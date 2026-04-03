@@ -50,18 +50,15 @@ function FighterPanel({
   selected,
   winner,
   loser,
-  crowdPercentage,
   labels,
 }: {
   fighter: FighterData;
   selected?: boolean;
   winner?: boolean;
   loser?: boolean;
-  crowdPercentage?: number;
   labels: {
     win: string;
     loss: string;
-    crowdPrediction: string;
     imageFallback: string;
   };
 }) {
@@ -112,9 +109,6 @@ function FighterPanel({
           <p className="text-xs text-gray-400">
             {fighter.record || "—"} {fighter.weight_class ? `• ${fighter.weight_class}` : ""}
           </p>
-          <p className="mt-1 text-xs text-amber-400">
-            {labels.crowdPrediction} {crowdPercentage ?? 0}%
-          </p>
         </div>
       </div>
     </div>
@@ -141,7 +135,6 @@ export default async function FightCard({
   const labels = {
     win: t("event.win"),
     loss: t("event.loss"),
-    crowdPrediction: t("event.crowdPrediction"),
     imageFallback: t("common.imageFallback"),
   };
 
@@ -165,7 +158,6 @@ export default async function FightCard({
           selected={prediction?.winner_id === fight.fighter_a_id}
           winner={!!fight.winner_id && fight.winner_id === fight.fighter_a_id}
           loser={!!fight.winner_id && fight.winner_id !== fight.fighter_a_id}
-          crowdPercentage={crowdStats?.fighter_a_percentage}
           labels={labels}
         />
         <FighterPanel
@@ -173,7 +165,6 @@ export default async function FightCard({
           selected={prediction?.winner_id === fight.fighter_b_id}
           winner={!!fight.winner_id && fight.winner_id === fight.fighter_b_id}
           loser={!!fight.winner_id && fight.winner_id !== fight.fighter_b_id}
-          crowdPercentage={crowdStats?.fighter_b_percentage}
           labels={labels}
         />
       </div>
