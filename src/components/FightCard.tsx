@@ -48,23 +48,37 @@ function FighterPanel({
   fighter,
   selected,
   winner,
+  loser,
   crowdPercentage,
 }: {
   fighter: FighterData;
   selected?: boolean;
   winner?: boolean;
+  loser?: boolean;
   crowdPercentage?: number;
 }) {
   return (
     <div
-      className={`rounded-2xl border p-4 ${
+      className={`relative rounded-2xl border p-4 ${
         winner
           ? "border-emerald-500 bg-emerald-500/10"
-          : selected
-            ? "border-amber-400 bg-amber-400/10"
-            : "border-gray-800 bg-gray-950"
+          : loser
+            ? "border-red-500/30 bg-red-500/5 opacity-60"
+            : selected
+              ? "border-amber-400 bg-amber-400/10"
+              : "border-gray-800 bg-gray-950"
       }`}
     >
+      {winner && (
+        <div className="absolute -top-2 right-3 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+          WIN
+        </div>
+      )}
+      {loser && (
+        <div className="absolute -top-2 right-3 rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+          LOSS
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <div className="h-14 w-14 overflow-hidden rounded-xl bg-gray-800">
           {fighter.image_url ? (
@@ -128,13 +142,15 @@ export default function FightCard({
         <FighterPanel
           fighter={fight.fighter_a}
           selected={prediction?.winner_id === fight.fighter_a_id}
-          winner={fight.winner_id === fight.fighter_a_id}
+          winner={!!fight.winner_id && fight.winner_id === fight.fighter_a_id}
+          loser={!!fight.winner_id && fight.winner_id !== fight.fighter_a_id}
           crowdPercentage={crowdStats?.fighter_a_percentage}
         />
         <FighterPanel
           fighter={fight.fighter_b}
           selected={prediction?.winner_id === fight.fighter_b_id}
-          winner={fight.winner_id === fight.fighter_b_id}
+          winner={!!fight.winner_id && fight.winner_id === fight.fighter_b_id}
+          loser={!!fight.winner_id && fight.winner_id !== fight.fighter_b_id}
           crowdPercentage={crowdStats?.fighter_b_percentage}
         />
       </div>
