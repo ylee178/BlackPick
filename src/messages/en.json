@@ -1,0 +1,76 @@
+{
+  "nav": {
+    "home": "Home",
+    "events": "Events",
+    "ranking": "Ranking",
+    "profile": "Profile",
+    "login": "Log in",
+    "signup": "Sign up",
+    "admin": "Admin"
+  },
+  "event": {
+    "upcoming": "Upcoming",
+    "live": "Live",
+    "completed": "Completed",
+    "fightCard": "Fight Card",
+    "vs": "VS",
+    "crowdPrediction": "Crowd Prediction",
+    "makeYourPick": "Make Your Pick",
+    "predictionLocked": "Prediction Locked",
+    "result": "Result",
+    "yourPrediction": "Your Prediction",
+    "win": "Win",
+    "loss": "Loss",
+    "mvpVote": "MVP Vote",
+    "mvpHighlight": "MVP Highlight"
+  },
+  "prediction": {
+    "selectWinner": "Select Winner",
+    "method": "Method",
+    "round": "Round",
+    "savePick": "Save Pick",
+    "saved": "Saved",
+    "noMethod": "No Method",
+    "noRound": "No Round",
+    "roundOT": "OT"
+  },
+  "profile": {
+    "fightRecord": "Fight Record",
+    "score": "Score",
+    "currentStreak": "Current Streak",
+    "bestStreak": "Best Streak",
+    "hallOfFame": "Hall of Fame",
+    "ranking": "Ranking",
+    "recentPredictions": "Recent Predictions",
+    "signInToView": "Sign in to view"
+  },
+  "ranking": {
+    "running": "Running",
+    "series": "Series",
+    "event": "Event",
+    "rank": "Rank",
+    "ringName": "Ring Name",
+    "record": "Record",
+    "score": "Score",
+    "streak": "Streak"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "ringName": "Ring Name",
+    "login": "Log in",
+    "signup": "Sign up",
+    "googleLogin": "Continue with Google",
+    "or": "or"
+  },
+  "fighter": {
+    "record": "Record",
+    "nationality": "Nationality",
+    "weightClass": "Weight Class"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "noData": "No data"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "nav": {
+    "home": "홈",
+    "events": "이벤트",
+    "ranking": "랭킹",
+    "profile": "프로필",
+    "login": "로그인",
+    "signup": "회원가입",
+    "admin": "관리자"
+  },
+  "event": {
+    "upcoming": "예정",
+    "live": "진행 중",
+    "completed": "종료",
+    "fightCard": "대진표",
+    "vs": "VS",
+    "crowdPrediction": "대중 예측",
+    "makeYourPick": "승자 예측하기",
+    "predictionLocked": "예측 마감",
+    "result": "결과",
+    "yourPrediction": "내 예측",
+    "win": "승",
+    "loss": "패",
+    "mvpVote": "MVP 투표",
+    "mvpHighlight": "MVP 하이라이트"
+  },
+  "prediction": {
+    "selectWinner": "승자 선택",
+    "method": "방법",
+    "round": "라운드",
+    "savePick": "예측 저장",
+    "saved": "저장됨",
+    "noMethod": "방법 없음",
+    "noRound": "라운드 없음",
+    "roundOT": "연장"
+  },
+  "profile": {
+    "fightRecord": "전적",
+    "score": "점수",
+    "currentStreak": "현재 연승",
+    "bestStreak": "최고 연승",
+    "hallOfFame": "명예의 전당",
+    "ranking": "랭킹",
+    "recentPredictions": "최근 예측",
+    "signInToView": "로그인 후 확인"
+  },
+  "ranking": {
+    "running": "진행 중",
+    "series": "시리즈",
+    "event": "이벤트",
+    "rank": "순위",
+    "ringName": "링네임",
+    "record": "전적",
+    "score": "점수",
+    "streak": "연승"
+  },
+  "auth": {
+    "email": "이메일",
+    "password": "비밀번호",
+    "ringName": "링네임",
+    "login": "로그인",
+    "signup": "회원가입",
+    "googleLogin": "Google로 계속하기",
+    "or": "또는"
+  },
+  "fighter": {
+    "record": "전적",
+    "nationality": "국적",
+    "weightClass": "체급"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류가 발생했습니다",
+    "noData": "데이터가 없습니다"
+  }
+}
