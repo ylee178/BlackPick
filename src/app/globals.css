@@ -17,9 +17,6 @@
   --font-display: "Barlow Condensed", "Pretendard", system-ui, sans-serif;
 }
 
-@import url("https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css");
-@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap");
-
 * {
   box-sizing: border-box;
 }
