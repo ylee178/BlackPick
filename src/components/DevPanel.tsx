@@ -53,6 +53,8 @@ export default function DevPanel() {
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [seedLoading, setSeedLoading] = useState<"full" | "empty" | null>(null);
+  const [seedMessage, setSeedMessage] = useState<string>("");
 
   const [events, setEvents] = useState<EventRow[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -82,7 +84,7 @@ export default function DevPanel() {
       .order("name", { ascending: true });
 
     if (error) {
-      console.error("Failed to load events:", error);
+      console.error("Failed to load events", error);
       return;
     }
 
@@ -114,364 +116,263 @@ export default function DevPanel() {
       .order("start_time", { ascending: true });
 
     if (error) {
-      console.error("Failed to load fights:", error);
+      console.error("Failed to load fights", error);
       return;
     }
 
     setFights((data || []) as FightRow[]);
   }
 
-  async function runAction(action: () => Promise<void>) {
+  async function runSeed(action: "full" | "empty") {
     try {
-      setLoading(true);
-      await action();
+      setSeedLoading(action);
+      setSeedMessage("");
+
+      const response = await fetch("/api/dev/seed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Request failed");
+      }
+
+      if (action === "full") {
+        setSeedMessage(
+          `Full Data complete: ${result.created_users ?? 0} users, ${result.created_predictions ?? 0} predictions`
+        );
+      } else {
+        setSeedMessage(`Empty Data complete: ${result.deleted_users ?? 0} users removed`);
+      }
+
+      router.refresh();
       await loadEvents();
       if (selectedEventId) {
         await loadFights(selectedEventId);
       }
-      router.refresh();
     } catch (error) {
-      console.error(error);
-      alert("Dev action failed. Check console.");
+      setSeedMessage(error instanceof Error ? error.message : "Seed failed");
     } finally {
-      setLoading(false);
+      setSeedLoading(null);
     }
   }
-
-  async function updateEventStatus(status: "upcoming" | "live" | "completed") {
-    if (!selectedEventId) return;
-
-    await runAction(async () => {
-      const { error } = await supabase
-        .from("events")
-        .update({ status })
-        .eq("id", selectedEventId);
-
-      if (error) throw error;
-    });
-  }
-
-  async function toggleFightStatus(fight: FightRow) {
-    const nextStatus = fight.status === "completed" ? "upcoming" : "completed";
-
-    await runAction(async () => {
-      const payload: Record<string, unknown> = { status: nextStatus };
-
-      if (nextStatus === "upcoming") {
-        payload.winner_id = null;
-      }
-
-      const { error } = await supabase
-        .from("fights")
-        .update(payload)
-        .eq("id", fight.id);
-
-      if (error) throw error;
-    });
-  }
-
-  async function setFightWinner(fight: FightRow, winnerId: string | null) {
-    await runAction(async () => {
-      const payload: Record<string, unknown> = {
-        winner_id: winnerId,
-        status: winnerId ? "completed" : "upcoming",
-      };
-
-      const { error } = await supabase
-        .from("fights")
-        .update(payload)
-        .eq("id", fight.id);
-
-      if (error) throw error;
-    });
-  }
-
-  // Test user functions disabled — users table requires auth.users FK
-  // Will be enabled when auth flow is complete
-
-  async function resetAllEventsToUpcoming() {
-    await runAction(async () => {
-      const { error: eventError } = await supabase
-        .from("events")
-        .update({ status: "upcoming" })
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      if (eventError) throw eventError;
-
-      const { error: fightError } = await supabase
-        .from("fights")
-        .update({ status: "upcoming", winner_id: null })
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      if (fightError) throw fightError;
-    });
-  }
-
-  async function setMongoliaVsChinaToLive() {
-    await runAction(async () => {
-      const targetEvent = events.find((event) =>
-        event.name.toLowerCase().includes("mongolia vs china")
-      );
-
-      if (!targetEvent) {
-        throw new Error('Event "Mongolia vs China" not found');
-      }
-
-      const { error } = await supabase
-        .from("events")
-        .update({ status: "live" })
-        .eq("id", targetEvent.id);
-
-      if (error) throw error;
-
-      setSelectedEventId(targetEvent.id);
-    });
-  }
-
-  function onDragStart(e: React.MouseEvent<HTMLDivElement>) {
-    const panel = e.currentTarget.parentElement;
-    if (!panel) return;
-
-    const rect = panel.getBoundingClientRect();
-    setDragging(true);
-    setPosition({
-      x: window.innerWidth - rect.right,
-      y: window.innerHeight - rect.bottom,
-    });
-  }
-
-  useEffect(() => {
-    if (!dragging) return;
-
-    function onMouseMove(e: MouseEvent) {
-      const panelWidth = 380;
-      const panelHeight = 560;
-
-      const right = Math.max(8, window.innerWidth - e.clientX - panelWidth / 2);
-      const bottom = Math.max(8, window.innerHeight - e.clientY - 20);
-
-      setPosition({
-        x: right,
-        y: bottom,
-      });
-    }
-
-    function onMouseUp() {
-      setDragging(false);
-    }
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [dragging]);
 
   if (!isDev) return null;
 
   return (
     <div
-      className="fixed z-[9999]"
       style={{
-        right: position.x || 16,
-        bottom: position.y || 16,
+        position: "fixed",
+        left: position.x || 16,
+        top: position.y || 16,
+        zIndex: 9999,
+        width: open ? 420 : 180,
+        background: "#111",
+        color: "#fff",
+        border: "1px solid #333",
+        borderRadius: 12,
+        boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+        overflow: "hidden",
       }}
     >
-      {!open ? (
+      <div
+        style={{
+          padding: "10px 12px",
+          background: dragging ? "#1f1f1f" : "#181818",
+          borderBottom: open ? "1px solid #2a2a2a" : "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "move",
+          userSelect: "none",
+        }}
+        onMouseDown={(e) => {
+          const startX = e.clientX - (position.x || 16);
+          const startY = e.clientY - (position.y || 16);
+          setDragging(true);
+
+          const onMove = (moveEvent: MouseEvent) => {
+            setPosition({
+              x: moveEvent.clientX - startX,
+              y: moveEvent.clientY - startY,
+            });
+          };
+
+          const onUp = () => {
+            setDragging(false);
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+          };
+
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        }}
+      >
+        <strong>Dev Panel</strong>
         <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="rounded-full border border-white/10 bg-black/70 px-3 py-2 text-xs text-white/80 shadow-lg backdrop-blur transition hover:bg-black/90 hover:text-white"
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            background: "#2a2a2a",
+            color: "#fff",
+            border: "1px solid #3a3a3a",
+            borderRadius: 8,
+            padding: "4px 8px",
+            cursor: "pointer",
+          }}
         >
-          🛠 Dev
+          {open ? "Close" : "Open"}
         </button>
-      ) : (
-        <div className="w-[380px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 text-white shadow-2xl backdrop-blur">
-          <div
-            onMouseDown={onDragStart}
-            className="flex cursor-move items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3"
-          >
-            <div>
-              <p className="text-sm font-semibold">Dev Panel</p>
-              <p className="text-[11px] text-white/50">Black Pick testing controls</p>
+      </div>
+
+      {open && (
+        <div style={{ padding: 12, display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Presets</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button
+                onClick={() => void runSeed("full")}
+                disabled={seedLoading !== null}
+                style={{
+                  padding: "12px 10px",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  background: "#6d28d9",
+                  color: "#fff",
+                  border: "1px solid #7c3aed",
+                  borderRadius: 10,
+                  cursor: seedLoading ? "not-allowed" : "pointer",
+                  opacity: seedLoading && seedLoading !== "full" ? 0.6 : 1,
+                }}
+              >
+                {seedLoading === "full" ? "Seeding..." : "🎭 Full Data"}
+              </button>
+
+              <button
+                onClick={() => void runSeed("empty")}
+                disabled={seedLoading !== null}
+                style={{
+                  padding: "12px 10px",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  background: "#991b1b",
+                  color: "#fff",
+                  border: "1px solid #b91c1c",
+                  borderRadius: 10,
+                  cursor: seedLoading ? "not-allowed" : "pointer",
+                  opacity: seedLoading && seedLoading !== "empty" ? 0.6 : 1,
+                }}
+              >
+                {seedLoading === "empty" ? "Clearing..." : "🗑 Empty"}
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-1 text-xs text-white/60 hover:bg-white/10 hover:text-white"
-            >
-              Close
-            </button>
+            {seedMessage ? (
+              <div
+                style={{
+                  fontSize: 12,
+                  lineHeight: 1.4,
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  background: "#1a1a1a",
+                  border: "1px solid #2f2f2f",
+                  color: "#d4d4d4",
+                }}
+              >
+                {seedMessage}
+              </div>
+            ) : null}
           </div>
 
-          <div className="max-h-[70vh] space-y-5 overflow-y-auto p-4">
-            <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                Event Controls
-              </h3>
+          <div style={{ height: 1, background: "#2a2a2a" }} />
 
-              <select
-                value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none"
-              >
-                <option value="">Select event</option>
-                {events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.name} ({event.status})
-                  </option>
-                ))}
-              </select>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Events</div>
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                background: "#1a1a1a",
+                color: "#fff",
+                border: "1px solid #333",
+                borderRadius: 8,
+              }}
+            >
+              <option value="">Select event</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name} ({event.status})
+                </option>
+              ))}
+            </select>
+          </div>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={!selectedEventId || loading}
-                  onClick={() => updateEventStatus("upcoming")}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10 disabled:opacity-40"
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Fights</div>
+            <div
+              style={{
+                display: "grid",
+                gap: 8,
+                maxHeight: 280,
+                overflowY: "auto",
+              }}
+            >
+              {fights.length === 0 ? (
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 8,
+                    background: "#1a1a1a",
+                    border: "1px solid #2a2a2a",
+                    fontSize: 13,
+                    opacity: 0.8,
+                  }}
                 >
-                  Upcoming
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedEventId || loading}
-                  onClick={() => updateEventStatus("live")}
-                  className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-40"
-                >
-                  Live
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedEventId || loading}
-                  onClick={() => updateEventStatus("completed")}
-                  className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-xs text-blue-300 hover:bg-blue-500/20 disabled:opacity-40"
-                >
-                  Completed
-                </button>
-              </div>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                Fight Controls
-              </h3>
-
-              {!selectedEventId ? (
-                <p className="text-sm text-white/50">Select an event to manage fights.</p>
-              ) : fights.length === 0 ? (
-                <p className="text-sm text-white/50">No fights found for this event.</p>
-              ) : (
-                <div className="space-y-3">
-                  {fights.map((fight, index) => {
-                    const fighterAName = getFighterLabel(fight.fighter_a, "Fighter A");
-                    const fighterBName = getFighterLabel(fight.fighter_b, "Fighter B");
-
-                    return (
-                      <div
-                        key={fight.id}
-                        className="rounded-xl border border-white/10 bg-white/[0.03] p-3"
-                      >
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium">
-                            Fight {index + 1}: {fighterAName} vs {fighterBName}
-                          </p>
-                          <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] uppercase tracking-wide text-white/60">
-                            {fight.status}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => toggleFightStatus(fight)}
-                            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs hover:bg-white/10 disabled:opacity-40"
-                          >
-                            Toggle Status
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={!fight.fighter_a_id || loading}
-                            onClick={() => setFightWinner(fight, fight.fighter_a_id)}
-                            className={`rounded-lg px-3 py-2 text-xs ${
-                              fight.winner_id === fight.fighter_a_id
-                                ? "border border-emerald-500/30 bg-emerald-500/20 text-emerald-300"
-                                : "border border-white/10 bg-white/5 hover:bg-white/10"
-                            } disabled:opacity-40`}
-                          >
-                            Winner: A
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={!fight.fighter_b_id || loading}
-                            onClick={() => setFightWinner(fight, fight.fighter_b_id)}
-                            className={`rounded-lg px-3 py-2 text-xs ${
-                              fight.winner_id === fight.fighter_b_id
-                                ? "border border-emerald-500/30 bg-emerald-500/20 text-emerald-300"
-                                : "border border-white/10 bg-white/5 hover:bg-white/10"
-                            } disabled:opacity-40`}
-                          >
-                            Winner: B
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => setFightWinner(fight, null)}
-                            className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300 hover:bg-red-500/20 disabled:opacity-40"
-                          >
-                            Clear Winner
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  No fights found.
                 </div>
+              ) : (
+                fights.map((fight) => {
+                  const fighterALabel = getFighterLabel(fight.fighter_a, "Fighter A");
+                  const fighterBLabel = getFighterLabel(fight.fighter_b, "Fighter B");
+                  const winnerLabel =
+                    fight.winner_id === fight.fighter_a_id
+                      ? fighterALabel
+                      : fight.winner_id === fight.fighter_b_id
+                      ? fighterBLabel
+                      : "TBD";
+
+                  return (
+                    <div
+                      key={fight.id}
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        background: "#1a1a1a",
+                        border: "1px solid #2a2a2a",
+                        display: "grid",
+                        gap: 4,
+                      }}
+                    >
+                      <div style={{ fontWeight: 600 }}>
+                        {fighterALabel} vs {fighterBLabel}
+                      </div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>
+                        Status: {fight.status}
+                      </div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>
+                        Winner: {winnerLabel}
+                      </div>
+                    </div>
+                  );
+                })
               )}
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                Quick Actions
-              </h3>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                Quick Actions
-              </h3>
-
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={resetAllEventsToUpcoming}
-                  className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-left text-sm text-yellow-200 hover:bg-yellow-500/20 disabled:opacity-40"
-                >
-                  Reset All Events to Upcoming
-                </button>
-
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={setMongoliaVsChinaToLive}
-                  className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-left text-sm text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-40"
-                >
-                  Set Mongolia vs China to Live
-                </button>
-              </div>
-            </section>
-
-            {loading && (
-              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60">
-                Running dev action...
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}
