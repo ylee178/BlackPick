@@ -79,16 +79,26 @@ async function loadMessages(locale: Locale): Promise<Messages> {
   }
 }
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
-  const [messages, setMessages] = useState<Messages>({});
+export function I18nProvider({
+  children,
+  initialLocale,
+  initialMessages,
+}: {
+  children: React.ReactNode;
+  initialLocale: Locale;
+  initialMessages: Messages;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const [messages, setMessages] = useState<Messages>(initialMessages);
 
   useEffect(() => {
     const cookieLocale = getCookie(LOCALE_COOKIE);
-    const initialLocale = isValidLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
+    const nextLocale = isValidLocale(cookieLocale) ? cookieLocale : initialLocale;
 
-    setLocaleState(initialLocale);
-  }, []);
+    if (nextLocale !== locale) {
+      setLocaleState(nextLocale);
+    }
+  }, [initialLocale, locale]);
 
   useEffect(() => {
     let mounted = true;
@@ -113,6 +123,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLocale = useCallback((nextLocale: Locale) => {
     if (!SUPPORTED_LOCALES.includes(nextLocale)) return;
     setCookie(LOCALE_COOKIE, nextLocale);
+    setLocaleState(nextLocale);
     window.location.reload();
   }, []);
 

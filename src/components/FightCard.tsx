@@ -1,5 +1,6 @@
 import PredictionForm from "@/components/PredictionForm";
 import { countryCodeToFlag } from "@/lib/flags";
+import { getTranslations } from "@/lib/i18n-server";
 
 type FighterData = {
   id: string;
@@ -50,12 +51,19 @@ function FighterPanel({
   winner,
   loser,
   crowdPercentage,
+  labels,
 }: {
   fighter: FighterData;
   selected?: boolean;
   winner?: boolean;
   loser?: boolean;
   crowdPercentage?: number;
+  labels: {
+    win: string;
+    loss: string;
+    crowdPrediction: string;
+    imageFallback: string;
+  };
 }) {
   return (
     <div
@@ -71,12 +79,12 @@ function FighterPanel({
     >
       {winner && (
         <div className="absolute -top-2 right-3 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-          WIN
+          {labels.win.toUpperCase()}
         </div>
       )}
       {loser && (
         <div className="absolute -top-2 right-3 rounded-full bg-red-500/80 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-          LOSS
+          {labels.loss.toUpperCase()}
         </div>
       )}
       <div className="flex items-center gap-3">
@@ -89,7 +97,7 @@ function FighterPanel({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-gray-500">
-              PIXEL
+              {labels.imageFallback}
             </div>
           )}
         </div>
@@ -105,7 +113,7 @@ function FighterPanel({
             {fighter.record || "—"} {fighter.weight_class ? `• ${fighter.weight_class}` : ""}
           </p>
           <p className="mt-1 text-xs text-amber-400">
-            Crowd {crowdPercentage ?? 0}%
+            {labels.crowdPrediction} {crowdPercentage ?? 0}%
           </p>
         </div>
       </div>
@@ -113,28 +121,37 @@ function FighterPanel({
   );
 }
 
-export default function FightCard({
+export default async function FightCard({
   fight,
   eventStatus,
   prediction,
   crowdStats,
 }: FightCardProps) {
+  const { t } = await getTranslations();
+
   const hasStarted = new Date(fight.start_time).getTime() <= Date.now();
   const isUpcoming = eventStatus === "upcoming" && !hasStarted;
   const isLive = eventStatus === "live" || (eventStatus === "upcoming" && hasStarted);
   const isCompleted = eventStatus === "completed";
 
+  const labels = {
+    win: t("event.win"),
+    loss: t("event.loss"),
+    crowdPrediction: t("event.crowdPrediction"),
+    imageFallback: t("common.imageFallback"),
+  };
+
   return (
     <article className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-widest text-gray-500">Fight</p>
+          <p className="text-xs uppercase tracking-widest text-gray-500">{t("event.fight")}</p>
           <p className="text-sm text-gray-400">
             {new Date(fight.start_time).toLocaleString()}
           </p>
         </div>
         <div className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-300">
-          {fight.status}
+          {t(`status.${fight.status}`)}
         </div>
       </div>
 
@@ -145,6 +162,7 @@ export default function FightCard({
           winner={!!fight.winner_id && fight.winner_id === fight.fighter_a_id}
           loser={!!fight.winner_id && fight.winner_id !== fight.fighter_a_id}
           crowdPercentage={crowdStats?.fighter_a_percentage}
+          labels={labels}
         />
         <FighterPanel
           fighter={fight.fighter_b}
@@ -152,6 +170,7 @@ export default function FightCard({
           winner={!!fight.winner_id && fight.winner_id === fight.fighter_b_id}
           loser={!!fight.winner_id && fight.winner_id !== fight.fighter_b_id}
           crowdPercentage={crowdStats?.fighter_b_percentage}
+          labels={labels}
         />
       </div>
 
@@ -168,20 +187,20 @@ export default function FightCard({
 
       {isLive && (
         <div className="mt-4 rounded-xl border border-gray-800 bg-gray-950 p-4 text-sm text-gray-300">
-          <p className="font-semibold text-amber-400">Predictions Locked</p>
+          <p className="font-semibold text-amber-400">{t("event.predictionLocked")}</p>
           {prediction ? (
             <p className="mt-2">
-              Your pick:{" "}
+              {t("prediction.yourPick")}:{" "}
               <span className="font-semibold text-white">
                 {prediction.winner_id === fight.fighter_a_id
                   ? fight.fighter_a.name
                   : fight.fighter_b.name}
               </span>
               {prediction.method ? ` • ${prediction.method}` : ""}
-              {prediction.round ? ` • Round ${prediction.round}` : ""}
+              {prediction.round ? ` • ${t("prediction.round")} ${prediction.round}` : ""}
             </p>
           ) : (
-            <p className="mt-2 text-gray-400">You did not submit a prediction.</p>
+            <p className="mt-2 text-gray-400">{t("prediction.notSubmitted")}</p>
           )}
         </div>
       )}
@@ -189,20 +208,20 @@ export default function FightCard({
       {isCompleted && (
         <div className="mt-4 space-y-3 rounded-xl border border-gray-800 bg-gray-950 p-4 text-sm">
           <div>
-            <p className="text-gray-400">Result</p>
+            <p className="text-gray-400">{t("event.result")}</p>
             <p className="font-semibold text-white">
               {fight.winner_id
-                ? `${fight.winner_id === fight.fighter_a_id ? fight.fighter_a.name : fight.fighter_b.name} won`
+                ? `${fight.winner_id === fight.fighter_a_id ? fight.fighter_a.name : fight.fighter_b.name} ${t("event.won")}`
                 : fight.status === "cancelled"
-                  ? "Fight cancelled"
-                  : "Result pending"}
+                  ? t("event.fightCancelled")
+                  : t("event.resultPending")}
               {fight.method ? ` • ${fight.method}` : ""}
-              {fight.round ? ` • Round ${fight.round}` : ""}
+              {fight.round ? ` • ${t("prediction.round")} ${fight.round}` : ""}
             </p>
           </div>
 
           <div>
-            <p className="text-gray-400">Your Prediction</p>
+            <p className="text-gray-400">{t("event.yourPrediction")}</p>
             {prediction ? (
               <div className="space-y-1">
                 <p className="text-white">
@@ -210,7 +229,7 @@ export default function FightCard({
                     ? fight.fighter_a.name
                     : fight.fighter_b.name}
                   {prediction.method ? ` • ${prediction.method}` : ""}
-                  {prediction.round ? ` • Round ${prediction.round}` : ""}
+                  {prediction.round ? ` • ${t("prediction.round")} ${prediction.round}` : ""}
                 </p>
                 <p
                   className={
@@ -219,12 +238,12 @@ export default function FightCard({
                       : "font-semibold text-red-400"
                   }
                 >
-                  {prediction.is_winner_correct ? "Win" : "Loss"}
-                  {typeof prediction.score === "number" ? ` • ${prediction.score} pts` : ""}
+                  {prediction.is_winner_correct ? t("event.win") : t("event.loss")}
+                  {typeof prediction.score === "number" ? ` • ${prediction.score} ${t("prediction.points")}` : ""}
                 </p>
               </div>
             ) : (
-              <p className="text-gray-400">No prediction submitted.</p>
+              <p className="text-gray-400">{t("prediction.noPredictionSubmitted")}</p>
             )}
           </div>
         </div>

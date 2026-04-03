@@ -3,6 +3,7 @@ import MvpVoteSection from "@/components/MvpVoteSection";
 import EventStatusBadge from "@/components/EventStatusBadge";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getSeriesLabel } from "@/lib/constants";
+import { getTranslations } from "@/lib/i18n-server";
 
 export default async function EventPage({
   params,
@@ -12,6 +13,7 @@ export default async function EventPage({
   const supabase = await createSupabaseServer();
   const user = await getUser();
   const { id } = await params;
+  const { t } = await getTranslations();
 
   const { data: event } = await supabase
     .from("events")
@@ -22,7 +24,7 @@ export default async function EventPage({
   if (!event) {
     return (
       <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 text-gray-300">
-        Event not found.
+        {t("event.notFound")}
       </div>
     );
   }
@@ -30,7 +32,15 @@ export default async function EventPage({
   const { data: fights } = await supabase
     .from("fights")
     .select(`
-      *,
+      id,
+      event_id,
+      fighter_a_id,
+      fighter_b_id,
+      start_time,
+      status,
+      winner_id,
+      method,
+      round,
       fighter_a:fighters!fights_fighter_a_id_fkey(*),
       fighter_b:fighters!fights_fighter_b_id_fkey(*)
     `)
@@ -98,7 +108,7 @@ export default async function EventPage({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-              {getSeriesLabel(event.series_type)}
+              {getSeriesLabel(event.series_type, t)}
             </p>
             <h1 className="mt-2 text-2xl font-black text-white">{event.name}</h1>
             <p className="mt-2 text-sm text-gray-400">{event.date}</p>
@@ -108,20 +118,19 @@ export default async function EventPage({
 
         {event.status === "upcoming" && (
           <p className="mt-4 text-sm text-gray-300">
-            Predictions are open until each fight starts. Crowd percentages are visible,
-            but individual picks stay private.
+            {t("event.upcomingDescription")}
           </p>
         )}
 
         {event.status === "live" && (
           <p className="mt-4 text-sm text-gray-300">
-            Predictions are locked. All picks are now public.
+            {t("event.liveDescription")}
           </p>
         )}
 
         {event.status === "completed" && (
           <p className="mt-4 text-sm text-gray-300">
-            Results are in. Review your picks, scores, and vote for the event MVP.
+            {t("event.completedDescription")}
           </p>
         )}
       </section>
@@ -129,12 +138,12 @@ export default async function EventPage({
       {event.status === "completed" && event.mvp_video_url && (
         <section className="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900">
           <div className="border-b border-gray-800 px-4 py-3">
-            <h2 className="font-bold text-white">MVP Highlight</h2>
+            <h2 className="font-bold text-white">{t("event.mvpHighlight")}</h2>
           </div>
           <div className="aspect-video w-full">
             <iframe
               src={event.mvp_video_url}
-              title="MVP Highlight Video"
+              title={t("event.mvpHighlightVideo")}
               className="h-full w-full"
               allowFullScreen
             />

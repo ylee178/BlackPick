@@ -26,19 +26,20 @@ export default async function HomePage() {
     <div className="space-y-10">
       <section className="rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 to-gray-900 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-400">
-          Fight Record Platform
+          {t("home.platformLabel")}
         </p>
         <h1 className="mt-2 text-3xl font-black text-white">
-          Pick fights. Build your record.
+          {t("home.heroTitle")}
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-gray-300">
-          Predict Black Combat fights, track your wins and losses, and compete with
-          fans around the world.
+          {t("home.heroDescription")}
         </p>
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-bold text-white">{t("event.upcoming")} {t("nav.events")}</h2>
+        <h2 className="text-xl font-bold text-white">
+          {t("event.upcoming")} {t("nav.events")}
+        </h2>
         <div className="grid gap-4">
           {upcomingEvents.length === 0 ? (
             <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 text-sm text-gray-400">
@@ -54,7 +55,7 @@ export default async function HomePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-widest text-gray-500">
-                      {getSeriesLabel(event.series_type)}
+                      {getSeriesLabel(event.series_type, t)}
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-white">{event.name}</h3>
                     <p className="mt-2 text-sm text-gray-400">{event.date}</p>
@@ -68,7 +69,9 @@ export default async function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-bold text-white">{t("event.completed")} {t("nav.events")}</h2>
+        <h2 className="text-xl font-bold text-white">
+          {t("event.completed")} {t("nav.events")}
+        </h2>
         <div className="grid gap-4">
           {completedEvents.length === 0 ? (
             <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 text-sm text-gray-400">
@@ -84,7 +87,7 @@ export default async function HomePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-widest text-gray-500">
-                      {getSeriesLabel(event.series_type)}
+                      {getSeriesLabel(event.series_type, t)}
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-white">{event.name}</h3>
                     <p className="mt-2 text-sm text-gray-400">{event.date}</p>

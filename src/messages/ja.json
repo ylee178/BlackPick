@@ -12,27 +12,44 @@
     "upcoming": "開催予定",
     "live": "ライブ",
     "completed": "終了",
+    "fight": "試合",
     "fightCard": "対戦カード",
-    "vs": "対",
+    "vs": "VS",
     "crowdPrediction": "みんなの予想",
-    "makeYourPick": "勝者を予想",
+    "makeYourPick": "予想する",
     "predictionLocked": "予想受付終了",
     "result": "結果",
     "yourPrediction": "あなたの予想",
     "win": "勝ち",
     "loss": "負け",
+    "won": "勝利",
+    "fightCancelled": "試合中止",
+    "resultPending": "結果待ち",
     "mvpVote": "MVP投票",
-    "mvpHighlight": "MVPハイライト"
+    "mvpHighlight": "MVPハイライト",
+    "mvpHighlightVideo": "MVPハイライト動画",
+    "notFound": "イベントが見つかりません。",
+    "upcomingDescription": "予想は各試合の開始まで受け付けています。全体の予想割合は表示されますが、個別の予想は非公開です。",
+    "liveDescription": "予想受付は終了しました。すべての予想が公開されています。",
+    "completedDescription": "結果が確定しました。あなたの予想やスコアを確認し、イベントMVPに投票しましょう。"
   },
   "prediction": {
     "selectWinner": "勝者を選択",
+    "selectWinnerMessage": "勝者を選択してください。",
+    "yourPick": "あなたの予想",
     "method": "決着方法",
     "round": "ラウンド",
     "savePick": "予想を保存",
-    "saved": "保存しました",
-    "noMethod": "方法未選択",
-    "noRound": "ラウンド未選択",
-    "roundOT": "判定 / その他"
+    "saved": "保存済み",
+    "savedMessage": "予想を保存しました。",
+    "failedToSave": "予想の保存に失敗しました。",
+    "notSubmitted": "予想を提出していません。",
+    "noPredictionSubmitted": "予想は提出されていません。",
+    "noMethod": "決着方法なし",
+    "noRound": "ラウンドなし",
+    "roundOT": "延長",
+    "editUntilStart": "試合開始まで予想を編集できます。",
+    "points": "pt"
   },
   "profile": {
     "fightRecord": "戦績",
@@ -60,7 +77,7 @@
     "ringName": "リングネーム",
     "login": "ログイン",
     "signup": "新規登録",
-    "googleLogin": "Googleでログイン",
+    "googleLogin": "Googleで続行",
     "or": "または"
   },
   "fighter": {
@@ -68,9 +85,30 @@
     "nationality": "国籍",
     "weightClass": "階級"
   },
+  "series": {
+    "blackCup": "ブラックカップ",
+    "numbering": "ナンバリング",
+    "rise": "RISE",
+    "championsLeague": "チャンピオンズリーグ"
+  },
+  "status": {
+    "upcoming": "開催予定",
+    "live": "ライブ",
+    "completed": "終了",
+    "cancelled": "中止"
+  },
+  "language": {
+    "switchTo": "{language}に言語を切り替える"
+  },
+  "home": {
+    "platformLabel": "戦績プラットフォーム",
+    "heroTitle": "試合を予想し、戦績を築こう。",
+    "heroDescription": "Black Combatの試合を予想し、勝敗を記録して、世界中のファンと競い合おう。"
+  },
   "common": {
-    "loading": "読み込み中",
-    "error": "エラー",
-    "noData": "データがありません"
+    "loading": "読み込み中...",
+    "error": "問題が発生しました",
+    "noData": "データがありません",
+    "imageFallback": "IMG"
   }
 }

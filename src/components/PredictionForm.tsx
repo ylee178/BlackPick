@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n-provider";
 
 type Fighter = {
   id: string;
@@ -28,6 +29,7 @@ export default function PredictionForm({
   fighterB,
   initialPrediction,
 }: PredictionFormProps) {
+  const { t } = useI18n();
   const [winnerId, setWinnerId] = useState<string>(initialPrediction?.winner_id ?? "");
   const [method, setMethod] = useState<string>(initialPrediction?.method ?? "");
   const [round, setRound] = useState<string>(
@@ -38,7 +40,7 @@ export default function PredictionForm({
 
   async function handleSubmit() {
     if (!winnerId) {
-      setMessage("Please select a winner.");
+      setMessage(t("prediction.selectWinnerMessage"));
       return;
     }
 
@@ -62,13 +64,13 @@ export default function PredictionForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.error || "Failed to save prediction.");
+        setMessage(data.error || t("prediction.failedToSave"));
         return;
       }
 
-      setMessage("Prediction saved.");
+      setMessage(t("prediction.savedMessage"));
     } catch {
-      setMessage("Something went wrong.");
+      setMessage(t("common.error"));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export default function PredictionForm({
 
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-950 p-4">
-      <p className="text-sm font-semibold text-white">Make your pick</p>
+      <p className="text-sm font-semibold text-white">{t("event.makeYourPick")}</p>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {[fighterA, fighterB].map((fighter) => {
@@ -93,7 +95,7 @@ export default function PredictionForm({
               }`}
             >
               <span className="block font-semibold">{fighter.name}</span>
-              <span className="mt-1 block text-xs text-gray-400">Pick winner</span>
+              <span className="mt-1 block text-xs text-gray-400">{t("prediction.selectWinner")}</span>
             </button>
           );
         })}
@@ -102,14 +104,14 @@ export default function PredictionForm({
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-gray-400">
-            Method
+            {t("prediction.method")}
           </span>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value)}
             className="w-full rounded-xl border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white outline-none ring-0"
           >
-            <option value="">No method</option>
+            <option value="">{t("prediction.noMethod")}</option>
             {methods.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -120,17 +122,17 @@ export default function PredictionForm({
 
         <label className="block">
           <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-gray-400">
-            Round
+            {t("prediction.round")}
           </span>
           <select
             value={round}
             onChange={(e) => setRound(e.target.value)}
             className="w-full rounded-xl border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white outline-none ring-0"
           >
-            <option value="">No round</option>
+            <option value="">{t("prediction.noRound")}</option>
             {rounds.map((item) => (
               <option key={item} value={item}>
-                {item === 4 ? "4 (OT)" : item}
+                {item === 4 ? `4 (${t("prediction.roundOT")})` : item}
               </option>
             ))}
           </select>
@@ -139,7 +141,7 @@ export default function PredictionForm({
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <p className="text-xs text-gray-400">
-          You can edit your pick until fight start.
+          {t("prediction.editUntilStart")}
         </p>
         <button
           type="button"
@@ -147,7 +149,7 @@ export default function PredictionForm({
           disabled={loading}
           className="rounded-xl bg-amber-400 px-4 py-2 text-sm font-bold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Saving..." : "Save Pick"}
+          {loading ? t("common.loading") : t("prediction.savePick")}
         </button>
       </div>
 

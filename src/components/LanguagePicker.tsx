@@ -10,7 +10,7 @@ const LANGUAGES: { code: Locale; label: string }[] = [
 ];
 
 export default function LanguagePicker() {
-  const { locale, setLocale } = useI18n();
+  const { locale, setLocale, t } = useI18n();
 
   return (
     <div className="inline-flex items-center rounded-full border border-gray-800 bg-gray-900/80 p-1 shadow-sm backdrop-blur">
@@ -29,7 +29,7 @@ export default function LanguagePicker() {
                 : "text-gray-300 hover:bg-gray-800 hover:text-white",
             ].join(" ")}
             aria-pressed={active}
-            aria-label={`Switch language to ${language.label}`}
+            aria-label={t("language.switchTo").replace("{language}", language.label)}
           >
             {language.label}
           </button>

@@ -12,27 +12,44 @@
     "upcoming": "Upcoming",
     "live": "Live",
     "completed": "Completed",
+    "fight": "Fight",
     "fightCard": "Fight Card",
     "vs": "VS",
-    "crowdPrediction": "Crowd Prediction",
+    "crowdPrediction": "Crowd",
     "makeYourPick": "Make Your Pick",
-    "predictionLocked": "Prediction Locked",
+    "predictionLocked": "Predictions Locked",
     "result": "Result",
     "yourPrediction": "Your Prediction",
     "win": "Win",
     "loss": "Loss",
+    "won": "won",
+    "fightCancelled": "Fight cancelled",
+    "resultPending": "Result pending",
     "mvpVote": "MVP Vote",
-    "mvpHighlight": "MVP Highlight"
+    "mvpHighlight": "MVP Highlight",
+    "mvpHighlightVideo": "MVP Highlight Video",
+    "notFound": "Event not found.",
+    "upcomingDescription": "Predictions are open until each fight starts. Crowd percentages are visible, but individual picks stay private.",
+    "liveDescription": "Predictions are locked. All picks are now public.",
+    "completedDescription": "Results are in. Review your picks, scores, and vote for the event MVP."
   },
   "prediction": {
-    "selectWinner": "Select Winner",
+    "selectWinner": "Pick winner",
+    "selectWinnerMessage": "Please select a winner.",
+    "yourPick": "Your pick",
     "method": "Method",
     "round": "Round",
     "savePick": "Save Pick",
     "saved": "Saved",
+    "savedMessage": "Prediction saved.",
+    "failedToSave": "Failed to save prediction.",
+    "notSubmitted": "You did not submit a prediction.",
+    "noPredictionSubmitted": "No prediction submitted.",
     "noMethod": "No Method",
     "noRound": "No Round",
-    "roundOT": "OT"
+    "roundOT": "OT",
+    "editUntilStart": "You can edit your pick until fight start.",
+    "points": "pts"
   },
   "profile": {
     "fightRecord": "Fight Record",
@@ -68,9 +85,30 @@
     "nationality": "Nationality",
     "weightClass": "Weight Class"
   },
+  "series": {
+    "blackCup": "Black Cup",
+    "numbering": "Numbering",
+    "rise": "Rise",
+    "championsLeague": "Champions League"
+  },
+  "status": {
+    "upcoming": "Upcoming",
+    "live": "Live",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "language": {
+    "switchTo": "Switch language to {language}"
+  },
+  "home": {
+    "platformLabel": "Fight Record Platform",
+    "heroTitle": "Pick fights. Build your record.",
+    "heroDescription": "Predict Black Combat fights, track your wins and losses, and compete with fans around the world."
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",
-    "noData": "No data"
+    "noData": "No data",
+    "imageFallback": "IMG"
   }
 }

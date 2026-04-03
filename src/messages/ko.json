@@ -12,6 +12,7 @@
     "upcoming": "예정",
     "live": "진행 중",
     "completed": "종료",
+    "fight": "경기",
     "fightCard": "대진표",
     "vs": "VS",
     "crowdPrediction": "대중 예측",
@@ -21,18 +22,34 @@
     "yourPrediction": "내 예측",
     "win": "승",
     "loss": "패",
+    "won": "승리",
+    "fightCancelled": "경기 취소",
+    "resultPending": "결과 대기 중",
     "mvpVote": "MVP 투표",
-    "mvpHighlight": "MVP 하이라이트"
+    "mvpHighlight": "MVP 하이라이트",
+    "mvpHighlightVideo": "MVP 하이라이트 영상",
+    "notFound": "이벤트를 찾을 수 없습니다.",
+    "upcomingDescription": "각 경기가 시작되기 전까지 예측할 수 있습니다. 대중 예측 비율은 보이지만 개인 예측은 비공개입니다.",
+    "liveDescription": "예측이 마감되었습니다. 이제 모든 예측이 공개됩니다.",
+    "completedDescription": "결과가 확정되었습니다. 내 예측과 점수를 확인하고 이벤트 MVP에 투표하세요."
   },
   "prediction": {
     "selectWinner": "승자 선택",
+    "selectWinnerMessage": "승자를 선택해 주세요.",
+    "yourPick": "내 선택",
     "method": "방법",
     "round": "라운드",
     "savePick": "예측 저장",
     "saved": "저장됨",
+    "savedMessage": "예측이 저장되었습니다.",
+    "failedToSave": "예측 저장에 실패했습니다.",
+    "notSubmitted": "예측을 제출하지 않았습니다.",
+    "noPredictionSubmitted": "제출한 예측이 없습니다.",
     "noMethod": "방법 없음",
     "noRound": "라운드 없음",
-    "roundOT": "연장"
+    "roundOT": "연장",
+    "editUntilStart": "경기 시작 전까지 예측을 수정할 수 있습니다.",
+    "points": "점"
   },
   "profile": {
     "fightRecord": "전적",
@@ -68,9 +85,30 @@
     "nationality": "국적",
     "weightClass": "체급"
   },
+  "series": {
+    "blackCup": "블랙컵",
+    "numbering": "넘버링",
+    "rise": "라이즈",
+    "championsLeague": "챔피언스 리그"
+  },
+  "status": {
+    "upcoming": "예정",
+    "live": "진행 중",
+    "completed": "종료",
+    "cancelled": "취소"
+  },
+  "language": {
+    "switchTo": "{language}(으)로 언어 변경"
+  },
+  "home": {
+    "platformLabel": "격투기 전적 플랫폼",
+    "heroTitle": "경기를 예측하고 전적을 쌓으세요.",
+    "heroDescription": "블랙컴뱃 경기를 예측하고 승패를 추적하며 전 세계 팬들과 경쟁하세요."
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",
-    "noData": "데이터가 없습니다"
+    "noData": "데이터가 없습니다",
+    "imageFallback": "이미지"
   }
 }

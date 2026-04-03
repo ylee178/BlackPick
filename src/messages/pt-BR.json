@@ -5,44 +5,61 @@
     "ranking": "Ranking",
     "profile": "Perfil",
     "login": "Entrar",
-    "signup": "Cadastrar",
+    "signup": "Cadastrar-se",
     "admin": "Admin"
   },
   "event": {
-    "upcoming": "Próximos",
+    "upcoming": "Em breve",
     "live": "Ao vivo",
-    "completed": "Encerrados",
-    "fightCard": "Card de lutas",
-    "vs": "vs",
-    "crowdPrediction": "Previsão da torcida",
+    "completed": "Concluído",
+    "fight": "Luta",
+    "fightCard": "Card de Lutas",
+    "vs": "VS",
+    "crowdPrediction": "Público",
     "makeYourPick": "Faça seu palpite",
-    "predictionLocked": "Palpite bloqueado",
+    "predictionLocked": "Palpites bloqueados",
     "result": "Resultado",
     "yourPrediction": "Seu palpite",
     "win": "Vitória",
     "loss": "Derrota",
+    "won": "venceu",
+    "fightCancelled": "Luta cancelada",
+    "resultPending": "Resultado pendente",
     "mvpVote": "Votação de MVP",
-    "mvpHighlight": "Destaque do MVP"
+    "mvpHighlight": "Destaque do MVP",
+    "mvpHighlightVideo": "Vídeo de destaque do MVP",
+    "notFound": "Evento não encontrado.",
+    "upcomingDescription": "Os palpites ficam abertos até o início de cada luta. As porcentagens do público são visíveis, mas os palpites individuais permanecem privados.",
+    "liveDescription": "Os palpites estão bloqueados. Todos os palpites agora são públicos.",
+    "completedDescription": "Os resultados saíram. Revise seus palpites, pontuações e vote no MVP do evento."
   },
   "prediction": {
-    "selectWinner": "Selecione o vencedor",
+    "selectWinner": "Escolha o vencedor",
+    "selectWinnerMessage": "Por favor, selecione um vencedor.",
+    "yourPick": "Seu palpite",
     "method": "Método",
     "round": "Round",
     "savePick": "Salvar palpite",
     "saved": "Salvo",
+    "savedMessage": "Palpite salvo.",
+    "failedToSave": "Falha ao salvar o palpite.",
+    "notSubmitted": "Você não enviou um palpite.",
+    "noPredictionSubmitted": "Nenhum palpite enviado.",
     "noMethod": "Sem método",
     "noRound": "Sem round",
-    "roundOT": "Decisão / Outro"
+    "roundOT": "OT",
+    "editUntilStart": "Você pode editar seu palpite até o início da luta.",
+    "points": "pts"
   },
   "profile": {
-    "fightRecord": "Cartel",
+    "fightRecord": "Cartel de lutas",
     "score": "Pontuação",
     "currentStreak": "Sequência atual",
     "bestStreak": "Melhor sequência",
-    "hallOfFame": "Hall da fama",
+    "hallOfFame": "Hall da Fama",
     "ranking": "Ranking",
     "recentPredictions": "Palpites recentes",
-    "signInToView": "Faça login para visualizar"
+    "signInToView": "Entre para visualizar"
   },
   "ranking": {
     "running": "Em andamento",
@@ -59,8 +76,8 @@
     "password": "Senha",
     "ringName": "Nome de ringue",
     "login": "Entrar",
-    "signup": "Cadastrar",
-    "googleLogin": "Entrar com Google",
+    "signup": "Cadastrar-se",
+    "googleLogin": "Continuar com Google",
     "or": "ou"
   },
   "fighter": {
@@ -68,9 +85,30 @@
     "nationality": "Nacionalidade",
     "weightClass": "Categoria de peso"
   },
+  "series": {
+    "blackCup": "Black Cup",
+    "numbering": "Numeração",
+    "rise": "Rise",
+    "championsLeague": "Champions League"
+  },
+  "status": {
+    "upcoming": "Em breve",
+    "live": "Ao vivo",
+    "completed": "Concluído",
+    "cancelled": "Cancelado"
+  },
+  "language": {
+    "switchTo": "Mudar idioma para {language}"
+  },
+  "home": {
+    "platformLabel": "Plataforma de Cartel de Lutas",
+    "heroTitle": "Escolha as lutas. Construa seu cartel.",
+    "heroDescription": "Preveja as lutas do Black Combat, acompanhe suas vitórias e derrotas e compita com fãs do mundo todo."
+  },
   "common": {
-    "loading": "Carregando",
-    "error": "Erro",
-    "noData": "Sem dados"
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "noData": "Sem dados",
+    "imageFallback": "IMG"
   }
 }
