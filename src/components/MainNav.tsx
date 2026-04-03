@@ -98,7 +98,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
             href={link.href}
             className={[
               "display-font relative pb-1 text-[1.02rem] font-semibold uppercase tracking-[0.08em] transition",
-              active ? "red-underline-active text-white" : "text-white/62 hover:text-white",
+              active ? "gold-underline-active text-white" : "text-white/62 hover:text-white",
             ].join(" ")}
           >
             {link.label}
