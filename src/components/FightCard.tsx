@@ -121,6 +121,10 @@ function FighterPanel({
   );
 }
 
+function displayName(fighter: FighterData): string {
+  return fighter.ring_name || fighter.name;
+}
+
 export default async function FightCard({
   fight,
   eventStatus,
@@ -193,8 +197,8 @@ export default async function FightCard({
               {t("prediction.yourPick")}:{" "}
               <span className="font-semibold text-white">
                 {prediction.winner_id === fight.fighter_a_id
-                  ? fight.fighter_a.name
-                  : fight.fighter_b.name}
+                  ? displayName(fight.fighter_a)
+                  : displayName(fight.fighter_b)}
               </span>
               {prediction.method ? ` • ${prediction.method}` : ""}
               {prediction.round ? ` • ${t("prediction.round")} ${prediction.round}` : ""}
@@ -211,7 +215,7 @@ export default async function FightCard({
             <p className="text-gray-400">{t("event.result")}</p>
             <p className="font-semibold text-white">
               {fight.winner_id
-                ? `${fight.winner_id === fight.fighter_a_id ? fight.fighter_a.name : fight.fighter_b.name} ${t("event.won")}`
+                ? `${fight.winner_id === fight.fighter_a_id ? displayName(fight.fighter_a) : displayName(fight.fighter_b)} ${t("event.won")}`
                 : fight.status === "cancelled"
                   ? t("event.fightCancelled")
                   : t("event.resultPending")}
@@ -226,8 +230,8 @@ export default async function FightCard({
               <div className="space-y-1">
                 <p className="text-white">
                   {prediction.winner_id === fight.fighter_a_id
-                    ? fight.fighter_a.name
-                    : fight.fighter_b.name}
+                    ? displayName(fight.fighter_a)
+                    : displayName(fight.fighter_b)}
                   {prediction.method ? ` • ${prediction.method}` : ""}
                   {prediction.round ? ` • ${t("prediction.round")} ${prediction.round}` : ""}
                 </p>
