@@ -1,6 +1,7 @@
 import FightCard from "@/components/FightCard";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import EventStatusBadge from "@/components/EventStatusBadge";
+import CountdownTimer from "@/components/CountdownTimer";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n-server";
@@ -117,9 +118,20 @@ export default async function EventPage({
         </div>
 
         {event.status === "upcoming" && (
-          <p className="mt-4 text-sm text-gray-300">
-            {t("event.upcomingDescription")}
-          </p>
+          <>
+            <p className="mt-4 text-sm text-gray-300">
+              {t("event.upcomingDescription")}
+            </p>
+            {fights && fights.length > 0 && (
+              <CountdownTimer
+                targetTime={
+                  [...fights]
+                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0]
+                    .start_time
+                }
+              />
+            )}
+          </>
         )}
 
         {event.status === "live" && (

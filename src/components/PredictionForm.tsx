@@ -139,10 +139,7 @@ export default function PredictionForm({
         </label>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-xs text-gray-400">
-          {t("prediction.editUntilStart")}
-        </p>
+      <div className="mt-4 flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={handleSubmit}

@@ -109,6 +109,10 @@
     "title": "Ranking Fight IQ",
     "description": "Classificação dos fãs do Black Combat comprovada pelo histórico de palpites"
   },
+  "countdown": {
+    "closesIn": "Palpites encerram em",
+    "locked": "Palpites encerrados"
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Algo deu errado",

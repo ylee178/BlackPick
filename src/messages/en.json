@@ -109,6 +109,10 @@
     "title": "Fight IQ Rankings",
     "description": "A leaderboard of Black Combat fans proven by prediction records"
   },
+  "countdown": {
+    "closesIn": "Predictions close in",
+    "locked": "Predictions locked"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

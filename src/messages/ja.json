@@ -109,6 +109,10 @@
     "title": "格闘通ランキング",
     "description": "予想戦績で実力を証明するBlack Combatファンの順位表"
   },
+  "countdown": {
+    "closesIn": "予想締切まで",
+    "locked": "予想受付終了"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",

@@ -109,6 +109,10 @@
     "title": "격잘알 랭킹",
     "description": "예측 전적으로 증명하는 블랙컴뱃 팬들의 순위"
   },
+  "countdown": {
+    "closesIn": "예측 마감까지",
+    "locked": "예측 마감됨"
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",
