@@ -68,7 +68,7 @@ export default function CountdownTimer({ targetTime }: CountdownTimerProps) {
     <div className="mt-4 flex items-center justify-center rounded-xl border border-amber-400/20 bg-gray-900/80 px-4 py-3 text-sm">
       <span className="mr-2">⏱️</span>
       <span className="text-gray-300">{t("countdown.closesIn")}</span>
-      <span className="ml-2 font-mono font-semibold tracking-wide text-amber-400">
+      <span className="ml-2 font-mono font-semibold tracking-wide text-amber-400" suppressHydrationWarning>
         {countdownText}
       </span>
     </div>
