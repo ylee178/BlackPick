@@ -60,8 +60,6 @@ export default function DevPanel() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [fights, setFights] = useState<FightRow[]>([]);
 
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (!isDev) return;
@@ -164,58 +162,68 @@ export default function DevPanel() {
 
   if (!isDev) return null;
 
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          position: "fixed",
+          bottom: 20,
+          right: 20,
+          zIndex: 9999,
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid #333",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+          cursor: "pointer",
+          fontSize: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="Dev Panel"
+      >
+        {"D"}
+      </button>
+    );
+  }
+
   return (
     <div
       style={{
         position: "fixed",
-        left: position.x || 16,
-        top: position.y || 16,
+        bottom: 20,
+        right: 20,
         zIndex: 9999,
-        width: open ? 420 : 180,
+        width: 400,
+        maxHeight: "80vh",
         background: "#111",
         color: "#fff",
         border: "1px solid #333",
         borderRadius: 12,
-        boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-        overflow: "hidden",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+        overflow: "auto",
       }}
     >
       <div
         style={{
           padding: "10px 12px",
-          background: dragging ? "#1f1f1f" : "#181818",
-          borderBottom: open ? "1px solid #2a2a2a" : "none",
+          background: "#181818",
+          borderBottom: "1px solid #2a2a2a",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          cursor: "move",
-          userSelect: "none",
-        }}
-        onMouseDown={(e) => {
-          const startX = e.clientX - (position.x || 16);
-          const startY = e.clientY - (position.y || 16);
-          setDragging(true);
-
-          const onMove = (moveEvent: MouseEvent) => {
-            setPosition({
-              x: moveEvent.clientX - startX,
-              y: moveEvent.clientY - startY,
-            });
-          };
-
-          const onUp = () => {
-            setDragging(false);
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
-          };
-
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
         }}
       >
         <strong>Dev Panel</strong>
         <button
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(false)}
           style={{
             background: "#2a2a2a",
             color: "#fff",
@@ -225,11 +233,11 @@ export default function DevPanel() {
             cursor: "pointer",
           }}
         >
-          {open ? "Close" : "Open"}
+          Close
         </button>
       </div>
 
-      {open && (
+      {true && (
         <div style={{ padding: 12, display: "grid", gap: 12 }}>
           <div style={{ display: "grid", gap: 8 }}>
             <div style={{ fontSize: 12, opacity: 0.8 }}>Presets</div>
