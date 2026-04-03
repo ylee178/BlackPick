@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "events": "Events",
-    "ranking": "Ranking",
+    "ranking": "Fight IQ",
     "profile": "Profile",
     "login": "Log in",
     "signup": "Sign up",
@@ -101,9 +101,13 @@
     "switchTo": "Switch language to {language}"
   },
   "home": {
-    "platformLabel": "Fight Record Platform",
-    "heroTitle": "Pick fights. Build your record.",
-    "heroDescription": "Predict Black Combat fights, track your wins and losses, and compete with fans around the world."
+    "platformLabel": "Fight IQ Platform",
+    "heroTitle": "It's not guessing. It's reading the fight.",
+    "heroDescription": "Predict Black Combat fights, build your record, and prove you're the real fight expert."
+  },
+  "rankingPage": {
+    "title": "Fight IQ Rankings",
+    "description": "A leaderboard of Black Combat fans proven by prediction records"
   },
   "common": {
     "loading": "Loading...",

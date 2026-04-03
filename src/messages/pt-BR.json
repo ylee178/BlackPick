@@ -2,7 +2,7 @@
   "nav": {
     "home": "Início",
     "events": "Eventos",
-    "ranking": "Ranking",
+    "ranking": "Fight IQ",
     "profile": "Perfil",
     "login": "Entrar",
     "signup": "Cadastrar-se",
@@ -101,9 +101,13 @@
     "switchTo": "Mudar idioma para {language}"
   },
   "home": {
-    "platformLabel": "Plataforma de Cartel de Lutas",
-    "heroTitle": "Escolha as lutas. Construa seu cartel.",
-    "heroDescription": "Preveja as lutas do Black Combat, acompanhe suas vitórias e derrotas e compita com fãs do mundo todo."
+    "platformLabel": "Plataforma Fight IQ",
+    "heroTitle": "Não é palpite. É leitura de luta.",
+    "heroDescription": "Preveja as lutas do Black Combat, construa seu cartel e prove que você é o verdadeiro entendedor de luta."
+  },
+  "rankingPage": {
+    "title": "Ranking Fight IQ",
+    "description": "Classificação dos fãs do Black Combat comprovada pelo histórico de palpites"
   },
   "common": {
     "loading": "Carregando...",

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { getTranslations } from "@/lib/i18n-server";
 
 const PAGE_SIZE = 50;
 
@@ -35,6 +36,7 @@ export default async function RankingPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
+  const { t } = await getTranslations();
   const tab = params.tab === "series" || params.tab === "event" ? params.tab : "running";
   const page = Math.max(1, Number(params.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -139,13 +141,13 @@ export default async function RankingPage({
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <p className="text-sm uppercase tracking-[0.2em] text-amber-400">
-            Leaderboard
+            {t("home.platformLabel")}
           </p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight">
-            Rankings
+            {t("rankingPage.title")}
           </h1>
           <p className="mt-2 text-sm text-gray-400">
-            Running, series, and event standings.
+            {t("rankingPage.description")}
           </p>
         </div>
 
