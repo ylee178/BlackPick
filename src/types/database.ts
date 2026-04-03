@@ -52,6 +52,9 @@ export type Database = {
         Row: {
           id: string
           name: string
+          ring_name: string | null
+          name_en: string | null
+          name_ko: string | null
           record: string | null
           nationality: string | null
           weight_class: string | null
@@ -61,6 +64,9 @@ export type Database = {
         Insert: {
           id?: string
           name: string
+          ring_name?: string | null
+          name_en?: string | null
+          name_ko?: string | null
           record?: string | null
           nationality?: string | null
           weight_class?: string | null
@@ -70,6 +76,9 @@ export type Database = {
         Update: {
           id?: string
           name?: string
+          ring_name?: string | null
+          name_en?: string | null
+          name_ko?: string | null
           record?: string | null
           nationality?: string | null
           weight_class?: string | null

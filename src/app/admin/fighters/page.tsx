@@ -1,4 +1,5 @@
 import { createSupabaseServer } from '@/lib/supabase-server'
+import { countryCodeToFlag } from '@/lib/flags'
 
 export default async function AdminFightersPage() {
   const supabase = await createSupabaseServer()
@@ -24,6 +25,7 @@ export default async function AdminFightersPage() {
           <thead className="bg-gray-950 text-gray-400">
             <tr className="border-b border-gray-800">
               <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Ring Name</th>
               <th className="px-4 py-3">Record</th>
               <th className="px-4 py-3">Nationality</th>
               <th className="px-4 py-3">Weight Class</th>
@@ -35,8 +37,9 @@ export default async function AdminFightersPage() {
               fighters.map((fighter) => (
                 <tr key={fighter.id} className="border-b border-gray-800/70">
                   <td className="px-4 py-3 font-medium text-white">{fighter.name}</td>
+                  <td className="px-4 py-3 text-amber-400">{fighter.ring_name ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-300">{fighter.record ?? '-'}</td>
-                  <td className="px-4 py-3 text-gray-300">{fighter.nationality ?? '-'}</td>
+                  <td className="px-4 py-3 text-gray-300">{countryCodeToFlag(fighter.nationality)} {fighter.nationality ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-300">{fighter.weight_class ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-400">
                     {new Date(fighter.created_at).toLocaleDateString()}
@@ -45,7 +48,7 @@ export default async function AdminFightersPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
                   No fighters found.
                 </td>
               </tr>

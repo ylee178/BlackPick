@@ -1,8 +1,12 @@
 import PredictionForm from "@/components/PredictionForm";
+import { countryCodeToFlag } from "@/lib/flags";
 
 type FighterData = {
   id: string;
   name: string;
+  ring_name?: string | null;
+  name_en?: string | null;
+  name_ko?: string | null;
   image_url?: string | null;
   record?: string | null;
   nationality?: string | null;
@@ -76,9 +80,15 @@ function FighterPanel({
           )}
         </div>
         <div className="min-w-0">
-          <p className="truncate font-bold text-white">{fighter.name}</p>
+          <p className="truncate font-bold text-white">
+            {countryCodeToFlag(fighter.nationality)}{" "}
+            {fighter.ring_name || fighter.name}
+          </p>
+          {fighter.ring_name && fighter.ring_name !== fighter.name && (
+            <p className="text-xs text-gray-500">{fighter.name}</p>
+          )}
           <p className="text-xs text-gray-400">
-            {fighter.record || "—"} {fighter.nationality ? `• ${fighter.nationality}` : ""}
+            {fighter.record || "—"} {fighter.weight_class ? `• ${fighter.weight_class}` : ""}
           </p>
           <p className="mt-1 text-xs text-amber-400">
             Crowd {crowdPercentage ?? 0}%
