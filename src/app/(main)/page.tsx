@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import EventStatusBadge from "@/components/EventStatusBadge";
+import { getSeriesLabel } from "@/lib/constants";
 
 export default async function HomePage() {
   const supabase = await createSupabaseServer();
@@ -52,7 +53,7 @@ export default async function HomePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-widest text-gray-500">
-                      {event.series_type.replace("_", " ")}
+                      {getSeriesLabel(event.series_type)}
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-white">{event.name}</h3>
                     <p className="mt-2 text-sm text-gray-400">{event.date}</p>
@@ -83,7 +84,7 @@ export default async function HomePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-widest text-gray-500">
-                      {event.series_type.replace("_", " ")}
+                      {getSeriesLabel(event.series_type)}
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-white">{event.name}</h3>
                     <p className="mt-2 text-sm text-gray-400">{event.date}</p>

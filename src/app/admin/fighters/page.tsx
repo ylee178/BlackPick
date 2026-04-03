@@ -39,7 +39,7 @@ export default async function AdminFightersPage() {
                   <td className="px-4 py-3 font-medium text-white">{fighter.name}</td>
                   <td className="px-4 py-3 text-amber-400">{fighter.ring_name ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-300">{fighter.record ?? '-'}</td>
-                  <td className="px-4 py-3 text-gray-300">{countryCodeToFlag(fighter.nationality)} {fighter.nationality ?? '-'}</td>
+                  <td className="px-4 py-3 text-gray-300">{fighter.nationality ?? '-'} {countryCodeToFlag(fighter.nationality)}</td>
                   <td className="px-4 py-3 text-gray-300">{fighter.weight_class ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-400">
                     {new Date(fighter.created_at).toLocaleDateString()}

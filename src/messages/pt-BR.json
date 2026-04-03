@@ -1,0 +1,76 @@
+{
+  "nav": {
+    "home": "Início",
+    "events": "Eventos",
+    "ranking": "Ranking",
+    "profile": "Perfil",
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "admin": "Admin"
+  },
+  "event": {
+    "upcoming": "Próximos",
+    "live": "Ao vivo",
+    "completed": "Encerrados",
+    "fightCard": "Card de lutas",
+    "vs": "vs",
+    "crowdPrediction": "Previsão da torcida",
+    "makeYourPick": "Faça seu palpite",
+    "predictionLocked": "Palpite bloqueado",
+    "result": "Resultado",
+    "yourPrediction": "Seu palpite",
+    "win": "Vitória",
+    "loss": "Derrota",
+    "mvpVote": "Votação de MVP",
+    "mvpHighlight": "Destaque do MVP"
+  },
+  "prediction": {
+    "selectWinner": "Selecione o vencedor",
+    "method": "Método",
+    "round": "Round",
+    "savePick": "Salvar palpite",
+    "saved": "Salvo",
+    "noMethod": "Sem método",
+    "noRound": "Sem round",
+    "roundOT": "Decisão / Outro"
+  },
+  "profile": {
+    "fightRecord": "Cartel",
+    "score": "Pontuação",
+    "currentStreak": "Sequência atual",
+    "bestStreak": "Melhor sequência",
+    "hallOfFame": "Hall da fama",
+    "ranking": "Ranking",
+    "recentPredictions": "Palpites recentes",
+    "signInToView": "Faça login para visualizar"
+  },
+  "ranking": {
+    "running": "Em andamento",
+    "series": "Série",
+    "event": "Evento",
+    "rank": "Posição",
+    "ringName": "Nome de ringue",
+    "record": "Cartel",
+    "score": "Pontuação",
+    "streak": "Sequência"
+  },
+  "auth": {
+    "email": "E-mail",
+    "password": "Senha",
+    "ringName": "Nome de ringue",
+    "login": "Entrar",
+    "signup": "Cadastrar",
+    "googleLogin": "Entrar com Google",
+    "or": "ou"
+  },
+  "fighter": {
+    "record": "Cartel",
+    "nationality": "Nacionalidade",
+    "weightClass": "Categoria de peso"
+  },
+  "common": {
+    "loading": "Carregando",
+    "error": "Erro",
+    "noData": "Sem dados"
+  }
+}

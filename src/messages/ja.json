@@ -1,0 +1,76 @@
+{
+  "nav": {
+    "home": "ホーム",
+    "events": "イベント",
+    "ranking": "ランキング",
+    "profile": "プロフィール",
+    "login": "ログイン",
+    "signup": "新規登録",
+    "admin": "管理者"
+  },
+  "event": {
+    "upcoming": "開催予定",
+    "live": "ライブ",
+    "completed": "終了",
+    "fightCard": "対戦カード",
+    "vs": "対",
+    "crowdPrediction": "みんなの予想",
+    "makeYourPick": "勝者を予想",
+    "predictionLocked": "予想受付終了",
+    "result": "結果",
+    "yourPrediction": "あなたの予想",
+    "win": "勝ち",
+    "loss": "負け",
+    "mvpVote": "MVP投票",
+    "mvpHighlight": "MVPハイライト"
+  },
+  "prediction": {
+    "selectWinner": "勝者を選択",
+    "method": "決着方法",
+    "round": "ラウンド",
+    "savePick": "予想を保存",
+    "saved": "保存しました",
+    "noMethod": "方法未選択",
+    "noRound": "ラウンド未選択",
+    "roundOT": "判定 / その他"
+  },
+  "profile": {
+    "fightRecord": "戦績",
+    "score": "スコア",
+    "currentStreak": "現在の連勝",
+    "bestStreak": "最高連勝",
+    "hallOfFame": "殿堂入り",
+    "ranking": "ランキング",
+    "recentPredictions": "最近の予想",
+    "signInToView": "閲覧するにはログインしてください"
+  },
+  "ranking": {
+    "running": "開催中",
+    "series": "シリーズ",
+    "event": "イベント",
+    "rank": "順位",
+    "ringName": "リングネーム",
+    "record": "戦績",
+    "score": "スコア",
+    "streak": "連勝"
+  },
+  "auth": {
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "ringName": "リングネーム",
+    "login": "ログイン",
+    "signup": "新規登録",
+    "googleLogin": "Googleでログイン",
+    "or": "または"
+  },
+  "fighter": {
+    "record": "戦績",
+    "nationality": "国籍",
+    "weightClass": "階級"
+  },
+  "common": {
+    "loading": "読み込み中",
+    "error": "エラー",
+    "noData": "データがありません"
+  }
+}

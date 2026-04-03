@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
+import { getSeriesLabel } from '@/lib/constants'
 import type { Database } from '@/types/database'
 
 type EventRow = Database['public']['Tables']['events']['Row']
@@ -118,7 +119,7 @@ export default function AdminEventsPage() {
             >
               {seriesOptions.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {getSeriesLabel(option)}
                 </option>
               ))}
             </select>
@@ -208,7 +209,7 @@ export default function AdminEventsPage() {
                 {events.map((event) => (
                   <tr key={event.id} className="border-b border-gray-800/70">
                     <td className="px-3 py-3 text-white">{event.name}</td>
-                    <td className="px-3 py-3 text-gray-300">{event.series_type}</td>
+                    <td className="px-3 py-3 text-gray-300">{getSeriesLabel(event.series_type)}</td>
                     <td className="px-3 py-3 text-gray-300">{event.date}</td>
                     <td className="px-3 py-3">
                       <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-wide text-amber-400">

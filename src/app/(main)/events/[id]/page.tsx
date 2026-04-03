@@ -2,6 +2,7 @@ import FightCard from "@/components/FightCard";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import EventStatusBadge from "@/components/EventStatusBadge";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
+import { getSeriesLabel } from "@/lib/constants";
 
 export default async function EventPage({
   params,
@@ -97,7 +98,7 @@ export default async function EventPage({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-              {event.series_type.replace("_", " ")}
+              {getSeriesLabel(event.series_type)}
             </p>
             <h1 className="mt-2 text-2xl font-black text-white">{event.name}</h1>
             <p className="mt-2 text-sm text-gray-400">{event.date}</p>

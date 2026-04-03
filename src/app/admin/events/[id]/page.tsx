@@ -175,7 +175,7 @@ export default async function AdminEventDetailPage({
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
         <h1 className="text-2xl font-bold text-white sm:text-3xl">{event.name}</h1>
         <p className="mt-2 text-sm text-gray-400">
-          {event.series_type} • {event.date}
+          {event.series_type === 'other' ? 'Champions League' : event.series_type === 'black_cup' ? 'Black Cup' : event.series_type === 'numbering' ? 'Numbering' : 'Rise'} • {event.date}
         </p>
 
         <div className="mt-6">

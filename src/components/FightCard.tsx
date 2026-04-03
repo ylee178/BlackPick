@@ -81,8 +81,8 @@ function FighterPanel({
         </div>
         <div className="min-w-0">
           <p className="truncate font-bold text-white">
-            {countryCodeToFlag(fighter.nationality)}{" "}
-            {fighter.ring_name || fighter.name}
+            {fighter.ring_name || fighter.name}{" "}
+            {countryCodeToFlag(fighter.nationality)}
           </p>
           {fighter.ring_name && fighter.ring_name !== fighter.name && (
             <p className="text-xs text-gray-500">{fighter.name}</p>
