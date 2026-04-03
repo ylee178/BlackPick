@@ -2,6 +2,7 @@ import FightCard from "@/components/FightCard";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import EventStatusBadge from "@/components/EventStatusBadge";
 import CountdownTimer from "@/components/CountdownTimer";
+import StickyEventHeader from "@/components/StickyEventHeader";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n-server";
@@ -49,6 +50,13 @@ export default async function EventPage({
     .order("start_time", { ascending: true });
 
   const fightIds = (fights ?? []).map((fight) => fight.id);
+  const earliestFightStartTime =
+    fights && fights.length > 0
+      ? [...fights].sort(
+          (a, b) =>
+            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        )[0].start_time
+      : null;
 
   const [{ data: predictions }, { data: statsData }] = await Promise.all([
     user && fightIds.length > 0
@@ -105,7 +113,17 @@ export default async function EventPage({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-800 bg-gray-900 p-6">
+      <StickyEventHeader
+        eventName={event.name}
+        eventStatus={event.status as "upcoming" | "live" | "completed"}
+        countdownTargetTime={event.status === "upcoming" ? earliestFightStartTime : null}
+        watchElementId="event-page-header"
+      />
+
+      <section
+        id="event-page-header"
+        className="rounded-2xl border border-gray-800 bg-gray-900 p-6"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
@@ -122,14 +140,8 @@ export default async function EventPage({
             <p className="mt-4 text-sm text-gray-300">
               {t("event.upcomingDescription")}
             </p>
-            {fights && fights.length > 0 && (
-              <CountdownTimer
-                targetTime={
-                  [...fights]
-                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0]
-                    .start_time
-                }
-              />
+            {earliestFightStartTime && (
+              <CountdownTimer targetTime={earliestFightStartTime} />
             )}
           </>
         )}
@@ -158,6 +170,8 @@ export default async function EventPage({
               title={t("event.mvpHighlightVideo")}
               className="h-full w-full"
               allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-popups"
+              referrerPolicy="no-referrer"
             />
           </div>
         </section>
