@@ -2,32 +2,260 @@ import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 
+type SearchParams = Promise<{
+  page?: string;
+}>;
+
+type UserRow = {
+  id: string;
+  ring_name: string | null;
+  wins: number | null;
+  losses: number | null;
+  current_streak: number | null;
+  best_streak: number | null;
+  hall_of_fame_count: number | null;
+  score: number | null;
+  created_at: string;
+};
+
 const PAGE_SIZE = 50;
 
-type SearchParams = Promise<{
-  tab?: string;
-  page?: string;
-  reference_id?: string;
-}>;
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 function getRankStyle(rank: number) {
   if (rank === 1) {
-    return "border-yellow-500/40 bg-yellow-500/10";
+    return {
+      badge:
+        "bg-yellow-500/20 text-yellow-300 border-yellow-400/50",
+      card:
+        "border-yellow-400/60 bg-gradient-to-b from-yellow-500/10 to-gray-900/90 shadow-[0_0_30px_rgba(250,204,21,0.15)]",
+      glow: "from-yellow-400/20",
+      medal: "🥇",
+    };
   }
   if (rank === 2) {
-    return "border-gray-400/40 bg-gray-400/10";
+    return {
+      badge:
+        "bg-zinc-300/10 text-zinc-200 border-zinc-300/40",
+      card:
+        "border-zinc-300/40 bg-gradient-to-b from-zinc-200/5 to-gray-900/90 shadow-[0_0_24px_rgba(212,212,216,0.10)]",
+      glow: "from-zinc-300/10",
+      medal: "🥈",
+    };
   }
-  if (rank === 3) {
-    return "border-amber-700/40 bg-amber-700/10";
-  }
-  return "border-gray-800 bg-gray-900/60";
+  return {
+    badge:
+      "bg-amber-700/20 text-amber-300 border-amber-700/50",
+    card:
+      "border-amber-700/50 bg-gradient-to-b from-amber-700/10 to-gray-900/90 shadow-[0_0_24px_rgba(180,83,9,0.12)]",
+    glow: "from-amber-700/10",
+    medal: "🥉",
+  };
 }
 
-function getRankTextStyle(rank: number) {
-  if (rank === 1) return "text-yellow-400";
-  if (rank === 2) return "text-gray-300";
-  if (rank === 3) return "text-amber-600";
-  return "text-white";
+function PodiumCard({
+  user,
+  rank,
+}: {
+  user: UserRow;
+  rank: number;
+}) {
+  const style = getRankStyle(rank);
+
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border p-4 sm:p-5",
+        style.card,
+        rank === 1 && "sm:-translate-y-2"
+      )}
+    >
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-b to-transparent",
+          style.glow
+        )}
+      />
+      <div className="relative flex h-full flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
+                style.badge
+              )}
+            >
+              <span>{style.medal}</span>
+              <span>#{rank}</span>
+            </div>
+            <h2 className="mt-3 text-lg font-black uppercase tracking-wide text-white sm:text-xl">
+              {user.ring_name || "Unknown Fighter"}
+            </h2>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-gray-400">
+              Score
+            </div>
+            <div className="text-2xl font-black text-amber-400 sm:text-3xl">
+              {user.score ?? 0}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-xl border border-white/10 bg-gray-900/70 p-3">
+            <div className="text-[11px] uppercase tracking-wider text-gray-500">
+              Record
+            </div>
+            <div className="mt-1 font-bold text-white">
+              {user.wins ?? 0}W - {user.losses ?? 0}L
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-gray-900/70 p-3">
+            <div className="text-[11px] uppercase tracking-wider text-gray-500">
+              Streak
+            </div>
+            <div className="mt-1 font-bold text-white">
+              🔥 {user.current_streak ?? 0} / {user.best_streak ?? 0}
+            </div>
+          </div>
+        </div>
+
+        {(user.hall_of_fame_count ?? 0) > 0 && (
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-300">
+            <span>🏆</span>
+            <span>{user.hall_of_fame_count} Hall of Fame</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RankingRow({
+  user,
+  rank,
+}: {
+  user: UserRow;
+  rank: number;
+}) {
+  const rankColor =
+    rank === 1
+      ? "text-yellow-300"
+      : rank === 2
+      ? "text-zinc-200"
+      : rank === 3
+      ? "text-amber-500"
+      : "text-gray-300";
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-gray-900/70 p-4 transition hover:border-amber-400/30 hover:bg-gray-900">
+      <div className="flex flex-col gap-3 sm:hidden">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className={cn("text-sm font-black", rankColor)}>#{rank}</div>
+            <div className="truncate text-base font-bold uppercase tracking-wide text-white">
+              {user.ring_name || "Unknown Fighter"}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] uppercase tracking-wider text-gray-500">
+              Score
+            </div>
+            <div className="text-lg font-black text-amber-400">
+              {user.score ?? 0}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="rounded-xl border border-white/10 bg-gray-950/70 p-3">
+            <div className="text-[11px] uppercase tracking-wider text-gray-500">
+              Record
+            </div>
+            <div className="mt-1 font-semibold text-white">
+              {user.wins ?? 0}W - {user.losses ?? 0}L
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-gray-950/70 p-3">
+            <div className="text-[11px] uppercase tracking-wider text-gray-500">
+              Streak
+            </div>
+            <div className="mt-1 font-semibold text-white">
+              🔥 {user.current_streak ?? 0} / {user.best_streak ?? 0}
+            </div>
+          </div>
+        </div>
+
+        {(user.hall_of_fame_count ?? 0) > 0 && (
+          <div className="text-xs font-semibold text-amber-300">
+            🏆 {user.hall_of_fame_count}
+          </div>
+        )}
+      </div>
+
+      <div className="hidden grid-cols-[80px_minmax(0,1.5fr)_120px_140px_180px_120px] items-center gap-4 sm:grid">
+        <div className={cn("text-lg font-black", rankColor)}>#{rank}</div>
+        <div className="min-w-0">
+          <div className="truncate font-bold uppercase tracking-wide text-white">
+            {user.ring_name || "Unknown Fighter"}
+          </div>
+        </div>
+        <div className="font-black text-amber-400">{user.score ?? 0}</div>
+        <div className="text-sm font-medium text-gray-200">
+          {user.wins ?? 0}W - {user.losses ?? 0}L
+        </div>
+        <div className="text-sm font-medium text-gray-200">
+          🔥 {user.current_streak ?? 0} / {user.best_streak ?? 0}
+        </div>
+        <div className="text-sm font-medium text-amber-300">
+          {(user.hall_of_fame_count ?? 0) > 0
+            ? `🏆 ${user.hall_of_fame_count}`
+            : "-"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Pagination({
+  page,
+  hasNextPage,
+}: {
+  page: number;
+  hasNextPage: boolean;
+}) {
+  return (
+    <div className="mt-8 flex items-center justify-between gap-3">
+      <Link
+        href={page > 1 ? `/ranking?page=${page - 1}` : "/ranking?page=1"}
+        className={cn(
+          "inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition",
+          page > 1
+            ? "border-white/10 bg-gray-900 text-white hover:border-amber-400/40 hover:text-amber-300"
+            : "pointer-events-none border-white/5 bg-gray-900/50 text-gray-600"
+        )}
+      >
+        ← Prev
+      </Link>
+
+      <div className="text-sm font-medium text-gray-400">Page {page}</div>
+
+      <Link
+        href={`/ranking?page=${page + 1}`}
+        className={cn(
+          "inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition",
+          hasNextPage
+            ? "border-white/10 bg-gray-900 text-white hover:border-amber-400/40 hover:text-amber-300"
+            : "pointer-events-none border-white/5 bg-gray-900/50 text-gray-600"
+        )}
+      >
+        Next →
+      </Link>
+    </div>
+  );
 }
 
 export default async function RankingPage({
@@ -35,246 +263,122 @@ export default async function RankingPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const params = await searchParams;
-  const { t } = await getTranslations();
-  const tab = params.tab === "series" || params.tab === "event" ? params.tab : "running";
-  const page = Math.max(1, Number(params.page ?? "1") || 1);
+  const [{ t }, params, supabase] = await Promise.all([
+    getTranslations(),
+    searchParams,
+    createSupabaseServer(),
+  ]);
+
+  const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-  const referenceId = params.reference_id;
+  const to = from + PAGE_SIZE;
 
-  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("users")
+    .select(
+      "id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score, created_at"
+    )
+    .order("score", { ascending: false })
+    .order("best_streak", { ascending: false })
+    .order("current_streak", { ascending: false })
+    .order("hall_of_fame_count", { ascending: false })
+    .order("created_at", { ascending: true })
+    .range(from, to);
 
-  let rows:
-    | Array<{
-        id: string;
-        ring_name: string;
-        wins: number;
-        losses: number;
-        score: number;
-        current_streak: number;
-        best_streak: number;
-      }>
-    | null = null;
+  const users: UserRow[] = error ? [] : (data ?? []);
+  const hasNextPage = users.length > PAGE_SIZE;
+  const pageUsers = users.slice(0, PAGE_SIZE);
 
-  let totalCount = 0;
-
-  if (tab === "running") {
-    const { data, count } = await supabase
-      .from("users")
-      .select(
-        "id, ring_name, wins, losses, score, current_streak, best_streak, hall_of_fame_count, created_at",
-        { count: "exact" }
-      )
-      .order("score", { ascending: false })
-      .order("best_streak", { ascending: false })
-      .order("current_streak", { ascending: false })
-      .order("hall_of_fame_count", { ascending: false })
-      .order("created_at", { ascending: true })
-      .range(from, to);
-
-    rows = data;
-    totalCount = count ?? 0;
-  } else if (referenceId) {
-    const { data, count } = await supabase
-      .from("rankings")
-      .select(
-        `
-        id,
-        score,
-        rank,
-        users:user_id (
-          id,
-          ring_name,
-          wins,
-          losses,
-          current_streak,
-          best_streak
-        )
-      `,
-        { count: "exact" }
-      )
-      .eq("type", tab)
-      .eq("reference_id", referenceId)
-      .order("rank", { ascending: true })
-      .range(from, to);
-
-    rows =
-      data?.map((item) => ({
-        id: item.users?.id ?? item.id,
-        ring_name: item.users?.ring_name ?? "Unknown",
-        wins: item.users?.wins ?? 0,
-        losses: item.users?.losses ?? 0,
-        score: item.score ?? 0,
-        current_streak: item.users?.current_streak ?? 0,
-        best_streak: item.users?.best_streak ?? 0,
-      })) ?? [];
-
-    totalCount = count ?? 0;
-  } else {
-    rows = [];
-    totalCount = 0;
-  }
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  const tabHref = (nextTab: "running" | "series" | "event") => {
-    const query = new URLSearchParams();
-    query.set("tab", nextTab);
-    query.set("page", "1");
-    if ((nextTab === "series" || nextTab === "event") && referenceId) {
-      query.set("reference_id", referenceId);
-    }
-    return `/ranking?${query.toString()}`;
-  };
-
-  const pageHref = (nextPage: number) => {
-    const query = new URLSearchParams();
-    query.set("tab", tab);
-    query.set("page", String(nextPage));
-    if (referenceId) query.set("reference_id", referenceId);
-    return `/ranking?${query.toString()}`;
-  };
+  const topThree = page === 1 ? pageUsers.slice(0, 3) : [];
+  const restUsers = page === 1 ? pageUsers.slice(3) : pageUsers;
 
   return (
-    <main className="min-h-screen bg-gray-950 px-4 py-6 text-white">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-amber-400">
-            {t("home.platformLabel")}
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight">
+    <main className="min-h-screen bg-gray-950 text-white">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <header className="mb-8">
+          <div className="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-amber-300">
+            Black Pick
+          </div>
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
             {t("rankingPage.title")}
           </h1>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base">
             {t("rankingPage.description")}
           </p>
+        </header>
+
+        <div className="mb-8 flex flex-wrap gap-3">
+          <button
+            type="button"
+            className="inline-flex items-center rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-bold text-amber-300"
+          >
+            {t("ranking.running")}
+          </button>
+          <button
+            type="button"
+            disabled
+            className="inline-flex items-center rounded-xl border border-white/10 bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-500"
+          >
+            {t("ranking.series")} · {t("common.comingSoon")}
+          </button>
+          <button
+            type="button"
+            disabled
+            className="inline-flex items-center rounded-xl border border-white/10 bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-500"
+          >
+            {t("ranking.event")} · {t("common.comingSoon")}
+          </button>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {(["running", "series", "event"] as const).map((item) => {
-            const active = tab === item;
-            return (
-              <Link
-                key={item}
-                href={tabHref(item)}
-                className={`rounded-xl px-4 py-2 text-sm font-semibold capitalize transition ${
-                  active
-                    ? "bg-amber-400 text-gray-950"
-                    : "border border-gray-800 bg-gray-900 text-gray-300 hover:border-gray-700 hover:text-white"
-                }`}
-              >
-                {item}
-              </Link>
-            );
-          })}
-        </div>
-
-        {(tab === "series" || tab === "event") && !referenceId ? (
-          <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6 text-gray-300">
-            Provide a <span className="font-semibold text-white">reference_id</span> in
-            the query string to view {tab} rankings.
+        {error ? (
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
+            Failed to load rankings.
+          </div>
+        ) : pageUsers.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-gray-900/70 p-8 text-center text-gray-400">
+            No rankings yet.
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="hidden grid-cols-[80px_1.5fr_140px_120px_140px_140px] gap-4 rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-4 text-xs font-bold uppercase tracking-wider text-gray-400 md:grid">
-              <div>Rank</div>
-              <div>Ring Name</div>
-              <div>Record</div>
-              <div>Score</div>
-              <div>Current</div>
-              <div>Best</div>
-            </div>
-
-            {rows && rows.length > 0 ? (
-              rows.map((row, index) => {
-                const rank = from + index + 1;
-                return (
-                  <div
-                    key={row.id}
-                    className={`rounded-2xl border p-4 md:px-5 md:py-4 ${getRankStyle(rank)}`}
-                  >
-                    <div className="flex flex-col gap-3 md:grid md:grid-cols-[80px_1.5fr_140px_120px_140px_140px] md:items-center md:gap-4">
-                      <div className={`text-2xl font-black md:text-lg ${getRankTextStyle(rank)}`}>
-                        #{rank}
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-500 md:hidden">
-                          Ring Name
-                        </p>
-                        <p className="text-lg font-bold text-white">{row.ring_name}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-500 md:hidden">
-                          Record
-                        </p>
-                        <p className="font-semibold text-gray-200">
-                          {row.wins}-{row.losses}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-500 md:hidden">
-                          Score
-                        </p>
-                        <p className="font-black text-amber-400">{row.score}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-500 md:hidden">
-                          Current Streak
-                        </p>
-                        <p className="font-semibold text-gray-200">{row.current_streak}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-500 md:hidden">
-                          Best Streak
-                        </p>
-                        <p className="font-semibold text-gray-200">{row.best_streak}</p>
-                      </div>
-                    </div>
+          <>
+            {topThree.length > 0 && (
+              <section className="mb-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+                  <div className="text-xs font-black uppercase tracking-[0.25em] text-amber-300">
+                    Champions
                   </div>
-                );
-              })
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-800 bg-gray-900/40 p-8 text-center text-gray-400">
-                No ranking data found.
-              </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3 md:items-end">
+                  {topThree[1] && <PodiumCard user={topThree[1]} rank={2} />}
+                  {topThree[0] && <PodiumCard user={topThree[0]} rank={1} />}
+                  {topThree[2] && <PodiumCard user={topThree[2]} rank={3} />}
+                </div>
+              </section>
             )}
-          </div>
+
+            <section>
+              <div className="mb-4 hidden grid-cols-[80px_minmax(0,1.5fr)_120px_140px_180px_120px] gap-4 px-2 text-xs font-bold uppercase tracking-[0.2em] text-gray-500 sm:grid">
+                <div>{t("ranking.rank")}</div>
+                <div>{t("ranking.ringName")}</div>
+                <div>{t("ranking.score")}</div>
+                <div>{t("ranking.record")}</div>
+                <div>{t("ranking.streak")}</div>
+                <div>{t("ranking.hallOfFame")}</div>
+              </div>
+
+              <div className="space-y-3">
+                {restUsers.map((user, index) => {
+                  const rank = from + (page === 1 ? 4 : 1) + index;
+                  return <RankingRow key={user.id} user={user} rank={rank} />;
+                })}
+              </div>
+            </section>
+
+            <Pagination page={page} hasNextPage={hasNextPage} />
+          </>
         )}
-
-        <div className="mt-8 flex items-center justify-between gap-4">
-          <Link
-            href={page > 1 ? pageHref(page - 1) : "#"}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-              page > 1
-                ? "border border-gray-800 bg-gray-900 text-white hover:border-gray-700"
-                : "cursor-not-allowed border border-gray-900 bg-gray-900 text-gray-600"
-            }`}
-          >
-            Previous
-          </Link>
-
-          <p className="text-sm text-gray-400">
-            Page <span className="font-semibold text-white">{page}</span> of{" "}
-            <span className="font-semibold text-white">{totalPages}</span>
-          </p>
-
-          <Link
-            href={page < totalPages ? pageHref(page + 1) : "#"}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-              page < totalPages
-                ? "border border-gray-800 bg-gray-900 text-white hover:border-gray-700"
-                : "cursor-not-allowed border border-gray-900 bg-gray-900 text-gray-600"
-            }`}
-          >
-            Next
-          </Link>
-        </div>
       </div>
     </main>
   );

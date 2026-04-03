@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "events": "Events",
-    "ranking": "Fight IQ",
+    "ranking": "Ranking",
     "profile": "Profile",
     "login": "Log in",
     "signup": "Sign up",
@@ -69,7 +69,8 @@
     "ringName": "Ring Name",
     "record": "Record",
     "score": "Score",
-    "streak": "Streak"
+    "streak": "Streak",
+    "hallOfFame": "Hall of Fame"
   },
   "auth": {
     "email": "Email",
@@ -117,6 +118,7 @@
     "loading": "Loading...",
     "error": "Something went wrong",
     "noData": "No data",
+    "comingSoon": "Coming soon",
     "imageFallback": "IMG"
   }
 }

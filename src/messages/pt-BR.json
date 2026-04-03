@@ -69,7 +69,8 @@
     "ringName": "Nome de ringue",
     "record": "Cartel",
     "score": "Pontuação",
-    "streak": "Sequência"
+    "streak": "Sequência",
+    "hallOfFame": "Hall da Fama"
   },
   "auth": {
     "email": "E-mail",
@@ -117,6 +118,7 @@
     "loading": "Carregando...",
     "error": "Algo deu errado",
     "noData": "Sem dados",
-    "imageFallback": "IMG"
+    "imageFallback": "IMG",
+    "comingSoon": "Em breve"
   }
 }
