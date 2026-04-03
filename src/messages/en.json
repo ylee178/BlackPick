@@ -31,7 +31,11 @@
     "notFound": "Event not found.",
     "upcomingDescription": "Predictions are open until each fight starts. Crowd percentages are visible, but individual picks stay private.",
     "liveDescription": "Predictions are locked. All picks are now public.",
-    "completedDescription": "Results are in. Review your picks, scores, and vote for the event MVP."
+    "completedDescription": "Results are in. Review your picks, scores, and vote for the event MVP.",
+    "eventOverview": "Event Overview",
+    "fights": "Fights",
+    "status": "Status",
+    "totalFights": "Total Fights"
   },
   "prediction": {
     "selectWinner": "Pick winner",
@@ -49,7 +53,9 @@
     "noRound": "No Round",
     "roundOT": "OT",
     "editUntilStart": "You can edit your pick until fight start.",
-    "points": "pts"
+    "points": "pts",
+    "bulk": "Predict all fights",
+    "predictAll": "Predict All"
   },
   "profile": {
     "fightRecord": "Fight Record",

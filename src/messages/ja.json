@@ -31,7 +31,11 @@
     "notFound": "イベントが見つかりません。",
     "upcomingDescription": "予想は各試合の開始まで受け付けています。全体の予想割合は表示されますが、個別の予想は非公開です。",
     "liveDescription": "予想受付は終了しました。すべての予想が公開されています。",
-    "completedDescription": "結果が確定しました。あなたの予想やスコアを確認し、イベントMVPに投票しましょう。"
+    "completedDescription": "結果が確定しました。あなたの予想やスコアを確認し、イベントMVPに投票しましょう。",
+    "eventOverview": "イベント概要",
+    "fights": "試合",
+    "status": "ステータス",
+    "totalFights": "試合数"
   },
   "prediction": {
     "selectWinner": "勝者を選択",
@@ -49,7 +53,9 @@
     "noRound": "ラウンドなし",
     "roundOT": "延長",
     "editUntilStart": "試合開始まで予想を編集できます。",
-    "points": "pt"
+    "points": "pt",
+    "bulk": "全試合予想",
+    "predictAll": "全て予想"
   },
   "profile": {
     "fightRecord": "戦績",

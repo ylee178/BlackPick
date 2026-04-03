@@ -31,7 +31,11 @@
     "notFound": "Evento não encontrado.",
     "upcomingDescription": "Os palpites ficam abertos até o início de cada luta. As porcentagens do público são visíveis, mas os palpites individuais permanecem privados.",
     "liveDescription": "Os palpites estão bloqueados. Todos os palpites agora são públicos.",
-    "completedDescription": "Os resultados saíram. Revise seus palpites, pontuações e vote no MVP do evento."
+    "completedDescription": "Os resultados saíram. Revise seus palpites, pontuações e vote no MVP do evento.",
+    "eventOverview": "Visao geral",
+    "fights": "Lutas",
+    "status": "Status",
+    "totalFights": "Total de lutas"
   },
   "prediction": {
     "selectWinner": "Escolha o vencedor",
@@ -49,7 +53,9 @@
     "noRound": "Sem round",
     "roundOT": "OT",
     "editUntilStart": "Você pode editar seu palpite até o início da luta.",
-    "points": "pts"
+    "points": "pts",
+    "bulk": "Prever todas as lutas",
+    "predictAll": "Prever tudo"
   },
   "profile": {
     "fightRecord": "Cartel de lutas",
