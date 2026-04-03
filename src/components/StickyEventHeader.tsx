@@ -90,9 +90,16 @@ export default function StickyEventHeader({
     return `${minutes}m ${seconds}s`;
   }, [countdownTargetTime, eventStatus, timeLeft]);
 
+  const statusClass =
+    eventStatus === "live"
+      ? "border-[#E10600]/30 bg-[#E10600]/10 text-[#F5F7FA]"
+      : eventStatus === "completed"
+        ? "border-[#C9A96A]/30 bg-[#C9A96A]/10 text-[#C9A96A]"
+        : "border-white/10 bg-white/5 text-[#F5F7FA]";
+
   return (
     <div
-      className={`sticky top-0 z-40 -mx-4 mb-4 border-b border-gray-800 bg-gray-950/95 px-4 py-3 backdrop-blur transition-all duration-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${
+      className={`sticky top-0 z-50 -mx-4 mb-4 border-b border-white/10 bg-[#0B0B0C]/92 px-4 py-3 backdrop-blur transition-all duration-300 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${
         visible
           ? "pointer-events-auto translate-y-0 opacity-100"
           : "pointer-events-none -translate-y-full opacity-0"
@@ -101,22 +108,28 @@ export default function StickyEventHeader({
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-white">{eventName}</p>
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9CA3AF]">
+            {t("event.event")}
+          </p>
+          <p className="truncate text-sm font-semibold text-[#F5F7FA]">{eventName}</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${
-            eventStatus === "live" ? "border-red-500/30 bg-red-500/10 text-red-300" :
-            eventStatus === "completed" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" :
-            "border-sky-500/30 bg-sky-500/10 text-sky-300"
-          }`}>
+          <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${statusClass}`}>
             {t(`event.${eventStatus}`)}
           </span>
+
           {countdownText && (
-            <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-300">
-              <span className="mr-1">⏱️</span>
-              <span className="text-gray-300">{t("countdown.closesIn")}</span>
-              <span className="ml-1 font-mono font-semibold" suppressHydrationWarning>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E10600]/20 bg-[#15171A] px-3 py-1">
+              <span className="h-2 w-2 rounded-full bg-[#E10600] shadow-[0_0_10px_rgba(225,6,0,0.6)]" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9CA3AF]">
+                {t("countdown.closesIn")}
+              </span>
+              <span
+                className="text-sm font-black text-[#F5F7FA]"
+                style={{ fontFamily: "Barlow Condensed, Pretendard, sans-serif" }}
+                suppressHydrationWarning
+              >
                 {countdownText}
               </span>
             </div>
