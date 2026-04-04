@@ -57,9 +57,9 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   return (
     <div
       className={cn(
-        "fixed left-0 right-0 top-[53px] z-30 border-b border-[var(--bp-line)] bg-[var(--bp-bg)]/80 backdrop-blur-xl",
-        "transition-[transform,opacity] duration-100",
-        visible ? "translate-y-0 opacity-100" : "-translate-y-full pointer-events-none opacity-0"
+        "fixed left-0 right-0 top-[53px] z-30 border-b bg-[var(--bp-bg)]/80 backdrop-blur-xl",
+        "transition-opacity duration-100",
+        visible ? "opacity-100 border-[var(--bp-line)]" : "opacity-0 border-transparent pointer-events-none"
       )}
     >
       <div className="mx-auto flex min-h-[44px] max-w-[1200px] items-center justify-between gap-4 px-4 py-2 sm:px-6">
