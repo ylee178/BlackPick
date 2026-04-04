@@ -6,6 +6,11 @@ import LanguagePicker from "@/components/LanguagePicker";
 import { getLocale } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import {
+  retroButtonClassName,
+  retroInsetClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 interface Messages {
   [key: string]: string | Messages;
@@ -40,17 +45,21 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
 
   return (
     <I18nProvider initialLocale={locale} initialMessages={messages}>
-      <div className="min-h-[100dvh] bg-black text-white">
+      <div className="min-h-[100dvh] bg-[var(--retro-bg)] text-[var(--retro-ink)]">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl">
-          <div className="gold-line" />
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
+        <header className="sticky top-0 z-40 px-4 pt-4 sm:px-8">
+          <div
+            className={retroPanelClassName({
+              tone: "muted",
+              className:
+                "retro-grid mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 backdrop-blur-xl sm:px-5",
+            })}
+          >
             {/* Logo */}
             <Link href="/" className="group flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center">
-                <div className="absolute inset-0 rotate-45 border border-[#ffba3c]/40" />
+              <div className={retroInsetClassName("flex h-11 w-11 items-center justify-center")}>
                 <span
-                  className="relative text-lg font-black text-[#ffba3c]"
+                  className="relative text-lg font-black text-[var(--retro-accent)]"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   BP
@@ -58,12 +67,12 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
               </div>
               <div>
                 <span
-                  className="block text-lg font-bold uppercase tracking-[0.15em] text-white group-hover:text-[#ffba3c] transition"
+                  className="block text-lg font-bold uppercase tracking-[0.15em] text-[var(--retro-ink)] transition group-hover:text-[var(--retro-accent)]"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   Black Pick
                 </span>
-                <span className="block text-[9px] uppercase tracking-[0.3em] text-[#ffba3c]/80">
+                <span className="block text-[9px] uppercase tracking-[0.3em] text-[var(--retro-muted)]">
                   Who Is The Pick?
                 </span>
               </div>
@@ -80,7 +89,11 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
               {authUser ? (
                 <Link
                   href="/profile"
-                  className="hidden rounded border border-[#ffba3c]/25 px-5 py-2 text-sm font-semibold text-[#ffba3c] transition hover:border-[#ffba3c]/40 hover:text-[#ffd06b] sm:inline-flex"
+                  className={retroButtonClassName({
+                    variant: "ghost",
+                    size: "sm",
+                    className: "hidden sm:inline-flex",
+                  })}
                 >
                   {publicUser?.ring_name?.trim() || authUser.email?.split("@")[0] || "Profile"}
                 </Link>
@@ -88,13 +101,21 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                 <>
                   <Link
                     href="/login"
-                    className="hidden rounded border border-white/10 px-5 py-2 text-sm font-medium text-white/70 transition hover:border-[#ffba3c]/30 hover:text-white sm:inline-flex"
+                    className={retroButtonClassName({
+                      variant: "ghost",
+                      size: "sm",
+                      className: "hidden sm:inline-flex",
+                    })}
                   >
                     Log in
                   </Link>
                   <Link
                     href="/signup"
-                    className="hidden rounded bg-[#ffba3c] px-5 py-2 text-sm font-bold text-black transition hover:bg-[#ffd06b] sm:inline-flex"
+                    className={retroButtonClassName({
+                      variant: "primary",
+                      size: "sm",
+                      className: "hidden sm:inline-flex",
+                    })}
                   >
                     Sign up
                   </Link>
@@ -105,7 +126,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </header>
 
         {/* Main */}
-        <main className="mx-auto max-w-7xl px-5 pb-28 pt-8 sm:px-8 lg:pb-12">
+        <main className="mx-auto max-w-7xl px-4 pb-32 pt-6 sm:px-8 lg:pb-12">
           {children}
         </main>
 
@@ -114,7 +135,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         ) : null}
 
         {/* Mobile tab bar */}
-        <nav className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[#ffba3c]/10 bg-black/95 backdrop-blur-xl md:hidden">
+        <nav className="bottom-safe fixed inset-x-0 bottom-0 z-50 px-3 pb-3 md:hidden">
           <MainNav mobile />
         </nav>
       </div>

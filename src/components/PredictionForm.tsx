@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
+import { cn } from "@/lib/cn";
+import {
+  retroButtonClassName,
+  retroFieldClassName,
+  retroInsetClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 type Fighter = {
   id: string;
@@ -38,14 +45,17 @@ export default function PredictionForm({
   const [round, setRound] = useState(initialPrediction?.round ? String(initialPrediction.round) : "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"neutral" | "success" | "danger">("neutral");
 
   async function handleSubmit() {
     if (!winnerId) {
       setMessage(t("prediction.selectWinnerMessage"));
+      setMessageTone("danger");
       return;
     }
     setLoading(true);
     setMessage("");
+    setMessageTone("neutral");
     try {
       const res = await fetch("/api/predictions", {
         method: "POST",
@@ -60,11 +70,14 @@ export default function PredictionForm({
       const data = await res.json();
       if (!res.ok) {
         setMessage(data.error || t("prediction.failedToSave"));
+        setMessageTone("danger");
         return;
       }
       setMessage(t("prediction.savedMessage"));
+      setMessageTone("success");
     } catch {
       setMessage(t("common.error"));
+      setMessageTone("danger");
     } finally {
       setLoading(false);
     }
@@ -80,25 +93,34 @@ export default function PredictionForm({
             <button
               key={fighter.id}
               type="button"
-              onClick={() => { setWinnerId(fighter.id); setMessage(""); }}
-              className={`rounded-lg border p-3 text-left transition-all ${
-                active
-                  ? "border-[#ffba3c]/40 bg-[#ffba3c]/[0.06] shadow-[0_0_20px_rgba(255,186,60,0.06)]"
-                  : "border-white/[0.05] bg-white/[0.02] hover:border-white/10"
-              }`}
+              onClick={() => {
+                setWinnerId(fighter.id);
+                setMessage("");
+                setMessageTone("neutral");
+              }}
+              className={cn(
+                retroPanelClassName({
+                  tone: active ? "accent" : "muted",
+                  interactive: true,
+                  className: "p-3 text-left",
+                }),
+                active && "translate-y-[-1px]"
+              )}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-sm font-bold uppercase ${active ? "text-[#ffba3c]" : "text-white/60"}`}
+                  className={`text-sm font-bold uppercase ${active ? "text-[#07111b]" : "text-[var(--retro-ink)]"}`}
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {getLocalizedFighterName(fighter, locale, fighter.name)}
                 </span>
-                <div className={`h-3 w-3 rounded-full border ${
-                  active
-                    ? "border-[#ffba3c] bg-[#ffba3c]"
-                    : "border-white/15 bg-transparent"
-                }`} />
+                <div
+                  className={`h-3.5 w-3.5 border ${
+                    active
+                      ? "border-[#07111b] bg-[#07111b]"
+                      : "border-[var(--retro-line-strong)] bg-transparent"
+                  }`}
+                />
               </div>
             </button>
           );
@@ -107,11 +129,11 @@ export default function PredictionForm({
 
       {/* Method/Round — only after winner selected */}
       {winnerId && (
-        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+        <div className={retroInsetClassName("grid gap-2 p-3 sm:grid-cols-[1fr_1fr_auto]")}>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="rounded-lg border border-white/[0.06] bg-black px-3 py-2.5 text-xs text-white/70 outline-none transition focus:border-[#ffba3c]/30"
+            className={retroFieldClassName("px-3 py-2.5 text-xs text-[var(--retro-ink)]")}
           >
             <option value="">{t("prediction.noMethod")}</option>
             {methods.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -120,7 +142,7 @@ export default function PredictionForm({
           <select
             value={round}
             onChange={(e) => setRound(e.target.value)}
-            className="rounded-lg border border-white/[0.06] bg-black px-3 py-2.5 text-xs text-white/70 outline-none transition focus:border-[#ffba3c]/30"
+            className={retroFieldClassName("px-3 py-2.5 text-xs text-[var(--retro-ink)]")}
           >
             <option value="">{t("prediction.noRound")}</option>
             {rounds.map((r) => (
@@ -132,7 +154,7 @@ export default function PredictionForm({
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="rounded-lg bg-[#ffba3c] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-[#ffd06b] disabled:opacity-50"
+            className={retroButtonClassName({ variant: "primary", className: "min-w-[120px]" })}
           >
             {loading ? "..." : t("prediction.savePick")}
           </button>
@@ -140,7 +162,16 @@ export default function PredictionForm({
       )}
 
       {message && (
-        <p className="text-xs text-white/60">{message}</p>
+        <div
+          className={cn(
+            retroInsetClassName("px-3 py-2 text-xs"),
+            messageTone === "success" && "text-[var(--retro-success)]",
+            messageTone === "danger" && "text-[var(--retro-danger)]",
+            messageTone === "neutral" && "text-[var(--retro-muted)]"
+          )}
+        >
+          {message}
+        </div>
       )}
     </div>
   );

@@ -3,11 +3,18 @@ import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
+import { cn } from "@/lib/cn";
 import {
   getLocalizedFighterName,
   getLocalizedFighterSubLabel,
   type AppLocale,
 } from "@/lib/localized-name";
+import {
+  RetroMeter,
+  RetroStatusBadge,
+  retroInsetClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 type FighterData = {
   id: string;
@@ -76,35 +83,34 @@ function FighterSide({
 
   return (
     <div
-      className={`relative rounded-xl border p-4 transition-all ${
-        isWinner
-          ? "border-[#ffba3c]/40 bg-[#ffba3c]/[0.04]"
-          : isLoser
-            ? "border-white/[0.03] bg-white/[0.01] opacity-50"
-            : isSelected
-              ? "border-[#ffba3c]/30 bg-[#ffba3c]/[0.06] shadow-[0_0_30px_rgba(255,186,60,0.08)]"
-              : "border-white/[0.05] bg-white/[0.01]"
-      }`}
+      className={cn(
+        retroPanelClassName({
+          tone: isWinner ? "accent" : isLoser ? "muted" : "default",
+          className: "relative p-4",
+        }),
+        isLoser && "opacity-60",
+        isSelected && !isWinner && "translate-y-[-1px]"
+      )}
     >
       {/* Win/Loss badge */}
       {isWinner && (
-        <div className="absolute -top-2.5 right-3 rounded border border-[#ffba3c]/30 bg-[#ffba3c]/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-[#ffba3c]">
+        <RetroStatusBadge tone="success" className="absolute -top-3 right-3">
           WIN
-        </div>
+        </RetroStatusBadge>
       )}
       {isLoser && (
-        <div className="absolute -top-2.5 right-3 rounded border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/55">
+        <RetroStatusBadge tone="danger" className="absolute -top-3 right-3">
           LOSS
-        </div>
+        </RetroStatusBadge>
       )}
 
       <div className={`flex items-center gap-3 ${flexDir}`}>
         {/* Avatar */}
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-white/[0.06] bg-black">
+        <div className={retroInsetClassName("h-16 w-16 shrink-0 overflow-hidden")}>
           {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            <img src={avatarUrl} alt={displayName} className="retro-avatar h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wider text-white/50">
+            <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wider text-[var(--retro-muted)]">
               IMG
             </div>
           )}
@@ -113,19 +119,19 @@ function FighterSide({
         {/* Info */}
         <div className={`min-w-0 flex-1 ${textAlign}`}>
           <p
-            className="truncate text-lg font-black uppercase text-white"
+            className="truncate text-lg font-black uppercase text-[var(--retro-ink)]"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {displayName} {countryCodeToFlag(fighter.nationality)}
           </p>
           {subLabel && (
-            <p className="truncate text-[11px] text-white/55">{subLabel}</p>
+            <p className="truncate text-[11px] text-[var(--retro-muted)]">{subLabel}</p>
           )}
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-white/60" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-[var(--retro-muted)]" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
             <span>{fighter.record || "0-0"}</span>
             {fighter.weight_class && (
               <>
-                <span className="text-white/45">|</span>
+                <span className="text-[var(--retro-muted)]">|</span>
                 <span>{translateWeightClass(fighter.weight_class, locale)}</span>
               </>
             )}
@@ -151,29 +157,31 @@ export default async function FightCard({
 
   const winnerA = !!fight.winner_id && fight.winner_id === fight.fighter_a_id;
   const winnerB = !!fight.winner_id && fight.winner_id === fight.fighter_b_id;
+  const fighterALabel = getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name);
+  const fighterBLabel = getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name);
 
   return (
-    <article className="gold-hover relative overflow-hidden rounded-2xl border border-white/[0.05] bg-[#0a0a0a] p-5 md:p-6">
-      {/* Top line accent */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffba3c]/15 to-transparent" />
+    <article className={retroPanelClassName({ interactive: true, className: "retro-grid p-5 md:p-6" })}>
 
       {/* Header row */}
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-px w-5 bg-[#ffba3c]/30" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+          <div className="retro-divider w-8" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--retro-muted)]">
             {t("event.fight")}
           </span>
         </div>
-        <span className={`rounded border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.15em] ${
-          fight.status === "completed"
-            ? "border-[#ffba3c]/20 bg-[#ffba3c]/8 text-[#ffba3c]"
-            : fight.status === "cancelled"
-              ? "border-white/10 text-white/55"
-              : "border-white/8 text-white/60"
-        }`}>
+        <RetroStatusBadge
+          tone={
+            fight.status === "completed"
+              ? "success"
+              : fight.status === "cancelled"
+                ? "danger"
+                : "info"
+          }
+        >
           {t(`status.${fight.status}`)}
-        </span>
+        </RetroStatusBadge>
       </div>
 
       {/* Fighter vs Fighter */}
@@ -189,12 +197,14 @@ export default async function FightCard({
 
         {/* VS center */}
         <div className="flex flex-col items-center justify-center px-2">
-          <span
-            className="text-2xl font-black text-[#ffba3c]/80 md:text-3xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            VS
-          </span>
+          <div className={retroInsetClassName("flex h-16 w-16 items-center justify-center px-2")}>
+            <span
+              className="text-2xl font-black text-[var(--retro-accent)] md:text-3xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("event.vs")}
+            </span>
+          </div>
         </div>
 
         <FighterSide
@@ -209,28 +219,24 @@ export default async function FightCard({
 
       {/* Result section */}
       {isCompleted && fight.winner_id && (
-        <div className="mt-5 rounded-lg border border-[#ffba3c]/10 bg-[#ffba3c]/[0.03] px-4 py-3">
+        <div className={retroPanelClassName({ tone: "accent", className: "mt-5 p-4" })}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/55">{t("event.result")}</p>
-              <p className="mt-1 text-sm font-bold text-white">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-black/55">{t("event.result")}</p>
+              <p className="mt-1 text-sm font-bold text-[#07111b]">
                 {winnerA
-                  ? getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name)
-                  : getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name)}{" "}
-                <span className="text-[#ffba3c]">{t("event.won")}</span>
-                {fight.method && <span className="text-white/60"> · {fight.method}</span>}
-                {fight.round && <span className="text-white/60"> · R{fight.round}</span>}
+                  ? fighterALabel
+                  : fighterBLabel}{" "}
+                <span className="text-black/60">{t("event.won")}</span>
+                {fight.method && <span className="text-black/60"> · {fight.method}</span>}
+                {fight.round && <span className="text-black/60"> · R{fight.round}</span>}
               </p>
             </div>
             {prediction && (
-              <span className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase ${
-                prediction.is_winner_correct
-                  ? "border border-[#ffba3c]/20 bg-[#ffba3c]/10 text-[#ffba3c]"
-                  : "border border-white/10 bg-white/5 text-white/60"
-              }`}>
+              <RetroStatusBadge tone={prediction.is_winner_correct ? "success" : "danger"}>
                 {prediction.is_winner_correct ? t("event.win") : t("event.loss")}
                 {typeof prediction.score === "number" && ` ${prediction.score}${t("prediction.points")}`}
-              </span>
+              </RetroStatusBadge>
             )}
           </div>
         </div>
@@ -238,14 +244,14 @@ export default async function FightCard({
 
       {/* Live: locked message */}
       {isLive && (
-        <div className="mt-5 rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3">
-          <p className="text-xs font-medium text-[#ffba3c]">{t("event.predictionLocked")}</p>
+        <div className={retroInsetClassName("mt-5 px-4 py-3")}>
+          <p className="text-xs font-medium text-[var(--retro-accent)]">{t("event.predictionLocked")}</p>
           {prediction && (
-            <p className="mt-1 text-sm text-white/50">
-              {t("prediction.yourPick")}: <span className="font-bold text-white">
+            <p className="mt-1 text-sm text-[var(--retro-muted)]">
+              {t("prediction.yourPick")}: <span className="font-bold text-[var(--retro-ink)]">
                 {prediction.winner_id === fight.fighter_a_id
-                  ? getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name)
-                  : getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name)}
+                  ? fighterALabel
+                  : fighterBLabel}
               </span>
               {prediction.method && ` · ${prediction.method}`}
               {prediction.round && ` · R${prediction.round}`}
@@ -254,9 +260,28 @@ export default async function FightCard({
         </div>
       )}
 
+      {crowdStats && crowdStats.total_predictions > 0 ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <RetroMeter
+            label={fighterALabel}
+            value={crowdStats.fighter_a_percentage}
+            max={100}
+            valueLabel={`${crowdStats.fighter_a_percentage}%`}
+            tone="info"
+          />
+          <RetroMeter
+            label={fighterBLabel}
+            value={crowdStats.fighter_b_percentage}
+            max={100}
+            valueLabel={`${crowdStats.fighter_b_percentage}%`}
+            tone="accent"
+          />
+        </div>
+      ) : null}
+
       {/* Upcoming: prediction form */}
       {isUpcoming && (
-        <div className="mt-5">
+        <div className={retroInsetClassName("mt-5 p-4")}>
           <PredictionForm
             fightId={fight.id}
             fighterA={fight.fighter_a}

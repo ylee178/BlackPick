@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Locale } from "@/lib/i18n-provider";
+import { cn } from "@/lib/cn";
+import {
+  retroButtonClassName,
+  retroInsetClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 const LANGUAGES: {
   code: Locale;
@@ -107,19 +113,28 @@ export default function LanguagePicker() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/88 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+        className={retroButtonClassName({
+          variant: "ghost",
+          size: "sm",
+          className: "h-10 px-3 text-sm",
+        })}
         aria-haspopup="menu"
         aria-expanded={open}
       >
         <Flag code={current.flag} />
         <span className="hidden text-xs font-medium sm:inline">{current.short}</span>
-        <span className="text-white/55">
+        <span className="text-[var(--retro-muted)]">
           <ChevronDown />
         </span>
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-[180px] overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] p-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+        <div
+          className={retroPanelClassName({
+            tone: "muted",
+            className: "absolute right-0 top-[calc(100%+10px)] z-50 min-w-[180px] p-1.5",
+          })}
+        >
           {LANGUAGES.map((language) => {
             const active = language.code === locale;
 
@@ -131,17 +146,17 @@ export default function LanguagePicker() {
                   setLocale(language.code);
                   setOpen(false);
                 }}
-                className={[
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition",
+                className={cn(
+                  retroInsetClassName("flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm"),
                   active
-                    ? "bg-white/[0.06] text-white"
-                    : "text-white/72 hover:bg-white/[0.04] hover:text-white",
-                ].join(" ")}
+                    ? "border-[var(--retro-line-strong)] text-[var(--retro-ink)]"
+                    : "border-transparent text-[var(--retro-muted)] hover:border-[var(--retro-line)] hover:text-[var(--retro-ink)]"
+                )}
                 role="menuitem"
               >
                 <Flag code={language.flag} />
                 <span className="flex-1">{language.label}</span>
-                <span className="text-[11px] uppercase tracking-[0.08em] text-white/45">
+                <span className="text-[11px] uppercase tracking-[0.08em] text-[var(--retro-muted)]">
                   {language.short}
                 </span>
               </button>

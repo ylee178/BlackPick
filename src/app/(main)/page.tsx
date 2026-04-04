@@ -2,8 +2,32 @@ import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
+import {
+  RetroMeter,
+  RetroSectionHeading,
+  RetroStatTile,
+  RetroStatusBadge,
+  retroButtonClassName,
+  retroChipClassName,
+  retroInsetClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 export const dynamic = "force-dynamic";
+
+type HomeLeaderboardUser = {
+  ring_name: string;
+  score: number;
+  wins: number;
+  losses: number;
+};
+
+type HomeResultEvent = {
+  id: string;
+  name: string;
+  date: string;
+  series_type: "black_cup" | "numbering" | "rise" | "other";
+};
 
 function getDDay(date: string) {
   const diff = new Date(date).getTime() - Date.now();
@@ -25,181 +49,265 @@ export default async function HomePage() {
 
   const upcomingEvents = (events ?? []).filter((e) => e.status === "upcoming" || e.status === "live");
   const featured = upcomingEvents[0] ?? null;
+  const topScore = Math.max(...(topUsers ?? []).map((user) => user.score ?? 0), 1);
+  const leaderboardUsers = (topUsers ?? []) as HomeLeaderboardUser[];
+  const resultEvents = (recentCompleted ?? []) as HomeResultEvent[];
 
   return (
     <div className="space-y-6">
+      <section className={retroPanelClassName({ className: "retro-grid p-6 md:p-8" })}>
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_0.9fr]">
+          <div className="space-y-6">
+            <RetroSectionHeading
+              eyebrow={t("home.platformLabel")}
+              title={t("home.heroTitle")}
+              description={t("home.heroDescription")}
+            />
 
-      {/* ═══ HERO: Left copy + Right next event card ═══ */}
-      <section className="relative overflow-hidden rounded-3xl bg-[#0a0a0a]">
-        <div className="dot-pattern absolute inset-0 opacity-40" />
-        <div className="stripe-accent absolute inset-0" />
-
-        <div className="relative grid gap-0 lg:grid-cols-[1.3fr_1fr]">
-          {/* Left */}
-          <div className="p-8 md:p-12">
-            <div className="inline-block skew-divider mb-6 w-12" />
-
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#ffba3c]">
-              {t("home.platformLabel")}
-            </p>
-
-            <h1
-              className="mt-4 text-5xl font-black uppercase leading-[0.85] text-white md:text-6xl lg:text-7xl"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {t("home.heroTitle")}
-            </h1>
-
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/50">
-              {t("home.heroDescription")}
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3">
               <Link
                 href={featured ? `/events/${featured.id}` : "/events"}
-                className="rounded-lg bg-[#ffba3c] px-8 py-3.5 text-sm font-black uppercase tracking-wider text-black transition hover:bg-[#ffd06b] active:scale-[0.98]"
+                className={retroButtonClassName({ variant: "primary", size: "lg" })}
               >
                 {t("event.makeYourPick")}
               </Link>
               <Link
                 href="/ranking"
-                className="rounded-lg border-2 border-[#ffba3c] px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-[#ffba3c] transition hover:bg-[#ffba3c] hover:text-black"
+                className={retroButtonClassName({ variant: "ghost", size: "lg" })}
               >
                 {t("nav.ranking")}
               </Link>
             </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <RetroStatTile
+                label={t("common.nextEvent")}
+                value={featured ? getDDay(featured.date) : t("common.comingSoon")}
+                meta={featured ? featured.name : t("common.noData")}
+                tone="accent"
+              />
+              <RetroStatTile
+                label={t("rankingPage.title")}
+                value={topUsers?.[0]?.ring_name ?? t("common.noData")}
+                meta={
+                  topUsers?.[0]
+                    ? `${topUsers[0].score}${t("prediction.points")} · ${topUsers[0].wins}W-${topUsers[0].losses}L`
+                    : t("common.noData")
+                }
+              />
+            </div>
           </div>
 
-          {/* Right: Next Event (gold block) */}
-          {featured && (
-            <Link
-              href={`/events/${featured.id}`}
-              className="group relative overflow-hidden bg-[#ffba3c] p-8 md:p-10 lg:rounded-r-3xl transition hover:bg-[#ffd06b]"
-            >
-              <div className="absolute inset-0 opacity-15" style={{
-                backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
-                backgroundSize: "14px 14px",
-              }} />
+          <div className={retroPanelClassName({ tone: "accent", className: "p-5 md:p-6" })}>
+            {featured ? (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <span className={retroChipClassName({ tone: "neutral" })}>
+                      {t("common.nextEvent")}
+                    </span>
+                    <h2
+                      className="mt-4 text-3xl font-black uppercase leading-[0.92] text-[#07111b] md:text-4xl"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {featured.name}
+                    </h2>
+                    <p className="mt-2 text-sm font-semibold text-black/60">
+                      {getSeriesLabel(featured.series_type, t)}
+                    </p>
+                  </div>
 
-              <div className="relative">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/50">
-                  {t("common.nextEvent")}
-                </p>
+                  <RetroStatusBadge tone={featured.status === "live" ? "danger" : "info"}>
+                    {t(`status.${featured.status}`)}
+                  </RetroStatusBadge>
+                </div>
 
-                <h2
-                  className="mt-4 text-3xl font-black uppercase leading-[0.9] text-black md:text-4xl"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {featured.name}
-                </h2>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <div className={retroInsetClassName("p-4")}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--retro-muted)]">
+                      {t("event.status")}
+                    </p>
+                    <p
+                      className="mt-2 text-2xl font-black uppercase text-[var(--retro-ink)]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {getDDay(featured.date)}
+                    </p>
+                  </div>
+                  <div className={retroInsetClassName("p-4")}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--retro-muted)]">
+                      {t("common.nextEvent")}
+                    </p>
+                    <p
+                      className="mt-2 text-2xl font-black uppercase text-[var(--retro-ink)]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {featured.date}
+                    </p>
+                  </div>
+                </div>
 
-                <div className="mt-5 flex items-center gap-3">
-                  <span className="rounded-md bg-black/10 px-4 py-2 text-sm font-bold text-black">
-                    {featured.date}
-                  </span>
-                  <span
-                    className="rounded-md bg-black px-4 py-2 text-sm font-black text-[#ffba3c]"
-                    style={{ fontFamily: "var(--font-display)" }}
+                <div className="mt-6">
+                  <RetroMeter
+                    label={t("common.platform")}
+                    value={featured.status === "live" ? 100 : 72}
+                    max={100}
+                    valueLabel={t(featured.status === "live" ? "status.live" : "status.upcoming")}
+                    tone={featured.status === "live" ? "danger" : "accent"}
+                  />
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    href={`/events/${featured.id}`}
+                    className={retroButtonClassName({ variant: "secondary" })}
                   >
-                    {getDDay(featured.date)}
-                  </span>
+                    {t("event.fightCard")}
+                  </Link>
+                  <Link
+                    href={`/events/${featured.id}`}
+                    className={retroButtonClassName({ variant: "ghost" })}
+                  >
+                    {t("event.makeYourPick")}
+                  </Link>
                 </div>
-
-                <p className="mt-3 text-sm font-medium text-black/50">
-                  {getSeriesLabel(featured.series_type, t)}
-                </p>
-
-                <div className="mt-6 inline-flex items-center gap-2 rounded-lg bg-black px-6 py-3 text-sm font-black uppercase tracking-wider text-[#ffba3c] transition group-hover:bg-black/80">
-                  {t("event.makeYourPick")} <span className="text-lg">&#x2197;</span>
-                </div>
-              </div>
-            </Link>
-          )}
+              </>
+            ) : (
+              <RetroSectionHeading
+                eyebrow={t("common.nextEvent")}
+                title={t("common.comingSoon")}
+                description={t("common.noData")}
+              />
+            )}
+          </div>
         </div>
       </section>
 
-      {/* ═══ Ranking + Recent Results ═══ */}
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
-        {/* Ranking Top 3 */}
-        <div className="gold-hover rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <div className="skew-divider w-5" />
-              <span className="text-xs font-black uppercase tracking-[0.2em] text-[#ffba3c]">
-                {t("rankingPage.title")}
-              </span>
-            </div>
-            <Link href="/ranking" className="text-[10px] font-bold uppercase tracking-wider text-white/50 hover:text-[#ffba3c] transition">
-              {t("common.viewAll")}
-            </Link>
-          </div>
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+        <section className={retroPanelClassName({ tone: "muted", className: "p-5 md:p-6" })}>
+          <RetroSectionHeading
+            eyebrow={t("rankingPage.title")}
+            action={
+              <Link href="/ranking" className={retroButtonClassName({ variant: "ghost", size: "sm" })}>
+                {t("common.viewAll")}
+              </Link>
+            }
+          />
+
           {(topUsers ?? []).length === 0 ? (
-            <div className="py-6 text-center text-sm text-white/50">{t("common.noData")}</div>
+            <div className="py-8 text-center text-sm text-[var(--retro-muted)]">{t("common.noData")}</div>
           ) : (
-            <div className="space-y-3">
-              {(topUsers ?? []).map((user: any, i: number) => {
-                const colors = ["text-[#ffba3c]", "text-white/70", "text-[#cd7f32]"];
-                return (
-                  <div key={i} className="flex items-center gap-4 rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5">
-                    <span className={`w-8 text-center text-2xl font-black ${colors[i]}`} style={{ fontFamily: "var(--font-display)" }}>
-                      {i + 1}
-                    </span>
+            <div className="mt-5 space-y-3">
+              {leaderboardUsers.map((user, i: number) => (
+                <div
+                  key={i}
+                  className={retroPanelClassName({
+                    tone: i === 0 ? "accent" : "default",
+                    interactive: true,
+                    className: "p-4",
+                  })}
+                >
+                  <div className="flex items-start gap-4">
+                    <RetroStatusBadge tone={i === 0 ? "accent" : "neutral"}>
+                      #{i + 1}
+                    </RetroStatusBadge>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold uppercase text-white">{user.ring_name}</p>
-                      <p className="text-[10px] text-white/50">{user.wins}W-{user.losses}L</p>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p
+                            className="truncate text-xl font-black uppercase text-[var(--retro-ink)]"
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
+                            {user.ring_name}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--retro-muted)]">
+                            {user.wins}W-{user.losses}L
+                          </p>
+                        </div>
+                        <p
+                          className="text-2xl font-black uppercase text-[var(--retro-accent)]"
+                          style={{ fontFamily: "var(--font-display)" }}
+                        >
+                          {user.score}
+                        </p>
+                      </div>
+
+                      <RetroMeter
+                        className="mt-4"
+                        label={t("profile.score")}
+                        value={user.score}
+                        max={topScore}
+                        valueLabel={`${user.score}${t("prediction.points")}`}
+                        tone={i === 0 ? "accent" : "info"}
+                      />
                     </div>
-                    <span className="text-lg font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
-                      {user.score}
-                    </span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Recent Results */}
-        <div className="gold-hover rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="skew-divider w-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-white/50">
-              {t("common.latestResults")}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {(recentCompleted ?? []).map((ev: any) => (
-              <Link key={ev.id} href={`/events/${ev.id}`}
-                className="group flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 transition hover:border-[#ffba3c]/20"
+        <section className={retroPanelClassName({ className: "p-5 md:p-6" })}>
+          <RetroSectionHeading eyebrow={t("common.latestResults")} />
+
+          <div className="mt-5 space-y-3">
+            {resultEvents.map((ev) => (
+              <Link
+                key={ev.id}
+                href={`/events/${ev.id}`}
+                className={`${retroInsetClassName("block p-4 transition-transform duration-150")} hover:-translate-y-px`}
               >
-                <div className="min-w-0">
-                  <p className="truncate font-bold text-white/70 group-hover:text-white transition">{ev.name}</p>
-                  <p className="mt-0.5 text-[10px] text-white/50">{ev.date} · {getSeriesLabel(ev.series_type, t)}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p
+                      className="truncate text-lg font-black uppercase text-[var(--retro-ink)]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {ev.name}
+                    </p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[var(--retro-muted)]">
+                      {ev.date} · {getSeriesLabel(ev.series_type, t)}
+                    </p>
+                  </div>
+                  <RetroStatusBadge tone="success">{t("event.result")}</RetroStatusBadge>
                 </div>
-                <span className="shrink-0 rounded bg-[#ffba3c]/10 px-2.5 py-1 text-[10px] font-bold text-[#ffba3c]/80">
-                  {t("event.result")}
-                </span>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* ═══ Ticket + Membership ═══ */}
       <div className="grid gap-3 md:grid-cols-2">
-        <a href="https://hegemonyblack.com" target="_blank" rel="noopener noreferrer"
-          className="group relative overflow-hidden rounded-2xl bg-[#ffba3c] p-6 transition hover:bg-[#ffd06b]">
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
-          <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-black/50">{t("common.tickets")}</p>
-            <p className="mt-2 text-xl font-black uppercase text-black" style={{ fontFamily: "var(--font-display)" }}>{t("common.blackCombatTickets")}</p>
-            <p className="mt-1 text-sm text-black/60">{t("common.getSeats")}</p>
-          </div>
+        <a
+          href="https://hegemonyblack.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={retroPanelClassName({ tone: "accent", interactive: true, className: "p-5 md:p-6" })}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/55">{t("common.tickets")}</p>
+          <p
+            className="mt-3 text-2xl font-black uppercase text-[#07111b]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {t("common.blackCombatTickets")}
+          </p>
+          <p className="mt-2 text-sm text-black/65">{t("common.getSeats")}</p>
         </a>
-        <a href="https://www.youtube.com/@BlackCombat" target="_blank" rel="noopener noreferrer"
-          className="gold-hover rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6 transition">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50">{t("common.membership")}</p>
-          <p className="mt-2 text-xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>{t("common.blackCombatYoutube")}</p>
-          <p className="mt-1 text-sm text-white/50">{t("common.joinMembership")}</p>
+        <a
+          href="https://www.youtube.com/@BlackCombat"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={retroPanelClassName({ tone: "muted", interactive: true, className: "p-5 md:p-6" })}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--retro-muted)]">{t("common.membership")}</p>
+          <p
+            className="mt-3 text-2xl font-black uppercase text-[var(--retro-ink)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {t("common.blackCombatYoutube")}
+          </p>
+          <p className="mt-2 text-sm text-[var(--retro-muted)]">{t("common.joinMembership")}</p>
         </a>
       </div>
     </div>

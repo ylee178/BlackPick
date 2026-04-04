@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n-provider";
+import { retroNavLinkClassName, retroPanelClassName } from "@/components/ui/retro";
 
-function HomeIcon({ active }: { active: boolean }) {
+function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3 10.5 12 3l9 7.5" />
@@ -47,12 +48,10 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   const desktopLinks = [
     { href: "/events", label: t("nav.events") || "Events" },
     { href: "/ranking", label: t("nav.ranking") || "Ranking" },
-    { href: "/terminal", label: "Terminal" },
-    { href: "/dashboard", label: "Dashboard" },
   ];
 
   const mobileLinks = [
-    { href: "/", label: t("nav.home") || "Home", icon: <HomeIcon active={pathname === "/"} /> },
+    { href: "/", label: t("nav.home") || "Home", icon: <HomeIcon /> },
     { href: "/events", label: t("nav.events") || "Events", icon: <CalendarIcon /> },
     { href: "/ranking", label: t("nav.ranking") || "Ranking", icon: <TrophyIcon /> },
     { href: "/profile", label: t("nav.profile") || "Profile", icon: <UserIcon /> },
@@ -60,7 +59,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
 
   if (mobile) {
     return (
-      <div className="grid grid-cols-4">
+      <div className={retroPanelClassName({ tone: "muted", className: "grid grid-cols-4 rounded-none border-x-0 border-b-0" })}>
         {mobileLinks.map((link) => {
           const active =
             link.href === "/"
@@ -71,15 +70,16 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
             <Link
               key={link.href}
               href={link.href}
-              className="flex min-h-16 flex-col items-center justify-center gap-1 py-2"
+              className={retroNavLinkClassName({
+                active,
+                mobile: true,
+                className: "border-y-0 border-l-0 first:border-l-0",
+              })}
             >
-              <span className={active ? "text-white" : "text-white/55"}>{link.icon}</span>
-              <span
-                className={[
-                  "text-[11px] font-medium tracking-[0.02em]",
-                  active ? "text-white" : "text-white/55",
-                ].join(" ")}
-              >
+              <span className={active ? "text-[var(--retro-ink)]" : "text-[var(--retro-muted)]"}>
+                {link.icon}
+              </span>
+              <span className={active ? "text-[var(--retro-ink)]" : "text-[var(--retro-muted)]"}>
                 {link.label}
               </span>
             </Link>
@@ -90,7 +90,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   }
 
   return (
-    <nav className="flex items-center gap-8">
+    <nav className={retroPanelClassName({ tone: "muted", className: "flex items-center gap-2 px-2 py-2" })}>
       {desktopLinks.map((link) => {
         const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
 
@@ -98,10 +98,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
           <Link
             key={link.href}
             href={link.href}
-            className={[
-              "display-font relative pb-1 text-[1.02rem] font-semibold uppercase tracking-[0.08em] transition",
-              active ? "gold-underline-active text-white" : "text-white/62 hover:text-white",
-            ].join(" ")}
+            className={retroNavLinkClassName({ active })}
           >
             {link.label}
           </Link>
