@@ -1,6 +1,5 @@
 import FightCard from "@/components/FightCard";
 import MvpVoteSection from "@/components/MvpVoteSection";
-import EventStatusBadge from "@/components/EventStatusBadge";
 import CountdownTimer from "@/components/CountdownTimer";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
@@ -25,7 +24,7 @@ export default async function EventPage({
 
   if (!event) {
     return (
-      <div className="rounded-[28px] border border-white/10 bg-[#15171A] p-6 text-[#9CA3AF]">
+      <div className="rounded-2xl border border-white/5 bg-[#0a0a0a] p-8 text-center text-white/30">
         {t("event.notFound")}
       </div>
     );
@@ -34,187 +33,149 @@ export default async function EventPage({
   const { data: fights } = await supabase
     .from("fights")
     .select(`
-      id,
-      event_id,
-      fighter_a_id,
-      fighter_b_id,
-      start_time,
-      status,
-      winner_id,
-      method,
-      round,
+      id, event_id, fighter_a_id, fighter_b_id, start_time, status, winner_id, method, round,
       fighter_a:fighters!fighter_a_id(*),
       fighter_b:fighters!fighter_b_id(*)
     `)
     .eq("event_id", id)
     .order("start_time", { ascending: true });
 
-  const fightIds = (fights ?? []).map((fight) => fight.id);
-  const earliestFightStartTime =
-    fights && fights.length > 0
-      ? [...fights].sort(
-          (a, b) =>
-            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-        )[0].start_time
-      : null;
+  const fightIds = (fights ?? []).map((f) => f.id);
+  const earliestStart = fights && fights.length > 0
+    ? [...fights].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0].start_time
+    : null;
 
   const [{ data: predictions }, { data: statsData }] = await Promise.all([
     user && fightIds.length > 0
-      ? supabase
-          .from("predictions")
-          .select("*")
-          .eq("user_id", user.id)
-          .in("fight_id", fightIds)
+      ? supabase.from("predictions").select("*").eq("user_id", user.id).in("fight_id", fightIds)
       : Promise.resolve({ data: [] as any[] }),
     fightIds.length > 0
       ? supabase.from("predictions").select("fight_id, winner_id").in("fight_id", fightIds)
       : Promise.resolve({ data: [] as any[] }),
   ]);
 
-  const predictionMap = new Map((predictions ?? []).map((p) => [p.fight_id, p]));
+  const predMap = new Map((predictions ?? []).map((p: any) => [p.fight_id, p]));
 
-  const statsMap = new Map<
-    string,
-    {
-      fighter_a_percentage: number;
-      fighter_b_percentage: number;
-      total_predictions: number;
-    }
-  >();
-
+  const statsMap = new Map<string, { fighter_a_percentage: number; fighter_b_percentage: number; total_predictions: number }>();
   for (const fight of fights ?? []) {
-    const fightPredictions = (statsData ?? []).filter((p) => p.fight_id === fight.id);
-    const total = fightPredictions.length;
-    const fighterACount = fightPredictions.filter(
-      (p) => p.winner_id === fight.fighter_a_id
-    ).length;
-    const fighterBCount = fightPredictions.filter(
-      (p) => p.winner_id === fight.fighter_b_id
-    ).length;
-
+    const fp = (statsData ?? []).filter((p: any) => p.fight_id === fight.id);
+    const total = fp.length;
+    const aCount = fp.filter((p: any) => p.winner_id === fight.fighter_a_id).length;
     statsMap.set(fight.id, {
-      fighter_a_percentage: total > 0 ? Math.round((fighterACount / total) * 100) : 0,
-      fighter_b_percentage: total > 0 ? Math.round((fighterBCount / total) * 100) : 0,
+      fighter_a_percentage: total > 0 ? Math.round((aCount / total) * 100) : 0,
+      fighter_b_percentage: total > 0 ? Math.round(((total - aCount) / total) * 100) : 0,
       total_predictions: total,
     });
   }
 
   const eventFighterMap = new Map<string, any>();
   for (const fight of fights ?? []) {
-    if ((fight as any).fighter_a) {
-      eventFighterMap.set((fight as any).fighter_a.id, (fight as any).fighter_a);
-    }
-    if ((fight as any).fighter_b) {
-      eventFighterMap.set((fight as any).fighter_b.id, (fight as any).fighter_b);
-    }
+    if ((fight as any).fighter_a) eventFighterMap.set((fight as any).fighter_a.id, (fight as any).fighter_a);
+    if ((fight as any).fighter_b) eventFighterMap.set((fight as any).fighter_b.id, (fight as any).fighter_b);
   }
 
-  const eventFighters = Array.from(eventFighterMap.values());
+  const fightCount = (fights ?? []).length;
+  const completedCount = (fights ?? []).filter((f) => f.status === "completed").length;
+  const withWinner = (fights ?? []).filter((f) => f.winner_id).length;
 
   return (
-    <div className="relative space-y-6 pb-24">
+    <div className="relative space-y-8 pb-24">
       <StickyEventHeader
         eventName={event.name}
         eventStatus={event.status as "upcoming" | "live" | "completed"}
-        countdownTargetTime={event.status === "upcoming" ? earliestFightStartTime : null}
+        countdownTargetTime={event.status === "upcoming" ? earliestStart : null}
         watchElementId="event-page-header"
       />
 
+      {/* ── Header ── */}
       <section
         id="event-page-header"
-        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#15171A] p-6 md:p-8"
+        className="premium-card relative overflow-hidden rounded-2xl p-6 md:p-8"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(225,6,0,0.12),transparent_30%,transparent_70%,rgba(201,169,106,0.08))]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffba3c]/25 to-transparent" />
 
-        <div className="relative grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+        <div className="relative grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Left: Event info */}
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex rounded-full border border-white/10 bg-[#0B0B0C] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#C9A96A]">
+            <div className="flex items-center gap-3">
+              <span className="rounded border border-[#ffba3c]/20 bg-[#ffba3c]/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#ffba3c]">
                 {getSeriesLabel(event.series_type, t)}
               </span>
-              <EventStatusBadge status={event.status as "upcoming" | "live" | "completed"} />
+              <span className={`rounded border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] ${
+                event.status === "live"
+                  ? "border-red-500/20 bg-red-500/10 text-red-400"
+                  : event.status === "completed"
+                    ? "border-[#ffba3c]/15 text-[#ffba3c]/60"
+                    : "border-white/8 text-white/40"
+              }`}>
+                {t(`event.${event.status}`)}
+              </span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-[#F5F7FA] md:text-5xl">
+            <h1
+              className="mt-5 text-3xl font-black uppercase leading-tight text-white md:text-4xl lg:text-5xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               {event.name}
             </h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#9CA3AF]">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                {event.date}
-              </span>
-              {earliestFightStartTime && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                  {new Date(earliestFightStartTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              )}
-            </div>
+            <p className="mt-3 text-sm text-white/30">{event.date}</p>
 
             {event.status === "upcoming" && (
-              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#9CA3AF]">
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/30">
                 {t("event.upcomingDescription")}
               </p>
             )}
-
             {event.status === "live" && (
-              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#9CA3AF]">
-                {t("event.liveDescription")}
-              </p>
+              <p className="mt-4 text-sm text-white/30">{t("event.liveDescription")}</p>
             )}
-
             {event.status === "completed" && (
-              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#9CA3AF]">
-                {t("event.completedDescription")}
-              </p>
+              <p className="mt-4 text-sm text-white/30">{t("event.completedDescription")}</p>
             )}
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-[#0B0B0C] p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9CA3AF]">
-              {t("event.eventOverview")}
-            </p>
-
-            {event.status === "upcoming" && earliestFightStartTime ? (
-              <div className="mt-4">
-                <CountdownTimer targetTime={earliestFightStartTime} />
-              </div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-white/8 bg-[#15171A] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]">
-                    {t("event.status")}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-[#F5F7FA]">
-                    {t(`event.${event.status}`)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/8 bg-[#15171A] p-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF]">
-                    {t("event.totalFights")}
-                  </p>
-                  <p
-                    className="mt-2 text-3xl font-black text-[#F5F7FA]"
-                    style={{ fontFamily: "Barlow Condensed, Pretendard, sans-serif" }}
-                  >
-                    {(fights ?? []).length}
-                  </p>
-                </div>
-              </div>
+          {/* Right: Stats panel */}
+          <div className="space-y-4">
+            {event.status === "upcoming" && earliestStart && (
+              <CountdownTimer targetTime={earliestStart} />
             )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/[0.05] bg-black p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/25">{t("event.totalFights")}</p>
+                <p
+                  className="mt-2 text-3xl font-black text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {fightCount}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/[0.05] bg-black p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/25">{t("event.result")}</p>
+                <p
+                  className="mt-2 text-3xl font-black text-[#ffba3c]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {withWinner}/{completedCount}
+                </p>
+              </div>
+            </div>
+
+            {/* Decorative corners */}
+            <div className="absolute bottom-4 right-4 hidden h-10 w-10 border-b border-r border-[#ffba3c]/10 lg:block" />
           </div>
         </div>
       </section>
 
+      {/* ── MVP Video ── */}
       {event.status === "completed" && event.mvp_video_url && (
-        <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#15171A]">
-          <div className="border-b border-white/10 px-5 py-4">
-            <h2 className="text-lg font-bold text-[#F5F7FA]">{t("event.mvpHighlight")}</h2>
+        <section className="overflow-hidden rounded-2xl border border-white/5 bg-[#0a0a0a]">
+          <div className="border-b border-white/5 px-5 py-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[#ffba3c]">
+              {t("event.mvpHighlight")}
+            </h2>
           </div>
-          <div className="aspect-video w-full bg-[#0B0B0C]">
+          <div className="aspect-video w-full bg-black">
             <iframe
               src={event.mvp_video_url}
               title={t("event.mvpHighlightVideo")}
@@ -227,61 +188,44 @@ export default async function EventPage({
         </section>
       )}
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9CA3AF]">
+      {/* ── Fight Card List ── */}
+      <section>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-px w-6 bg-[#ffba3c]/30" />
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
               {t("event.fightCard")}
-            </p>
-            <h2 className="mt-1 text-xl font-bold text-[#F5F7FA]">
-              {t("event.fights")}
             </h2>
           </div>
-          <div
-            className="rounded-full border border-white/10 bg-[#15171A] px-3 py-1 text-sm text-[#9CA3AF]"
-            style={{ fontFamily: "Barlow Condensed, Pretendard, sans-serif" }}
+          <span
+            className="text-sm font-bold text-white/20"
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            {(fights ?? []).length}
-          </div>
+            {fightCount} {t("event.fights")}
+          </span>
         </div>
 
-        {(fights ?? []).map((fight) => (
-          <FightCard
-            key={fight.id}
-            fight={fight as any}
-            eventStatus={event.status as "upcoming" | "live" | "completed"}
-            prediction={predictionMap.get(fight.id) ?? null}
-            crowdStats={statsMap.get(fight.id) ?? null}
-            currentUserId={user?.id ?? null}
-          />
-        ))}
+        <div className="space-y-4">
+          {(fights ?? []).map((fight) => (
+            <FightCard
+              key={fight.id}
+              fight={fight as any}
+              eventStatus={event.status as "upcoming" | "live" | "completed"}
+              prediction={predMap.get(fight.id) ?? null}
+              crowdStats={statsMap.get(fight.id) ?? null}
+              currentUserId={user?.id ?? null}
+            />
+          ))}
+        </div>
       </section>
 
+      {/* ── MVP Vote ── */}
       {event.status === "completed" && (
         <MvpVoteSection
           eventId={event.id}
           eventDate={event.date}
-          fighters={eventFighters}
+          fighters={Array.from(eventFighterMap.values())}
         />
-      )}
-
-      {event.status === "upcoming" && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0B0B0C]/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9CA3AF]">
-                {t("prediction.bulk")}
-              </p>
-              <p className="truncate text-sm text-[#F5F7FA]">{event.name}</p>
-            </div>
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#E10600] px-5 py-3 text-sm font-semibold text-[#F5F7FA] transition hover:bg-[#c90500]"
-            >
-              {t("prediction.predictAll")}
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );

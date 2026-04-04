@@ -3,11 +3,13 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
-  --card: #111111;
-  --subtext: #919191;
-  --accent: #ffba3c;
-  --accent-dim: rgba(255, 186, 60, 0.15);
-  --line: rgba(255, 255, 255, 0.08);
+  --card: #0a0a0a;
+  --card-border: rgba(255, 186, 60, 0.12);
+  --gold: #ffba3c;
+  --gold-dim: rgba(255, 186, 60, 0.08);
+  --gold-text: #d4a848;
+  --subtext: #8a8a8a;
+  --line: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
@@ -47,10 +49,25 @@ a, button {
   font-family: "Barlow Condensed", "Pretendard", system-ui, sans-serif;
 }
 
+/* Premium gold decorative line */
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ffba3c, transparent);
+}
+
+/* Gold shimmer on hover */
+.gold-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gold-hover:hover {
+  border-color: rgba(255, 186, 60, 0.3);
+  box-shadow: 0 0 40px rgba(255, 186, 60, 0.06);
+}
+
+/* Gold active underline for nav */
 .gold-underline-active {
   position: relative;
 }
-
 .gold-underline-active::after {
   content: "";
   position: absolute;
@@ -58,7 +75,32 @@ a, button {
   right: 0;
   bottom: -14px;
   height: 2px;
-  background: #ffba3c;
+  background: linear-gradient(90deg, transparent, #ffba3c, transparent);
+}
+
+/* Premium card with subtle gold */
+.premium-card {
+  background: linear-gradient(180deg, rgba(255, 186, 60, 0.03) 0%, rgba(0, 0, 0, 0) 100%);
+  border: 1px solid rgba(255, 186, 60, 0.1);
+}
+.premium-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at top, rgba(255, 186, 60, 0.05), transparent 70%);
+  pointer-events: none;
+}
+
+/* Triangle decoration */
+.gold-triangle {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 60px solid transparent;
+  border-right: 60px solid transparent;
+  border-bottom: 100px solid rgba(255, 186, 60, 0.06);
+  pointer-events: none;
 }
 
 .bottom-safe {

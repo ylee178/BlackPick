@@ -3,74 +3,54 @@
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
 
-type CountdownTimerProps = {
-  targetTime: string;
-};
+type Props = { targetTime: string };
 
-type TimeLeft = {
-  total: number;
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-};
-
-function getTimeLeft(targetTime: string): TimeLeft {
-  const target = new Date(targetTime).getTime();
-  const now = Date.now();
-  const total = target - now;
-
-  if (Number.isNaN(target) || total <= 0) {
-    return { total: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
-  }
-
+function getTimeLeft(target: string) {
+  const diff = new Date(target).getTime() - Date.now();
+  if (diff <= 0) return { total: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
-    total,
-    days: Math.floor(total / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((total / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((total / (1000 * 60)) % 60),
-    seconds: Math.floor((total / 1000) % 60),
+    total: diff,
+    days: Math.floor(diff / 86400000),
+    hours: Math.floor((diff / 3600000) % 24),
+    minutes: Math.floor((diff / 60000) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
   };
 }
 
-export default function CountdownTimer({ targetTime }: CountdownTimerProps) {
+export default function CountdownTimer({ targetTime }: Props) {
   const { t } = useI18n();
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() =>
-    getTimeLeft(targetTime)
-  );
+  const [tl, setTl] = useState(() => getTimeLeft(targetTime));
 
   useEffect(() => {
-    setTimeLeft(getTimeLeft(targetTime));
-    const interval = setInterval(() => {
-      setTimeLeft(getTimeLeft(targetTime));
-    }, 1000);
-    return () => clearInterval(interval);
+    setTl(getTimeLeft(targetTime));
+    const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
+    return () => clearInterval(i);
   }, [targetTime]);
 
-  const isLocked = timeLeft.total <= 0;
+  const text = useMemo(() => {
+    if (tl.days > 0) return `${tl.days}d ${tl.hours}h ${tl.minutes}m ${tl.seconds}s`;
+    if (tl.hours > 0) return `${tl.hours}h ${tl.minutes}m ${tl.seconds}s`;
+    return `${tl.minutes}m ${tl.seconds}s`;
+  }, [tl]);
 
-  const countdownText = useMemo(() => {
-    const { days, hours, minutes, seconds } = timeLeft;
-    if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-    return `${minutes}m ${seconds}s`;
-  }, [timeLeft]);
-
-  if (isLocked) {
+  if (tl.total <= 0) {
     return (
-      <div className="mt-4 flex items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400">
-        🔒 {t("countdown.locked")}
+      <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-center text-sm font-bold text-white/40">
+        {t("countdown.locked")}
       </div>
     );
   }
 
   return (
-    <div className="mt-4 flex items-center justify-center rounded-xl border border-amber-400/20 bg-gray-900/80 px-4 py-3 text-sm">
-      <span className="mr-2">⏱️</span>
-      <span className="text-gray-300">{t("countdown.closesIn")}</span>
-      <span className="ml-2 font-mono font-semibold tracking-wide text-amber-400" suppressHydrationWarning>
-        {countdownText}
-      </span>
+    <div className="rounded-xl border border-[#ffba3c]/15 bg-[#ffba3c]/[0.03] px-4 py-3">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">{t("countdown.closesIn")}</p>
+      <p
+        className="mt-1 text-2xl font-black text-[#ffba3c]"
+        style={{ fontFamily: "var(--font-display)" }}
+        suppressHydrationWarning
+      >
+        {text}
+      </p>
     </div>
   );
 }

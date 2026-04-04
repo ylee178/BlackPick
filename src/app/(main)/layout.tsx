@@ -11,15 +11,10 @@ interface Messages {
 
 async function loadMessages(locale: "en" | "ko" | "ja" | "pt-BR"): Promise<Messages> {
   switch (locale) {
-    case "ko":
-      return (await import("@/messages/ko.json")).default;
-    case "ja":
-      return (await import("@/messages/ja.json")).default;
-    case "pt-BR":
-      return (await import("@/messages/pt-BR.json")).default;
-    case "en":
-    default:
-      return (await import("@/messages/en.json")).default;
+    case "ko": return (await import("@/messages/ko.json")).default;
+    case "ja": return (await import("@/messages/ja.json")).default;
+    case "pt-BR": return (await import("@/messages/pt-BR.json")).default;
+    default: return (await import("@/messages/en.json")).default;
   }
 }
 
@@ -31,35 +26,50 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
     <I18nProvider initialLocale={locale} initialMessages={messages}>
       <div className="min-h-[100dvh] bg-black text-white">
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-white/8 bg-black/95 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl">
+          <div className="gold-line" />
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <span
-                className="text-xl font-black uppercase tracking-wider text-[#ffba3c]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Black Pick
-              </span>
+            <Link href="/" className="group flex items-center gap-3">
+              <div className="relative flex h-10 w-10 items-center justify-center">
+                <div className="absolute inset-0 rotate-45 border border-[#ffba3c]/40" />
+                <span
+                  className="relative text-lg font-black text-[#ffba3c]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  BP
+                </span>
+              </div>
+              <div>
+                <span
+                  className="block text-lg font-bold uppercase tracking-[0.15em] text-white group-hover:text-[#ffba3c] transition"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Black Pick
+                </span>
+                <span className="block text-[9px] uppercase tracking-[0.3em] text-[#ffba3c]/60">
+                  Who Is The Pick?
+                </span>
+              </div>
             </Link>
 
-            {/* Center Nav (desktop) */}
+            {/* Center Nav */}
             <div className="hidden md:flex">
               <MainNav />
             </div>
 
-            {/* Right: Lang + Auth */}
+            {/* Right */}
             <div className="flex items-center gap-3">
               <LanguagePicker />
               <Link
                 href="/login"
-                className="hidden rounded-lg border border-white/12 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-[#ffba3c]/30 hover:text-white sm:inline-flex"
+                className="hidden rounded border border-white/10 px-5 py-2 text-sm font-medium text-white/70 transition hover:border-[#ffba3c]/30 hover:text-white sm:inline-flex"
               >
                 Log in
               </Link>
               <Link
                 href="/signup"
-                className="hidden rounded-lg bg-[#ffba3c] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#ffc85c] sm:inline-flex"
+                className="hidden rounded bg-[#ffba3c] px-5 py-2 text-sm font-bold text-black transition hover:bg-[#ffd06b] sm:inline-flex"
               >
                 Sign up
               </Link>
@@ -68,12 +78,12 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </header>
 
         {/* Main */}
-        <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
+        <main className="mx-auto max-w-7xl px-5 pb-28 pt-8 sm:px-8 lg:pb-12">
           {children}
         </main>
 
         {/* Mobile tab bar */}
-        <nav className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-white/8 bg-black/95 backdrop-blur-xl md:hidden">
+        <nav className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[#ffba3c]/10 bg-black/95 backdrop-blur-xl md:hidden">
           <MainNav mobile />
         </nav>
       </div>
