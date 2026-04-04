@@ -1,296 +1,216 @@
 import Link from "next/link";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
-import type { Database } from "@/types/database";
+import { getTranslations } from "@/lib/i18n-server";
 
-type PredictionRow = Database["public"]["Tables"]["predictions"]["Row"] & {
-  fights: {
-    id: string;
-    method: string | null;
-    round: number | null;
-    winner_id: string | null;
-    status: string;
-    start_time: string;
-    events: {
-      id: string;
-      name: string;
-      date: string;
-    } | null;
-    fighter_a: {
-      id: string;
-      name: string;
-    } | null;
-    fighter_b: {
-      id: string;
-      name: string;
-    } | null;
-  } | null;
-  predicted_winner: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-function formatPredictionResult(prediction: PredictionRow) {
-  if (prediction.score === null) return "Pending";
-
-  if (prediction.is_winner_correct) {
-    if (prediction.is_method_correct && prediction.is_round_correct) {
-      return "Perfect Pick";
-    }
-    if (prediction.is_method_correct) {
-      return "Winner + Method";
-    }
-    return "Winner Correct";
-  }
-
-  return "Miss";
-}
-
-function scoreColor(score: number | null) {
-  if (score === null) return "text-gray-400";
-  if (score > 0) return "text-emerald-400";
-  if (score < 0) return "text-red-400";
-  return "text-gray-300";
-}
+export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServer();
   const authUser = await getUser();
+  const { t } = await getTranslations();
 
   if (!authUser) {
     return (
-      <main className="min-h-screen bg-gray-950 px-4 py-8 text-white">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-gray-800 bg-gray-900/60 p-8 text-center">
-          <h1 className="text-2xl font-bold text-white">Profile</h1>
-          <p className="mt-4 text-gray-300">Sign in to view your profile</p>
-          <Link
-            href="/login"
-            className="mt-6 inline-flex rounded-xl bg-amber-400 px-5 py-3 font-semibold text-gray-950 transition hover:bg-amber-300"
-          >
-            Sign In
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-[#ffba3c]/20 bg-[#ffba3c]/[0.04]">
+            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#ffba3c]/60" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+              <path d="M3 20a9 9 0 0 1 18 0" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>
+            My Account
+          </h2>
+          <p className="mt-2 text-sm text-white/50">{t("profile.signInToView")}</p>
+        </div>
+        <div className="flex gap-3">
+          <Link href="/login" className="rounded-lg border border-white/10 px-6 py-2.5 text-sm font-medium text-white/70 hover:border-[#ffba3c]/30">
+            Log in
+          </Link>
+          <Link href="/signup" className="rounded-lg bg-[#ffba3c] px-6 py-2.5 text-sm font-bold text-black hover:bg-[#ffd06b]">
+            Sign up
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
-  const [{ data: profile }, { data: rankingUsers }, { data: predictions }] =
-    await Promise.all([
-      supabase
-        .from("users")
-        .select("*")
-        .eq("id", authUser.id)
-        .single(),
-      supabase
-        .from("users")
-        .select("id, score, best_streak, current_streak, hall_of_fame_count, created_at")
-        .order("score", { ascending: false })
-        .order("best_streak", { ascending: false })
-        .order("current_streak", { ascending: false })
-        .order("hall_of_fame_count", { ascending: false })
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("predictions")
-        .select(
-          `
-          *,
-          fights (
-            id,
-            method,
-            round,
-            winner_id,
-            status,
-            start_time,
-            events (
-              id,
-              name,
-              date
-            ),
-            fighter_a:fighter_a_id (
-              id,
-              name
-            ),
-            fighter_b:fighter_b_id (
-              id,
-              name
-            )
-          ),
-          predicted_winner:winner_id (
-            id,
-            name
-          )
-        `
-        )
-        .eq("user_id", authUser.id)
-        .order("created_at", { ascending: false })
-        .limit(20),
-    ]);
+  const { data: user } = await supabase.from("users").select("*").eq("id", authUser.id).single();
+  const { count: higherCount } = await supabase.from("users").select("*", { count: "exact", head: true }).gt("score", user?.score ?? 0);
+  const { count: totalUsers } = await supabase.from("users").select("*", { count: "exact", head: true });
+  const rank = (higherCount ?? 0) + 1;
 
-  const rank =
-    rankingUsers?.findIndex((user) => user.id === authUser.id) !== undefined &&
-    (rankingUsers?.findIndex((user) => user.id === authUser.id) ?? -1) >= 0
-      ? (rankingUsers?.findIndex((user) => user.id === authUser.id) ?? 0) + 1
-      : null;
+  const { data: recentPreds } = await supabase
+    .from("predictions")
+    .select(`
+      id, winner_id, method, round, score, is_winner_correct, created_at,
+      fight:fights!fight_id(
+        id, status, winner_id, method, round,
+        fighter_a:fighters!fighter_a_id(id, name, ring_name),
+        fighter_b:fighters!fighter_b_id(id, name, ring_name),
+        event:events!event_id(id, name, date)
+      )
+    `)
+    .eq("user_id", authUser.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
-  const typedPredictions = (predictions ?? []) as unknown as PredictionRow[];
+  const wins = user?.wins ?? 0;
+  const losses = user?.losses ?? 0;
+  const total = wins + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   return (
-    <main className="min-h-screen bg-gray-950 px-4 py-6 text-white">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-2xl border border-gray-800 bg-gray-900/70 p-6 shadow-xl">
-          <div className="flex flex-col gap-6">
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-amber-400">
-                Fighter Profile
-              </p>
-              <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-white">
-                {profile?.ring_name ?? "Unknown Fighter"}
-              </h1>
-              <p className="mt-2 text-gray-400">{profile?.email}</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-2xl border border-amber-400/20 bg-gray-950 p-5">
-                <p className="text-xs uppercase tracking-widest text-gray-400">
-                  Fight Record
-                </p>
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-4xl font-black text-amber-400">
-                    {profile?.wins ?? 0}
-                  </span>
-                  <span className="pb-1 text-xl font-bold text-gray-400">-</span>
-                  <span className="text-4xl font-black text-white">
-                    {profile?.losses ?? 0}
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-gray-800 bg-gray-950 p-5">
-                <p className="text-xs uppercase tracking-widest text-gray-400">
-                  Score
-                </p>
-                <p className="mt-3 text-4xl font-black text-white">
-                  {profile?.score ?? 0}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-gray-800 bg-gray-950 p-5">
-                <p className="text-xs uppercase tracking-widest text-gray-400">
-                  Streaks
-                </p>
-                <p className="mt-3 text-lg font-bold text-white">
-                  {profile?.current_streak ?? 0}
-                  <span className="ml-2 text-sm font-medium text-gray-400">
-                    current
-                  </span>
-                </p>
-                <p className="mt-1 text-lg font-bold text-amber-400">
-                  {profile?.best_streak ?? 0}
-                  <span className="ml-2 text-sm font-medium text-gray-400">
-                    best
-                  </span>
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-gray-800 bg-gray-950 p-5">
-                <p className="text-xs uppercase tracking-widest text-gray-400">
-                  Honors
-                </p>
-                <p className="mt-3 text-lg font-bold text-white">
-                  {profile?.hall_of_fame_count ?? 0}
-                  <span className="ml-2 text-sm font-medium text-gray-400">
-                    Hall of Fame
-                  </span>
-                </p>
-                <p className="mt-1 text-lg font-bold text-amber-400">
-                  #{rank ?? "-"}
-                  <span className="ml-2 text-sm font-medium text-gray-400">
-                    ranking
-                  </span>
-                </p>
-              </div>
-            </div>
+    <div className="space-y-6">
+      {/* ── Header Card ── */}
+      <div className="premium-card relative overflow-hidden rounded-2xl p-6">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffba3c]/25 to-transparent" />
+        <div className="relative flex items-center gap-5">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#ffba3c]/30 bg-[#ffba3c]/[0.06]">
+            <span className="text-2xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
+              {(user?.ring_name ?? "?")[0].toUpperCase()}
+            </span>
           </div>
-        </section>
-
-        <section className="rounded-2xl border border-gray-800 bg-gray-900/70 p-6 shadow-xl">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white">Recent Predictions</h2>
-              <p className="text-sm text-gray-400">Last 20 picks</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>
+              {user?.ring_name ?? "Fighter"}
+            </h1>
+            <p className="text-sm text-white/50">{authUser.email}</p>
           </div>
+        </div>
+      </div>
 
-          {typedPredictions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-800 bg-gray-950/60 p-8 text-center text-gray-400">
-              No predictions yet.
+      {/* ── Streak Banner ── */}
+      {(user?.current_streak ?? 0) > 0 && (
+        <div className="flex items-center gap-4 rounded-xl border border-[#ffba3c]/20 bg-[#ffba3c]/[0.05] px-5 py-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffba3c]/15 text-lg">
+            F
+          </div>
+          <div>
+            <p className="text-xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
+              {user?.current_streak} {t("ranking.streak")}
+            </p>
+            <p className="text-xs text-white/50">Best: {user?.best_streak}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Stats Grid (2x2 mobile, 4 col desktop) ── */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{t("profile.fightRecord")}</p>
+          <p className="mt-2 text-3xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+            {wins}<span className="text-lg text-white/50">W</span> {losses}<span className="text-lg text-white/50">L</span>
+          </p>
+          <p className="mt-1 text-xs text-white/50">{winRate}%</p>
+        </div>
+
+        <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{t("profile.score")}</p>
+          <p className="mt-2 text-3xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
+            {user?.score ?? 0}
+          </p>
+          <p className="mt-1 text-xs text-white/50">{t("prediction.points")}</p>
+        </div>
+
+        <div className="gold-hover rounded-xl border border-[#ffba3c]/10 bg-[#ffba3c]/[0.03] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#ffba3c]/80">{t("profile.ranking")}</p>
+          <p className="mt-2 text-3xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
+            #{rank}
+          </p>
+          <p className="mt-1 text-xs text-white/50">of {totalUsers ?? 0}</p>
+        </div>
+
+        <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{t("profile.hallOfFame")}</p>
+          <p className="mt-2 text-3xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+            {user?.hall_of_fame_count ?? 0}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Streak Comparison ── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{t("profile.currentStreak")}</p>
+          <p className="mt-3 text-4xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+            {user?.current_streak ?? 0}<span className="text-base text-white/50 ml-1">wins</span>
+          </p>
+        </div>
+        <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{t("profile.bestStreak")}</p>
+          <p className="mt-3 text-4xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
+            {user?.best_streak ?? 0}<span className="text-base text-white/50 ml-1">wins</span>
+          </p>
+        </div>
+      </div>
+
+      {/* ── Recent Predictions ── */}
+      <section>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px w-6 bg-[#ffba3c]/30" />
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
+            {t("profile.recentPredictions")}
+          </h2>
+        </div>
+
+        <div className="space-y-2">
+          {(recentPreds ?? []).length === 0 ? (
+            <div className="rounded-xl border border-white/[0.04] p-8 text-center">
+              <p className="text-sm text-white/50">{t("common.noData")}</p>
+              <Link href="/events" className="mt-3 inline-block text-xs font-bold text-[#ffba3c] underline underline-offset-2">
+                Start predicting
+              </Link>
             </div>
           ) : (
-            <div className="space-y-3">
-              {typedPredictions.map((prediction) => {
-                const fight = prediction.fights;
-                const fighterA = fight?.fighter_a?.name ?? "TBD";
-                const fighterB = fight?.fighter_b?.name ?? "TBD";
-                const predictedWinner = prediction.predicted_winner?.name ?? "Unknown";
-                const resultText =
-                  fight?.winner_id && fight?.status === "completed"
-                    ? prediction.is_winner_correct
-                      ? "Correct"
-                      : "Wrong"
-                    : "Pending";
+            (recentPreds ?? []).map((pred: any) => {
+              const fight = pred.fight;
+              if (!fight) return null;
+              const pickedName = pred.winner_id === fight.fighter_a?.id
+                ? (fight.fighter_a?.ring_name || fight.fighter_a?.name)
+                : (fight.fighter_b?.ring_name || fight.fighter_b?.name);
 
-                return (
-                  <div
-                    key={prediction.id}
-                    className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-sm text-amber-400">
-                          {fight?.events?.name ?? "Unknown Event"}
-                        </p>
-                        <h3 className="truncate text-lg font-bold text-white">
-                          {fighterA} vs {fighterB}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-400">
-                          Picked:{" "}
-                          <span className="font-medium text-gray-200">
-                            {predictedWinner}
-                          </span>
-                          {prediction.method ? ` • ${prediction.method}` : ""}
-                          {prediction.round ? ` • R${prediction.round}` : ""}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                        <span className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-300">
-                          {formatPredictionResult(prediction)}
-                        </span>
-                        <span
-                          className={`text-sm font-semibold ${
-                            resultText === "Correct"
-                              ? "text-emerald-400"
-                              : resultText === "Wrong"
-                              ? "text-red-400"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          {resultText}
-                        </span>
-                        <span className={`text-lg font-black ${scoreColor(prediction.score)}`}>
-                          {prediction.score !== null
-                            ? `${prediction.score > 0 ? "+" : ""}${prediction.score}`
-                            : "—"}
-                        </span>
-                      </div>
-                    </div>
+              return (
+                <Link
+                  key={pred.id}
+                  href={`/events/${fight.event?.id || ""}`}
+                  className="group flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.01] p-4 transition hover:border-white/8"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] uppercase tracking-wider text-white/50">
+                      {fight.event?.name} · {fight.event?.date}
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-white/70">
+                      {fight.fighter_a?.ring_name || fight.fighter_a?.name} vs {fight.fighter_b?.ring_name || fight.fighter_b?.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-white/50">
+                      Picked: <span className="font-medium text-white/70">{pickedName}</span>
+                      {pred.method && ` · ${pred.method}`}
+                      {pred.round && ` · R${pred.round}`}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="shrink-0 text-right">
+                    {pred.is_winner_correct === null ? (
+                      <span className="rounded border border-white/8 px-2 py-1 text-[10px] font-bold text-white/50">PENDING</span>
+                    ) : pred.is_winner_correct ? (
+                      <div>
+                        <span className="rounded border border-[#ffba3c]/20 bg-[#ffba3c]/10 px-2 py-1 text-[10px] font-bold text-[#ffba3c]">WIN</span>
+                        {typeof pred.score === "number" && <p className="mt-1 text-xs font-bold text-[#ffba3c]">+{pred.score}</p>}
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="rounded border border-white/8 bg-white/5 px-2 py-1 text-[10px] font-bold text-white/50">LOSS</span>
+                        {typeof pred.score === "number" && <p className="mt-1 text-xs font-bold text-white/50">{pred.score}</p>}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              );
+            })
           )}
-        </section>
-      </div>
-    </main>
+        </div>
+      </section>
+    </div>
   );
 }
