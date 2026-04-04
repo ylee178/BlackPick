@@ -32,7 +32,7 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   useEffect(() => {
     const el = document.getElementById(watchElementId);
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => setVisible(!e.isIntersecting), { threshold: 0 });
+    const obs = new IntersectionObserver(([e]) => setVisible(!e.isIntersecting), { threshold: 0, rootMargin: "-60px 0px 0px 0px" });
     obs.observe(el);
     return () => obs.disconnect();
   }, [watchElementId]);
@@ -58,11 +58,11 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
     <div
       className={cn(
         "sticky top-[53px] z-30 -mx-4 border-b border-[var(--bp-line)] bg-[var(--bp-bg)]/80 backdrop-blur-xl px-4 sm:-mx-6 sm:px-6",
-        "transition-all duration-200 overflow-hidden",
-        visible ? "translate-y-0 opacity-100" : "h-0 border-b-0 pointer-events-none opacity-0"
+        "transition-[height,opacity] duration-100 overflow-hidden",
+        visible ? "opacity-100" : "h-0 border-b-0 pointer-events-none opacity-0"
       )}
     >
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 py-3">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-0 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <RetroStatusBadge
             tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
