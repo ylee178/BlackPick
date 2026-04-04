@@ -20,7 +20,7 @@ export default async function ProfilePage() {
             </svg>
           </div>
           <h2 className="text-2xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>
-            My Account
+            {t("profile.myAccount")}
           </h2>
           <p className="mt-2 text-sm text-white/50">{t("profile.signInToView")}</p>
         </div>
@@ -91,7 +91,7 @@ export default async function ProfilePage() {
             <p className="text-xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
               {user?.current_streak} {t("ranking.streak")}
             </p>
-            <p className="text-xs text-white/50">Best: {user?.best_streak}</p>
+            <p className="text-xs text-white/50">{t("profile.bestStreak")}: {user?.best_streak}</p>
           </div>
         </div>
       )}
@@ -119,7 +119,7 @@ export default async function ProfilePage() {
           <p className="mt-2 text-3xl font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
             #{rank}
           </p>
-          <p className="mt-1 text-xs text-white/50">of {totalUsers ?? 0}</p>
+          <p className="mt-1 text-xs text-white/50">{t("common.of")} {totalUsers ?? 0}</p>
         </div>
 
         <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
@@ -135,7 +135,7 @@ export default async function ProfilePage() {
         <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{t("profile.currentStreak")}</p>
           <p className="mt-3 text-4xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
-            {user?.current_streak ?? 0}<span className="text-base text-white/50 ml-1">wins</span>
+            {user?.current_streak ?? 0}<span className="text-base text-white/50 ml-1">{t("common.wins")}</span>
           </p>
         </div>
         <div className="gold-hover rounded-xl border border-white/[0.05] bg-[#0a0a0a] p-5">
@@ -185,22 +185,22 @@ export default async function ProfilePage() {
                       {fight.fighter_a?.ring_name || fight.fighter_a?.name} vs {fight.fighter_b?.ring_name || fight.fighter_b?.name}
                     </p>
                     <p className="mt-0.5 text-xs text-white/50">
-                      Picked: <span className="font-medium text-white/70">{pickedName}</span>
+                      {t("prediction.yourPick")}: <span className="font-medium text-white/70">{pickedName}</span>
                       {pred.method && ` · ${pred.method}`}
                       {pred.round && ` · R${pred.round}`}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
                     {pred.is_winner_correct === null ? (
-                      <span className="rounded border border-white/8 px-2 py-1 text-[10px] font-bold text-white/50">PENDING</span>
+                      <span className="rounded border border-white/8 px-2 py-1 text-[10px] font-bold text-white/50">{t("common.pending")}</span>
                     ) : pred.is_winner_correct ? (
                       <div>
-                        <span className="rounded border border-[#ffba3c]/20 bg-[#ffba3c]/10 px-2 py-1 text-[10px] font-bold text-[#ffba3c]">WIN</span>
+                        <span className="rounded border border-[#ffba3c]/20 bg-[#ffba3c]/10 px-2 py-1 text-[10px] font-bold text-[#ffba3c]">{t("event.win")}</span>
                         {typeof pred.score === "number" && <p className="mt-1 text-xs font-bold text-[#ffba3c]">+{pred.score}</p>}
                       </div>
                     ) : (
                       <div>
-                        <span className="rounded border border-white/8 bg-white/5 px-2 py-1 text-[10px] font-bold text-white/50">LOSS</span>
+                        <span className="rounded border border-white/8 bg-white/5 px-2 py-1 text-[10px] font-bold text-white/50">{t("event.loss")}</span>
                         {typeof pred.score === "number" && <p className="mt-1 text-xs font-bold text-white/50">{pred.score}</p>}
                       </div>
                     )}

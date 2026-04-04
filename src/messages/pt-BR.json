@@ -35,7 +35,8 @@
     "eventOverview": "Visao geral",
     "fights": "Lutas",
     "status": "Status",
-    "totalFights": "Total de lutas"
+    "totalFights": "Total de lutas",
+    "allEvents": "Todos os eventos"
   },
   "prediction": {
     "selectWinner": "Escolha o vencedor",
@@ -65,7 +66,8 @@
     "hallOfFame": "Hall da Fama",
     "ranking": "Ranking",
     "recentPredictions": "Palpites recentes",
-    "signInToView": "Entre para visualizar"
+    "signInToView": "Entre para visualizar",
+    "myAccount": "Minha Conta"
   },
   "ranking": {
     "running": "Em andamento",
@@ -76,7 +78,11 @@
     "record": "Cartel",
     "score": "Pontuação",
     "streak": "Sequência",
-    "hallOfFame": "Hall da Fama"
+    "hallOfFame": "Hall da Fama",
+    "first": "#1",
+    "second": "#2",
+    "third": "#3",
+    "unknown": "Desconhecido"
   },
   "auth": {
     "email": "E-mail",
@@ -125,6 +131,26 @@
     "error": "Algo deu errado",
     "noData": "Sem dados",
     "imageFallback": "IMG",
-    "comingSoon": "Em breve"
+    "comingSoon": "Em breve",
+    "dDay": "D-DAY",
+    "wins": "vitórias",
+    "of": "de",
+    "times": "vezes",
+    "winRate": "Taxa de vitória",
+    "startPredicting": "Começar a prever",
+    "pending": "PENDENTE",
+    "viewAll": "Ver tudo",
+    "nextEvent": "Próximo evento",
+    "buyTickets": "Comprar ingressos",
+    "joinNow": "Participar",
+    "tickets": "Ingressos",
+    "membership": "Assinatura",
+    "blackCombatTickets": "Ingressos Black Combat",
+    "getSeats": "Garanta seu lugar no próximo evento",
+    "blackCombatYoutube": "Black Combat YouTube",
+    "joinMembership": "Assine para replays completos",
+    "platform": "Plataforma",
+    "fighters": "Lutadores",
+    "latestResults": "Últimos resultados"
   }
 }

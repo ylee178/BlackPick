@@ -35,7 +35,8 @@
     "eventOverview": "Event Overview",
     "fights": "Fights",
     "status": "Status",
-    "totalFights": "Total Fights"
+    "totalFights": "Total Fights",
+    "allEvents": "All Events"
   },
   "prediction": {
     "selectWinner": "Pick winner",
@@ -65,7 +66,8 @@
     "hallOfFame": "Hall of Fame",
     "ranking": "Ranking",
     "recentPredictions": "Recent Predictions",
-    "signInToView": "Sign in to view"
+    "signInToView": "Sign in to view",
+    "myAccount": "My Account"
   },
   "ranking": {
     "running": "Running",
@@ -76,7 +78,11 @@
     "record": "Record",
     "score": "Score",
     "streak": "Streak",
-    "hallOfFame": "Hall of Fame"
+    "hallOfFame": "Hall of Fame",
+    "first": "#1",
+    "second": "#2",
+    "third": "#3",
+    "unknown": "Unknown"
   },
   "auth": {
     "email": "Email",
@@ -125,6 +131,26 @@
     "error": "Something went wrong",
     "noData": "No data",
     "comingSoon": "Coming soon",
-    "imageFallback": "IMG"
+    "imageFallback": "IMG",
+    "dDay": "D-DAY",
+    "wins": "wins",
+    "of": "of",
+    "times": "times",
+    "winRate": "Win Rate",
+    "startPredicting": "Start predicting",
+    "pending": "PENDING",
+    "viewAll": "View all",
+    "nextEvent": "Next Event",
+    "buyTickets": "Buy Tickets",
+    "joinNow": "Join Now",
+    "tickets": "Tickets",
+    "membership": "Membership",
+    "blackCombatTickets": "Black Combat Tickets",
+    "getSeats": "Get your seats for the next event",
+    "blackCombatYoutube": "Black Combat YouTube",
+    "joinMembership": "Join membership for full fight replays",
+    "platform": "Platform",
+    "fighters": "Fighters",
+    "latestResults": "Latest results"
   }
 }

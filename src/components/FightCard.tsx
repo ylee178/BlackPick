@@ -1,5 +1,6 @@
 import PredictionForm from "@/components/PredictionForm";
 import { countryCodeToFlag } from "@/lib/flags";
+import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 
 type FighterData = {
@@ -55,12 +56,14 @@ function FighterSide({
   isWinner,
   isLoser,
   isSelected,
+  locale,
 }: {
   fighter: FighterData;
   align: "left" | "right";
   isWinner: boolean;
   isLoser: boolean;
   isSelected: boolean;
+  locale: string;
 }) {
   const textAlign = align === "right" ? "text-right" : "text-left";
   const flexDir = align === "right" ? "flex-row-reverse" : "";
@@ -117,7 +120,7 @@ function FighterSide({
             {fighter.weight_class && (
               <>
                 <span className="text-white/45">|</span>
-                <span>{fighter.weight_class}</span>
+                <span>{translateWeightClass(fighter.weight_class, locale)}</span>
               </>
             )}
           </div>
@@ -133,7 +136,7 @@ export default async function FightCard({
   prediction,
   crowdStats,
 }: FightCardProps) {
-  const { t } = await getTranslations();
+  const { t, locale } = await getTranslations();
 
   const hasStarted = new Date(fight.start_time).getTime() <= Date.now();
   const isUpcoming = eventStatus === "upcoming" && !hasStarted;
@@ -175,6 +178,7 @@ export default async function FightCard({
           isWinner={winnerA}
           isLoser={!!fight.winner_id && !winnerA}
           isSelected={prediction?.winner_id === fight.fighter_a_id}
+          locale={locale}
         />
 
         {/* VS center */}
@@ -193,6 +197,7 @@ export default async function FightCard({
           isWinner={winnerB}
           isLoser={!!fight.winner_id && !winnerB}
           isSelected={prediction?.winner_id === fight.fighter_b_id}
+          locale={locale}
         />
       </div>
 

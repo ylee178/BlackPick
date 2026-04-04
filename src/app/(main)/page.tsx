@@ -124,8 +124,8 @@ export default async function HomePage() {
           <div className="mt-5 space-y-3">
             {(topUsers ?? []).length === 0 ? (
               <div className="py-8 text-center">
-                <p className="text-xs text-white/50">No rankings yet</p>
-                <p className="mt-1 text-[10px] text-white/45">Be the first to predict</p>
+                <p className="text-xs text-white/50">{t("common.noData")}</p>
+                <p className="mt-1 text-[10px] text-white/45">{t("common.startPredicting")}</p>
               </div>
             ) : (
               (topUsers ?? []).map((user: any, i: number) => {
@@ -182,7 +182,7 @@ export default async function HomePage() {
               >
                 {fighterCount ?? 335}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">Fighters</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">{t("common.fighters")}</p>
             </div>
             <div className="h-px bg-white/[0.04]" />
             <div>
@@ -203,7 +203,7 @@ export default async function HomePage() {
             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/50">
               {t("event.completed")}
             </span>
-            <span className="text-[10px] text-white/45">Latest results</span>
+            <span className="text-[10px] text-white/45">{t("common.latestResults")}</span>
           </div>
 
           <div className="mt-5 space-y-3">

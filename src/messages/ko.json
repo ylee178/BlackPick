@@ -35,7 +35,8 @@
     "eventOverview": "이벤트 개요",
     "fights": "경기",
     "status": "상태",
-    "totalFights": "총 경기 수"
+    "totalFights": "총 경기 수",
+    "allEvents": "전체 이벤트"
   },
   "prediction": {
     "selectWinner": "승자 선택",
@@ -65,7 +66,8 @@
     "hallOfFame": "명예의 전당",
     "ranking": "랭킹",
     "recentPredictions": "최근 예측",
-    "signInToView": "로그인 후 확인"
+    "signInToView": "로그인 후 확인",
+    "myAccount": "내 계정"
   },
   "ranking": {
     "running": "진행 중",
@@ -76,7 +78,11 @@
     "record": "전적",
     "score": "점수",
     "streak": "연승",
-    "hallOfFame": "명예의 전당"
+    "hallOfFame": "명예의 전당",
+    "first": "#1",
+    "second": "#2",
+    "third": "#3",
+    "unknown": "알 수 없음"
   },
   "auth": {
     "email": "이메일",
@@ -125,6 +131,26 @@
     "error": "오류가 발생했습니다",
     "noData": "데이터가 없습니다",
     "imageFallback": "이미지",
-    "comingSoon": "준비 중"
+    "comingSoon": "준비 중",
+    "dDay": "D-DAY",
+    "wins": "승",
+    "of": "/",
+    "times": "회",
+    "winRate": "승률",
+    "startPredicting": "예측 시작하기",
+    "pending": "대기중",
+    "viewAll": "전체 보기",
+    "nextEvent": "다음 이벤트",
+    "buyTickets": "티켓 구매",
+    "joinNow": "가입하기",
+    "tickets": "티켓",
+    "membership": "멤버십",
+    "blackCombatTickets": "블랙컴뱃 티켓",
+    "getSeats": "다음 이벤트 좌석을 예매하세요",
+    "blackCombatYoutube": "블랙컴뱃 YouTube",
+    "joinMembership": "멤버십 가입으로 풀 경기 다시보기",
+    "platform": "플랫폼",
+    "fighters": "선수",
+    "latestResults": "최신 결과"
   }
 }

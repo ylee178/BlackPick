@@ -35,7 +35,8 @@
     "eventOverview": "イベント概要",
     "fights": "試合",
     "status": "ステータス",
-    "totalFights": "試合数"
+    "totalFights": "試合数",
+    "allEvents": "全イベント"
   },
   "prediction": {
     "selectWinner": "勝者を選択",
@@ -65,7 +66,8 @@
     "hallOfFame": "殿堂入り",
     "ranking": "ランキング",
     "recentPredictions": "最近の予想",
-    "signInToView": "閲覧するにはログインしてください"
+    "signInToView": "閲覧するにはログインしてください",
+    "myAccount": "マイアカウント"
   },
   "ranking": {
     "running": "開催中",
@@ -76,7 +78,11 @@
     "record": "戦績",
     "score": "スコア",
     "streak": "連勝",
-    "hallOfFame": "殿堂入り"
+    "hallOfFame": "殿堂入り",
+    "first": "#1",
+    "second": "#2",
+    "third": "#3",
+    "unknown": "不明"
   },
   "auth": {
     "email": "メールアドレス",
@@ -125,6 +131,26 @@
     "error": "問題が発生しました",
     "noData": "データがありません",
     "imageFallback": "IMG",
-    "comingSoon": "近日公開"
+    "comingSoon": "近日公開",
+    "dDay": "D-DAY",
+    "wins": "勝",
+    "of": "/",
+    "times": "回",
+    "winRate": "勝率",
+    "startPredicting": "予想を始める",
+    "pending": "保留中",
+    "viewAll": "全て見る",
+    "nextEvent": "次のイベント",
+    "buyTickets": "チケット購入",
+    "joinNow": "参加する",
+    "tickets": "チケット",
+    "membership": "メンバーシップ",
+    "blackCombatTickets": "Black Combatチケット",
+    "getSeats": "次のイベントの席を確保",
+    "blackCombatYoutube": "Black Combat YouTube",
+    "joinMembership": "メンバーシップで全試合リプレイ",
+    "platform": "プラットフォーム",
+    "fighters": "選手",
+    "latestResults": "最新結果"
   }
 }
