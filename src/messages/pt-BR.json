@@ -70,9 +70,9 @@
     "myAccount": "Minha Conta"
   },
   "ranking": {
-    "running": "Em andamento",
-    "series": "Série",
-    "event": "Evento",
+    "running": "Geral",
+    "series": "Por Série",
+    "event": "Por Evento",
     "rank": "Posição",
     "ringName": "Nome de ringue",
     "record": "Cartel",
@@ -144,7 +144,11 @@
   },
   "countdown": {
     "closesIn": "Palpites encerram em",
-    "locked": "Palpites encerrados"
+    "locked": "Palpites encerrados",
+    "daysShort": "Dias",
+    "hoursShort": "Hrs",
+    "minutesShort": "Min",
+    "secondsShort": "Seg"
   },
   "mvp": {
     "oneVotePerEvent": "Um voto por evento.",

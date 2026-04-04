@@ -5,7 +5,6 @@ import { useI18n, type Locale } from "@/lib/i18n-provider";
 import { cn } from "@/lib/cn";
 import {
   retroButtonClassName,
-  retroInsetClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
 
@@ -23,9 +22,45 @@ const LANGUAGES: {
 
 function ChevronDown() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="m6 9 6 6 6-6" />
     </svg>
+  );
+}
+
+function Trigram({
+  x,
+  y,
+  rotation,
+  pattern,
+}: {
+  x: number;
+  y: number;
+  rotation: number;
+  pattern: Array<"solid" | "split">;
+}) {
+  return (
+    <g
+      transform={`translate(${x} ${y}) rotate(${rotation})`}
+      stroke="#12161b"
+      strokeWidth="0.85"
+      strokeLinecap="round"
+    >
+      {pattern.map((line, index) => {
+        const yOffset = index * 1.5 - 1.5;
+
+        if (line === "solid") {
+          return <line key={`${rotation}-${index}`} x1="-2" y1={yOffset} x2="2" y2={yOffset} />;
+        }
+
+        return (
+          <g key={`${rotation}-${index}`}>
+            <line x1="-2" y1={yOffset} x2="-0.55" y2={yOffset} />
+            <line x1="0.55" y1={yOffset} x2="2" y2={yOffset} />
+          </g>
+        );
+      })}
+    </g>
   );
 }
 
@@ -54,9 +89,15 @@ function Flag({ code }: { code: string }) {
   if (code === "KR") {
     return (
       <svg viewBox="0 0 20 20" className="h-4 w-4 rounded-full">
-        <circle cx="10" cy="10" r="10" fill="#fff" />
-        <path d="M10 6a4 4 0 0 1 0 8 4 4 0 0 0 0-8Z" fill="#cd2e3a" />
-        <path d="M10 14a4 4 0 0 1 0-8 4 4 0 0 0 0 8Z" fill="#0047a0" />
+        <circle cx="10" cy="10" r="9" fill="#fff" stroke="rgba(18,22,27,0.22)" strokeWidth="1" />
+        <g transform="rotate(-33 10 10)">
+          <path d="M10 6.2a3.8 3.8 0 1 1 0 7.6 1.9 1.9 0 0 0 0-3.8 1.9 1.9 0 0 1 0-3.8Z" fill="#cd2e3a" />
+          <path d="M10 13.8a3.8 3.8 0 1 1 0-7.6 1.9 1.9 0 0 0 0 3.8 1.9 1.9 0 0 1 0 3.8Z" fill="#0047a0" />
+        </g>
+        <Trigram x={5.1} y={5.5} rotation={-33} pattern={["solid", "solid", "solid"]} />
+        <Trigram x={14.9} y={5.5} rotation={33} pattern={["solid", "split", "solid"]} />
+        <Trigram x={5.1} y={14.5} rotation={33} pattern={["split", "solid", "split"]} />
+        <Trigram x={14.9} y={14.5} rotation={-33} pattern={["split", "split", "split"]} />
       </svg>
     );
   }
@@ -64,7 +105,7 @@ function Flag({ code }: { code: string }) {
   if (code === "JP") {
     return (
       <svg viewBox="0 0 20 20" className="h-4 w-4 rounded-full">
-        <circle cx="10" cy="10" r="10" fill="#fff" />
+        <circle cx="10" cy="10" r="9" fill="#fff" stroke="rgba(18,22,27,0.22)" strokeWidth="1" />
         <circle cx="10" cy="10" r="4" fill="#bc002d" />
       </svg>
     );
@@ -116,14 +157,14 @@ export default function LanguagePicker() {
         className={retroButtonClassName({
           variant: "ghost",
           size: "sm",
-          className: "h-10 px-3 text-sm",
+          className: "h-9 gap-1.5 px-2.5",
         })}
         aria-haspopup="menu"
         aria-expanded={open}
       >
         <Flag code={current.flag} />
-        <span className="hidden text-xs font-medium sm:inline">{current.short}</span>
-        <span className="text-[var(--retro-muted)]">
+        <span className="hidden text-xs sm:inline">{current.short}</span>
+        <span className="text-[var(--bp-muted)]">
           <ChevronDown />
         </span>
       </button>
@@ -131,8 +172,7 @@ export default function LanguagePicker() {
       {open ? (
         <div
           className={retroPanelClassName({
-            tone: "muted",
-            className: "absolute right-0 top-[calc(100%+10px)] z-50 min-w-[180px] p-1.5",
+            className: "absolute right-0 top-[calc(100%+6px)] z-50 min-w-[160px] p-1",
           })}
         >
           {LANGUAGES.map((language) => {
@@ -147,18 +187,16 @@ export default function LanguagePicker() {
                   setOpen(false);
                 }}
                 className={cn(
-                  retroInsetClassName("flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm"),
+                  "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-sm transition",
                   active
-                    ? "border-[var(--retro-line-strong)] text-[var(--retro-ink)]"
-                    : "border-transparent text-[var(--retro-muted)] hover:border-[var(--retro-line)] hover:text-[var(--retro-ink)]"
+                    ? "bg-[var(--bp-accent-dim)] text-[var(--bp-ink)]"
+                    : "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
                 )}
                 role="menuitem"
               >
                 <Flag code={language.flag} />
                 <span className="flex-1">{language.label}</span>
-                <span className="text-[11px] uppercase tracking-[0.08em] text-[var(--retro-muted)]">
-                  {language.short}
-                </span>
+                <span className="text-[11px] text-[var(--bp-muted)]">{language.short}</span>
               </button>
             );
           })}

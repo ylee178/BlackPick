@@ -70,9 +70,9 @@
     "myAccount": "マイアカウント"
   },
   "ranking": {
-    "running": "開催中",
-    "series": "シリーズ",
-    "event": "イベント",
+    "running": "通算",
+    "series": "シリーズ別",
+    "event": "イベント別",
     "rank": "順位",
     "ringName": "リングネーム",
     "record": "戦績",
@@ -144,7 +144,11 @@
   },
   "countdown": {
     "closesIn": "予想締切まで",
-    "locked": "予想受付終了"
+    "locked": "予想受付終了",
+    "daysShort": "日",
+    "hoursShort": "時",
+    "minutesShort": "分",
+    "secondsShort": "秒"
   },
   "mvp": {
     "oneVotePerEvent": "イベントごとに1票までです。",

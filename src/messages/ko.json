@@ -70,9 +70,9 @@
     "myAccount": "내 계정"
   },
   "ranking": {
-    "running": "진행 중",
-    "series": "시리즈",
-    "event": "이벤트",
+    "running": "통합",
+    "series": "시리즈별",
+    "event": "대회별",
     "rank": "순위",
     "ringName": "링네임",
     "record": "전적",
@@ -144,7 +144,11 @@
   },
   "countdown": {
     "closesIn": "예측 마감까지",
-    "locked": "예측 마감됨"
+    "locked": "예측 마감됨",
+    "daysShort": "일",
+    "hoursShort": "시간",
+    "minutesShort": "분",
+    "secondsShort": "초"
   },
   "mvp": {
     "oneVotePerEvent": "이벤트당 1회 투표할 수 있습니다.",

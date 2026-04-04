@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n-provider";
-import { retroNavLinkClassName, retroPanelClassName } from "@/components/ui/retro";
+import { retroNavLinkClassName } from "@/components/ui/retro";
 
 function HomeIcon() {
   return (
@@ -46,6 +46,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   const { t } = useI18n();
 
   const desktopLinks = [
+    { href: "/", label: t("nav.home") || "Home" },
     { href: "/events", label: t("nav.events") || "Events" },
     { href: "/ranking", label: t("nav.ranking") || "Ranking" },
   ];
@@ -54,12 +55,11 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
     { href: "/", label: t("nav.home") || "Home", icon: <HomeIcon /> },
     { href: "/events", label: t("nav.events") || "Events", icon: <CalendarIcon /> },
     { href: "/ranking", label: t("nav.ranking") || "Ranking", icon: <TrophyIcon /> },
-    { href: "/profile", label: t("nav.profile") || "Profile", icon: <UserIcon /> },
   ];
 
   if (mobile) {
     return (
-      <div className={retroPanelClassName({ tone: "muted", className: "grid grid-cols-4 rounded-none border-x-0 border-b-0" })}>
+      <div className="grid grid-cols-3">
         {mobileLinks.map((link) => {
           const active =
             link.href === "/"
@@ -73,13 +73,12 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
               className={retroNavLinkClassName({
                 active,
                 mobile: true,
-                className: "border-y-0 border-l-0 first:border-l-0",
               })}
             >
-              <span className={active ? "text-[var(--retro-ink)]" : "text-[var(--retro-muted)]"}>
+              <span className={active ? "text-[var(--bp-accent)]" : "text-[var(--bp-muted)]"}>
                 {link.icon}
               </span>
-              <span className={active ? "text-[var(--retro-ink)]" : "text-[var(--retro-muted)]"}>
+              <span className={active ? "text-[var(--bp-accent)]" : "text-[var(--bp-muted)]"}>
                 {link.label}
               </span>
             </Link>
@@ -90,9 +89,12 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   }
 
   return (
-    <nav className={retroPanelClassName({ tone: "muted", className: "flex items-center gap-2 px-2 py-2" })}>
+    <nav className="flex items-center gap-1">
       {desktopLinks.map((link) => {
-        const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+        const active =
+          link.href === "/"
+            ? pathname === "/"
+            : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
         return (
           <Link

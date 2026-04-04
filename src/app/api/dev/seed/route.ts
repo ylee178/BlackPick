@@ -291,9 +291,50 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
     }
   }
 
+  // Seed event rankings for completed events
+  let createdRankings = 0;
+  try {
+    const { data: completedEvents } = await admin
+      .from("events")
+      .select("id")
+      .eq("status", "completed")
+      .order("date", { ascending: false })
+      .limit(2);
+
+    if (completedEvents && completedEvents.length > 0) {
+      const eventIds = completedEvents.map((e: { id: string }) => e.id);
+      await admin.from("rankings").delete().in("reference_id", eventIds);
+
+      for (let ei = 0; ei < completedEvents.length; ei++) {
+        const event = completedEvents[ei];
+        const rankingsToInsert = createdUsers
+          .slice(0, 8)
+          .map((authUser, index) => {
+            const seedUser = seedUsers[index];
+            const eventScore = Math.max(0, (seedUser?.score ?? 0) - index * 40 - ei * 60);
+            return {
+              type: "event" as const,
+              reference_id: event.id,
+              user_id: authUser.id,
+              score: eventScore,
+              rank: index + 1,
+            };
+          });
+
+        const { error: rankError } = await admin.from("rankings").insert(rankingsToInsert);
+        if (!rankError) {
+          createdRankings += rankingsToInsert.length;
+        }
+      }
+    }
+  } catch {
+    // Rankings seeding is optional, don't fail the whole seed
+  }
+
   return {
     created_users: createdUsers.length,
     created_predictions: predictionsToInsert.length,
+    created_rankings: createdRankings,
   };
 }
 

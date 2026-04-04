@@ -70,9 +70,9 @@
     "myAccount": "My Account"
   },
   "ranking": {
-    "running": "Running",
-    "series": "Series",
-    "event": "Event",
+    "running": "All-Time",
+    "series": "By Series",
+    "event": "By Event",
     "rank": "Rank",
     "ringName": "Ring Name",
     "record": "Record",
@@ -144,7 +144,11 @@
   },
   "countdown": {
     "closesIn": "Predictions close in",
-    "locked": "Predictions locked"
+    "locked": "Predictions locked",
+    "daysShort": "Days",
+    "hoursShort": "Hrs",
+    "minutesShort": "Min",
+    "secondsShort": "Sec"
   },
   "mvp": {
     "oneVotePerEvent": "One vote per event.",

@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
+import { cn } from "@/lib/cn";
+import {
+  RetroStatusBadge,
+  retroButtonClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 type Fighter = {
   id: string;
@@ -44,20 +50,20 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
     return Date.now() <= deadline;
   }, [eventDate]);
 
-  async function loadResults() {
+  const loadResults = useCallback(async () => {
     try {
-      const res = await fetch(`/api/mvp-vote?event_id=${eventId}`);
-      const data = await res.json();
-      if (res.ok) {
+      const response = await fetch(`/api/mvp-vote?event_id=${eventId}`);
+      const data = await response.json();
+      if (response.ok) {
         setResults(data.results ?? []);
         setTotalVotes(data.total_votes ?? 0);
       }
     } catch {}
-  }
+  }, [eventId]);
 
   useEffect(() => {
-    loadResults();
-  }, [eventId]);
+    void loadResults();
+  }, [loadResults]);
 
   async function handleVote() {
     if (!selectedFighterId) {
@@ -71,17 +77,11 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
     try {
       const res = await fetch("/api/mvp-vote", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          event_id: eventId,
-          fighter_id: selectedFighterId,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: eventId, fighter_id: selectedFighterId }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         setMessage(data.error || t("mvp.submitFailed"));
         return;
@@ -97,18 +97,16 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
   }
 
   return (
-    <section className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
+    <section className={retroPanelClassName({ className: "p-4" })}>
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-white">{t("event.mvpVote")}</h2>
-          <p className="text-sm text-gray-400">{t("mvp.oneVotePerEvent")}</p>
-        </div>
-        <div className="text-xs text-gray-400">{t("mvp.totalVotes")}: {totalVotes}</div>
+        <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("event.mvpVote")}</p>
+        <RetroStatusBadge tone="info">{totalVotes} {t("mvp.totalVotes")}</RetroStatusBadge>
       </div>
+      <p className="mt-1 text-xs text-[var(--bp-muted)]">{t("mvp.oneVotePerEvent")}</p>
 
       {votingOpen ? (
         <>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
             {fighters.map((fighter) => {
               const active = selectedFighterId === fighter.id;
               const fighterLabel = getLocalizedFighterName(fighter, locale, fighter.name);
@@ -118,80 +116,75 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
                   key={fighter.id}
                   type="button"
                   onClick={() => setSelectedFighterId(fighter.id)}
-                  className={`rounded-xl border p-3 text-left transition ${
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-[10px] border p-2.5 text-left transition",
                     active
-                      ? "border-amber-400 bg-amber-400/10"
-                      : "border-gray-800 bg-gray-950 hover:border-gray-700"
-                  }`}
+                      ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-accent-dim)]"
+                      : "border-[var(--bp-line)] bg-[var(--bp-card-inset)] hover:border-[var(--bp-line-strong)]"
+                  )}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 overflow-hidden rounded-lg bg-gray-800">
-                      {avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt={fighterLabel}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
-                          PIXEL
-                        </div>
-                      )}
-                    </div>
-                    <p className="font-semibold text-white">{fighterLabel}</p>
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-[8px] border border-[var(--bp-line)] bg-[var(--bp-card)]">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={fighterLabel} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[8px] text-[var(--bp-muted)]">IMG</div>
+                    )}
                   </div>
+                  <p className="min-w-0 truncate text-sm font-medium text-[var(--bp-ink)]">{fighterLabel}</p>
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-4 flex items-center justify-end">
+          <div className="mt-3 flex items-center justify-end">
             <button
               type="button"
               onClick={handleVote}
               disabled={loading}
-              className="rounded-xl bg-amber-400 px-4 py-2 text-sm font-bold text-gray-950 transition hover:bg-amber-300 disabled:opacity-60"
+              className={retroButtonClassName({ variant: "primary", size: "sm" })}
             >
               {loading ? t("mvp.submitting") : t("mvp.vote")}
             </button>
           </div>
         </>
       ) : (
-        <p className="mt-4 text-sm text-gray-400">{t("mvp.ended")}</p>
+        <p className="mt-3 text-sm text-[var(--bp-muted)]">{t("mvp.ended")}</p>
       )}
 
-      {message && <p className="mt-3 text-sm text-gray-300">{message}</p>}
+      {message && <p className="mt-2 text-xs text-[var(--bp-muted)]">{message}</p>}
 
-      <div className="mt-6 space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
-          {t("mvp.results")}
-        </h3>
-        {results.length === 0 ? (
-          <p className="text-sm text-gray-400">{t("mvp.noVotesYet")}</p>
-        ) : (
-          results.map((result) => (
-            <div
-              key={result.fighter_id}
-              className="rounded-xl border border-gray-800 bg-gray-950 p-3"
-            >
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="font-semibold text-white">
-                  {getLocalizedFighterName(result, locale, result.name)}
-                </p>
-                <p className="text-sm text-amber-400">
-                  {result.votes} votes • {result.percentage}%
-                </p>
+      {results.length > 0 ? (
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-semibold uppercase text-[var(--bp-muted)]">{t("mvp.results")}</p>
+          {results.map((result) => {
+            const avatarUrl = getFighterAvatarUrl(result);
+            return (
+              <div key={result.fighter_id} className="flex items-center gap-2.5 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] p-2.5">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-[8px] border border-[var(--bp-line)] bg-[var(--bp-card)]">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={getLocalizedFighterName(result, locale, result.name)} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[8px] text-[var(--bp-muted)]">IMG</div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-medium text-[var(--bp-ink)]">
+                      {getLocalizedFighterName(result, locale, result.name)}
+                    </p>
+                    <p className="text-xs font-semibold text-[var(--bp-accent)]">
+                      {result.votes} ({result.percentage}%)
+                    </p>
+                  </div>
+                  <div className="retro-meter mt-1.5">
+                    <div className="retro-meter-fill" style={{ width: `${result.percentage}%` }} />
+                  </div>
+                </div>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-gray-800">
-                <div
-                  className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${result.percentage}%` }}
-                />
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }

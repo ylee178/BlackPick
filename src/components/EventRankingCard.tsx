@@ -1,0 +1,171 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useI18n } from "@/lib/i18n-provider";
+import { getLocalizedEventName } from "@/lib/localized-name";
+import { retroPanelClassName } from "@/components/ui/retro";
+
+type CompletedEvent = {
+  id: string;
+  name: string;
+  date: string;
+};
+
+type RankUser = {
+  id: string;
+  ring_name: string | null;
+  score: number | null;
+  wins: number | null;
+  losses: number | null;
+};
+
+type Props = {
+  completedEvents: CompletedEvent[];
+  initialEventIndex: number;
+  initialUsers: RankUser[];
+};
+
+function ArrowLeft() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M10 3 5 8l5 5" />
+    </svg>
+  );
+}
+
+function ArrowRight() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M6 3l5 5-5 5" />
+    </svg>
+  );
+}
+
+export default function EventRankingCard({ completedEvents, initialEventIndex, initialUsers }: Props) {
+  const { t, locale } = useI18n();
+  const [currentIndex, setCurrentIndex] = useState(initialEventIndex);
+  const [users, setUsers] = useState<RankUser[]>(initialUsers);
+  const [loading, setLoading] = useState(false);
+
+  const currentEvent = completedEvents[currentIndex] ?? null;
+  const canGoLeft = currentIndex > 0;
+  const canGoRight = currentIndex < completedEvents.length - 1;
+
+  const fetchRankings = useCallback(async (eventId: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/ranking?type=event&reference_id=${eventId}&limit=5`);
+      if (res.ok) {
+        const json = await res.json();
+        const ranked = (json.data ?? []) as Array<{ user: RankUser | null; score: number | null }>;
+        setUsers(
+          ranked
+            .filter((r) => r.user)
+            .map((r) => ({ ...r.user!, score: r.score ?? r.user!.score }))
+        );
+      } else {
+        setUsers([]);
+      }
+    } catch {
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  function goLeft() {
+    if (!canGoLeft) return;
+    const newIndex = currentIndex - 1;
+    setCurrentIndex(newIndex);
+    const ev = completedEvents[newIndex];
+    if (ev) void fetchRankings(ev.id);
+  }
+
+  function goRight() {
+    if (!canGoRight) return;
+    const newIndex = currentIndex + 1;
+    setCurrentIndex(newIndex);
+    const ev = completedEvents[newIndex];
+    if (ev) void fetchRankings(ev.id);
+  }
+
+  if (completedEvents.length === 0) {
+    return (
+      <section className={retroPanelClassName({ className: "p-4" })}>
+        <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("ranking.event")}</p>
+        <p className="mt-3 py-4 text-center text-xs text-[var(--bp-muted)]">{t("common.noData")}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className={retroPanelClassName({ className: "p-4" })}>
+      {/* Header with arrows */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("ranking.event")}</p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={goLeft}
+            disabled={!canGoLeft}
+            className={`flex h-6 w-6 items-center justify-center rounded-[6px] transition ${
+              canGoLeft
+                ? "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
+                : "pointer-events-none text-[var(--bp-muted)] opacity-20"
+            }`}
+          >
+            <ArrowLeft />
+          </button>
+          <button
+            type="button"
+            onClick={goRight}
+            disabled={!canGoRight}
+            className={`flex h-6 w-6 items-center justify-center rounded-[6px] transition ${
+              canGoRight
+                ? "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
+                : "pointer-events-none text-[var(--bp-muted)] opacity-20"
+            }`}
+          >
+            <ArrowRight />
+          </button>
+        </div>
+      </div>
+
+      {/* Current event name */}
+      {currentEvent ? (
+        <Link
+          href={`/ranking?tab=event&event=${currentEvent.id}`}
+          className="mt-1 block truncate text-[11px] text-[var(--bp-accent)] hover:underline"
+        >
+          {getLocalizedEventName(currentEvent, locale, currentEvent.name)}
+        </Link>
+      ) : null}
+
+      {/* Rankings list */}
+      <div className="mt-3 space-y-1">
+        {loading ? (
+          <p className="py-4 text-center text-xs text-[var(--bp-muted)]">{t("common.loading")}</p>
+        ) : users.length === 0 ? (
+          <p className="py-4 text-center text-xs text-[var(--bp-muted)]">{t("common.noData")}</p>
+        ) : (
+          users.map((user, index) => (
+            <div key={user.id} className="flex items-center justify-between gap-2 rounded-[8px] px-2.5 py-1.5 odd:bg-[var(--bp-card-inset)]">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`w-5 text-center text-[11px] font-bold ${index === 0 ? "text-[var(--bp-accent)]" : index < 3 ? "text-[var(--bp-info)]" : "text-[var(--bp-muted)]"}`}>
+                  {index + 1}
+                </span>
+                <span className="text-[11px] text-[var(--bp-muted)] opacity-40">—</span>
+                <p className="truncate text-sm text-[var(--bp-ink)]">{user.ring_name || t("ranking.unknown")}</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg viewBox="0 0 16 16" className="h-3 w-3 text-[var(--bp-accent)]" fill="currentColor"><path d="M8 2l2.5 4h-1.75v8h-1.5V6H5.5z" /></svg>
+                <span className="text-sm font-bold tabular-nums text-[var(--bp-accent)]">{user.score ?? 0}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}

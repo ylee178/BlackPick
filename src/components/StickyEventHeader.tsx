@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/cn";
 import { useI18n } from "@/lib/i18n-provider";
+import { RetroStatusBadge } from "@/components/ui/retro";
 
 type Props = {
   eventName: string;
@@ -36,38 +38,50 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   }, [watchElementId]);
 
   useEffect(() => {
-    if (!countdownTargetTime) return;
-    setCountdown(getTimeLeft(countdownTargetTime));
+    const initTimer = window.setTimeout(
+      () => setCountdown(countdownTargetTime ? getTimeLeft(countdownTargetTime) : null),
+      0
+    );
+
+    if (!countdownTargetTime) {
+      return () => clearTimeout(initTimer);
+    }
+
     const i = setInterval(() => setCountdown(getTimeLeft(countdownTargetTime)), 1000);
-    return () => clearInterval(i);
+    return () => {
+      clearTimeout(initTimer);
+      clearInterval(i);
+    };
   }, [countdownTargetTime]);
 
   return (
     <div
-      className={`sticky top-0 z-50 -mx-5 border-b border-[#ffba3c]/8 bg-black/95 px-5 py-3 backdrop-blur-xl transition-all duration-300 sm:-mx-8 sm:px-8 ${
-        visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
-      }`}
+      className={cn(
+        "sticky top-[53px] z-30 -mx-4 border-b border-[var(--bp-line)] bg-[var(--bp-bg)] px-4 sm:-mx-6 sm:px-6",
+        "transition-all duration-200",
+        visible ? "translate-y-0 opacity-100" : "-translate-y-2 pointer-events-none opacity-0"
+      )}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-white">{eventName}</p>
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 py-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <RetroStatusBadge
+            tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
+          >
+            {t(`status.${eventStatus}`)}
+          </RetroStatusBadge>
+          <p className="min-w-0 truncate text-sm font-semibold text-[var(--bp-ink)]">{eventName}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-            eventStatus === "live" ? "bg-red-500/15 text-red-400" :
-            eventStatus === "completed" ? "bg-[#ffba3c]/10 text-[#ffba3c]/80" :
-            "bg-white/5 text-white/60"
-          }`}>
-            {t(`event.${eventStatus}`)}
-          </span>
           {countdown && (
-            <span
-              className="text-xs font-bold text-[#ffba3c]"
-              style={{ fontFamily: "var(--font-display)" }}
-              suppressHydrationWarning
-            >
-              {countdown}
-            </span>
+            <div className="flex items-center gap-1.5 rounded-[8px] bg-[var(--bp-accent-dim)] px-2.5 py-1">
+              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-[var(--bp-accent)]" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="8" cy="8" r="6.5" />
+                <path d="M8 4.5V8l2.5 1.5" />
+              </svg>
+              <span className="text-xs font-bold tabular-nums text-[var(--bp-accent)]" suppressHydrationWarning>
+                {countdown}
+              </span>
+            </div>
           )}
         </div>
       </div>

@@ -3,14 +3,80 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getLocalizedEventName } from "@/lib/localized-name";
+import {
+  RetroEmptyState,
+  RetroStatusBadge,
+  retroButtonClassName,
+  retroChipClassName,
+  retroInsetClassName,
+  retroPanelClassName,
+  retroSegmentClassName,
+} from "@/components/ui/retro";
 
 export const dynamic = "force-dynamic";
 
-function getDDay(date: string) {
-  const diff = new Date(date).getTime() - Date.now();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days <= 0) return "D-DAY";
-  return `D-${days}`;
+type EventRow = {
+  id: string;
+  name: string;
+  date: string;
+  status: "upcoming" | "live" | "completed";
+  series_type: "black_cup" | "numbering" | "rise" | "other";
+};
+
+function getStatusTone(status: EventRow["status"]) {
+  if (status === "live") return "danger";
+  if (status === "completed") return "success";
+  return "info";
+}
+
+function EventListSection({
+  title,
+  items,
+  locale,
+  t,
+}: {
+  title: string;
+  items: EventRow[];
+  locale: string;
+  t: (key: string) => string;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <section>
+      <div className="mb-3 flex items-center gap-2">
+        <p className="text-sm font-semibold text-[var(--bp-ink)]">{title}</p>
+        <span className="text-xs text-[var(--bp-muted)]">{items.length}</span>
+      </div>
+
+      <div className="space-y-2">
+        {items.map((event) => (
+          <Link
+            key={event.id}
+            href={`/events/${event.id}`}
+            className={retroInsetClassName("gold-hover flex items-center justify-between gap-3 p-3 sm:p-4")}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <RetroStatusBadge tone={getStatusTone(event.status)}>
+                  {t(`status.${event.status}`)}
+                </RetroStatusBadge>
+                <span className="text-[11px] text-[var(--bp-muted)]">{getSeriesLabel(event.series_type, t)}</span>
+              </div>
+              <p className="mt-1.5 truncate text-sm font-semibold text-[var(--bp-ink)]">
+                {getLocalizedEventName(event, locale as "en" | "ko" | "ja" | "pt-BR", event.name)}
+              </p>
+              <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{event.date}</p>
+            </div>
+
+            <span className={retroButtonClassName({ variant: event.status === "completed" ? "ghost" : "primary", size: "sm" })}>
+              {event.status === "completed" ? t("event.result") : t("event.makeYourPick")}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export default async function EventsPage() {
@@ -20,102 +86,46 @@ export default async function EventsPage() {
   const { data: events } = await supabase
     .from("events")
     .select("id, name, date, status, series_type")
-    .order("date", { ascending: false });
+    .order("date", { ascending: true });
 
-  const upcoming = (events ?? []).filter((e) => e.status === "upcoming" || e.status === "live");
-  const completed = (events ?? []).filter((e) => e.status === "completed");
+  const typedEvents = (events ?? []) as EventRow[];
+  const liveEvents = typedEvents.filter((event) => event.status === "live");
+  const upcomingEvents = typedEvents.filter((event) => event.status === "upcoming");
+  const completedEvents = typedEvents.filter((event) => event.status === "completed");
+  const featured = liveEvents[0] ?? upcomingEvents[0] ?? null;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-5">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="h-px w-8 bg-[#ffba3c]/40" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
-            Black Combat
-          </span>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("event.allEvents")}</h1>
+          <div className="mt-2 flex gap-2">
+            <span className={retroChipClassName({ tone: liveEvents.length > 0 ? "accent" : "neutral" })}>
+              {liveEvents.length} {t("status.live")}
+            </span>
+            <span className={retroChipClassName({ tone: "neutral" })}>
+              {upcomingEvents.length} {t("status.upcoming")}
+            </span>
+            <span className={retroChipClassName({ tone: "neutral" })}>
+              {completedEvents.length} {t("status.completed")}
+            </span>
+          </div>
         </div>
-        <h1
-          className="mt-4 text-3xl font-black uppercase text-white md:text-4xl"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          All {t("nav.events")}
-        </h1>
+        {featured ? (
+          <Link href={`/events/${featured.id}`} className={retroButtonClassName({ variant: "primary", size: "sm" })}>
+            {t("event.makeYourPick")}
+          </Link>
+        ) : null}
       </div>
 
-      {/* Upcoming / Live */}
-      {upcoming.length > 0 && (
-        <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-px w-6 bg-[#ffba3c]/30" />
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
-              {t("event.upcoming")}
-            </h2>
-          </div>
-          <div className="grid gap-3">
-            {upcoming.map((event) => (
-              <Link
-                key={event.id}
-                href={`/events/${event.id}`}
-                className="gold-hover group flex items-center justify-between rounded-xl border border-[#ffba3c]/10 bg-[#ffba3c]/[0.02] p-5 transition"
-              >
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#ffba3c]/80">
-                    {getSeriesLabel(event.series_type, t)}
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-white group-hover:text-[#ffba3c] transition">
-                    {getLocalizedEventName(event, locale, event.name)}
-                  </p>
-                  <p className="mt-1 text-xs text-white/50">{event.date}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {event.status === "live" && (
-                    <span className="flex items-center gap-1.5 rounded bg-red-500/15 px-2.5 py-1 text-[10px] font-bold text-red-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-                      LIVE
-                    </span>
-                  )}
-                  <span
-                    className="rounded border border-[#ffba3c]/20 bg-[#ffba3c]/10 px-3 py-1.5 text-xs font-bold text-[#ffba3c]"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {getDDay(event.date)}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Completed */}
-      <section>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-px w-6 bg-white/10" />
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50">
-            {t("event.completed")} ({completed.length})
-          </h2>
-        </div>
-        <div className="grid gap-2">
-          {completed.map((event) => (
-            <Link
-              key={event.id}
-              href={`/events/${event.id}`}
-              className="group flex items-center justify-between rounded-lg border border-white/[0.03] p-4 transition hover:border-white/8"
-            >
-              <div>
-                <p className="text-[9px] uppercase tracking-wider text-white/50">
-                  {getSeriesLabel(event.series_type, t)}
-                </p>
-                <p className="mt-0.5 text-sm font-medium text-white/60 group-hover:text-white/60 transition">
-                  {getLocalizedEventName(event, locale, event.name)}
-                </p>
-              </div>
-              <span className="text-[10px] text-white/45">{event.date}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Event Lists */}
+      <div className={retroPanelClassName({ className: "space-y-6 p-4 sm:p-5" })}>
+        <EventListSection title={t("status.live")} items={liveEvents} locale={locale} t={t} />
+        <EventListSection title={t("status.upcoming")} items={upcomingEvents} locale={locale} t={t} />
+        <EventListSection title={t("status.completed")} items={completedEvents} locale={locale} t={t} />
+        {typedEvents.length === 0 ? <RetroEmptyState title={t("common.noData")} /> : null}
+      </div>
     </div>
   );
 }

@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { useI18n } from "@/lib/i18n-provider";
+import { useRouter } from "next/navigation";
 import { mapAuthErrorMessage } from "@/lib/auth-error";
+import { useI18n } from "@/lib/i18n-provider";
+import { createBrowserSupabaseClient } from "@/lib/supabase";
+import {
+  retroButtonClassName,
+  retroFieldClassName,
+  retroPanelClassName,
+} from "@/components/ui/retro";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,20 +23,20 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: loginError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     setLoading(false);
 
-    if (error) {
-      setError(mapAuthErrorMessage(error.message, t));
+    if (loginError) {
+      setError(mapAuthErrorMessage(loginError.message, t));
       return;
     }
 
@@ -44,63 +49,56 @@ export default function LoginPage() {
     setError(null);
 
     const origin = window.location.origin;
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${origin}/`,
       },
     });
 
-    if (error) {
-      setError(mapAuthErrorMessage(error.message, t));
+    if (oauthError) {
+      setError(mapAuthErrorMessage(oauthError.message, t));
       setGoogleLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 px-4 py-8 text-white">
-      <div className="mx-auto max-w-md rounded-2xl border border-gray-800 bg-gray-900/70 p-6 shadow-xl">
-        <div className="mb-6 text-center">
-          <p className="text-sm uppercase tracking-[0.2em] text-amber-400">
-            {t("auth.loginEyebrow")}
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold">{t("auth.loginTitle")}</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            {t("auth.loginDescription")}
-          </p>
-        </div>
+    <div className="mx-auto max-w-md">
+      <section className={retroPanelClassName({ className: "p-5 sm:p-6" })}>
+        <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("auth.loginTitle")}</h1>
+        <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("auth.loginDescription")}</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="mt-5 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-[var(--bp-ink)]">
               {t("auth.email")}
             </label>
             <input
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
+              onChange={(event) => setEmail(event.target.value)}
+              className={retroFieldClassName("px-3.5 py-2.5")}
               placeholder={t("auth.emailPlaceholder")}
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-[var(--bp-ink)]">
               {t("auth.password")}
             </label>
             <input
               type="password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
+              onChange={(event) => setPassword(event.target.value)}
+              className={retroFieldClassName("px-3.5 py-2.5")}
               placeholder={t("auth.passwordPlaceholder")}
             />
           </div>
 
           {error ? (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            <div className="rounded-[10px] border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3.5 py-2.5 text-sm text-[var(--bp-danger)]">
               {error}
             </div>
           ) : null}
@@ -108,34 +106,34 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-amber-400 px-4 py-3 font-bold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-70"
+            className={retroButtonClassName({ variant: "primary", size: "lg", block: true })}
           >
             {loading ? t("auth.signingIn") : t("auth.login")}
           </button>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-[var(--bp-line)]" />
+            <span className="text-xs text-[var(--bp-muted)]">{t("auth.or")}</span>
+            <div className="h-px flex-1 bg-[var(--bp-line)]" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className={retroButtonClassName({ variant: "ghost", block: true })}
+          >
+            {googleLoading ? t("auth.redirecting") : t("auth.googleLogin")}
+          </button>
+
+          <p className="text-center text-sm text-[var(--bp-muted)]">
+            {t("auth.noAccount")}{" "}
+            <Link href="/signup" className="font-semibold text-[var(--bp-accent)]">
+              {t("auth.signup")}
+            </Link>
+          </p>
         </form>
-
-        <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-800" />
-          <span className="text-xs uppercase tracking-widest text-gray-400">{t("auth.or")}</span>
-          <div className="h-px flex-1 bg-gray-800" />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-          className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 font-semibold text-white transition hover:border-gray-700 hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {googleLoading ? t("auth.redirecting") : t("auth.googleLogin")}
-        </button>
-
-        <p className="mt-6 text-center text-sm text-gray-400">
-          {t("auth.noAccount")}{" "}
-          <Link href="/signup" className="font-semibold text-amber-400 hover:text-amber-300">
-            {t("auth.signup")}
-          </Link>
-        </p>
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }

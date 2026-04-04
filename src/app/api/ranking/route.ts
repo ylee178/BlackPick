@@ -10,8 +10,10 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") ?? "running";
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const referenceId = searchParams.get("reference_id");
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const limitParam = Number(searchParams.get("limit") || "0") || 0;
+  const effectivePageSize = limitParam > 0 ? Math.min(limitParam, PAGE_SIZE) : PAGE_SIZE;
+  const from = (page - 1) * effectivePageSize;
+  const to = from + effectivePageSize - 1;
 
   if (!["running", "series", "event"].includes(type)) {
     return NextResponse.json(

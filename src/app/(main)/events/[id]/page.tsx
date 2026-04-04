@@ -1,11 +1,41 @@
 import FightCard from "@/components/FightCard";
-import MvpVoteSection from "@/components/MvpVoteSection";
 import FlipTimer from "@/components/FlipTimer";
+import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
-import { createSupabaseServer, getUser } from "@/lib/supabase-server";
+import { RetroStatusBadge, retroChipClassName, retroPanelClassName } from "@/components/ui/retro";
 import { getSeriesLabel } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n-server";
-import { getLocalizedEventName } from "@/lib/localized-name";
+import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
+import { createSupabaseServer, getUser } from "@/lib/supabase-server";
+import type { Database } from "@/types/database";
+
+type FighterRow = Database["public"]["Tables"]["fighters"]["Row"];
+type FightRow = Database["public"]["Tables"]["fights"]["Row"];
+type PredictionRow = Database["public"]["Tables"]["predictions"]["Row"];
+type FightWithFighters = FightRow & {
+  fighter_a: FighterRow;
+  fighter_b: FighterRow;
+};
+type PredictionVoteRow = Pick<PredictionRow, "fight_id" | "winner_id">;
+type FightDisplayState = "upcoming" | "live" | "completed";
+type FightEntry = {
+  index: number;
+  fight: FightWithFighters;
+  hasStarted: boolean;
+  displayState: FightDisplayState;
+  prediction: PredictionRow | null;
+  crowdStats: {
+    fighter_a_percentage: number;
+    fighter_b_percentage: number;
+    total_predictions: number;
+  } | null;
+};
+
+function getStatusTone(status: FightDisplayState | "cancelled") {
+  if (status === "completed") return "success";
+  if (status === "live" || status === "cancelled") return "danger";
+  return "info";
+}
 
 export default async function EventPage({
   params,
@@ -25,11 +55,13 @@ export default async function EventPage({
 
   if (!event) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-[#0a0a0a] p-8 text-center text-white/55">
+      <div className={retroPanelClassName({ className: "p-6 text-center text-sm text-[var(--bp-muted)]" })}>
         {t("event.notFound")}
       </div>
     );
   }
+
+  const eventStatus = event.status as "upcoming" | "live" | "completed";
 
   const { data: fights } = await supabase
     .from("fights")
@@ -41,27 +73,28 @@ export default async function EventPage({
     .eq("event_id", id)
     .order("start_time", { ascending: true });
 
-  const fightIds = (fights ?? []).map((f) => f.id);
-  const earliestStart = fights && fights.length > 0
-    ? [...fights].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0].start_time
-    : null;
+  const typedFights = (fights ?? []) as FightWithFighters[];
+  const fightIds = typedFights.map((fight) => fight.id);
+  const earliestStart = typedFights[0]?.start_time ?? null;
 
   const [{ data: predictions }, { data: statsData }] = await Promise.all([
     user && fightIds.length > 0
       ? supabase.from("predictions").select("*").eq("user_id", user.id).in("fight_id", fightIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as PredictionRow[] }),
     fightIds.length > 0
       ? supabase.from("predictions").select("fight_id, winner_id").in("fight_id", fightIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as PredictionVoteRow[] }),
   ]);
 
-  const predMap = new Map((predictions ?? []).map((p: any) => [p.fight_id, p]));
+  const predictionRows = (predictions ?? []) as PredictionRow[];
+  const predictionStatsRows = (statsData ?? []) as PredictionVoteRow[];
+  const predictionMap = new Map(predictionRows.map((prediction) => [prediction.fight_id, prediction]));
 
   const statsMap = new Map<string, { fighter_a_percentage: number; fighter_b_percentage: number; total_predictions: number }>();
-  for (const fight of fights ?? []) {
-    const fp = (statsData ?? []).filter((p: any) => p.fight_id === fight.id);
-    const total = fp.length;
-    const aCount = fp.filter((p: any) => p.winner_id === fight.fighter_a_id).length;
+  for (const fight of typedFights) {
+    const rows = predictionStatsRows.filter((prediction) => prediction.fight_id === fight.id);
+    const total = rows.length;
+    const aCount = rows.filter((prediction) => prediction.winner_id === fight.fighter_a_id).length;
     statsMap.set(fight.id, {
       fighter_a_percentage: total > 0 ? Math.round((aCount / total) * 100) : 0,
       fighter_b_percentage: total > 0 ? Math.round(((total - aCount) / total) * 100) : 0,
@@ -69,114 +102,134 @@ export default async function EventPage({
     });
   }
 
-  const eventFighterMap = new Map<string, any>();
-  for (const fight of fights ?? []) {
-    if ((fight as any).fighter_a) eventFighterMap.set((fight as any).fighter_a.id, (fight as any).fighter_a);
-    if ((fight as any).fighter_b) eventFighterMap.set((fight as any).fighter_b.id, (fight as any).fighter_b);
+  const eventFighterMap = new Map<string, FighterRow>();
+  for (const fight of typedFights) {
+    eventFighterMap.set(fight.fighter_a.id, fight.fighter_a);
+    eventFighterMap.set(fight.fighter_b.id, fight.fighter_b);
   }
 
-  const fightCount = (fights ?? []).length;
-  const completedCount = (fights ?? []).filter((f) => f.status === "completed").length;
-  const withWinner = (fights ?? []).filter((f) => f.winner_id).length;
+  // eslint-disable-next-line react-hooks/purity -- request-time lock state needs the current server timestamp.
   const nowTimestamp = Date.now();
   const localizedEventName = getLocalizedEventName(event, locale, event.name);
+  const fightEntries: FightEntry[] = typedFights.map((fight, index) => {
+    const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
+    const isCompleted = event.status === "completed" || fight.status === "completed" || fight.status === "cancelled";
+    const displayState: FightDisplayState = isCompleted
+      ? "completed"
+      : event.status === "live" || hasStarted
+        ? "live"
+        : "upcoming";
+
+    return {
+      index: index + 1,
+      fight,
+      hasStarted,
+      displayState,
+      prediction: predictionMap.get(fight.id) ?? null,
+      crowdStats: statsMap.get(fight.id) ?? null,
+    };
+  });
+
+  const liveEntries = fightEntries.filter((entry) => entry.displayState === "live");
+  const upcomingEntries = fightEntries.filter((entry) => entry.displayState === "upcoming");
+  const completedEntries = fightEntries.filter((entry) => entry.displayState === "completed");
+  const pickedEntries = fightEntries.filter((entry) => entry.prediction);
+
+  function renderFightSection(sectionId: string, label: string, items: FightEntry[]) {
+    if (items.length === 0) return null;
+
+    return (
+      <section id={sectionId}>
+        <div className="mb-3 flex items-center gap-2">
+          <RetroStatusBadge tone={getStatusTone(sectionId as FightDisplayState)}>{label}</RetroStatusBadge>
+          <span className="text-xs text-[var(--bp-muted)]">{items.length}</span>
+        </div>
+        <div className="space-y-2">
+          {items.map((entry) => (
+            <FightCard
+              key={entry.fight.id}
+              index={entry.index}
+              variant="option-2"
+              fight={entry.fight}
+              eventStatus={eventStatus}
+              hasStarted={entry.hasStarted}
+              prediction={entry.prediction}
+              crowdStats={entry.crowdStats}
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <div className="relative space-y-8 pb-24">
+    <div className="relative space-y-4 pb-24 md:pb-0">
       <StickyEventHeader
         eventName={localizedEventName}
-        eventStatus={event.status as "upcoming" | "live" | "completed"}
-        countdownTargetTime={event.status === "upcoming" ? earliestStart : null}
+        eventStatus={eventStatus}
+        countdownTargetTime={eventStatus === "upcoming" ? earliestStart : null}
         watchElementId="event-page-header"
       />
 
-      {/* ── Header ── */}
-      <section
-        id="event-page-header"
-        className="premium-card relative overflow-hidden rounded-2xl p-6 md:p-8"
-      >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffba3c]/25 to-transparent" />
+      {/* Event Header */}
+      <section id="event-page-header" className={retroPanelClassName({ className: "p-4 sm:p-5" })}>
+        <div className="flex items-center gap-2">
+          <RetroStatusBadge tone={getStatusTone(event.status as FightDisplayState)}>
+            {t(`status.${event.status}`)}
+          </RetroStatusBadge>
+          <span className={retroChipClassName({ tone: "neutral" })}>{getSeriesLabel(event.series_type, t)}</span>
+        </div>
 
-        <div className="relative grid gap-6 lg:grid-cols-[1fr_320px]">
-          {/* Left: Event info */}
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="rounded border border-[#ffba3c]/20 bg-[#ffba3c]/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#ffba3c]">
-                {getSeriesLabel(event.series_type, t)}
-              </span>
-              <span className={`rounded border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] ${
-                event.status === "live"
-                  ? "border-red-500/20 bg-red-500/10 text-red-400"
-                  : event.status === "completed"
-                    ? "border-[#ffba3c]/15 text-[#ffba3c]/80"
-                    : "border-white/8 text-white/60"
-              }`}>
-                {t(`event.${event.status}`)}
-              </span>
-            </div>
+        <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] sm:text-2xl">
+          {localizedEventName}
+        </h1>
+        <p className="mt-1 text-sm text-[var(--bp-muted)]">{event.date}</p>
 
-            <h1
-              className="mt-5 text-3xl font-black uppercase leading-tight text-white md:text-4xl lg:text-5xl"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {localizedEventName}
-            </h1>
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--bp-muted)]">
+          <span>{fightEntries.length} {t("event.totalFights")}</span>
+          <span>·</span>
+          <span>{pickedEntries.length} {t("prediction.yourPick")}</span>
+        </div>
 
-            <p className="mt-3 text-sm text-white/55">{event.date}</p>
-
-            {event.status === "upcoming" && (
-              <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/55">
-                {t("event.upcomingDescription")}
-              </p>
-            )}
-            {event.status === "live" && (
-              <p className="mt-4 text-sm text-white/55">{t("event.liveDescription")}</p>
-            )}
-            {event.status === "completed" && (
-              <p className="mt-4 text-sm text-white/55">{t("event.completedDescription")}</p>
-            )}
+        {/* Timer */}
+        {event.status === "upcoming" && earliestStart ? (
+          <div className="mt-4">
+            <FlipTimer targetTime={earliestStart} />
           </div>
+        ) : null}
 
-          {/* Right: Stats panel */}
-          <div className="space-y-4">
-            {event.status === "upcoming" && earliestStart && (
-              <FlipTimer targetTime={earliestStart} />
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/[0.05] bg-black p-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{t("event.totalFights")}</p>
-                <p
-                  className="mt-2 text-3xl font-black text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {fightCount}
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/[0.05] bg-black p-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{t("event.result")}</p>
-                <p
-                  className="mt-2 text-3xl font-black text-[#ffba3c]"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {withWinner}/{completedCount}
-                </p>
-              </div>
-            </div>
-
-            {/* Decorative corners */}
-            <div className="absolute bottom-4 right-4 hidden h-10 w-10 border-b border-r border-[#ffba3c]/10 lg:block" />
-          </div>
+        {/* Quick Nav */}
+        <div className="mt-4 flex gap-2">
+          {liveEntries.length > 0 ? (
+            <a href="#live" className={retroChipClassName()}>
+              {t("status.live")} {liveEntries.length}
+            </a>
+          ) : null}
+          {upcomingEntries.length > 0 ? (
+            <a href="#upcoming" className={retroChipClassName({ tone: "neutral" })}>
+              {t("status.upcoming")} {upcomingEntries.length}
+            </a>
+          ) : null}
+          {completedEntries.length > 0 ? (
+            <a href="#completed" className={retroChipClassName({ tone: "neutral" })}>
+              {t("status.completed")} {completedEntries.length}
+            </a>
+          ) : null}
         </div>
       </section>
 
-      {/* ── MVP Video ── */}
-      {event.status === "completed" && event.mvp_video_url && (
-        <section className="overflow-hidden rounded-2xl border border-white/5 bg-[#0a0a0a]">
-          <div className="border-b border-white/5 px-5 py-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-[#ffba3c]">
-              {t("event.mvpHighlight")}
-            </h2>
+      {/* Fight Sections */}
+      <div className="space-y-5">
+        {renderFightSection("live", t("status.live"), liveEntries)}
+        {renderFightSection("upcoming", t("status.upcoming"), upcomingEntries)}
+        {renderFightSection("completed", t("status.completed"), completedEntries)}
+      </div>
+
+      {/* MVP Video */}
+      {event.status === "completed" && event.mvp_video_url ? (
+        <section className={retroPanelClassName({ className: "overflow-hidden p-0" })}>
+          <div className="border-b border-[var(--bp-line)] px-4 py-3">
+            <p className="text-sm font-semibold text-[var(--bp-accent)]">{t("event.mvpHighlight")}</p>
           </div>
           <div className="aspect-video w-full bg-black">
             <iframe
@@ -189,48 +242,16 @@ export default async function EventPage({
             />
           </div>
         </section>
-      )}
+      ) : null}
 
-      {/* ── Fight Card List ── */}
-      <section>
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-px w-6 bg-[#ffba3c]/30" />
-            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
-              {t("event.fightCard")}
-            </h2>
-          </div>
-          <span
-            className="text-sm font-bold text-white/50"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {fightCount} {t("event.fights")}
-          </span>
-        </div>
-
-        <div className="space-y-4">
-          {(fights ?? []).map((fight) => (
-            <FightCard
-              key={fight.id}
-              fight={fight as any}
-              eventStatus={event.status as "upcoming" | "live" | "completed"}
-              hasStarted={new Date(fight.start_time).getTime() <= nowTimestamp}
-              prediction={predMap.get(fight.id) ?? null}
-              crowdStats={statsMap.get(fight.id) ?? null}
-              currentUserId={user?.id ?? null}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* ── MVP Vote ── */}
-      {event.status === "completed" && (
+      {/* MVP Vote */}
+      {event.status === "completed" ? (
         <MvpVoteSection
           eventId={event.id}
           eventDate={event.date}
           fighters={Array.from(eventFighterMap.values())}
         />
-      )}
+      ) : null}
     </div>
   );
 }

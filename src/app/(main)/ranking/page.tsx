@@ -3,6 +3,14 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getLocalizedEventName } from "@/lib/localized-name";
+import { cn } from "@/lib/cn";
+import {
+  RetroEmptyState,
+  RetroStatusBadge,
+  retroInsetClassName,
+  retroPanelClassName,
+  retroSegmentClassName,
+} from "@/components/ui/retro";
 
 const PAGE_SIZE = 50;
 
@@ -13,84 +21,92 @@ type SearchParams = Promise<{
   event?: string;
 }>;
 
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
+type RankingUser = {
+  id: string;
+  ring_name: string | null;
+  wins: number | null;
+  losses: number | null;
+  current_streak: number | null;
+  best_streak: number | null;
+  hall_of_fame_count: number | null;
+  score: number | null;
+};
 
-function getRankDecor(rank: number) {
-  if (rank === 1) return { border: "border-[#ffba3c]/40", bg: "bg-[#ffba3c]/[0.04]", text: "text-[#ffba3c]", label: "1ST" };
-  if (rank === 2) return { border: "border-white/15", bg: "bg-white/[0.02]", text: "text-white/70", label: "2ND" };
-  if (rank === 3) return { border: "border-[#cd7f32]/30", bg: "bg-[#cd7f32]/[0.03]", text: "text-[#cd7f32]", label: "3RD" };
-  return { border: "border-white/[0.04]", bg: "bg-white/[0.01]", text: "text-white/60", label: `#${rank}` };
-}
-
-function UserRow({ user, rank }: { user: any; rank: number }) {
-  const d = getRankDecor(rank);
-  const isTop3 = rank <= 3;
-
+function RankChangeIndicator({ change }: { change: number | "new" | null }) {
+  if (change === "new") {
+    return (
+      <span className="rounded-[4px] bg-[var(--bp-accent-dim)] px-1.5 py-0.5 text-[9px] font-bold text-[var(--bp-accent)]">
+        NEW
+      </span>
+    );
+  }
+  if (change === null || change === 0) {
+    return <span className="text-[11px] text-[var(--bp-muted)] opacity-40">—</span>;
+  }
+  if (change > 0) {
+    return (
+      <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[var(--bp-success)]">
+        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="currentColor"><path d="M5 1 9 7H1z" /></svg>
+        {change}
+      </span>
+    );
+  }
   return (
-    <div className={cn(
-      "gold-hover flex items-center gap-4 rounded-xl border p-4 transition md:gap-6",
-      d.border, d.bg,
-      isTop3 && "p-5"
-    )}>
-      {/* Rank */}
-      <div className="w-12 shrink-0 text-center">
-        <span
-          className={cn("text-lg font-black", d.text, isTop3 && "text-2xl")}
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {d.label}
+    <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[var(--bp-danger)]">
+      <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="currentColor"><path d="M5 9 1 3h8z" /></svg>
+      {Math.abs(change)}
+    </span>
+  );
+}
+
+function RankingRow({
+  user,
+  rank,
+  rankChange = null,
+  labels,
+}: {
+  user: RankingUser;
+  rank: number;
+  rankChange?: number | "new" | null;
+  labels: {
+    unknown: string;
+    score: string;
+    streak: string;
+    hallOfFame: string;
+  };
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] p-3 sm:p-4">
+      <div className="flex w-12 flex-col items-center gap-0.5">
+        <span className={`text-xs font-bold ${rank === 1 ? "text-[var(--bp-accent)]" : rank <= 3 ? "text-[var(--bp-info)]" : "text-[var(--bp-muted)]"}`}>
+          #{rank}
         </span>
+        <RankChangeIndicator change={rankChange} />
       </div>
 
-      {/* Name */}
       <div className="min-w-0 flex-1">
-        <p className={cn(
-          "truncate font-bold uppercase",
-          isTop3 ? "text-lg text-white" : "text-sm text-white/80"
-        )} style={{ fontFamily: "var(--font-display)" }}>
-          {user.ring_name || "Unknown"}
+        <p className="truncate text-sm font-semibold text-[var(--bp-ink)]">
+          {user.ring_name || labels.unknown}
+        </p>
+        <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
+          {(user.wins ?? 0)}W-{(user.losses ?? 0)}L
         </p>
       </div>
 
-      {/* Stats grid */}
-      <div className="hidden items-center gap-6 md:flex">
+      <div className="hidden items-center gap-5 md:flex">
         <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">Score</p>
-          <p className="text-lg font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
-            {user.score ?? 0}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">Record</p>
-          <p className="text-sm font-bold text-white/60">
-            {user.wins ?? 0}W-{user.losses ?? 0}L
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">Streak</p>
-          <p className="text-sm font-bold text-white/60">
+          <p className="text-[10px] text-[var(--bp-muted)]">{labels.streak}</p>
+          <p className="text-xs font-semibold text-[var(--bp-ink)]">
             {user.current_streak ?? 0}/{user.best_streak ?? 0}
           </p>
         </div>
-        {(user.hall_of_fame_count ?? 0) > 0 && (
-          <div className="text-center">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">HOF</p>
-            <p className="text-sm font-bold text-[#ffba3c]">{user.hall_of_fame_count}</p>
-          </div>
-        )}
+        <div className="text-center">
+          <p className="text-[10px] text-[var(--bp-muted)]">{labels.hallOfFame}</p>
+          <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.hall_of_fame_count ?? 0}</p>
+        </div>
       </div>
 
-      {/* Mobile stats */}
-      <div className="flex items-center gap-3 md:hidden">
-        <span className="text-sm font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
-          {user.score ?? 0}
-        </span>
-        <span className="text-xs text-white/55">
-          {user.wins ?? 0}W-{user.losses ?? 0}L
-        </span>
-      </div>
+      <p className="text-lg font-bold text-[var(--bp-accent)]">{user.score ?? 0}</p>
     </div>
   );
 }
@@ -105,15 +121,13 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
 
-  // Tab definitions
   const tabs = [
     { key: "running", label: t("ranking.running") },
     { key: "series", label: t("ranking.series") },
     { key: "event", label: t("ranking.event") },
   ];
 
-  // ── Running Ranking ──
-  let users: any[] = [];
+  let users: RankingUser[] = [];
   let hasNextPage = false;
 
   if (tab === "running") {
@@ -127,276 +141,206 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
       .order("created_at", { ascending: true })
       .range(from, to);
 
-    users = data ?? [];
+    users = (data ?? []) as RankingUser[];
     hasNextPage = users.length > PAGE_SIZE;
     users = users.slice(0, PAGE_SIZE);
   }
 
-  // ── Series Ranking ──
-  let seriesData: any[] = [];
+  let seriesData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
+  let seriesTypes: string[] = [];
   const selectedSeries = params.series || "";
 
   if (tab === "series") {
-    // Get unique series types
-    const { data: events } = await supabase
-      .from("events")
-      .select("series_type")
-      .order("series_type");
+    const { data: events } = await supabase.from("events").select("series_type").order("series_type");
+    seriesTypes = [...new Set((events ?? []).map((event: { series_type: string }) => event.series_type))];
 
-    const seriesTypes = [...new Set((events ?? []).map((e: any) => e.series_type))];
-
-    // If a series is selected, get rankings for it
     if (selectedSeries) {
-      // Get all events of this series type
       const { data: seriesEvents } = await supabase
         .from("events")
         .select("id")
         .eq("series_type", selectedSeries as "black_cup" | "numbering" | "rise" | "other");
 
-      const eventIds = (seriesEvents ?? []).map((e: any) => e.id);
+      const eventIds = (seriesEvents ?? []).map((event: { id: string }) => event.id);
 
       if (eventIds.length > 0) {
-        // Get rankings from the rankings table
         const { data } = await supabase
           .from("rankings")
-          .select("*, user:users!user_id(ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count)")
+          .select("id, rank, score, user:users!user_id(id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score)")
           .eq("type", "series")
           .in("reference_id", eventIds)
           .order("rank", { ascending: true })
           .limit(PAGE_SIZE);
 
-        seriesData = data ?? [];
+        seriesData = (data ?? []) as Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }>;
       }
     }
-
-    // Pass seriesTypes for the selector
-    seriesData = seriesData.length > 0 ? seriesData : [];
-    // Store series types for rendering
-    (seriesData as any).__seriesTypes = seriesTypes;
   }
 
-  // ── Event Ranking ──
-  let eventRankData: any[] = [];
-  let eventList: any[] = [];
+  let eventRankData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
+  let eventList: Array<{ id: string; name: string; date: string; status: string }> = [];
   const selectedEvent = params.event || "";
 
   if (tab === "event") {
-    // Get current/recent events for selector (only post-launch events will have rankings)
-    const { data: completedEvents } = await supabase
+    const { data: availableEvents } = await supabase
       .from("events")
       .select("id, name, date, status")
       .in("status", ["upcoming", "live", "completed"])
       .order("date", { ascending: false })
       .limit(10);
 
-    eventList = completedEvents ?? [];
+    eventList = availableEvents ?? [];
 
     if (selectedEvent) {
       const { data } = await supabase
         .from("rankings")
-        .select("*, user:users!user_id(ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count)")
+        .select("id, rank, score, user:users!user_id(id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score)")
         .eq("type", "event")
         .eq("reference_id", selectedEvent)
         .order("rank", { ascending: true })
         .limit(PAGE_SIZE);
 
-      eventRankData = data ?? [];
+      eventRankData = (data ?? []) as Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }>;
     }
   }
 
-  const seriesTypes = tab === "series" ? ((seriesData as any).__seriesTypes || []) : [];
-
   return (
-    <div className="space-y-8">
-      {/* ── Header ── */}
+    <div className="space-y-4">
+      {/* Header */}
       <div>
-        <div className="flex items-center gap-3">
-          <div className="h-px w-8 bg-[#ffba3c]/40" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
-            {t("home.platformLabel")}
-          </span>
+        <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>
+        <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("rankingPage.description")}</p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {tabs.map((item) => (
+            <Link
+              key={item.key}
+              href={`/ranking?tab=${item.key}`}
+              className={retroSegmentClassName({ active: tab === item.key })}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
-        <h1
-          className="mt-4 text-3xl font-black uppercase text-white md:text-4xl"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {t("rankingPage.title")}
-        </h1>
-        <p className="mt-2 text-sm text-white/55">
-          {t("rankingPage.description")}
-        </p>
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-2">
-        {tabs.map((item) => (
-          <Link
-            key={item.key}
-            href={`/ranking?tab=${item.key}`}
-            className={cn(
-              "rounded-lg border px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] transition",
-              tab === item.key
-                ? "border-[#ffba3c]/30 bg-[#ffba3c]/10 text-[#ffba3c]"
-                : "border-white/[0.05] text-white/55 hover:border-white/10 hover:text-white/50"
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
+      {/* Content */}
+      <section className={retroPanelClassName({ className: "p-4" })}>
+        {tab === "series" ? (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {seriesTypes.map((seriesType) => (
+              <Link
+                key={seriesType}
+                href={`/ranking?tab=series&series=${seriesType}`}
+                className={retroSegmentClassName({ active: selectedSeries === seriesType })}
+              >
+                {getSeriesLabel(seriesType, t)}
+              </Link>
+            ))}
+          </div>
+        ) : null}
 
-      <div className="gold-line" />
+        {tab === "event" ? (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {eventList.map((event) => (
+              <Link
+                key={event.id}
+                href={`/ranking?tab=event&event=${event.id}`}
+                className={retroSegmentClassName({ active: selectedEvent === event.id, className: "max-w-full" })}
+              >
+                <span className="truncate">
+                  {getLocalizedEventName(event, locale, event.name)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : null}
 
-      {/* ── Running Tab ── */}
-      {tab === "running" && (
-        <div className="space-y-3">
-          {users.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/50">{t("common.noData")}</p>
-              <p className="mt-2 text-xs text-white/45">
-                Rankings will appear once users start predicting
-              </p>
-            </div>
+        {tab === "running" ? (
+          users.length === 0 ? (
+            <RetroEmptyState title={t("common.noData")} />
           ) : (
-            <>
-              {/* Desktop header */}
-              <div className="hidden items-center gap-4 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/50 md:flex md:gap-6">
-                <div className="w-12 text-center">{t("ranking.rank")}</div>
-                <div className="flex-1">{t("ranking.ringName")}</div>
-                <div className="flex items-center gap-6">
-                  <div className="w-16 text-center">{t("ranking.score")}</div>
-                  <div className="w-16 text-center">{t("ranking.record")}</div>
-                  <div className="w-16 text-center">{t("ranking.streak")}</div>
-                  <div className="w-12 text-center">{t("ranking.hallOfFame")}</div>
-                </div>
-              </div>
-
-              {users.map((user, i) => (
-                <UserRow key={user.id} user={user} rank={from + i + 1} />
+            <div className="space-y-2">
+              {users.map((user, index) => (
+                <RankingRow
+                  key={user.id}
+                  user={user}
+                  rank={from + index + 1}
+                  labels={{
+                    unknown: t("ranking.unknown"),
+                    score: t("ranking.score"),
+                    streak: t("ranking.streak"),
+                    hallOfFame: t("ranking.hallOfFame"),
+                  }}
+                />
               ))}
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center justify-between pt-2">
                 <Link
                   href={page > 1 ? `/ranking?tab=running&page=${page - 1}` : "#"}
-                  className={cn(
-                    "rounded border px-4 py-2 text-xs font-medium transition",
-                    page > 1
-                      ? "border-white/8 text-white/50 hover:text-white"
-                      : "pointer-events-none border-white/[0.03] text-white/45"
-                  )}
+                  className={cn(retroSegmentClassName({ active: false }), page <= 1 && "pointer-events-none opacity-40")}
                 >
-                  Prev
+                  ←
                 </Link>
-                <span className="text-xs text-white/50">Page {page}</span>
+                <span className="text-sm text-[var(--bp-muted)]">{page}</span>
                 <Link
                   href={hasNextPage ? `/ranking?tab=running&page=${page + 1}` : "#"}
-                  className={cn(
-                    "rounded border px-4 py-2 text-xs font-medium transition",
-                    hasNextPage
-                      ? "border-white/8 text-white/50 hover:text-white"
-                      : "pointer-events-none border-white/[0.03] text-white/45"
-                  )}
+                  className={cn(retroSegmentClassName({ active: false }), !hasNextPage && "pointer-events-none opacity-40")}
                 >
-                  Next
+                  →
                 </Link>
               </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ── Series Tab ── */}
-      {tab === "series" && (
-        <div className="space-y-6">
-          {/* Series type selector */}
-          <div className="flex flex-wrap gap-2">
-            {(seriesTypes as string[]).map((st: string) => (
-              <Link
-                key={st}
-                href={`/ranking?tab=series&series=${st}`}
-                className={cn(
-                  "rounded-lg border px-4 py-2 text-xs font-bold uppercase tracking-wider transition",
-                  selectedSeries === st
-                    ? "border-[#ffba3c]/30 bg-[#ffba3c]/10 text-[#ffba3c]"
-                    : "border-white/5 text-white/55 hover:border-white/10"
-                )}
-              >
-                {getSeriesLabel(st, t)}
-              </Link>
-            ))}
-          </div>
-
-          {!selectedSeries ? (
-            <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/50">Select a series to view rankings</p>
             </div>
+          )
+        ) : null}
+
+        {tab === "series" ? (
+          !selectedSeries ? (
+            <RetroEmptyState title={t("common.noData")} description={t("ranking.series")} />
           ) : seriesData.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/50">{t("common.noData")}</p>
-              <p className="mt-2 text-xs text-white/45">
-                Series rankings are calculated after events are completed
-              </p>
-            </div>
+            <RetroEmptyState title={t("common.noData")} />
           ) : (
-            <div className="space-y-3">
-              {seriesData.map((row: any, i: number) => (
-                <UserRow
+            <div className="space-y-2">
+              {seriesData.map((row, index) => (row.user ? (
+                <RankingRow
                   key={row.id}
-                  user={{ ...row.user, score: row.score }}
-                  rank={row.rank || i + 1}
+                  user={{ ...row.user, score: row.score ?? row.user.score }}
+                  rank={row.rank || index + 1}
+                  labels={{
+                    unknown: t("ranking.unknown"),
+                    score: t("ranking.score"),
+                    streak: t("ranking.streak"),
+                    hallOfFame: t("ranking.hallOfFame"),
+                  }}
                 />
-              ))}
+              ) : null))}
             </div>
-          )}
-        </div>
-      )}
+          )
+        ) : null}
 
-      {/* ── Event Tab ── */}
-      {tab === "event" && (
-        <div className="space-y-6">
-          {/* Event selector */}
-          <div className="flex flex-wrap gap-2">
-            {eventList.map((ev: any) => (
-              <Link
-                key={ev.id}
-                href={`/ranking?tab=event&event=${ev.id}`}
-                className={cn(
-                  "rounded-lg border px-4 py-2 text-xs font-medium transition",
-                  selectedEvent === ev.id
-                    ? "border-[#ffba3c]/30 bg-[#ffba3c]/10 text-[#ffba3c]"
-                    : "border-white/5 text-white/55 hover:border-white/10"
-                )}
-              >
-                {getLocalizedEventName(ev, locale, ev.name)}
-              </Link>
-            ))}
-          </div>
-
-          {!selectedEvent ? (
-            <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/50">Select an event to view rankings</p>
-            </div>
+        {tab === "event" ? (
+          !selectedEvent ? (
+            <RetroEmptyState title={t("common.noData")} description={t("ranking.event")} />
           ) : eventRankData.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/50">{t("common.noData")}</p>
-              <p className="mt-2 text-xs text-white/45">
-                Event rankings are calculated when results are finalized
-              </p>
-            </div>
+            <RetroEmptyState title={t("common.noData")} />
           ) : (
-            <div className="space-y-3">
-              {eventRankData.map((row: any, i: number) => (
-                <UserRow
+            <div className="space-y-2">
+              {eventRankData.map((row, index) => (row.user ? (
+                <RankingRow
                   key={row.id}
-                  user={{ ...row.user, score: row.score }}
-                  rank={row.rank || i + 1}
+                  user={{ ...row.user, score: row.score ?? row.user.score }}
+                  rank={row.rank || index + 1}
+                  labels={{
+                    unknown: t("ranking.unknown"),
+                    score: t("ranking.score"),
+                    streak: t("ranking.streak"),
+                    hallOfFame: t("ranking.hallOfFame"),
+                  }}
                 />
-              ))}
+              ) : null))}
             </div>
-          )}
-        </div>
-      )}
+          )
+        ) : null}
+      </section>
     </div>
   );
 }
