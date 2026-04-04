@@ -47,7 +47,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
     <I18nProvider initialLocale={locale} initialMessages={messages}>
       <div className="min-h-[100dvh] bg-[var(--bp-bg)] text-[var(--bp-ink)]">
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-[var(--bp-line)] bg-[rgba(5,5,5,0.8)] backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-[var(--bp-line)] bg-[var(--bp-bg-translucent)] backdrop-blur-xl">
           <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
             {/* Logo */}
             <Link href="/" className="group flex items-center gap-2.5">

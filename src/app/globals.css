@@ -38,6 +38,18 @@
   --bp-danger: var(--retro-danger);
   --bp-success: var(--retro-success);
   --bp-info: var(--retro-info);
+  --bp-bg-translucent: rgba(5, 5, 5, 0.8);
+  /* Semantic alpha tokens */
+  --bp-accent-border: rgba(229, 169, 68, 0.3);
+  --bp-accent-border-subtle: rgba(255, 186, 60, 0.15);
+  --bp-danger-bg: rgba(239, 68, 68, 0.08);
+  --bp-danger-border: rgba(239, 68, 68, 0.2);
+  --bp-success-bg: rgba(34, 197, 94, 0.06);
+  --bp-success-border: rgba(34, 197, 94, 0.25);
+  --bp-overlay-subtle: rgba(255, 255, 255, 0.04);
+  --bp-overlay-light: rgba(255, 255, 255, 0.06);
+  --bp-overlay-medium: rgba(255, 255, 255, 0.12);
+  --bp-ring-muted: rgba(255, 255, 255, 0.25);
   /* Spacing tokens — 4px base, 2px for tight spots */
   --sp-1: 2px;   /* tight: icon gaps, inline padding */
   --sp-2: 4px;   /* compact: chip padding, badge gaps */
