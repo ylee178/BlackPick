@@ -14,6 +14,7 @@ import {
   retroChipClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
+import { RankingRowCompact } from "@/components/ui/ranking";
 import type { Database } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -267,6 +268,8 @@ export default async function HomePage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          <p className="text-sm font-semibold text-[var(--bp-ink)]">Black Pick Ranking</p>
+
           {/* Card 1: All-Time Rankings */}
           <section className={retroPanelClassName({ className: "p-4" })}>
             <div className="flex items-center justify-between">
@@ -280,21 +283,19 @@ export default async function HomePage() {
               {allTimeUsers.length === 0 ? (
                 <p className="py-4 text-center text-sm text-[var(--bp-muted)]">{t("common.noData")}</p>
               ) : (
-                allTimeUsers.slice(0, 5).map((user, index) => (
-                  <div key={user.id} className="flex items-center justify-between gap-2 rounded-[8px] px-2.5 py-1.5 odd:bg-[var(--bp-card-inset)]">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`w-5 text-center text-[11px] font-bold ${index === 0 ? "text-[var(--bp-accent)]" : index < 3 ? "text-[var(--bp-info)]" : "text-[var(--bp-muted)]"}`}>
-                        {index + 1}
-                      </span>
-                      <span className="text-[11px] text-[var(--bp-muted)] opacity-40">—</span>
-                      <p className="truncate text-sm text-[var(--bp-ink)]">{user.ring_name || t("ranking.unknown")}</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <svg viewBox="0 0 16 16" className="h-3 w-3 text-[var(--bp-accent)]" fill="currentColor"><path d="M8 2l2.5 4h-1.75v8h-1.5V6H5.5z" /></svg>
-                      <span className="text-sm font-bold tabular-nums text-[var(--bp-accent)]">{user.score ?? 0}</span>
-                    </div>
-                  </div>
-                ))
+                allTimeUsers.slice(0, 5).map((user, index) => {
+                  const deltas = [2, 0, 1, -1, 3];
+                  return (
+                    <RankingRowCompact
+                      key={user.id}
+                      rank={index + 1}
+                      delta={deltas[index] ?? 0}
+                      name={user.ring_name}
+                      value={user.score ?? 0}
+                      unknownLabel={t("ranking.unknown")}
+                    />
+                  );
+                })
               )}
             </div>
           </section>
@@ -314,22 +315,16 @@ export default async function HomePage() {
                 <p className="py-3 text-center text-xs text-[var(--bp-muted)]">{t("common.noData")}</p>
               ) : (
                 p4pUsers.map((user, index) => {
-                  const total = (user.wins ?? 0) + (user.losses ?? 0);
-                  const rate = total > 0 ? Math.round(((user.wins ?? 0) / total) * 100) : 0;
+                  const deltas = [0, 1, -2, 0, 1];
                   return (
-                    <div key={user.id} className="flex items-center justify-between gap-2 rounded-[8px] px-2.5 py-1.5 odd:bg-[var(--bp-card-inset)]">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={`w-5 text-center text-[11px] font-bold ${index === 0 ? "text-[var(--bp-accent)]" : index < 3 ? "text-[var(--bp-info)]" : "text-[var(--bp-muted)]"}`}>
-                          {index + 1}
-                        </span>
-                        <span className="text-[11px] text-[var(--bp-muted)] opacity-40">—</span>
-                        <p className="truncate text-sm text-[var(--bp-ink)]">{user.ring_name || t("ranking.unknown")}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <svg viewBox="0 0 16 16" className="h-3 w-3 text-[var(--bp-success)]" fill="currentColor"><circle cx="8" cy="8" r="3" /></svg>
-                        <span className="text-sm font-bold tabular-nums text-[var(--bp-success)]">{rate}%</span>
-                      </div>
-                    </div>
+                    <RankingRowCompact
+                      key={user.id}
+                      rank={index + 1}
+                      delta={deltas[index] ?? 0}
+                      name={user.ring_name}
+                      value={user.score ?? 0}
+                      unknownLabel={t("ranking.unknown")}
+                    />
                   );
                 })
               )}

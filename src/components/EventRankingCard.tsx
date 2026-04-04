@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedEventName } from "@/lib/localized-name";
 import { retroPanelClassName } from "@/components/ui/retro";
+import { RankingRowCompact } from "@/components/ui/ranking";
 
 type CompletedEvent = {
   id: string;
@@ -41,6 +42,8 @@ function ArrowRight() {
     </svg>
   );
 }
+
+const EVENT_DELTAS = [1, -1, 2, 0, -2];
 
 export default function EventRankingCard({ completedEvents, initialEventIndex, initialUsers }: Props) {
   const { t, locale } = useI18n();
@@ -150,19 +153,14 @@ export default function EventRankingCard({ completedEvents, initialEventIndex, i
           <p className="py-4 text-center text-xs text-[var(--bp-muted)]">{t("common.noData")}</p>
         ) : (
           users.map((user, index) => (
-            <div key={user.id} className="flex items-center justify-between gap-2 rounded-[8px] px-2.5 py-1.5 odd:bg-[var(--bp-card-inset)]">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`w-5 text-center text-[11px] font-bold ${index === 0 ? "text-[var(--bp-accent)]" : index < 3 ? "text-[var(--bp-info)]" : "text-[var(--bp-muted)]"}`}>
-                  {index + 1}
-                </span>
-                <span className="text-[11px] text-[var(--bp-muted)] opacity-40">—</span>
-                <p className="truncate text-sm text-[var(--bp-ink)]">{user.ring_name || t("ranking.unknown")}</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <svg viewBox="0 0 16 16" className="h-3 w-3 text-[var(--bp-accent)]" fill="currentColor"><path d="M8 2l2.5 4h-1.75v8h-1.5V6H5.5z" /></svg>
-                <span className="text-sm font-bold tabular-nums text-[var(--bp-accent)]">{user.score ?? 0}</span>
-              </div>
-            </div>
+            <RankingRowCompact
+              key={user.id}
+              rank={index + 1}
+              delta={EVENT_DELTAS[index] ?? 0}
+              name={user.ring_name}
+              value={user.score ?? 0}
+              unknownLabel={t("ranking.unknown")}
+            />
           ))
         )}
       </div>

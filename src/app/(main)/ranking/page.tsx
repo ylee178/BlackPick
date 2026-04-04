@@ -6,11 +6,10 @@ import { getLocalizedEventName } from "@/lib/localized-name";
 import { cn } from "@/lib/cn";
 import {
   RetroEmptyState,
-  RetroStatusBadge,
-  retroInsetClassName,
   retroPanelClassName,
   retroSegmentClassName,
 } from "@/components/ui/retro";
+import { RankingRowFull } from "@/components/ui/ranking";
 
 const PAGE_SIZE = 50;
 
@@ -32,81 +31,19 @@ type RankingUser = {
   score: number | null;
 };
 
-function RankChangeIndicator({ change }: { change: number | "new" | null }) {
-  if (change === "new") {
-    return (
-      <span className="rounded-[4px] bg-[var(--bp-accent-dim)] px-1.5 py-0.5 text-[9px] font-bold text-[var(--bp-accent)]">
-        NEW
-      </span>
-    );
-  }
-  if (change === null || change === 0) {
-    return <span className="text-[11px] text-[var(--bp-muted)] opacity-40">—</span>;
-  }
-  if (change > 0) {
-    return (
-      <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[var(--bp-success)]">
-        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="currentColor"><path d="M5 1 9 7H1z" /></svg>
-        {change}
-      </span>
-    );
-  }
+function UserExtra({ user, labels }: { user: RankingUser; labels: { streak: string; hallOfFame: string } }) {
   return (
-    <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[var(--bp-danger)]">
-      <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="currentColor"><path d="M5 9 1 3h8z" /></svg>
-      {Math.abs(change)}
-    </span>
-  );
-}
-
-function RankingRow({
-  user,
-  rank,
-  rankChange = null,
-  labels,
-}: {
-  user: RankingUser;
-  rank: number;
-  rankChange?: number | "new" | null;
-  labels: {
-    unknown: string;
-    score: string;
-    streak: string;
-    hallOfFame: string;
-  };
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] p-3 sm:p-4">
-      <div className="flex w-12 flex-col items-center gap-0.5">
-        <span className={`text-xs font-bold ${rank === 1 ? "text-[var(--bp-accent)]" : rank <= 3 ? "text-[var(--bp-info)]" : "text-[var(--bp-muted)]"}`}>
-          #{rank}
-        </span>
-        <RankChangeIndicator change={rankChange} />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-[var(--bp-ink)]">
-          {user.ring_name || labels.unknown}
-        </p>
-        <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
-          {(user.wins ?? 0)}W-{(user.losses ?? 0)}L
+    <div className="hidden items-center gap-5 md:flex">
+      <div className="text-center">
+        <p className="text-[10px] text-[var(--bp-muted)]">{labels.streak}</p>
+        <p className="text-xs font-semibold text-[var(--bp-ink)]">
+          {user.current_streak ?? 0}/{user.best_streak ?? 0}
         </p>
       </div>
-
-      <div className="hidden items-center gap-5 md:flex">
-        <div className="text-center">
-          <p className="text-[10px] text-[var(--bp-muted)]">{labels.streak}</p>
-          <p className="text-xs font-semibold text-[var(--bp-ink)]">
-            {user.current_streak ?? 0}/{user.best_streak ?? 0}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-[10px] text-[var(--bp-muted)]">{labels.hallOfFame}</p>
-          <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.hall_of_fame_count ?? 0}</p>
-        </div>
+      <div className="text-center">
+        <p className="text-[10px] text-[var(--bp-muted)]">{labels.hallOfFame}</p>
+        <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.hall_of_fame_count ?? 0}</p>
       </div>
-
-      <p className="text-lg font-bold text-[var(--bp-accent)]">{user.score ?? 0}</p>
     </div>
   );
 }
@@ -261,16 +198,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
           ) : (
             <div className="space-y-2">
               {users.map((user, index) => (
-                <RankingRow
+                <RankingRowFull
                   key={user.id}
-                  user={user}
                   rank={from + index + 1}
-                  labels={{
-                    unknown: t("ranking.unknown"),
-                    score: t("ranking.score"),
-                    streak: t("ranking.streak"),
-                    hallOfFame: t("ranking.hallOfFame"),
-                  }}
+                  name={user.ring_name}
+                  record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
+                  score={user.score ?? 0}
+                  unknownLabel={t("ranking.unknown")}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
                 />
               ))}
 
@@ -301,16 +236,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
           ) : (
             <div className="space-y-2">
               {seriesData.map((row, index) => (row.user ? (
-                <RankingRow
+                <RankingRowFull
                   key={row.id}
-                  user={{ ...row.user, score: row.score ?? row.user.score }}
                   rank={row.rank || index + 1}
-                  labels={{
-                    unknown: t("ranking.unknown"),
-                    score: t("ranking.score"),
-                    streak: t("ranking.streak"),
-                    hallOfFame: t("ranking.hallOfFame"),
-                  }}
+                  name={row.user.ring_name}
+                  record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
+                  score={row.score ?? row.user.score ?? 0}
+                  unknownLabel={t("ranking.unknown")}
+                  extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
                 />
               ) : null))}
             </div>
@@ -325,16 +258,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
           ) : (
             <div className="space-y-2">
               {eventRankData.map((row, index) => (row.user ? (
-                <RankingRow
+                <RankingRowFull
                   key={row.id}
-                  user={{ ...row.user, score: row.score ?? row.user.score }}
                   rank={row.rank || index + 1}
-                  labels={{
-                    unknown: t("ranking.unknown"),
-                    score: t("ranking.score"),
-                    streak: t("ranking.streak"),
-                    hallOfFame: t("ranking.hallOfFame"),
-                  }}
+                  name={row.user.ring_name}
+                  record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
+                  score={row.score ?? row.user.score ?? 0}
+                  unknownLabel={t("ranking.unknown")}
+                  extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
                 />
               ) : null))}
             </div>
