@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* ── Core palette ── */
   --retro-bg: #050505;
   --retro-bg-2: #0a0a0a;
   --retro-panel: #0d0d0d;
@@ -22,11 +23,8 @@
   --retro-danger: #ef4444;
   --retro-success: #22c55e;
   --retro-info: #3b82f6;
-  --card: oklch(1 0 0);
-  --gold: var(--retro-accent);
-  --gold-dim: var(--retro-accent-dim);
-  --line: var(--retro-line);
-  /* bp aliases for components that use bp-* vars */
+
+  /* ── BP aliases ── */
   --bp-bg: var(--retro-bg);
   --bp-card: var(--retro-panel);
   --bp-card-hover: var(--retro-panel-hover);
@@ -41,7 +39,8 @@
   --bp-success: var(--retro-success);
   --bp-info: var(--retro-info);
   --bp-bg-translucent: rgba(5, 5, 5, 0.8);
-  /* Semantic alpha tokens */
+
+  /* ── Semantic alpha tokens ── */
   --bp-accent-border: rgba(229, 169, 68, 0.3);
   --bp-accent-border-subtle: rgba(255, 186, 60, 0.15);
   --bp-danger-bg: rgba(239, 68, 68, 0.08);
@@ -52,54 +51,67 @@
   --bp-overlay-light: rgba(255, 255, 255, 0.06);
   --bp-overlay-medium: rgba(255, 255, 255, 0.12);
   --bp-ring-muted: rgba(255, 255, 255, 0.25);
-  /* Spacing tokens — 4px base, 2px for tight spots */
-  --sp-1: 2px;   /* tight: icon gaps, inline padding */
-  --sp-2: 4px;   /* compact: chip padding, badge gaps */
-  --sp-3: 8px;   /* default: card padding inner, row gaps */
-  --sp-4: 12px;  /* medium: section gaps */
-  --sp-5: 16px;  /* standard: content padding, card padding */
-  --sp-6: 20px;  /* large: section margins */
-  --sp-7: 24px;  /* page padding */
-  --sp-8: 32px;  /* hero padding */
-  --sp-9: 40px;  /* major section gaps */
-  --sp-10: 48px; /* page-level spacing */ --background: oklch(1 0 0); --foreground: oklch(0.145 0 0); --card-foreground: oklch(0.145 0 0); --popover: oklch(1 0 0); --popover-foreground: oklch(0.145 0 0); --primary: oklch(0.205 0 0); --primary-foreground: oklch(0.985 0 0); --secondary: oklch(0.97 0 0); --secondary-foreground: oklch(0.205 0 0); --muted: oklch(0.97 0 0); --muted-foreground: oklch(0.556 0 0); --accent: oklch(0.97 0 0); --accent-foreground: oklch(0.205 0 0); --destructive: oklch(0.577 0.245 27.325); --border: oklch(0.922 0 0); --input: oklch(0.922 0 0); --ring: oklch(0.708 0 0); --chart-1: oklch(0.87 0 0); --chart-2: oklch(0.556 0 0); --chart-3: oklch(0.439 0 0); --chart-4: oklch(0.371 0 0); --chart-5: oklch(0.269 0 0); --radius: 0.625rem; --sidebar: oklch(0.985 0 0); --sidebar-foreground: oklch(0.145 0 0); --sidebar-primary: oklch(0.205 0 0); --sidebar-primary-foreground: oklch(0.985 0 0); --sidebar-accent: oklch(0.97 0 0); --sidebar-accent-foreground: oklch(0.205 0 0); --sidebar-border: oklch(0.922 0 0); --sidebar-ring: oklch(0.708 0 0);
+
+  /* ── Spacing tokens (4px base, 2px for tight) ── */
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 16px;
+  --sp-6: 20px;
+  --sp-7: 24px;
+  --sp-8: 32px;
+  --sp-9: 40px;
+  --sp-10: 48px;
+
+  /* ── shadcn semantic tokens (gold-black dark theme) ── */
+  --background: #050505;
+  --foreground: #ffffff;
+  --card: #0d0d0d;
+  --card-foreground: #ffffff;
+  --popover: #0d0d0d;
+  --popover-foreground: #ffffff;
+  --primary: #ffba3c;
+  --primary-foreground: #000000;
+  --secondary: #161616;
+  --secondary-foreground: #ffffff;
+  --muted: #111111;
+  --muted-foreground: rgba(255, 255, 255, 0.5);
+  --accent: rgba(255, 186, 60, 0.1);
+  --accent-foreground: #ffba3c;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.06);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #ffba3c;
+  --radius: 0.75rem;
+
+  /* Legacy aliases */
+  --gold: var(--retro-accent);
+  --gold-dim: var(--retro-accent-dim);
+  --line: var(--retro-line);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-display: "Barlow Condensed", "Pretendard", -apple-system, system-ui, sans-serif;
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: "Pretendard", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "Pretendard", -apple-system, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -119,8 +131,8 @@ html {
 
 body {
   min-height: 100dvh;
-  background: var(--retro-bg);
-  color: var(--retro-ink);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -146,7 +158,7 @@ button:disabled {
 /* ── Focus ── */
 
 :focus-visible {
-  outline: 2px solid var(--retro-accent);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -157,7 +169,7 @@ button:disabled {
 
 ::selection {
   background: rgba(255, 186, 60, 0.26);
-  color: var(--retro-ink);
+  color: var(--foreground);
 }
 
 /* ── Reduced Motion ── */
@@ -173,9 +185,9 @@ button:disabled {
 /* ── Panels ── */
 
 .retro-panel {
-  border: 1px solid var(--retro-line);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: var(--retro-panel);
+  background: var(--card);
 }
 
 .retro-panel::before {
@@ -183,10 +195,10 @@ button:disabled {
 }
 
 .retro-panel-accent {
-  border-color: rgba(255, 186, 60, 0.2);
+  border-color: var(--bp-accent-border-subtle);
   background:
     radial-gradient(circle at top right, rgba(255, 186, 60, 0.08), transparent 40%),
-    var(--retro-panel);
+    var(--card);
 }
 
 .retro-panel-muted {
@@ -194,7 +206,7 @@ button:disabled {
 }
 
 .retro-panel-flat {
-  background: var(--retro-panel);
+  background: var(--card);
 }
 
 .retro-panel-flat::before {
@@ -202,18 +214,18 @@ button:disabled {
 }
 
 .retro-panel-interactive {
-  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .retro-panel-interactive:hover {
-  border-color: rgba(255, 186, 60, 0.15);
-  background: var(--retro-panel-hover);
+  border-color: var(--bp-accent-border-subtle);
+  background: var(--secondary);
 }
 
 /* ── Inset ── */
 
 .retro-inset {
-  border: 1px solid var(--retro-line);
+  border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--retro-panel-inset);
 }
@@ -227,18 +239,18 @@ button:disabled {
   gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.65rem 1.1rem;
-  border: 1px solid var(--retro-line-strong);
+  border: 1px solid var(--input);
   border-radius: 14px;
-  background: var(--retro-panel);
-  color: var(--retro-ink);
+  background: var(--card);
+  color: var(--foreground);
   font-size: 0.875rem;
   font-weight: 600;
-  transition: all 0.18s ease;
+  transition: all 0.15s ease;
 }
 
 .retro-button:hover {
-  border-color: rgba(255, 186, 60, 0.15);
-  background: var(--retro-panel-hover);
+  border-color: var(--bp-accent-border-subtle);
+  background: var(--secondary);
 }
 
 .retro-button:disabled {
@@ -252,9 +264,9 @@ button:disabled {
 }
 
 .retro-button-primary {
-  border-color: rgba(255, 186, 60, 0.3);
-  background: var(--retro-accent);
-  color: #000;
+  border-color: var(--bp-accent-border);
+  background: var(--primary);
+  color: var(--primary-foreground);
   font-weight: 700;
 }
 
@@ -263,25 +275,25 @@ button:disabled {
 }
 
 .retro-button-secondary {
-  border-color: var(--retro-line-strong);
-  background: var(--retro-panel);
-  color: var(--retro-ink);
+  border-color: var(--input);
+  background: var(--card);
+  color: var(--foreground);
 }
 
 .retro-button-secondary:hover {
-  border-color: rgba(255, 186, 60, 0.15);
-  background: var(--retro-panel-hover);
+  border-color: var(--bp-accent-border-subtle);
+  background: var(--secondary);
 }
 
 .retro-button-ghost {
   border-color: transparent;
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--muted-foreground);
 }
 
 .retro-button-ghost:hover {
-  color: var(--retro-ink);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  background: var(--bp-overlay-subtle);
 }
 
 .retro-button-sm {
@@ -304,10 +316,10 @@ button:disabled {
   gap: 0.35rem;
   min-height: 1.625rem;
   padding: 0.15rem 0.65rem;
-  border: 1px solid rgba(255, 186, 60, 0.2);
+  border: 1px solid var(--bp-accent-border-subtle);
   border-radius: 8px;
-  background: var(--retro-accent-dim);
-  color: var(--retro-accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -315,9 +327,9 @@ button:disabled {
 }
 
 .retro-chip-neutral {
-  border-color: var(--retro-line);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.5);
+  border-color: var(--border);
+  background: var(--bp-overlay-subtle);
+  color: var(--muted-foreground);
 }
 
 /* ── Status Badges ── */
@@ -329,8 +341,8 @@ button:disabled {
   padding: 0.2rem 0.55rem;
   border: none;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--bp-overlay-light);
+  color: var(--muted-foreground);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -339,8 +351,8 @@ button:disabled {
 }
 
 .retro-status-badge-accent {
-  background: var(--retro-accent-dim);
-  color: var(--retro-accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 .retro-status-badge-success {
@@ -349,8 +361,8 @@ button:disabled {
 }
 
 .retro-status-badge-danger {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--retro-danger);
+  background: var(--bp-danger-bg);
+  color: var(--destructive);
 }
 
 .retro-status-badge-danger::before {
@@ -359,7 +371,7 @@ button:disabled {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--retro-danger);
+  background: var(--destructive);
   animation: live-pulse 1.5s ease-in-out infinite;
 }
 
@@ -378,13 +390,13 @@ button:disabled {
 .retro-field {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid var(--retro-line-strong);
+  border: 1px solid var(--input);
   border-radius: 14px;
   background: black;
-  color: var(--retro-ink);
+  color: var(--foreground);
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.18s ease;
+  transition: border-color 0.15s ease;
 }
 
 .retro-field::placeholder {
@@ -392,14 +404,14 @@ button:disabled {
 }
 
 .retro-field:focus {
-  border-color: var(--retro-accent);
+  border-color: var(--ring);
   outline: 2px solid rgba(255, 186, 60, 0.3);
   outline-offset: -1px;
 }
 
 .retro-field option {
-  background: var(--retro-panel);
-  color: var(--retro-ink);
+  background: var(--card);
+  color: var(--foreground);
 }
 
 /* ── Navigation ── */
@@ -411,21 +423,21 @@ button:disabled {
   padding: 0.5rem 0.85rem;
   border: none;
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted-foreground);
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.18s ease;
+  transition: all 0.15s ease;
   min-height: auto;
 }
 
 .retro-nav-link:hover {
-  color: var(--retro-ink);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  background: var(--bp-overlay-subtle);
 }
 
 .retro-nav-link-active {
-  background: var(--retro-accent-dim);
-  color: var(--retro-accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
   font-weight: 600;
   border-color: transparent;
   box-shadow: none;
@@ -442,7 +454,7 @@ button:disabled {
 }
 
 .retro-nav-link-mobile.retro-nav-link-active {
-  background: var(--retro-accent-dim);
+  background: var(--accent);
   box-shadow: none;
 }
 
@@ -453,7 +465,7 @@ button:disabled {
   height: 6px;
   border: none;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bp-overlay-light);
   box-shadow: none;
 }
 
@@ -461,13 +473,13 @@ button:disabled {
   height: 100%;
   min-height: 0;
   border-radius: 999px;
-  background: var(--retro-accent);
+  background: var(--primary);
   transition: width 0.3s ease;
 }
 
 .retro-meter-fill-success { background: var(--retro-success); }
 .retro-meter-fill-info { background: var(--retro-info); }
-.retro-meter-fill-danger { background: var(--retro-danger); }
+.retro-meter-fill-danger { background: var(--destructive); }
 
 .retro-meter-sheen { display: none; }
 
@@ -482,15 +494,15 @@ button:disabled {
 .retro-divider {
   height: 3px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--retro-accent), transparent);
+  background: linear-gradient(90deg, var(--primary), transparent);
 }
 
 .premium-card {
-  border: 1px solid rgba(255, 186, 60, 0.15);
+  border: 1px solid var(--bp-accent-border-subtle);
   border-radius: 20px;
   background:
     radial-gradient(circle at top right, rgba(255, 186, 60, 0.08), transparent 30%),
-    var(--retro-panel);
+    var(--card);
 }
 
 .dot-pattern {
@@ -501,64 +513,14 @@ button:disabled {
 /* ── Utility ── */
 
 .gold-hover {
-  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .gold-hover:hover {
-  border-color: rgba(255, 186, 60, 0.15);
-  background: var(--retro-panel-hover);
+  border-color: var(--bp-accent-border-subtle);
+  background: var(--secondary);
 }
 
 .bottom-safe {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-}
-
-.retro-avatar {
-  image-rendering: auto;
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
 }
