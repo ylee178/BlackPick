@@ -57,19 +57,21 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   return (
     <div
       className={cn(
-        "sticky top-[53px] z-30 -mx-4 border-b border-[var(--bp-line)] bg-[var(--bp-bg)]/80 backdrop-blur-xl px-4 sm:-mx-6 sm:px-6",
-        "transition-[height,opacity] duration-100 overflow-hidden",
-        visible ? "opacity-100" : "h-0 border-b-0 pointer-events-none opacity-0"
+        "fixed left-0 right-0 top-[53px] z-30 border-b border-[var(--bp-line)] bg-[var(--bp-bg)]/80 backdrop-blur-xl",
+        "transition-[transform,opacity] duration-100",
+        visible ? "translate-y-0 opacity-100" : "-translate-y-full pointer-events-none opacity-0"
       )}
     >
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-0 py-3">
+      <div className="mx-auto flex min-h-[44px] max-w-[1200px] items-center justify-between gap-4 px-4 py-2 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <RetroStatusBadge
-            tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
-          >
-            {t(`status.${eventStatus}`)}
-          </RetroStatusBadge>
-          <p className="min-w-0 truncate text-sm font-bold text-[var(--bp-ink)]">{eventName}</p>
+          <div className="shrink-0">
+            <RetroStatusBadge
+              tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
+            >
+              {t(`status.${eventStatus}`)}
+            </RetroStatusBadge>
+          </div>
+          <p className="min-w-0 truncate text-sm font-bold leading-none text-[var(--bp-ink)]">{eventName}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {countdown && (
