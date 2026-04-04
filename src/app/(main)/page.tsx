@@ -23,74 +23,102 @@ export default async function HomePage() {
       supabase.from("events").select("id, name, date, series_type").eq("status", "completed").order("date", { ascending: false }).limit(5),
     ]);
 
-  const allEvents = events ?? [];
-  const upcomingEvents = allEvents.filter((e) => e.status === "upcoming" || e.status === "live");
+  const upcomingEvents = (events ?? []).filter((e) => e.status === "upcoming" || e.status === "live");
   const featured = upcomingEvents[0] ?? null;
 
   return (
     <div className="space-y-6">
 
-      {/* ═══ HERO: Featured Event ═══ */}
+      {/* ═══ HERO: Left copy + Right next event card ═══ */}
       <section className="relative overflow-hidden rounded-3xl bg-[#0a0a0a]">
         <div className="dot-pattern absolute inset-0 opacity-40" />
         <div className="stripe-accent absolute inset-0" />
 
-        <div className="relative p-8 md:p-12">
-          <div className="inline-block skew-divider mb-6 w-12" />
+        <div className="relative grid gap-0 lg:grid-cols-[1.3fr_1fr]">
+          {/* Left */}
+          <div className="p-8 md:p-12">
+            <div className="inline-block skew-divider mb-6 w-12" />
 
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-[#ffba3c]">
-            {t("home.platformLabel")}
-          </p>
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#ffba3c]">
+              {t("home.platformLabel")}
+            </p>
 
-          <h1
-            className="mt-4 text-5xl font-black uppercase leading-[0.85] text-white md:text-6xl lg:text-7xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {t("home.heroTitle")}
-          </h1>
+            <h1
+              className="mt-4 text-5xl font-black uppercase leading-[0.85] text-white md:text-6xl lg:text-7xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t("home.heroTitle")}
+            </h1>
 
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-white/50">
-            {t("home.heroDescription")}
-          </p>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/50">
+              {t("home.heroDescription")}
+            </p>
 
-          {/* Featured Event Card */}
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href={featured ? `/events/${featured.id}` : "/events"}
+                className="rounded-lg bg-[#ffba3c] px-8 py-3.5 text-sm font-black uppercase tracking-wider text-black transition hover:bg-[#ffd06b] active:scale-[0.98]"
+              >
+                {t("event.makeYourPick")}
+              </Link>
+              <Link
+                href="/ranking"
+                className="rounded-lg border-2 border-[#ffba3c] px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-[#ffba3c] transition hover:bg-[#ffba3c] hover:text-black"
+              >
+                {t("nav.ranking")}
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: Next Event (gold block) */}
           {featured && (
             <Link
               href={`/events/${featured.id}`}
-              className="mt-8 block max-w-lg rounded-2xl border border-[#ffba3c]/25 bg-[#ffba3c]/[0.06] p-6 transition hover:border-[#ffba3c]/40 hover:bg-[#ffba3c]/[0.1]"
+              className="group relative overflow-hidden bg-[#ffba3c] p-8 md:p-10 lg:rounded-r-3xl transition hover:bg-[#ffd06b]"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#ffba3c]">
-                    {t("common.nextEvent")}
-                  </p>
-                  <p
-                    className="mt-2 text-2xl font-black uppercase text-white md:text-3xl"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    {featured.name}
-                  </p>
-                  <p className="mt-2 text-xs text-white/50">
-                    {featured.date} · {getSeriesLabel(featured.series_type, t)}
-                  </p>
-                </div>
-                <span
-                  className="shrink-0 rounded-lg bg-[#ffba3c] px-3 py-2 text-sm font-black text-black"
+              <div className="absolute inset-0 opacity-15" style={{
+                backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+                backgroundSize: "14px 14px",
+              }} />
+
+              <div className="relative">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/50">
+                  {t("common.nextEvent")}
+                </p>
+
+                <h2
+                  className="mt-4 text-3xl font-black uppercase leading-[0.9] text-black md:text-4xl"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {getDDay(featured.date)}
-                </span>
-              </div>
-              <div className="mt-4 flex items-center gap-2 text-sm font-bold text-[#ffba3c]">
-                {t("event.makeYourPick")}
-                <span>&#x2192;</span>
+                  {featured.name}
+                </h2>
+
+                <div className="mt-5 flex items-center gap-3">
+                  <span className="rounded-md bg-black/10 px-4 py-2 text-sm font-bold text-black">
+                    {featured.date}
+                  </span>
+                  <span
+                    className="rounded-md bg-black px-4 py-2 text-sm font-black text-[#ffba3c]"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    {getDDay(featured.date)}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm font-medium text-black/50">
+                  {getSeriesLabel(featured.series_type, t)}
+                </p>
+
+                <div className="mt-6 inline-flex items-center gap-2 rounded-lg bg-black px-6 py-3 text-sm font-black uppercase tracking-wider text-[#ffba3c] transition group-hover:bg-black/80">
+                  {t("event.makeYourPick")} <span className="text-lg">&#x2197;</span>
+                </div>
               </div>
             </Link>
           )}
         </div>
       </section>
 
-      {/* ═══ ROW 2: Ranking + Recent Results ═══ */}
+      {/* ═══ Ranking + Recent Results ═══ */}
       <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
         {/* Ranking Top 3 */}
         <div className="gold-hover rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6">
@@ -105,7 +133,6 @@ export default async function HomePage() {
               {t("common.viewAll")}
             </Link>
           </div>
-
           {(topUsers ?? []).length === 0 ? (
             <div className="py-6 text-center text-sm text-white/50">{t("common.noData")}</div>
           ) : (
@@ -141,9 +168,7 @@ export default async function HomePage() {
           </div>
           <div className="space-y-2">
             {(recentCompleted ?? []).map((ev: any) => (
-              <Link
-                key={ev.id}
-                href={`/events/${ev.id}`}
+              <Link key={ev.id} href={`/events/${ev.id}`}
                 className="group flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 transition hover:border-[#ffba3c]/20"
               >
                 <div className="min-w-0">
@@ -159,61 +184,24 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* ═══ TICKET + MEMBERSHIP ═══ */}
+      {/* ═══ Ticket + Membership ═══ */}
       <div className="grid gap-3 md:grid-cols-2">
-        <a
-          href="https://hegemonyblack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative overflow-hidden rounded-2xl bg-[#ffba3c] p-6 transition hover:bg-[#ffd06b]"
-        >
+        <a href="https://hegemonyblack.com" target="_blank" rel="noopener noreferrer"
+          className="group relative overflow-hidden rounded-2xl bg-[#ffba3c] p-6 transition hover:bg-[#ffd06b]">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
           <div className="relative">
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-black/50">{t("common.tickets")}</p>
-            <p className="mt-2 text-xl font-black uppercase text-black" style={{ fontFamily: "var(--font-display)" }}>
-              {t("common.blackCombatTickets")}
-            </p>
+            <p className="mt-2 text-xl font-black uppercase text-black" style={{ fontFamily: "var(--font-display)" }}>{t("common.blackCombatTickets")}</p>
             <p className="mt-1 text-sm text-black/60">{t("common.getSeats")}</p>
           </div>
         </a>
-        <a
-          href="https://www.youtube.com/@BlackCombat"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="gold-hover rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6 transition"
-        >
+        <a href="https://www.youtube.com/@BlackCombat" target="_blank" rel="noopener noreferrer"
+          className="gold-hover rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6 transition">
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50">{t("common.membership")}</p>
-          <p className="mt-2 text-xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>
-            {t("common.blackCombatYoutube")}
-          </p>
+          <p className="mt-2 text-xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>{t("common.blackCombatYoutube")}</p>
           <p className="mt-1 text-sm text-white/50">{t("common.joinMembership")}</p>
         </a>
       </div>
-
-      {/* ═══ COMPLETED (compact list only, no duplicates) ═══ */}
-      <section>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-0.5 w-6 bg-white/15" />
-          <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50">
-            {t("event.completed")} {t("nav.events")}
-          </h2>
-        </div>
-        <div className="grid gap-2">
-          {allEvents.filter((e) => e.status === "completed").slice(0, 8).map((event) => (
-            <Link
-              key={event.id}
-              href={`/events/${event.id}`}
-              className="group flex items-center justify-between rounded-lg border border-white/[0.03] p-4 transition hover:border-white/8"
-            >
-              <div>
-                <p className="text-[9px] uppercase tracking-wider text-white/45">{getSeriesLabel(event.series_type, t)}</p>
-                <p className="mt-0.5 text-sm font-medium text-white/55 group-hover:text-white/80 transition">{event.name}</p>
-              </div>
-              <span className="text-[10px] text-white/45">{event.date}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
