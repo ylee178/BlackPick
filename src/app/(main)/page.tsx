@@ -153,7 +153,7 @@ export default async function HomePage() {
           eventName={localizedEventName}
           eventStatus={eventStatus ?? "upcoming"}
           countdownTargetTime={eventStatus === "upcoming" ? earliestStart : null}
-          watchElementId="home-hero"
+          watchElementId={eventStatus === "upcoming" && earliestStart ? "home-timer" : "home-hero"}
         />
       ) : null}
 
@@ -192,7 +192,7 @@ export default async function HomePage() {
 
               {/* Timer */}
               {eventStatus === "upcoming" && earliestStart ? (
-                <div className="mt-4">
+                <div id="home-timer" className="mt-4">
                   <FlipTimer targetTime={earliestStart} />
                 </div>
               ) : null}
