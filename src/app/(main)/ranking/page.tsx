@@ -3,7 +3,7 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getLocalizedEventName } from "@/lib/localized-name";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import {
   RetroEmptyState,
   retroPanelClassName,

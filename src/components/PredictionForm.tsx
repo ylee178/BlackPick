@@ -4,7 +4,7 @@ import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import {
   retroButtonClassName,
 } from "@/components/ui/retro";

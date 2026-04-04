@@ -3,7 +3,7 @@ import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import {
   getLocalizedFighterName,
   type AppLocale,

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 
 type RetroPanelTone = "default" | "accent" | "muted" | "flat";
 type RetroButtonVariant = "primary" | "secondary" | "ghost";

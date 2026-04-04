@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Locale } from "@/lib/i18n-provider";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import {
   retroButtonClassName,
   retroPanelClassName,

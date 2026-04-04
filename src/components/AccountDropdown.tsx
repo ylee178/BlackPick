@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import {
   retroButtonClassName,
   retroPanelClassName,

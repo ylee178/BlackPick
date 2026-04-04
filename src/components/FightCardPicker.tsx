@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 
 type FighterData = {
   id: string;

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 import {
   RetroStatusBadge,
   retroButtonClassName,
