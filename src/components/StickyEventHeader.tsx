@@ -32,7 +32,7 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   useEffect(() => {
     const el = document.getElementById(watchElementId);
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => setVisible(!e.isIntersecting), { threshold: 0, rootMargin: "-60px 0px 0px 0px" });
+    const obs = new IntersectionObserver(([e]) => setVisible(!e.isIntersecting), { threshold: 0, rootMargin: "0px 0px 0px 0px" });
     obs.observe(el);
     return () => obs.disconnect();
   }, [watchElementId]);
