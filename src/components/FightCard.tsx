@@ -101,9 +101,9 @@ function FighterSideStatic({
         )}
       </div>
       <div>
-        <p className="text-sm font-bold text-[var(--bp-ink)]">{displayName}</p>
+        <p className="text-sm font-bold text-[var(--bp-ink)]">{displayName} {countryCodeToFlag(fighter.nationality)}</p>
         <p className="mt-0.5 text-[11px] text-[var(--bp-muted)]">
-          {fighter.record || "0-0"} {countryCodeToFlag(fighter.nationality)}
+          {fighter.record || "0-0"}
         </p>
       </div>
       {isPicked ? (

@@ -1,47 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --bp-bg: #0f1115;
-  --bp-bg-2: #161a1f;
-  --bp-card: #1a1e24;
-  --bp-card-hover: #1f242b;
-  --bp-card-inset: #13161b;
-  --bp-accent: #e5a944;
-  --bp-accent-dim: rgba(229, 169, 68, 0.15);
-  --bp-ink: #f0ece4;
-  --bp-muted: #7c8490;
-  --bp-line: rgba(255, 255, 255, 0.08);
-  --bp-line-strong: rgba(255, 255, 255, 0.13);
-  --bp-danger: #ef4444;
-  --bp-success: #22c55e;
-  --bp-info: #3b82f6;
-  --bp-live: #ef4444;
-  --background: var(--bp-bg);
-  --foreground: var(--bp-ink);
-  --card: var(--bp-card);
-  --gold: var(--bp-accent);
-  --gold-dim: var(--bp-accent-dim);
-  --line: var(--bp-line);
-  /* Legacy variable aliases */
-  --retro-bg: var(--bp-bg);
-  --retro-ink: var(--bp-ink);
-  --retro-muted: var(--bp-muted);
-  --retro-accent: var(--bp-accent);
-  --retro-accent-2: #f0c060;
-  --retro-cream: var(--bp-ink);
-  --retro-line: var(--bp-line);
-  --retro-line-strong: var(--bp-line-strong);
-  --retro-danger: var(--bp-danger);
-  --retro-success: var(--bp-success);
-  --retro-info: var(--bp-info);
-  --retro-panel: var(--bp-card);
+  --retro-bg: #050505;
+  --retro-bg-2: #0a0a0a;
+  --retro-panel: #0d0d0d;
+  --retro-panel-2: #111111;
+  --retro-panel-hover: #161616;
+  --retro-panel-inset: #080808;
+  --retro-accent: #ffba3c;
+  --retro-accent-2: #ffd06b;
+  --retro-accent-dim: rgba(255, 186, 60, 0.1);
+  --retro-cream: #f5f1e8;
+  --retro-ink: #ffffff;
+  --retro-muted: rgba(255, 255, 255, 0.5);
+  --retro-line: rgba(255, 255, 255, 0.06);
+  --retro-line-strong: rgba(255, 255, 255, 0.12);
+  --retro-danger: #ef4444;
+  --retro-success: #22c55e;
+  --retro-info: #3b82f6;
+  --background: var(--retro-bg);
+  --foreground: var(--retro-ink);
+  --card: var(--retro-panel);
+  --gold: var(--retro-accent);
+  --gold-dim: var(--retro-accent-dim);
+  --line: var(--retro-line);
+  /* bp aliases for components that use bp-* vars */
+  --bp-bg: var(--retro-bg);
+  --bp-card: var(--retro-panel);
+  --bp-card-hover: var(--retro-panel-hover);
+  --bp-card-inset: var(--retro-panel-inset);
+  --bp-accent: var(--retro-accent);
+  --bp-accent-dim: var(--retro-accent-dim);
+  --bp-ink: var(--retro-ink);
+  --bp-muted: var(--retro-muted);
+  --bp-line: var(--retro-line);
+  --bp-line-strong: var(--retro-line-strong);
+  --bp-danger: var(--retro-danger);
+  --bp-success: var(--retro-success);
+  --bp-info: var(--retro-info);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "Pretendard", -apple-system, "Segoe UI", system-ui, sans-serif;
-  --font-display: "Pretendard", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "Pretendard", -apple-system, system-ui, sans-serif;
 }
 
 * {
@@ -49,13 +52,13 @@
 }
 
 html {
-  background: var(--bp-bg);
+  background: #000;
 }
 
 body {
   min-height: 100dvh;
-  background: var(--bp-bg);
-  color: var(--bp-ink);
+  background: var(--retro-bg);
+  color: var(--retro-ink);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -78,16 +81,16 @@ button:disabled {
 }
 
 ::selection {
-  background: rgba(229, 169, 68, 0.26);
-  color: var(--bp-ink);
+  background: rgba(255, 186, 60, 0.26);
+  color: var(--retro-ink);
 }
 
 /* ── Panels ── */
 
 .retro-panel {
-  border: 1px solid var(--bp-line);
-  border-radius: 16px;
-  background: var(--bp-card);
+  border: 1px solid var(--retro-line);
+  border-radius: 20px;
+  background: var(--retro-panel);
 }
 
 .retro-panel::before {
@@ -95,15 +98,18 @@ button:disabled {
 }
 
 .retro-panel-accent {
-  border-color: rgba(229, 169, 68, 0.2);
+  border-color: rgba(255, 186, 60, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(255, 186, 60, 0.08), transparent 40%),
+    var(--retro-panel);
 }
 
 .retro-panel-muted {
-  background: var(--bp-card-inset);
+  background: var(--retro-panel-inset);
 }
 
 .retro-panel-flat {
-  background: var(--bp-card);
+  background: var(--retro-panel);
 }
 
 .retro-panel-flat::before {
@@ -111,20 +117,20 @@ button:disabled {
 }
 
 .retro-panel-interactive {
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
 .retro-panel-interactive:hover {
-  border-color: var(--bp-line-strong);
-  background: var(--bp-card-hover);
+  border-color: rgba(255, 186, 60, 0.15);
+  background: var(--retro-panel-hover);
 }
 
 /* ── Inset ── */
 
 .retro-inset {
-  border: 1px solid var(--bp-line);
-  border-radius: 12px;
-  background: var(--bp-card-inset);
+  border: 1px solid var(--retro-line);
+  border-radius: 14px;
+  background: var(--retro-panel-inset);
 }
 
 /* ── Buttons ── */
@@ -136,17 +142,18 @@ button:disabled {
   gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.65rem 1.1rem;
-  border: 1px solid var(--bp-line-strong);
-  border-radius: 12px;
-  background: var(--bp-card);
-  color: var(--bp-ink);
+  border: 1px solid var(--retro-line-strong);
+  border-radius: 14px;
+  background: var(--retro-panel);
+  color: var(--retro-ink);
   font-size: 0.875rem;
   font-weight: 600;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: all 0.18s ease;
 }
 
 .retro-button:hover {
-  background: var(--bp-card-hover);
+  border-color: rgba(255, 186, 60, 0.15);
+  background: var(--retro-panel-hover);
 }
 
 .retro-button:disabled {
@@ -159,30 +166,35 @@ button:disabled {
 }
 
 .retro-button-primary {
-  border-color: rgba(229, 169, 68, 0.3);
-  background: linear-gradient(135deg, var(--bp-accent), #d4982c);
-  color: #0f1115;
+  border-color: rgba(255, 186, 60, 0.3);
+  background: var(--retro-accent);
+  color: #000;
   font-weight: 700;
 }
 
 .retro-button-primary:hover {
-  background: linear-gradient(135deg, #edb44f, var(--bp-accent));
+  background: var(--retro-accent-2);
 }
 
 .retro-button-secondary {
-  border-color: var(--bp-line-strong);
-  background: var(--bp-card);
-  color: var(--bp-ink);
+  border-color: var(--retro-line-strong);
+  background: var(--retro-panel);
+  color: var(--retro-ink);
+}
+
+.retro-button-secondary:hover {
+  border-color: rgba(255, 186, 60, 0.15);
+  background: var(--retro-panel-hover);
 }
 
 .retro-button-ghost {
   border-color: transparent;
   background: transparent;
-  color: var(--bp-muted);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .retro-button-ghost:hover {
-  color: var(--bp-ink);
+  color: var(--retro-ink);
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -206,10 +218,10 @@ button:disabled {
   gap: 0.35rem;
   min-height: 1.625rem;
   padding: 0.15rem 0.65rem;
-  border: 1px solid rgba(229, 169, 68, 0.2);
+  border: 1px solid rgba(255, 186, 60, 0.2);
   border-radius: 8px;
-  background: var(--bp-accent-dim);
-  color: var(--bp-accent);
+  background: var(--retro-accent-dim);
+  color: var(--retro-accent);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -217,9 +229,9 @@ button:disabled {
 }
 
 .retro-chip-neutral {
-  border-color: var(--bp-line);
+  border-color: var(--retro-line);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--bp-muted);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* ── Status Badges ── */
@@ -230,9 +242,9 @@ button:disabled {
   gap: 0.3rem;
   padding: 0.2rem 0.55rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.06);
-  color: var(--bp-muted);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -241,18 +253,18 @@ button:disabled {
 }
 
 .retro-status-badge-accent {
-  background: var(--bp-accent-dim);
-  color: var(--bp-accent);
+  background: var(--retro-accent-dim);
+  color: var(--retro-accent);
 }
 
 .retro-status-badge-success {
   background: rgba(34, 197, 94, 0.12);
-  color: var(--bp-success);
+  color: var(--retro-success);
 }
 
 .retro-status-badge-danger {
   background: rgba(239, 68, 68, 0.12);
-  color: var(--bp-danger);
+  color: var(--retro-danger);
 }
 
 .retro-status-badge-danger::before {
@@ -261,7 +273,7 @@ button:disabled {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--bp-danger);
+  background: var(--retro-danger);
   animation: live-pulse 1.5s ease-in-out infinite;
 }
 
@@ -272,7 +284,7 @@ button:disabled {
 
 .retro-status-badge-info {
   background: rgba(59, 130, 246, 0.12);
-  color: var(--bp-info);
+  color: var(--retro-info);
 }
 
 /* ── Fields ── */
@@ -280,26 +292,26 @@ button:disabled {
 .retro-field {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid var(--bp-line-strong);
-  border-radius: 12px;
-  background: var(--bp-card-inset);
-  color: var(--bp-ink);
+  border: 1px solid var(--retro-line-strong);
+  border-radius: 14px;
+  background: black;
+  color: var(--retro-ink);
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.18s ease;
 }
 
 .retro-field::placeholder {
-  color: rgba(124, 132, 144, 0.7);
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .retro-field:focus {
-  border-color: rgba(229, 169, 68, 0.4);
+  border-color: var(--retro-accent);
 }
 
 .retro-field option {
-  background: var(--bp-card);
-  color: var(--bp-ink);
+  background: var(--retro-panel);
+  color: var(--retro-ink);
 }
 
 /* ── Navigation ── */
@@ -311,21 +323,21 @@ button:disabled {
   padding: 0.5rem 0.85rem;
   border: none;
   border-radius: 10px;
-  color: var(--bp-muted);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.875rem;
   font-weight: 500;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: all 0.18s ease;
   min-height: auto;
 }
 
 .retro-nav-link:hover {
-  color: var(--bp-ink);
+  color: var(--retro-ink);
   background: rgba(255, 255, 255, 0.04);
 }
 
 .retro-nav-link-active {
-  background: rgba(229, 169, 68, 0.1);
-  color: var(--bp-accent);
+  background: var(--retro-accent-dim);
+  color: var(--retro-accent);
   font-weight: 600;
   border-color: transparent;
   box-shadow: none;
@@ -342,7 +354,7 @@ button:disabled {
 }
 
 .retro-nav-link-mobile.retro-nav-link-active {
-  background: rgba(229, 169, 68, 0.1);
+  background: var(--retro-accent-dim);
   box-shadow: none;
 }
 
@@ -361,25 +373,52 @@ button:disabled {
   height: 100%;
   min-height: 0;
   border-radius: 999px;
-  background: var(--bp-accent);
+  background: var(--retro-accent);
   transition: width 0.3s ease;
 }
 
-.retro-meter-fill-success { background: var(--bp-success); }
-.retro-meter-fill-info { background: var(--bp-info); }
-.retro-meter-fill-danger { background: var(--bp-danger); }
+.retro-meter-fill-success { background: var(--retro-success); }
+.retro-meter-fill-info { background: var(--retro-info); }
+.retro-meter-fill-danger { background: var(--retro-danger); }
 
 .retro-meter-sheen { display: none; }
+
+/* ── Decorative ── */
+
+.retro-grid {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%),
+    radial-gradient(circle at top right, rgba(255, 186, 60, 0.06), transparent 28%);
+}
+
+.retro-divider {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--retro-accent), transparent);
+}
+
+.premium-card {
+  border: 1px solid rgba(255, 186, 60, 0.15);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 186, 60, 0.08), transparent 30%),
+    var(--retro-panel);
+}
+
+.dot-pattern {
+  background-image: radial-gradient(rgba(255, 186, 60, 0.08) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
 
 /* ── Utility ── */
 
 .gold-hover {
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
 .gold-hover:hover {
-  border-color: var(--bp-line-strong);
-  background: var(--bp-card-hover);
+  border-color: rgba(255, 186, 60, 0.15);
+  background: var(--retro-panel-hover);
 }
 
 .bottom-safe {
