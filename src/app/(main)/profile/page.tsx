@@ -1,13 +1,45 @@
 import Link from "next/link";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
+import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 
 export const dynamic = "force-dynamic";
+
+type RecentPrediction = {
+  id: string;
+  winner_id: string;
+  method?: string | null;
+  round?: number | null;
+  score?: number | null;
+  is_winner_correct?: boolean | null;
+  fight?: {
+    id: string;
+    fighter_a?: {
+      id: string;
+      name: string;
+      ring_name?: string | null;
+      name_en?: string | null;
+      name_ko?: string | null;
+    } | null;
+    fighter_b?: {
+      id: string;
+      name: string;
+      ring_name?: string | null;
+      name_en?: string | null;
+      name_ko?: string | null;
+    } | null;
+    event?: {
+      id: string;
+      name: string;
+      date: string;
+    } | null;
+  } | null;
+};
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServer();
   const authUser = await getUser();
-  const { t } = await getTranslations();
+  const { t, locale } = await getTranslations();
 
   if (!authUser) {
     return (
@@ -47,8 +79,8 @@ export default async function ProfilePage() {
       id, winner_id, method, round, score, is_winner_correct, created_at,
       fight:fights!fight_id(
         id, status, winner_id, method, round,
-        fighter_a:fighters!fighter_a_id(id, name, ring_name),
-        fighter_b:fighters!fighter_b_id(id, name, ring_name),
+        fighter_a:fighters!fighter_a_id(id, name, ring_name, name_en, name_ko),
+        fighter_b:fighters!fighter_b_id(id, name, ring_name, name_en, name_ko),
         event:events!event_id(id, name, date)
       )
     `)
@@ -164,12 +196,14 @@ export default async function ProfilePage() {
               </Link>
             </div>
           ) : (
-            (recentPreds ?? []).map((pred: any) => {
+            ((recentPreds ?? []) as RecentPrediction[]).map((pred) => {
               const fight = pred.fight;
               if (!fight) return null;
+              const fighterALabel = getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a?.name);
+              const fighterBLabel = getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b?.name);
               const pickedName = pred.winner_id === fight.fighter_a?.id
-                ? (fight.fighter_a?.ring_name || fight.fighter_a?.name)
-                : (fight.fighter_b?.ring_name || fight.fighter_b?.name);
+                ? fighterALabel
+                : fighterBLabel;
 
               return (
                 <Link
@@ -179,10 +213,10 @@ export default async function ProfilePage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-[9px] uppercase tracking-wider text-white/50">
-                      {fight.event?.name} · {fight.event?.date}
+                      {fight.event ? getLocalizedEventName(fight.event, locale, fight.event.name) : ""} · {fight.event?.date}
                     </p>
                     <p className="mt-1 text-sm font-bold text-white/70">
-                      {fight.fighter_a?.ring_name || fight.fighter_a?.name} vs {fight.fighter_b?.ring_name || fight.fighter_b?.name}
+                      {fighterALabel} vs {fighterBLabel}
                     </p>
                     <p className="mt-0.5 text-xs text-white/50">
                       {t("prediction.yourPick")}: <span className="font-medium text-white/70">{pickedName}</span>

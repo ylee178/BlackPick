@@ -126,6 +126,19 @@
     "closesIn": "Predictions close in",
     "locked": "Predictions locked"
   },
+  "mvp": {
+    "oneVotePerEvent": "One vote per event.",
+    "totalVotes": "Total votes",
+    "selectFighter": "Please select a fighter.",
+    "submitFailed": "Failed to submit vote.",
+    "submitted": "MVP vote submitted.",
+    "unknownError": "Something went wrong.",
+    "submitting": "Submitting...",
+    "vote": "Vote MVP",
+    "ended": "MVP voting has ended.",
+    "results": "Results",
+    "noVotesYet": "No votes yet."
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

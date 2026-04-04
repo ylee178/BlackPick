@@ -126,6 +126,19 @@
     "closesIn": "예측 마감까지",
     "locked": "예측 마감됨"
   },
+  "mvp": {
+    "oneVotePerEvent": "이벤트당 1회 투표할 수 있습니다.",
+    "totalVotes": "총 투표 수",
+    "selectFighter": "선수를 선택해 주세요.",
+    "submitFailed": "투표 제출에 실패했습니다.",
+    "submitted": "MVP 투표가 제출되었습니다.",
+    "unknownError": "문제가 발생했습니다.",
+    "submitting": "제출 중...",
+    "vote": "MVP 투표",
+    "ended": "MVP 투표가 종료되었습니다.",
+    "results": "결과",
+    "noVotesYet": "아직 투표가 없습니다."
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",

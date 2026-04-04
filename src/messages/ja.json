@@ -126,6 +126,19 @@
     "closesIn": "予想締切まで",
     "locked": "予想受付終了"
   },
+  "mvp": {
+    "oneVotePerEvent": "イベントごとに1票までです。",
+    "totalVotes": "総投票数",
+    "selectFighter": "選手を選択してください。",
+    "submitFailed": "投票の送信に失敗しました。",
+    "submitted": "MVP投票を送信しました。",
+    "unknownError": "問題が発生しました。",
+    "submitting": "送信中...",
+    "vote": "MVPに投票",
+    "ended": "MVP投票は終了しました。",
+    "results": "結果",
+    "noVotesYet": "まだ投票がありません。"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",

@@ -5,6 +5,7 @@ import StickyEventHeader from "@/components/StickyEventHeader";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n-server";
+import { getLocalizedEventName } from "@/lib/localized-name";
 
 export default async function EventPage({
   params,
@@ -14,7 +15,7 @@ export default async function EventPage({
   const supabase = await createSupabaseServer();
   const user = await getUser();
   const { id } = await params;
-  const { t } = await getTranslations();
+  const { t, locale } = await getTranslations();
 
   const { data: event } = await supabase
     .from("events")
@@ -77,11 +78,13 @@ export default async function EventPage({
   const fightCount = (fights ?? []).length;
   const completedCount = (fights ?? []).filter((f) => f.status === "completed").length;
   const withWinner = (fights ?? []).filter((f) => f.winner_id).length;
+  const nowTimestamp = Date.now();
+  const localizedEventName = getLocalizedEventName(event, locale, event.name);
 
   return (
     <div className="relative space-y-8 pb-24">
       <StickyEventHeader
-        eventName={event.name}
+        eventName={localizedEventName}
         eventStatus={event.status as "upcoming" | "live" | "completed"}
         countdownTargetTime={event.status === "upcoming" ? earliestStart : null}
         watchElementId="event-page-header"
@@ -116,7 +119,7 @@ export default async function EventPage({
               className="mt-5 text-3xl font-black uppercase leading-tight text-white md:text-4xl lg:text-5xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {event.name}
+              {localizedEventName}
             </h1>
 
             <p className="mt-3 text-sm text-white/55">{event.date}</p>
@@ -211,6 +214,7 @@ export default async function EventPage({
               key={fight.id}
               fight={fight as any}
               eventStatus={event.status as "upcoming" | "live" | "completed"}
+              hasStarted={new Date(fight.start_time).getTime() <= nowTimestamp}
               prediction={predMap.get(fight.id) ?? null}
               crowdStats={statsMap.get(fight.id) ?? null}
               currentUserId={user?.id ?? null}

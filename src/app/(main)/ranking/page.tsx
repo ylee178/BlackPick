@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
+import { getLocalizedEventName } from "@/lib/localized-name";
 
 const PAGE_SIZE = 50;
 
@@ -96,7 +97,7 @@ function UserRow({ user, rank }: { user: any; rank: number }) {
 
 export default async function RankingPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const { t } = await getTranslations();
+  const { t, locale } = await getTranslations();
   const supabase = await createSupabaseServer();
 
   const tab = params.tab === "series" || params.tab === "event" ? params.tab : "running";
@@ -367,7 +368,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                     : "border-white/5 text-white/55 hover:border-white/10"
                 )}
               >
-                {ev.name}
+                {getLocalizedEventName(ev, locale, ev.name)}
               </Link>
             ))}
           </div>

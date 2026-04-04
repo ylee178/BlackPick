@@ -4,11 +4,8 @@
   --background: #000000;
   --foreground: #ffffff;
   --card: #0a0a0a;
-  --card-border: rgba(255, 186, 60, 0.12);
   --gold: #ffba3c;
   --gold-dim: rgba(255, 186, 60, 0.08);
-  --gold-text: #d4a848;
-  --subtext: #8a8a8a;
   --line: rgba(255, 255, 255, 0.06);
 }
 
@@ -19,88 +16,93 @@
   --font-display: "Barlow Condensed", "Pretendard", system-ui, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html {
-  background: #000000;
-}
+html { background: #000; }
 
 body {
   min-height: 100dvh;
-  background: #000000;
-  color: #ffffff;
+  background: #000;
+  color: #fff;
   font-family: "Pretendard", system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-a, button {
-  -webkit-tap-highlight-color: transparent;
-}
+a, button { -webkit-tap-highlight-color: transparent; }
 
-::selection {
-  background: rgba(255, 186, 60, 0.3);
-  color: #ffffff;
-}
+::selection { background: rgba(255,186,60,0.3); color: #fff; }
 
 .display-font {
   font-family: "Barlow Condensed", "Pretendard", system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
-/* Premium gold decorative line */
+/* ── Dot pattern texture (halftone inspired) ── */
+.dot-pattern {
+  background-image: radial-gradient(rgba(255,186,60,0.12) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.dot-pattern-light {
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* ── Diagonal stripe accent ── */
+.stripe-accent {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    rgba(255,186,60,0.06) 6px,
+    rgba(255,186,60,0.06) 7px
+  );
+}
+
+/* ── Gold line ── */
 .gold-line {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #ffba3c, transparent);
+  height: 2px;
+  background: linear-gradient(90deg, #ffba3c, transparent);
 }
 
-/* Gold shimmer on hover */
+/* ── Skew divider ── */
+.skew-divider {
+  height: 4px;
+  background: #ffba3c;
+  transform: skewX(-20deg);
+}
+
+/* ── Gold hover card ── */
 .gold-hover {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .gold-hover:hover {
-  border-color: rgba(255, 186, 60, 0.3);
-  box-shadow: 0 0 40px rgba(255, 186, 60, 0.06);
+  border-color: rgba(255,186,60,0.35);
+  box-shadow: 0 0 40px rgba(255,186,60,0.08);
+  transform: translateY(-2px);
 }
 
-/* Gold active underline for nav */
-.gold-underline-active {
-  position: relative;
-}
+/* ── Active nav underline ── */
+.gold-underline-active { position: relative; }
 .gold-underline-active::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -14px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #ffba3c, transparent);
+  left: 0; right: 0; bottom: -14px;
+  height: 3px;
+  background: #ffba3c;
 }
 
-/* Premium card with subtle gold */
+/* ── Premium card ── */
 .premium-card {
-  background: linear-gradient(180deg, rgba(255, 186, 60, 0.03) 0%, rgba(0, 0, 0, 0) 100%);
-  border: 1px solid rgba(255, 186, 60, 0.1);
-}
-.premium-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(ellipse at top, rgba(255, 186, 60, 0.05), transparent 70%);
-  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,186,60,0.04) 0%, rgba(0,0,0,0) 100%);
+  border: 1px solid rgba(255,186,60,0.12);
 }
 
-/* Triangle decoration */
-.gold-triangle {
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-left: 60px solid transparent;
-  border-right: 60px solid transparent;
-  border-bottom: 100px solid rgba(255, 186, 60, 0.06);
-  pointer-events: none;
+/* ── Gold block (solid gold bg section) ── */
+.gold-block {
+  background: #ffba3c;
+  color: #000;
 }
 
 .bottom-safe {

@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
+import { getLocalizedFighterName } from "@/lib/localized-name";
 
 type Fighter = {
   id: string;
   name: string;
   ring_name?: string | null;
+  name_en?: string | null;
+  name_ko?: string | null;
 };
 
 type PredictionFormProps = {
@@ -23,17 +26,13 @@ type PredictionFormProps = {
 const methods = ["KO/TKO", "Submission", "Decision"] as const;
 const rounds = [1, 2, 3, 4] as const;
 
-function dn(fighter: Fighter) {
-  return fighter.ring_name || fighter.name;
-}
-
 export default function PredictionForm({
   fightId,
   fighterA,
   fighterB,
   initialPrediction,
 }: PredictionFormProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [winnerId, setWinnerId] = useState(initialPrediction?.winner_id ?? "");
   const [method, setMethod] = useState(initialPrediction?.method ?? "");
   const [round, setRound] = useState(initialPrediction?.round ? String(initialPrediction.round) : "");
@@ -93,7 +92,7 @@ export default function PredictionForm({
                   className={`text-sm font-bold uppercase ${active ? "text-[#ffba3c]" : "text-white/60"}`}
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {dn(fighter)}
+                  {getLocalizedFighterName(fighter, locale, fighter.name)}
                 </span>
                 <div className={`h-3 w-3 rounded-full border ${
                   active

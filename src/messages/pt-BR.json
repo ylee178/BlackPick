@@ -126,6 +126,19 @@
     "closesIn": "Palpites encerram em",
     "locked": "Palpites encerrados"
   },
+  "mvp": {
+    "oneVotePerEvent": "Um voto por evento.",
+    "totalVotes": "Total de votos",
+    "selectFighter": "Selecione um lutador.",
+    "submitFailed": "Falha ao enviar voto.",
+    "submitted": "Voto de MVP enviado.",
+    "unknownError": "Algo deu errado.",
+    "submitting": "Enviando...",
+    "vote": "Votar no MVP",
+    "ended": "A votação de MVP foi encerrada.",
+    "results": "Resultados",
+    "noVotesYet": "Ainda não há votos."
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Algo deu errado",

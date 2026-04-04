@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
+import { getLocalizedEventName } from "@/lib/localized-name";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ function getDDay(date: string) {
 
 export default async function EventsPage() {
   const supabase = await createSupabaseServer();
-  const { t } = await getTranslations();
+  const { t, locale } = await getTranslations();
 
   const { data: events } = await supabase
     .from("events")
@@ -63,7 +64,7 @@ export default async function EventsPage() {
                     {getSeriesLabel(event.series_type, t)}
                   </p>
                   <p className="mt-1 text-lg font-bold text-white group-hover:text-[#ffba3c] transition">
-                    {event.name}
+                    {getLocalizedEventName(event, locale, event.name)}
                   </p>
                   <p className="mt-1 text-xs text-white/50">{event.date}</p>
                 </div>
@@ -107,7 +108,7 @@ export default async function EventsPage() {
                   {getSeriesLabel(event.series_type, t)}
                 </p>
                 <p className="mt-0.5 text-sm font-medium text-white/60 group-hover:text-white/60 transition">
-                  {event.name}
+                  {getLocalizedEventName(event, locale, event.name)}
                 </p>
               </div>
               <span className="text-[10px] text-white/45">{event.date}</span>

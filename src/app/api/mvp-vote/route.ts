@@ -6,6 +6,18 @@ type VotePayload = {
   fighter_id?: string;
 };
 
+type VoteResultRow = {
+  fighter_id: string;
+  fighters: {
+    id: string;
+    name: string;
+    ring_name: string | null;
+    name_en: string | null;
+    name_ko: string | null;
+    image_url: string | null;
+  } | null;
+};
+
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServer();
   const user = await getUser();
@@ -119,6 +131,9 @@ export async function GET(req: NextRequest) {
       fighters!mvp_votes_fighter_id_fkey(
         id,
         name,
+        ring_name,
+        name_en,
+        name_ko,
         image_url
       )
     `)
@@ -133,11 +148,19 @@ export async function GET(req: NextRequest) {
 
   const counts = new Map<
     string,
-    { fighter_id: string; name: string; image_url: string | null; votes: number }
+    {
+      fighter_id: string;
+      name: string;
+      ring_name: string | null;
+      name_en: string | null;
+      name_ko: string | null;
+      image_url: string | null;
+      votes: number;
+    }
   >();
 
-  for (const vote of votes ?? []) {
-    const fighter = (vote as any).fighters;
+  for (const vote of (votes ?? []) as VoteResultRow[]) {
+    const fighter = vote.fighters;
     if (!fighter) continue;
 
     const existing = counts.get(vote.fighter_id);
@@ -147,6 +170,9 @@ export async function GET(req: NextRequest) {
       counts.set(vote.fighter_id, {
         fighter_id: vote.fighter_id,
         name: fighter.name,
+        ring_name: fighter.ring_name ?? null,
+        name_en: fighter.name_en ?? null,
+        name_ko: fighter.name_ko ?? null,
         image_url: fighter.image_url ?? null,
         votes: 1,
       });

@@ -1,7 +1,13 @@
 import PredictionForm from "@/components/PredictionForm";
+import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
+import {
+  getLocalizedFighterName,
+  getLocalizedFighterSubLabel,
+  type AppLocale,
+} from "@/lib/localized-name";
 
 type FighterData = {
   id: string;
@@ -29,6 +35,7 @@ type FightCardProps = {
     fighter_b: FighterData;
   };
   eventStatus: "upcoming" | "live" | "completed";
+  hasStarted: boolean;
   prediction: {
     winner_id: string;
     method?: string | null;
@@ -46,10 +53,6 @@ type FightCardProps = {
   currentUserId?: string | null;
 };
 
-function dn(fighter: FighterData): string {
-  return fighter.ring_name || fighter.name;
-}
-
 function FighterSide({
   fighter,
   align,
@@ -63,10 +66,13 @@ function FighterSide({
   isWinner: boolean;
   isLoser: boolean;
   isSelected: boolean;
-  locale: string;
+  locale: AppLocale;
 }) {
   const textAlign = align === "right" ? "text-right" : "text-left";
   const flexDir = align === "right" ? "flex-row-reverse" : "";
+  const displayName = getLocalizedFighterName(fighter, locale, fighter.name);
+  const subLabel = getLocalizedFighterSubLabel(fighter, locale);
+  const avatarUrl = getFighterAvatarUrl(fighter);
 
   return (
     <div
@@ -95,8 +101,8 @@ function FighterSide({
       <div className={`flex items-center gap-3 ${flexDir}`}>
         {/* Avatar */}
         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-white/[0.06] bg-black">
-          {fighter.image_url ? (
-            <img src={fighter.image_url} alt={fighter.name} className="h-full w-full object-cover" />
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wider text-white/50">
               IMG
@@ -110,10 +116,10 @@ function FighterSide({
             className="truncate text-lg font-black uppercase text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {dn(fighter)} {countryCodeToFlag(fighter.nationality)}
+            {displayName} {countryCodeToFlag(fighter.nationality)}
           </p>
-          {fighter.ring_name && fighter.ring_name !== fighter.name && (
-            <p className="truncate text-[11px] text-white/55">{fighter.name}</p>
+          {subLabel && (
+            <p className="truncate text-[11px] text-white/55">{subLabel}</p>
           )}
           <div className="mt-1 flex items-center gap-2 text-[11px] text-white/60" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
             <span>{fighter.record || "0-0"}</span>
@@ -133,12 +139,12 @@ function FighterSide({
 export default async function FightCard({
   fight,
   eventStatus,
+  hasStarted,
   prediction,
   crowdStats,
 }: FightCardProps) {
   const { t, locale } = await getTranslations();
 
-  const hasStarted = new Date(fight.start_time).getTime() <= Date.now();
   const isUpcoming = eventStatus === "upcoming" && !hasStarted;
   const isLive = eventStatus === "live" || (eventStatus === "upcoming" && hasStarted);
   const isCompleted = eventStatus === "completed";
@@ -208,7 +214,9 @@ export default async function FightCard({
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-white/55">{t("event.result")}</p>
               <p className="mt-1 text-sm font-bold text-white">
-                {winnerA ? dn(fight.fighter_a) : dn(fight.fighter_b)}{" "}
+                {winnerA
+                  ? getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name)
+                  : getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name)}{" "}
                 <span className="text-[#ffba3c]">{t("event.won")}</span>
                 {fight.method && <span className="text-white/60"> · {fight.method}</span>}
                 {fight.round && <span className="text-white/60"> · R{fight.round}</span>}
@@ -235,7 +243,9 @@ export default async function FightCard({
           {prediction && (
             <p className="mt-1 text-sm text-white/50">
               {t("prediction.yourPick")}: <span className="font-bold text-white">
-                {prediction.winner_id === fight.fighter_a_id ? dn(fight.fighter_a) : dn(fight.fighter_b)}
+                {prediction.winner_id === fight.fighter_a_id
+                  ? getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name)
+                  : getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name)}
               </span>
               {prediction.method && ` · ${prediction.method}`}
               {prediction.round && ` · R${prediction.round}`}
