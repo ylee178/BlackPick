@@ -231,9 +231,9 @@ export default async function HomePage() {
           {fights.length > 0 ? (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-[var(--bp-ink)]">
+                <h2 className="text-lg font-bold tracking-tight text-[var(--bp-ink)]">
                   {t("event.fights")} ({fights.length})
-                </p>
+                </h2>
                 {featured ? (
                   <Link href={`/events/${featured.id}`} className="text-xs font-medium text-[var(--bp-accent)]">
                     {t("common.viewAll")}
@@ -268,7 +268,7 @@ export default async function HomePage() {
 
         {/* Sidebar */}
         <div className="flex flex-col gap-6">
-          <p className="text-sm font-semibold text-[var(--bp-ink)]">Black Pick Ranking</p>
+          <h2 className="text-lg font-bold tracking-tight text-[var(--bp-ink)]">Black Pick Ranking</h2>
 
           {/* Card 1: All-Time Rankings */}
           <section className={retroPanelClassName({ className: "p-4" })}>
