@@ -119,7 +119,7 @@ export default function LanguagePicker() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-[180px] overflow-hidden rounded-xl border border-white/10 bg-[#121417] p-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+        <div className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-[180px] overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] p-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
           {LANGUAGES.map((language) => {
             const active = language.code === locale;
 
