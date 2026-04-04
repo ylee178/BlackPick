@@ -5,8 +5,6 @@ type RetroPanelTone = "default" | "accent" | "muted" | "flat";
 type RetroButtonVariant = "primary" | "secondary" | "ghost";
 type RetroButtonSize = "sm" | "md" | "lg";
 type RetroBadgeTone = "neutral" | "accent" | "success" | "danger" | "info";
-type RetroMeterTone = "accent" | "success" | "info" | "danger";
-
 export function retroPanelClassName({
   tone = "default",
   interactive = false,
@@ -104,73 +102,6 @@ export function retroSegmentClassName({
   );
 }
 
-export function RetroSectionHeading({
-  eyebrow,
-  title,
-  description,
-  action,
-  className,
-}: {
-  eyebrow?: string;
-  title?: string;
-  description?: string;
-  action?: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex flex-col gap-3 md:flex-row md:items-start md:justify-between", className)}>
-      <div className="min-w-0">
-        {eyebrow ? <span className={retroChipClassName()}>{eyebrow}</span> : null}
-        {title ? (
-          <h2 className="mt-3 text-2xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] md:text-3xl">
-            {title}
-          </h2>
-        ) : null}
-        {description ? (
-          <p className="mt-2 max-w-2xl text-sm text-[var(--bp-muted)]">
-            {description}
-          </p>
-        ) : null}
-      </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </div>
-  );
-}
-
-export function RetroPageIntro({
-  eyebrow,
-  title,
-  description,
-  action,
-  meta,
-  className,
-}: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  action?: ReactNode;
-  meta?: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex flex-col gap-4 md:flex-row md:items-end md:justify-between", className)}>
-      <div className="min-w-0">
-        {eyebrow ? <span className={retroChipClassName()}>{eyebrow}</span> : null}
-        <h1 className="mt-3 text-2xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] md:text-3xl">
-          {title}
-        </h1>
-        {description ? (
-          <p className="mt-2 max-w-2xl text-sm text-[var(--bp-muted)]">
-            {description}
-          </p>
-        ) : null}
-        {meta ? <div className="mt-3">{meta}</div> : null}
-      </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </div>
-  );
-}
-
 export function RetroStatusBadge({
   children,
   tone = "neutral",
@@ -193,44 +124,6 @@ export function RetroStatusBadge({
     >
       {children}
     </span>
-  );
-}
-
-export function RetroMeter({
-  label,
-  value,
-  max,
-  valueLabel,
-  tone = "accent",
-  className,
-}: {
-  label: string;
-  value: number;
-  max: number;
-  valueLabel?: string;
-  tone?: RetroMeterTone;
-  className?: string;
-}) {
-  const ratio = max <= 0 ? 0 : Math.min(100, Math.max(0, (value / max) * 100));
-
-  return (
-    <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between gap-3 text-[11px] text-[var(--bp-muted)]">
-        <span>{label}</span>
-        <span className="font-semibold text-[var(--bp-ink)]">{valueLabel ?? `${Math.round(ratio)}%`}</span>
-      </div>
-      <div className="retro-meter">
-        <div
-          className={cn(
-            "retro-meter-fill",
-            tone === "success" && "retro-meter-fill-success",
-            tone === "info" && "retro-meter-fill-info",
-            tone === "danger" && "retro-meter-fill-danger"
-          )}
-          style={{ width: `${ratio}%` }}
-        />
-      </div>
-    </div>
   );
 }
 
