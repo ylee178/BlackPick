@@ -103,7 +103,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </header>
 
         {/* Main Content */}
-        <main className="mx-auto max-w-[1200px] px-4 pb-28 pt-3 sm:px-6 sm:pt-4 lg:pb-10">
+        <main className="mx-auto max-w-[1200px] px-4 pb-28 pt-10 sm:px-6 lg:pb-10">
           {children}
         </main>
 
