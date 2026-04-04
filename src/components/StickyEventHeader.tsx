@@ -57,7 +57,7 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   return (
     <div
       className={cn(
-        "fixed left-0 right-0 top-[53px] z-30 border-b bg-[var(--bp-bg)]/80 backdrop-blur-xl",
+        "fixed left-0 right-0 top-[61px] z-30 border-b bg-[var(--bp-bg)]/80 backdrop-blur-xl",
         "transition-opacity duration-100",
         visible ? "opacity-100 border-[var(--bp-line)]" : "opacity-0 border-transparent pointer-events-none"
       )}
