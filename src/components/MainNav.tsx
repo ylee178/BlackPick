@@ -47,6 +47,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   const desktopLinks = [
     { href: "/events", label: t("nav.events") || "Events" },
     { href: "/ranking", label: t("nav.ranking") || "Ranking" },
+    { href: "/terminal", label: "Terminal" },
   ];
 
   const mobileLinks = [

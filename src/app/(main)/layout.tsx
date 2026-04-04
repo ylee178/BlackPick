@@ -4,6 +4,8 @@ import { I18nProvider } from "@/lib/i18n-provider";
 import MainNav from "@/components/MainNav";
 import LanguagePicker from "@/components/LanguagePicker";
 import { getLocale } from "@/lib/i18n-server";
+import RingNameOnboarding from "@/components/RingNameOnboarding";
+import { createSupabaseServer } from "@/lib/supabase-server";
 
 interface Messages {
   [key: string]: string | Messages;
@@ -21,6 +23,20 @@ async function loadMessages(locale: "en" | "ko" | "ja" | "pt-BR"): Promise<Messa
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
   const messages = await loadMessages(locale);
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  const { data: publicUser } = authUser
+    ? await supabase
+        .from("users")
+        .select("ring_name")
+        .eq("id", authUser.id)
+        .maybeSingle()
+    : { data: null };
+
+  const needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim());
 
   return (
     <I18nProvider initialLocale={locale} initialMessages={messages}>
@@ -61,18 +77,29 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             {/* Right */}
             <div className="flex items-center gap-3">
               <LanguagePicker />
-              <Link
-                href="/login"
-                className="hidden rounded border border-white/10 px-5 py-2 text-sm font-medium text-white/70 transition hover:border-[#ffba3c]/30 hover:text-white sm:inline-flex"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/signup"
-                className="hidden rounded bg-[#ffba3c] px-5 py-2 text-sm font-bold text-black transition hover:bg-[#ffd06b] sm:inline-flex"
-              >
-                Sign up
-              </Link>
+              {authUser ? (
+                <Link
+                  href="/profile"
+                  className="hidden rounded border border-[#ffba3c]/25 px-5 py-2 text-sm font-semibold text-[#ffba3c] transition hover:border-[#ffba3c]/40 hover:text-[#ffd06b] sm:inline-flex"
+                >
+                  {publicUser?.ring_name?.trim() || authUser.email?.split("@")[0] || "Profile"}
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="hidden rounded border border-white/10 px-5 py-2 text-sm font-medium text-white/70 transition hover:border-[#ffba3c]/30 hover:text-white sm:inline-flex"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="hidden rounded bg-[#ffba3c] px-5 py-2 text-sm font-bold text-black transition hover:bg-[#ffd06b] sm:inline-flex"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -81,6 +108,10 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         <main className="mx-auto max-w-7xl px-5 pb-28 pt-8 sm:px-8 lg:pb-12">
           {children}
         </main>
+
+        {needsRingNameOnboarding ? (
+          <RingNameOnboarding email={authUser?.email ?? null} />
+        ) : null}
 
         {/* Mobile tab bar */}
         <nav className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[#ffba3c]/10 bg-black/95 backdrop-blur-xl md:hidden">

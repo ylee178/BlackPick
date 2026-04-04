@@ -4,10 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n-provider";
+import { mapAuthErrorMessage } from "@/lib/auth-error";
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createBrowserSupabaseClient();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,11 +31,11 @@ export default function LoginPage() {
     setLoading(false);
 
     if (error) {
-      setError(error.message);
+      setError(mapAuthErrorMessage(error.message, t));
       return;
     }
 
-    router.push("/profile");
+    router.push("/");
     router.refresh();
   };
 
@@ -44,12 +47,12 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/profile`,
+        redirectTo: `${origin}/`,
       },
     });
 
     if (error) {
-      setError(error.message);
+      setError(mapAuthErrorMessage(error.message, t));
       setGoogleLoading(false);
     }
   };
@@ -59,18 +62,18 @@ export default function LoginPage() {
       <div className="mx-auto max-w-md rounded-2xl border border-gray-800 bg-gray-900/70 p-6 shadow-xl">
         <div className="mb-6 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-amber-400">
-            Welcome Back
+            {t("auth.loginEyebrow")}
           </p>
-          <h1 className="mt-2 text-3xl font-extrabold">Sign In</h1>
+          <h1 className="mt-2 text-3xl font-extrabold">{t("auth.loginTitle")}</h1>
           <p className="mt-2 text-sm text-gray-400">
-            Enter the arena and track your picks.
+            {t("auth.loginDescription")}
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-300">
-              Email
+              {t("auth.email")}
             </label>
             <input
               type="email"
@@ -78,13 +81,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-300">
-              Password
+              {t("auth.password")}
             </label>
             <input
               type="password"
@@ -92,7 +95,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
-              placeholder="••••••••"
+              placeholder={t("auth.passwordPlaceholder")}
             />
           </div>
 
@@ -107,13 +110,13 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-xl bg-amber-400 px-4 py-3 font-bold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? "Signing In..." : "Sign In"}
+            {loading ? t("auth.signingIn") : t("auth.login")}
           </button>
         </form>
 
         <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-800" />
-          <span className="text-xs uppercase tracking-widest text-gray-400">or</span>
+          <span className="text-xs uppercase tracking-widest text-gray-400">{t("auth.or")}</span>
           <div className="h-px flex-1 bg-gray-800" />
         </div>
 
@@ -123,13 +126,13 @@ export default function LoginPage() {
           disabled={googleLoading}
           className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 font-semibold text-white transition hover:border-gray-700 hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {googleLoading ? "Redirecting..." : "Continue with Google"}
+          {googleLoading ? t("auth.redirecting") : t("auth.googleLogin")}
         </button>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          Don&apos;t have an account?{" "}
+          {t("auth.noAccount")}{" "}
           <Link href="/signup" className="font-semibold text-amber-400 hover:text-amber-300">
-            Sign up
+            {t("auth.signup")}
           </Link>
         </p>
       </div>
