@@ -13,6 +13,12 @@ const WEIGHT_MAP: Record<string, Record<string, string>> = {
   "헤비급": { en: "Heavyweight", ja: "ヘビー級", "pt-BR": "Peso Pesado" },
   "스트로급": { en: "Strawweight", ja: "ストロー級", "pt-BR": "Peso Palha" },
   "슈퍼라이트급": { en: "Super Lightweight", ja: "スーパーライト級", "pt-BR": "Peso Super-Leve" },
+  "캐치웨이트": { en: "Catchweight", ja: "キャッチウェイト", "pt-BR": "Peso Casado" },
+  "오픈웨이트": { en: "Openweight", ja: "無差別級", "pt-BR": "Peso Aberto" },
+  "슈퍼웰터급": { en: "Super Welterweight", ja: "スーパーウェルター級", "pt-BR": "Peso Super Meio-Médio" },
+  "슈퍼밴텀급": { en: "Super Bantamweight", ja: "スーパーバンタム級", "pt-BR": "Peso Super-Galo" },
+  "슈퍼페더급": { en: "Super Featherweight", ja: "スーパーフェザー級", "pt-BR": "Peso Super-Pena" },
+  "슈퍼미들급": { en: "Super Middleweight", ja: "スーパーミドル級", "pt-BR": "Peso Super-Médio" },
 };
 
 export function translateWeightClass(
@@ -22,14 +28,15 @@ export function translateWeightClass(
   if (!koreanWeight) return "";
   if (locale === "ko") return koreanWeight;
 
-  // Strip ranking info like "#16" from "라이트급 #16"
-  const clean = koreanWeight.replace(/#\d+/, "").trim();
+  // Strip ranking info like "#16" and weight like "70kg"
+  const rankMatch = koreanWeight.match(/#\d+/)?.[0] || "";
+  const weightMatch = koreanWeight.match(/\d+(\.\d+)?\s*kg/i)?.[0] || "";
+  const clean = koreanWeight.replace(/#\d+/, "").replace(/\d+(\.\d+)?\s*kg/i, "").trim();
 
   const translations = WEIGHT_MAP[clean];
   if (translations && translations[locale]) {
-    // Preserve rank if present
-    const rank = koreanWeight.match(/#\d+/)?.[0] || "";
-    return `${translations[locale]}${rank ? ` ${rank}` : ""}`;
+    const suffix = [weightMatch, rankMatch].filter(Boolean).join(" ");
+    return `${translations[locale]}${suffix ? ` ${suffix}` : ""}`;
   }
 
   return koreanWeight;

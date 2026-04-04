@@ -145,7 +145,8 @@ export default async function FightCard({
       : t("event.resultPending");
 
   const statusTone = isCancelled ? "danger" : isCompleted ? "success" : isLive ? "danger" : "info";
-  const weightLabel = fight.fighter_a.weight_class ? translateWeightClass(fight.fighter_a.weight_class, locale) : null;
+  const rawWeight = fight.fighter_a.weight_class || fight.fighter_b.weight_class;
+  const weightLabel = rawWeight ? translateWeightClass(rawWeight, locale) : null;
   const isTitleFight = (fight as { is_title_fight?: boolean }).is_title_fight;
 
   return (
