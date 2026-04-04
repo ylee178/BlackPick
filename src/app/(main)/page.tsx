@@ -146,7 +146,7 @@ export default async function HomePage() {
   const localizedEventName = featured ? getLocalizedEventName(featured, locale, featured.name) : "";
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-10">
       {/* Sticky sub-header for scrolling */}
       {featured ? (
         <StickyEventHeader
@@ -162,7 +162,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-[rgba(229,169,68,0.06)] blur-[100px]" />
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-[rgba(229,169,68,0.04)] blur-[80px]" />
 
-        <div className="relative p-5 sm:p-7 lg:p-8">
+        <div className="relative p-4 sm:p-6 lg:p-8">
           {featured ? (
             <>
               <div className="flex flex-wrap items-center gap-2">
@@ -192,7 +192,7 @@ export default async function HomePage() {
 
               {/* Timer */}
               {eventStatus === "upcoming" && earliestStart ? (
-                <div className="mt-5">
+                <div className="mt-4">
                   <FlipTimer targetTime={earliestStart} />
                 </div>
               ) : null}
@@ -210,8 +210,8 @@ export default async function HomePage() {
               <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-[var(--bp-ink)] sm:text-3xl">
                 {t("home.heroTitle")}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm text-[var(--bp-muted)]">{t("home.heroDescription")}</p>
-              <div className="mt-5 flex gap-3">
+              <p className="mt-2 max-w-2xl text-sm text-[var(--bp-muted)]">{t("home.heroDescription")}</p>
+              <div className="mt-4 flex gap-2">
                 <Link href="/events" className={retroButtonClassName({ variant: "primary", size: "lg" })}>
                   {t("nav.events")}
                 </Link>
@@ -225,9 +225,9 @@ export default async function HomePage() {
       </section>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         {/* Fight List */}
-        <div id="fights" className="space-y-3">
+        <div id="fights" className="flex flex-col gap-6">
           {fights.length > 0 ? (
             <>
               <div className="flex items-center justify-between">
@@ -267,7 +267,7 @@ export default async function HomePage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-6">
           <p className="text-sm font-semibold text-[var(--bp-ink)]">Black Pick Ranking</p>
 
           {/* Card 1: All-Time Rankings */}

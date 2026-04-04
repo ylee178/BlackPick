@@ -95,7 +95,7 @@ export default async function EventsPage() {
   const featured = liveEvents[0] ?? upcomingEvents[0] ?? null;
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-10">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
@@ -120,7 +120,7 @@ export default async function EventsPage() {
       </div>
 
       {/* Event Lists */}
-      <div className={retroPanelClassName({ className: "space-y-6 p-4 sm:p-5" })}>
+      <div className={retroPanelClassName({ className: "flex flex-col gap-6 p-4 sm:p-6" })}>
         <EventListSection title={t("status.live")} items={liveEvents} locale={locale} t={t} />
         <EventListSection title={t("status.upcoming")} items={upcomingEvents} locale={locale} t={t} />
         <EventListSection title={t("status.completed")} items={completedEvents} locale={locale} t={t} />

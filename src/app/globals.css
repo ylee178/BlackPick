@@ -38,6 +38,17 @@
   --bp-danger: var(--retro-danger);
   --bp-success: var(--retro-success);
   --bp-info: var(--retro-info);
+  /* Spacing tokens — 4px base, 2px for tight spots */
+  --sp-1: 2px;   /* tight: icon gaps, inline padding */
+  --sp-2: 4px;   /* compact: chip padding, badge gaps */
+  --sp-3: 8px;   /* default: card padding inner, row gaps */
+  --sp-4: 12px;  /* medium: section gaps */
+  --sp-5: 16px;  /* standard: content padding, card padding */
+  --sp-6: 20px;  /* large: section margins */
+  --sp-7: 24px;  /* page padding */
+  --sp-8: 32px;  /* hero padding */
+  --sp-9: 40px;  /* major section gaps */
+  --sp-10: 48px; /* page-level spacing */
 }
 
 @theme inline {

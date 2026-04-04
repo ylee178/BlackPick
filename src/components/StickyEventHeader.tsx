@@ -57,28 +57,28 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
   return (
     <div
       className={cn(
-        "sticky top-[53px] z-30 -mx-4 border-b border-[var(--bp-line)] bg-[var(--bp-bg)] px-4 sm:-mx-6 sm:px-6",
-        "transition-all duration-200",
-        visible ? "translate-y-0 opacity-100" : "-translate-y-2 pointer-events-none opacity-0"
+        "sticky top-[53px] z-30 -mx-4 border-b border-[var(--bp-line)] bg-[var(--bp-bg)]/80 backdrop-blur-xl px-4 sm:-mx-6 sm:px-6",
+        "transition-all duration-200 overflow-hidden",
+        visible ? "translate-y-0 opacity-100" : "h-0 border-b-0 pointer-events-none opacity-0"
       )}
     >
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
           <RetroStatusBadge
             tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
           >
             {t(`status.${eventStatus}`)}
           </RetroStatusBadge>
-          <p className="min-w-0 truncate text-sm font-semibold text-[var(--bp-ink)]">{eventName}</p>
+          <p className="min-w-0 truncate text-sm font-bold text-[var(--bp-ink)]">{eventName}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {countdown && (
-            <div className="flex items-center gap-1.5 rounded-[8px] bg-[var(--bp-accent-dim)] px-2.5 py-1">
-              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-[var(--bp-accent)]" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <div className="flex items-center gap-2 rounded-[10px] border border-[rgba(255,186,60,0.15)] bg-[var(--bp-accent-dim)] px-3 py-1.5">
+              <svg viewBox="0 0 16 16" className="h-4 w-4 text-[var(--bp-accent)]" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="8" cy="8" r="6.5" />
                 <path d="M8 4.5V8l2.5 1.5" />
               </svg>
-              <span className="text-xs font-bold tabular-nums text-[var(--bp-accent)]" suppressHydrationWarning>
+              <span className="text-sm font-bold tabular-nums tracking-wide text-[var(--bp-accent)]" suppressHydrationWarning>
                 {countdown}
               </span>
             </div>
