@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import { getSeriesLabel } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n-server";
-import TerminalClock from "./TerminalClock";
+import { getSeriesLabel } from "@/lib/constants";
+import CountdownRing from "./CountdownRing";
 
 export const dynamic = "force-dynamic";
 
@@ -10,221 +10,198 @@ export default async function TerminalPage() {
   const supabase = await createSupabaseServer();
   const { t } = await getTranslations();
 
-  const [{ data: events }, { count: fighterCount }, { data: topUsers }, { data: recentFights }] =
+  const [{ data: events }, { count: fighterCount }, { data: topUsers }, { data: recentCompleted }] =
     await Promise.all([
-      supabase.from("events").select("id, name, date, status, series_type").order("date", { ascending: false }).limit(10),
+      supabase.from("events").select("id, name, date, status, series_type").order("date", { ascending: false }),
       supabase.from("fighters").select("*", { count: "exact", head: true }),
-      supabase.from("users").select("ring_name, score, wins, losses, current_streak, best_streak, hall_of_fame_count").order("score", { ascending: false }).limit(5),
-      supabase.from("fights").select("id, status, winner_id, fighter_a:fighters!fighter_a_id(name, ring_name), fighter_b:fighters!fighter_b_id(name, ring_name)").eq("status", "completed").not("winner_id", "is", null).order("created_at", { ascending: false }).limit(8),
+      supabase.from("users").select("ring_name, score, wins, losses, current_streak, best_streak").order("score", { ascending: false }).limit(3),
+      supabase.from("events").select("id, name, date, series_type").eq("status", "completed").order("date", { ascending: false }).limit(3),
     ]);
 
   const upcoming = (events ?? []).filter((e) => e.status === "upcoming" || e.status === "live");
-  const completed = (events ?? []).filter((e) => e.status === "completed");
   const featured = upcoming[0] ?? null;
-
-  const dday = featured
-    ? Math.ceil((new Date(featured.date).getTime() - Date.now()) / 86400000)
-    : 0;
+  const dday = featured ? Math.max(0, Math.ceil((new Date(featured.date).getTime() - Date.now()) / 86400000)) : 0;
+  const completedCount = (events ?? []).filter((e) => e.status === "completed").length;
 
   return (
-    <div
-      className="min-h-screen font-mono text-[#ffba3c]"
-      style={{ background: "#0c0800", fontFamily: "'Courier New', 'Consolas', monospace" }}
-    >
-      <div className="mx-auto max-w-6xl p-4 md:p-8">
+    <div className="space-y-4">
 
-        {/* ── Header bar ── */}
-        <div className="flex items-start justify-between border border-[#ffba3c]/30 p-4">
-          <div>
-            <p className="text-xs text-[#ffba3c]/60">Node: BLACK_PICK_MAIN</p>
-            <p className="text-xs text-[#ffba3c]/60">Status: <span className="text-[#ffba3c]">ONLINE</span></p>
-          </div>
-          <p className="text-center text-sm font-bold tracking-wider">Fight Telemetry Utility</p>
-          <TerminalClock />
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#ffba3c]/60">System Active</p>
+          <h1 className="text-2xl font-black uppercase text-white" style={{ fontFamily: "var(--font-display)" }}>
+            Dashboard
+          </h1>
         </div>
+        <Link
+          href="/"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#ffba3c]/25 bg-[#ffba3c]/[0.06]"
+        >
+          <span className="text-xs font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>BP</span>
+          <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-black bg-[#ffba3c]" />
+        </Link>
+      </div>
 
-        {/* ── Title ── */}
-        <div className="mt-4 flex justify-center">
-          <span className="border border-[#ffba3c] px-4 py-1 text-sm font-bold tracking-[0.3em]">
-            BLACK PICK DASHBOARD
-          </span>
-        </div>
+      {/* ── Tabs ── */}
+      <div className="flex gap-6 border-b border-white/[0.05] pb-3">
+        <span className="border-b-2 border-[#ffba3c] pb-3 text-sm font-bold text-white">Overview</span>
+        <Link href="/events" className="pb-3 text-sm text-white/40 hover:text-white/60 transition">Events</Link>
+        <Link href="/ranking" className="pb-3 text-sm text-white/40 hover:text-white/60 transition">{t("nav.ranking")}</Link>
+      </div>
 
-        {/* ── Row 1: Next Event + System States ── */}
-        <div className="mt-8 grid gap-8 md:grid-cols-2">
-          {/* Next Event */}
-          <div>
-            <p className="text-xs text-[#ffba3c]/60">Active Mission</p>
-            <div className="mt-2 border border-[#ffba3c]/30 p-4">
-              {featured ? (
-                <>
-                  <div className="flex items-center justify-between">
-                    <p className="text-lg font-bold">{featured.name}</p>
-                    <span className="text-xs text-[#ffba3c]/60">{getSeriesLabel(featured.series_type, t)}</span>
-                  </div>
-                  <div className="mt-3 flex items-center gap-4">
-                    <span className="text-sm">{featured.date}</span>
-                    <span className="font-bold">T-{dday > 0 ? dday : 0} DAYS</span>
-                  </div>
+      {/* ── Featured Event with Ring ── */}
+      {featured && (
+        <Link
+          href={`/events/${featured.id}`}
+          className="group block rounded-[28px] border border-white/[0.06] bg-[#111] p-6 transition hover:border-[#ffba3c]/20"
+        >
+          <div className="flex items-center justify-between gap-5">
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#ffba3c]">
+                {t("common.nextEvent")}
+              </p>
+              <h2
+                className="mt-2 text-xl font-black uppercase leading-tight text-white md:text-2xl"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {featured.name}
+              </h2>
 
-                  {/* Progress bar */}
-                  <div className="mt-4">
-                    <div className="flex justify-between text-[10px] text-[#ffba3c]/60">
-                      <span>Countdown</span>
-                      <span>Target: {featured.date}</span>
-                    </div>
-                    <div className="mt-1 h-4 border border-[#ffba3c]/40">
-                      <div
-                        className="h-full"
-                        style={{
-                          width: `${Math.max(5, Math.min(95, 100 - (dday / 30) * 100))}%`,
-                          background: `repeating-linear-gradient(90deg, #ffba3c 0px, #ffba3c 4px, transparent 4px, transparent 6px)`,
-                        }}
-                      />
-                    </div>
-                    <p className="mt-1 text-[10px] text-[#ffba3c]/60">
-                      Status: {featured.status === "live" ? "LIVE_ENGAGEMENT" : "AWAITING_START"}
-                    </p>
-                  </div>
+              <div className="mt-3 h-0.5 w-10 rounded-full bg-[#ffba3c]" />
 
-                  <Link
-                    href={`/events/${featured.id}`}
-                    className="mt-4 inline-block border border-[#ffba3c] px-4 py-1.5 text-xs font-bold tracking-wider transition hover:bg-[#ffba3c] hover:text-black"
-                  >
-                    ENGAGE &gt;&gt;
-                  </Link>
-                </>
-              ) : (
-                <p className="text-sm text-[#ffba3c]/50">NO_ACTIVE_MISSION</p>
-              )}
-            </div>
-          </div>
-
-          {/* System States */}
-          <div>
-            <p className="text-xs text-[#ffba3c]/60">System States</p>
-            <div className="mt-2 border border-[#ffba3c]/30 p-4">
-              <table className="w-full text-sm">
-                <tbody>
-                  <tr>
-                    <td className="py-1 pr-4 text-[#ffba3c]/60">EVT:</td>
-                    <td className="py-1 font-bold">{(events ?? []).length}</td>
-                    <td className="py-1 px-4 text-[#ffba3c]/60">FTR:</td>
-                    <td className="py-1 font-bold">{fighterCount ?? 0}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-4 text-[#ffba3c]/60">UPC:</td>
-                    <td className="py-1 font-bold">{upcoming.length}</td>
-                    <td className="py-1 px-4 text-[#ffba3c]/60">CMP:</td>
-                    <td className="py-1 font-bold">{completed.length}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-4 text-[#ffba3c]/60">USR:</td>
-                    <td className="py-1 font-bold">{(topUsers ?? []).length > 0 ? "ACTIVE" : "IDLE"}</td>
-                    <td className="py-1 px-4 text-[#ffba3c]/60">SYS:</td>
-                    <td className="py-1 font-bold">NOMINAL</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div className="mt-4 border-t border-dashed border-[#ffba3c]/20 pt-3 text-center">
-                <p className="text-sm">Overall Integrity: <span className="font-bold">100%</span></p>
+              <div className="mt-3 text-sm text-white/45">
+                <span className="text-[9px] uppercase tracking-wider text-white/30 mr-2">Status</span>
+                {featured.status === "live" ? "Live" : "Standby"} · {getSeriesLabel(featured.series_type, t)}
               </div>
             </div>
+
+            <CountdownRing days={dday} date={featured.date} />
           </div>
+        </Link>
+      )}
+
+      {/* ── Stats: 2 cards ── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-[22px] border border-white/[0.06] bg-[#111] p-5">
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">{t("nav.events")}</p>
+          {/* Mini chart */}
+          <div className="mt-4 flex items-end gap-[3px] h-10">
+            {[35, 55, 45, 70, 60, 85, 50, 75, 65, 90].map((h, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-t-sm"
+                style={{ height: `${h}%`, background: i >= 7 ? "#ffba3c" : "rgba(255,186,60,0.2)" }}
+              />
+            ))}
+          </div>
+          <p className="mt-3 text-3xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+            {(events ?? []).length}
+          </p>
+          <p className="text-[9px] uppercase tracking-wider text-white/40">Total · {completedCount} {t("event.completed")}</p>
         </div>
 
-        {/* ── Row 2: Ranking Telemetry + Event Log ── */}
-        <div className="mt-8 grid gap-8 md:grid-cols-2">
-          {/* Ranking */}
-          <div>
-            <p className="text-xs text-[#ffba3c]/60">Combatant Rankings (Top 5)</p>
-            <div className="mt-2 border border-[#ffba3c]/30 p-4">
-              {(topUsers ?? []).length === 0 ? (
-                <p className="text-sm text-[#ffba3c]/50">NO_COMBATANT_DATA</p>
-              ) : (
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-[#ffba3c]/20 text-[#ffba3c]/60">
-                      <th className="pb-2 text-left">#</th>
-                      <th className="pb-2 text-left">CALLSIGN</th>
-                      <th className="pb-2 text-right">W/L</th>
-                      <th className="pb-2 text-right">STK</th>
-                      <th className="pb-2 text-right">PTS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(topUsers ?? []).map((u: any, i: number) => (
-                      <tr key={i} className="border-b border-[#ffba3c]/10">
-                        <td className="py-1.5 font-bold">{i + 1}</td>
-                        <td className="py-1.5 font-bold">{u.ring_name}</td>
-                        <td className="py-1.5 text-right">{u.wins}/{u.losses}</td>
-                        <td className="py-1.5 text-right">{u.current_streak}</td>
-                        <td className="py-1.5 text-right font-bold">{u.score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              <Link
-                href="/ranking"
-                className="mt-3 inline-block text-[10px] tracking-wider text-[#ffba3c]/60 underline underline-offset-2 hover:text-[#ffba3c]"
-              >
-                FULL_RANKINGS &gt;&gt;
-              </Link>
-            </div>
+        <div className="rounded-[22px] border border-white/[0.06] bg-[#111] p-5">
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">{t("common.fighters")}</p>
+          {/* Energy blocks */}
+          <div className="mt-4 flex items-center gap-1.5 h-10">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-5 flex-1 rounded-sm ${i < 5 ? "bg-[#ffba3c]" : "bg-white/[0.06]"}`}
+              />
+            ))}
           </div>
-
-          {/* Event Log */}
-          <div>
-            <p className="text-xs text-[#ffba3c]/60">System Event Log</p>
-            <div className="mt-2 border border-[#ffba3c]/30 p-4">
-              {(recentFights ?? []).map((fight: any, i: number) => {
-                const fa = fight.fighter_a?.ring_name || fight.fighter_a?.name || "???";
-                const fb = fight.fighter_b?.ring_name || fight.fighter_b?.name || "???";
-                const winner = fight.winner_id === fight.fighter_a?.id ? fa : fb;
-                return (
-                  <p key={fight.id} className={`py-0.5 text-xs ${i === 0 ? "text-[#ffba3c]" : "text-[#ffba3c]/70"}`}>
-                    {String(i).padStart(2, "0")}:{String(i * 7 + 15).padStart(2, "0")} - RESULT: {winner} DEF. {winner === fa ? fb : fa}
-                  </p>
-                );
-              })}
-            </div>
-          </div>
+          <p className="mt-3 text-3xl font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+            {fighterCount ?? 335}
+          </p>
+          <p className="text-[9px] uppercase tracking-wider text-white/40">Active roster</p>
         </div>
+      </div>
 
-        {/* ── Row 3: Upcoming missions ── */}
-        {upcoming.length > 0 && (
-          <div className="mt-8">
-            <p className="text-xs text-[#ffba3c]/60">Queued Missions ({upcoming.length})</p>
-            <div className="mt-2 border border-[#ffba3c]/30 p-4">
-              {upcoming.map((ev) => (
-                <Link
-                  key={ev.id}
-                  href={`/events/${ev.id}`}
-                  className="flex items-center justify-between border-b border-[#ffba3c]/10 py-2 text-sm transition hover:text-[#ffd06b] last:border-0"
-                >
-                  <span>{ev.name}</span>
-                  <span className="text-xs text-[#ffba3c]/60">{ev.date}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Footer ── */}
-        <div className="mt-8 flex items-center gap-2 text-xs text-[#ffba3c]/50">
-          <span className="animate-pulse">_</span>
-          <span>AWAITING INPUT...</span>
-        </div>
-
-        {/* Back to normal view */}
-        <div className="mt-4">
-          <Link href="/" className="text-[10px] tracking-wider text-[#ffba3c]/40 underline underline-offset-2 hover:text-[#ffba3c]">
-            EXIT_TERMINAL &gt;&gt; STANDARD_VIEW
+      {/* ── Latest Results ── */}
+      <div className="rounded-[28px] border border-white/[0.06] bg-[#111] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">{t("common.latestResults")}</p>
+          <Link href="/events" className="text-[9px] uppercase tracking-wider text-white/30 hover:text-[#ffba3c] transition">
+            {t("common.viewAll")}
           </Link>
         </div>
+        {(recentCompleted ?? []).map((ev: any, i: number) => (
+          <Link
+            key={ev.id}
+            href={`/events/${ev.id}`}
+            className="group flex items-center justify-between py-3.5"
+            style={{ borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : undefined }}
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-white/65 group-hover:text-white transition">{ev.name}</p>
+              <p className="text-[10px] text-white/30">{ev.date} · {getSeriesLabel(ev.series_type, t)}</p>
+            </div>
+            <span className="shrink-0 text-white/20 group-hover:text-[#ffba3c] transition">&#x2192;</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Ranking: 2 cards ── */}
+      <div className="grid grid-cols-2 gap-3">
+        {(topUsers ?? []).length === 0 ? (
+          <>
+            <div className="rounded-[22px] border border-white/[0.06] bg-[#111] p-5">
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">#1 {t("ranking.rank")}</p>
+              <p className="mt-4 text-3xl font-black text-white/20" style={{ fontFamily: "var(--font-display)" }}>--</p>
+              <p className="text-[9px] text-white/20">Awaiting data</p>
+            </div>
+            <div className="rounded-[22px] border border-white/[0.06] bg-[#111] p-5">
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">#2 {t("ranking.rank")}</p>
+              <p className="mt-4 text-3xl font-black text-white/20" style={{ fontFamily: "var(--font-display)" }}>--</p>
+              <p className="text-[9px] text-white/20">Awaiting data</p>
+            </div>
+          </>
+        ) : (
+          (topUsers ?? []).slice(0, 2).map((user: any, i: number) => (
+            <div key={i} className="rounded-[22px] border border-white/[0.06] bg-[#111] p-5">
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">
+                #{i + 1} {t("ranking.rank")}
+              </p>
+              <p
+                className="mt-4 truncate text-2xl font-black text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {user.ring_name}
+              </p>
+              <p className="text-sm text-white/40">
+                <span className="font-bold text-[#ffba3c]">{user.score}</span> pts · {user.wins}W-{user.losses}L
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── Ticket CTA ── */}
+      <a
+        href="https://hegemonyblack.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group flex items-center justify-between rounded-[28px] border border-white/[0.06] bg-[#111] p-5 transition hover:border-[#ffba3c]/15"
+      >
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">{t("common.tickets")}</p>
+          <p className="mt-1 text-lg font-black text-white" style={{ fontFamily: "var(--font-display)" }}>
+            {t("common.blackCombatTickets")}
+          </p>
+          <p className="text-xs text-white/40">{t("common.getSeats")}</p>
+        </div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#ffba3c]/20 bg-[#ffba3c]/[0.06] text-[#ffba3c] group-hover:bg-[#ffba3c]/10 transition">
+          &#x25B6;
+        </div>
+      </a>
+
+      {/* ── Footer ── */}
+      <div className="text-center pt-2">
+        <Link href="/" className="text-[10px] tracking-wider text-white/30 hover:text-[#ffba3c] transition">
+          Switch to Standard View
+        </Link>
       </div>
     </div>
   );

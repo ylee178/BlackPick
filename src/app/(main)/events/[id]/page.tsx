@@ -1,6 +1,6 @@
 import FightCard from "@/components/FightCard";
 import MvpVoteSection from "@/components/MvpVoteSection";
-import CountdownTimer from "@/components/CountdownTimer";
+import FlipTimer from "@/components/FlipTimer";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getSeriesLabel } from "@/lib/constants";
@@ -140,7 +140,7 @@ export default async function EventPage({
           {/* Right: Stats panel */}
           <div className="space-y-4">
             {event.status === "upcoming" && earliestStart && (
-              <CountdownTimer targetTime={earliestStart} />
+              <FlipTimer targetTime={earliestStart} />
             )}
 
             <div className="grid grid-cols-2 gap-3">

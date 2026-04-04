@@ -48,6 +48,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
     { href: "/events", label: t("nav.events") || "Events" },
     { href: "/ranking", label: t("nav.ranking") || "Ranking" },
     { href: "/terminal", label: "Terminal" },
+    { href: "/dashboard", label: "Dashboard" },
   ];
 
   const mobileLinks = [
