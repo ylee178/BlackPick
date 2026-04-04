@@ -35,7 +35,7 @@ export default function CountdownTimer({ targetTime }: Props) {
 
   if (tl.total <= 0) {
     return (
-      <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-center text-sm font-bold text-white/40">
+      <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-center text-sm font-bold text-white/60">
         {t("countdown.locked")}
       </div>
     );
@@ -43,7 +43,7 @@ export default function CountdownTimer({ targetTime }: Props) {
 
   return (
     <div className="rounded-xl border border-[#ffba3c]/15 bg-[#ffba3c]/[0.03] px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">{t("countdown.closesIn")}</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-white/55">{t("countdown.closesIn")}</p>
       <p
         className="mt-1 text-2xl font-black text-[#ffba3c]"
         style={{ fontFamily: "var(--font-display)" }}

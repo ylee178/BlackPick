@@ -55,8 +55,8 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
         <div className="flex shrink-0 items-center gap-2">
           <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
             eventStatus === "live" ? "bg-red-500/15 text-red-400" :
-            eventStatus === "completed" ? "bg-[#ffba3c]/10 text-[#ffba3c]/60" :
-            "bg-white/5 text-white/40"
+            eventStatus === "completed" ? "bg-[#ffba3c]/10 text-[#ffba3c]/80" :
+            "bg-white/5 text-white/60"
           }`}>
             {t(`event.${eventStatus}`)}
           </span>

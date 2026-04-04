@@ -84,7 +84,7 @@ function FighterSide({
         </div>
       )}
       {isLoser && (
-        <div className="absolute -top-2.5 right-3 rounded border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/30">
+        <div className="absolute -top-2.5 right-3 rounded border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/55">
           LOSS
         </div>
       )}
@@ -95,7 +95,7 @@ function FighterSide({
           {fighter.image_url ? (
             <img src={fighter.image_url} alt={fighter.name} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wider text-white/15">
+            <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wider text-white/50">
               IMG
             </div>
           )}
@@ -110,13 +110,13 @@ function FighterSide({
             {dn(fighter)} {countryCodeToFlag(fighter.nationality)}
           </p>
           {fighter.ring_name && fighter.ring_name !== fighter.name && (
-            <p className="truncate text-[11px] text-white/30">{fighter.name}</p>
+            <p className="truncate text-[11px] text-white/55">{fighter.name}</p>
           )}
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-white/40" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-white/60" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
             <span>{fighter.record || "0-0"}</span>
             {fighter.weight_class && (
               <>
-                <span className="text-white/10">|</span>
+                <span className="text-white/45">|</span>
                 <span>{fighter.weight_class}</span>
               </>
             )}
@@ -152,7 +152,7 @@ export default async function FightCard({
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-px w-5 bg-[#ffba3c]/30" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
             {t("event.fight")}
           </span>
         </div>
@@ -160,8 +160,8 @@ export default async function FightCard({
           fight.status === "completed"
             ? "border-[#ffba3c]/20 bg-[#ffba3c]/8 text-[#ffba3c]"
             : fight.status === "cancelled"
-              ? "border-white/10 text-white/30"
-              : "border-white/8 text-white/40"
+              ? "border-white/10 text-white/55"
+              : "border-white/8 text-white/60"
         }`}>
           {t(`status.${fight.status}`)}
         </span>
@@ -180,7 +180,7 @@ export default async function FightCard({
         {/* VS center */}
         <div className="flex flex-col items-center justify-center px-2">
           <span
-            className="text-2xl font-black text-[#ffba3c]/60 md:text-3xl"
+            className="text-2xl font-black text-[#ffba3c]/80 md:text-3xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
             VS
@@ -201,19 +201,19 @@ export default async function FightCard({
         <div className="mt-5 rounded-lg border border-[#ffba3c]/10 bg-[#ffba3c]/[0.03] px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">{t("event.result")}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/55">{t("event.result")}</p>
               <p className="mt-1 text-sm font-bold text-white">
                 {winnerA ? dn(fight.fighter_a) : dn(fight.fighter_b)}{" "}
                 <span className="text-[#ffba3c]">{t("event.won")}</span>
-                {fight.method && <span className="text-white/40"> · {fight.method}</span>}
-                {fight.round && <span className="text-white/40"> · R{fight.round}</span>}
+                {fight.method && <span className="text-white/60"> · {fight.method}</span>}
+                {fight.round && <span className="text-white/60"> · R{fight.round}</span>}
               </p>
             </div>
             {prediction && (
               <span className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase ${
                 prediction.is_winner_correct
                   ? "border border-[#ffba3c]/20 bg-[#ffba3c]/10 text-[#ffba3c]"
-                  : "border border-white/10 bg-white/5 text-white/40"
+                  : "border border-white/10 bg-white/5 text-white/60"
               }`}>
                 {prediction.is_winner_correct ? t("event.win") : t("event.loss")}
                 {typeof prediction.score === "number" && ` ${prediction.score}${t("prediction.points")}`}

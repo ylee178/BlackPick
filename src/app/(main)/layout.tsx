@@ -47,7 +47,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                 >
                   Black Pick
                 </span>
-                <span className="block text-[9px] uppercase tracking-[0.3em] text-[#ffba3c]/60">
+                <span className="block text-[9px] uppercase tracking-[0.3em] text-[#ffba3c]/80">
                   Who Is The Pick?
                 </span>
               </div>

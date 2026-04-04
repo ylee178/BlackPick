@@ -60,7 +60,7 @@ export default async function HomePage() {
               {t("home.heroTitle")}
             </h1>
 
-            <p className="max-w-md text-sm leading-relaxed text-white/35">
+            <p className="max-w-md text-sm leading-relaxed text-white/60">
               {t("home.heroDescription")}
             </p>
 
@@ -68,7 +68,7 @@ export default async function HomePage() {
               <div className="rounded-xl border border-[#ffba3c]/12 bg-[#ffba3c]/[0.03] p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#ffba3c]/60">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#ffba3c]/80">
                       Next Event
                     </p>
                     <p
@@ -77,7 +77,7 @@ export default async function HomePage() {
                     >
                       {featured.name}
                     </p>
-                    <p className="mt-1 text-xs text-white/25">
+                    <p className="mt-1 text-xs text-white/50">
                       {featured.date} · {getSeriesLabel(featured.series_type, t)}
                     </p>
                   </div>
@@ -116,7 +116,7 @@ export default async function HomePage() {
             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#ffba3c]">
               {t("rankingPage.title")}
             </span>
-            <Link href="/ranking" className="text-[10px] uppercase tracking-wider text-white/25 hover:text-[#ffba3c] transition">
+            <Link href="/ranking" className="text-[10px] uppercase tracking-wider text-white/50 hover:text-[#ffba3c] transition">
               View all
             </Link>
           </div>
@@ -124,8 +124,8 @@ export default async function HomePage() {
           <div className="mt-5 space-y-3">
             {(topUsers ?? []).length === 0 ? (
               <div className="py-8 text-center">
-                <p className="text-xs text-white/15">No rankings yet</p>
-                <p className="mt-1 text-[10px] text-white/10">Be the first to predict</p>
+                <p className="text-xs text-white/50">No rankings yet</p>
+                <p className="mt-1 text-[10px] text-white/45">Be the first to predict</p>
               </div>
             ) : (
               (topUsers ?? []).map((user: any, i: number) => {
@@ -140,7 +140,7 @@ export default async function HomePage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-white">{user.ring_name}</p>
-                      <p className="text-[10px] text-white/25">{user.wins}W-{user.losses}L</p>
+                      <p className="text-[10px] text-white/50">{user.wins}W-{user.losses}L</p>
                     </div>
                     <span
                       className="text-sm font-black text-[#ffba3c]"
@@ -161,7 +161,7 @@ export default async function HomePage() {
 
         {/* ── C: Platform Stats ── */}
         <div className="gold-hover rounded-2xl border border-white/[0.05] bg-[#0a0a0a] p-5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/25">
+          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/50">
             Platform
           </span>
           <div className="mt-5 space-y-5">
@@ -172,7 +172,7 @@ export default async function HomePage() {
               >
                 {allEvents.length}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-white/20">{t("nav.events")}</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">{t("nav.events")}</p>
             </div>
             <div className="h-px bg-white/[0.04]" />
             <div>
@@ -182,7 +182,7 @@ export default async function HomePage() {
               >
                 {fighterCount ?? 335}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-white/20">Fighters</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">Fighters</p>
             </div>
             <div className="h-px bg-white/[0.04]" />
             <div>
@@ -192,7 +192,7 @@ export default async function HomePage() {
               >
                 {totalFights}+
               </p>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-white/20">{t("event.fights")}</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">{t("event.fights")}</p>
             </div>
           </div>
         </div>
@@ -200,10 +200,10 @@ export default async function HomePage() {
         {/* ── D: Recent Completed Events ── */}
         <div className="gold-hover rounded-2xl border border-white/[0.05] bg-[#0a0a0a] p-5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/25">
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/50">
               {t("event.completed")}
             </span>
-            <span className="text-[10px] text-white/10">Latest results</span>
+            <span className="text-[10px] text-white/45">Latest results</span>
           </div>
 
           <div className="mt-5 space-y-3">
@@ -217,11 +217,11 @@ export default async function HomePage() {
                   <p className="truncate text-sm font-bold text-white/70 group-hover:text-white transition">
                     {ev.name}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-white/20">
+                  <p className="mt-0.5 text-[10px] text-white/50">
                     {ev.date} · {getSeriesLabel(ev.series_type, t)}
                   </p>
                 </div>
-                <span className="shrink-0 text-[10px] font-bold uppercase text-[#ffba3c]/40">
+                <span className="shrink-0 text-[10px] font-bold uppercase text-[#ffba3c]/70">
                   {t("event.result")}
                 </span>
               </Link>
@@ -243,7 +243,7 @@ export default async function HomePage() {
             <p className="mt-3 text-sm font-bold text-white">
               Black Combat Tickets
             </p>
-            <p className="mt-1 text-[11px] text-white/25">
+            <p className="mt-1 text-[11px] text-white/50">
               Get your seats for the next event
             </p>
             <span className="mt-3 inline-block text-xs font-bold text-[#ffba3c] underline underline-offset-2">
@@ -257,16 +257,16 @@ export default async function HomePage() {
             rel="noopener noreferrer"
             className="gold-hover flex-1 rounded-2xl border border-white/[0.05] bg-[#0a0a0a] p-5 transition"
           >
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
               Membership
             </span>
             <p className="mt-3 text-sm font-bold text-white">
               Black Combat YouTube
             </p>
-            <p className="mt-1 text-[11px] text-white/25">
+            <p className="mt-1 text-[11px] text-white/50">
               Join membership for full fight replays
             </p>
-            <span className="mt-3 inline-block text-xs font-bold text-white/40 underline underline-offset-2">
+            <span className="mt-3 inline-block text-xs font-bold text-white/60 underline underline-offset-2">
               Join Now
             </span>
           </a>
@@ -293,13 +293,13 @@ export default async function HomePage() {
                 className="gold-hover group flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-5 transition"
               >
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#ffba3c]/40">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#ffba3c]/70">
                     {getSeriesLabel(event.series_type, t)}
                   </p>
                   <p className="mt-1 text-lg font-bold text-white group-hover:text-[#ffba3c] transition">
                     {event.name}
                   </p>
-                  <p className="mt-1 text-xs text-white/20">{event.date}</p>
+                  <p className="mt-1 text-xs text-white/50">{event.date}</p>
                 </div>
                 <span
                   className="rounded border border-[#ffba3c]/15 bg-[#ffba3c]/8 px-3 py-1.5 text-xs font-bold text-[#ffba3c]"
@@ -317,7 +317,7 @@ export default async function HomePage() {
       <section>
         <div className="flex items-center gap-3 mb-5">
           <div className="h-px w-6 bg-white/10" />
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/25">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50">
             {t("event.completed")} {t("nav.events")}
           </h2>
         </div>
@@ -329,14 +329,14 @@ export default async function HomePage() {
               className="group flex items-center justify-between rounded-lg border border-white/[0.03] p-4 transition hover:border-white/8"
             >
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-white/15">
+                <p className="text-[9px] uppercase tracking-wider text-white/50">
                   {getSeriesLabel(event.series_type, t)}
                 </p>
-                <p className="mt-0.5 text-sm font-medium text-white/40 group-hover:text-white/60 transition">
+                <p className="mt-0.5 text-sm font-medium text-white/60 group-hover:text-white/60 transition">
                   {event.name}
                 </p>
               </div>
-              <span className="text-[10px] text-white/10">{event.date}</span>
+              <span className="text-[10px] text-white/45">{event.date}</span>
             </Link>
           ))}
         </div>

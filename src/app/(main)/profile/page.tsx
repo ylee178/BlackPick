@@ -158,7 +158,7 @@ export default async function ProfilePage() {
                   <span className="text-4xl font-black text-amber-400">
                     {profile?.wins ?? 0}
                   </span>
-                  <span className="pb-1 text-xl font-bold text-gray-500">-</span>
+                  <span className="pb-1 text-xl font-bold text-gray-400">-</span>
                   <span className="text-4xl font-black text-white">
                     {profile?.losses ?? 0}
                   </span>

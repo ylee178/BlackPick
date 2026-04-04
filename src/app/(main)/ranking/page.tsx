@@ -20,7 +20,7 @@ function getRankDecor(rank: number) {
   if (rank === 1) return { border: "border-[#ffba3c]/40", bg: "bg-[#ffba3c]/[0.04]", text: "text-[#ffba3c]", label: "1ST" };
   if (rank === 2) return { border: "border-white/15", bg: "bg-white/[0.02]", text: "text-white/70", label: "2ND" };
   if (rank === 3) return { border: "border-[#cd7f32]/30", bg: "bg-[#cd7f32]/[0.03]", text: "text-[#cd7f32]", label: "3RD" };
-  return { border: "border-white/[0.04]", bg: "bg-white/[0.01]", text: "text-white/40", label: `#${rank}` };
+  return { border: "border-white/[0.04]", bg: "bg-white/[0.01]", text: "text-white/60", label: `#${rank}` };
 }
 
 function UserRow({ user, rank }: { user: any; rank: number }) {
@@ -56,26 +56,26 @@ function UserRow({ user, rank }: { user: any; rank: number }) {
       {/* Stats grid */}
       <div className="hidden items-center gap-6 md:flex">
         <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/20">Score</p>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">Score</p>
           <p className="text-lg font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
             {user.score ?? 0}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/20">Record</p>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">Record</p>
           <p className="text-sm font-bold text-white/60">
             {user.wins ?? 0}W-{user.losses ?? 0}L
           </p>
         </div>
         <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-white/20">Streak</p>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">Streak</p>
           <p className="text-sm font-bold text-white/60">
             {user.current_streak ?? 0}/{user.best_streak ?? 0}
           </p>
         </div>
         {(user.hall_of_fame_count ?? 0) > 0 && (
           <div className="text-center">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-white/20">HOF</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-white/50">HOF</p>
             <p className="text-sm font-bold text-[#ffba3c]">{user.hall_of_fame_count}</p>
           </div>
         )}
@@ -86,7 +86,7 @@ function UserRow({ user, rank }: { user: any; rank: number }) {
         <span className="text-sm font-black text-[#ffba3c]" style={{ fontFamily: "var(--font-display)" }}>
           {user.score ?? 0}
         </span>
-        <span className="text-xs text-white/30">
+        <span className="text-xs text-white/55">
           {user.wins ?? 0}W-{user.losses ?? 0}L
         </span>
       </div>
@@ -221,7 +221,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         >
           {t("rankingPage.title")}
         </h1>
-        <p className="mt-2 text-sm text-white/30">
+        <p className="mt-2 text-sm text-white/55">
           {t("rankingPage.description")}
         </p>
       </div>
@@ -236,7 +236,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               "rounded-lg border px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] transition",
               tab === item.key
                 ? "border-[#ffba3c]/30 bg-[#ffba3c]/10 text-[#ffba3c]"
-                : "border-white/[0.05] text-white/30 hover:border-white/10 hover:text-white/50"
+                : "border-white/[0.05] text-white/55 hover:border-white/10 hover:text-white/50"
             )}
           >
             {item.label}
@@ -251,15 +251,15 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         <div className="space-y-3">
           {users.length === 0 ? (
             <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/20">{t("common.noData")}</p>
-              <p className="mt-2 text-xs text-white/10">
+              <p className="text-sm text-white/50">{t("common.noData")}</p>
+              <p className="mt-2 text-xs text-white/45">
                 Rankings will appear once users start predicting
               </p>
             </div>
           ) : (
             <>
               {/* Desktop header */}
-              <div className="hidden items-center gap-4 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/15 md:flex md:gap-6">
+              <div className="hidden items-center gap-4 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/50 md:flex md:gap-6">
                 <div className="w-12 text-center">{t("ranking.rank")}</div>
                 <div className="flex-1">{t("ranking.ringName")}</div>
                 <div className="flex items-center gap-6">
@@ -282,19 +282,19 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                     "rounded border px-4 py-2 text-xs font-medium transition",
                     page > 1
                       ? "border-white/8 text-white/50 hover:text-white"
-                      : "pointer-events-none border-white/[0.03] text-white/10"
+                      : "pointer-events-none border-white/[0.03] text-white/45"
                   )}
                 >
                   Prev
                 </Link>
-                <span className="text-xs text-white/15">Page {page}</span>
+                <span className="text-xs text-white/50">Page {page}</span>
                 <Link
                   href={hasNextPage ? `/ranking?tab=running&page=${page + 1}` : "#"}
                   className={cn(
                     "rounded border px-4 py-2 text-xs font-medium transition",
                     hasNextPage
                       ? "border-white/8 text-white/50 hover:text-white"
-                      : "pointer-events-none border-white/[0.03] text-white/10"
+                      : "pointer-events-none border-white/[0.03] text-white/45"
                   )}
                 >
                   Next
@@ -318,7 +318,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   "rounded-lg border px-4 py-2 text-xs font-bold uppercase tracking-wider transition",
                   selectedSeries === st
                     ? "border-[#ffba3c]/30 bg-[#ffba3c]/10 text-[#ffba3c]"
-                    : "border-white/5 text-white/30 hover:border-white/10"
+                    : "border-white/5 text-white/55 hover:border-white/10"
                 )}
               >
                 {getSeriesLabel(st, t)}
@@ -328,12 +328,12 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
           {!selectedSeries ? (
             <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/20">Select a series to view rankings</p>
+              <p className="text-sm text-white/50">Select a series to view rankings</p>
             </div>
           ) : seriesData.length === 0 ? (
             <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/20">{t("common.noData")}</p>
-              <p className="mt-2 text-xs text-white/10">
+              <p className="text-sm text-white/50">{t("common.noData")}</p>
+              <p className="mt-2 text-xs text-white/45">
                 Series rankings are calculated after events are completed
               </p>
             </div>
@@ -364,7 +364,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   "rounded-lg border px-4 py-2 text-xs font-medium transition",
                   selectedEvent === ev.id
                     ? "border-[#ffba3c]/30 bg-[#ffba3c]/10 text-[#ffba3c]"
-                    : "border-white/5 text-white/30 hover:border-white/10"
+                    : "border-white/5 text-white/55 hover:border-white/10"
                 )}
               >
                 {ev.name}
@@ -374,12 +374,12 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
           {!selectedEvent ? (
             <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/20">Select an event to view rankings</p>
+              <p className="text-sm text-white/50">Select an event to view rankings</p>
             </div>
           ) : eventRankData.length === 0 ? (
             <div className="rounded-2xl border border-white/5 p-12 text-center">
-              <p className="text-sm text-white/20">{t("common.noData")}</p>
-              <p className="mt-2 text-xs text-white/10">
+              <p className="text-sm text-white/50">{t("common.noData")}</p>
+              <p className="mt-2 text-xs text-white/45">
                 Event rankings are calculated when results are finalized
               </p>
             </div>

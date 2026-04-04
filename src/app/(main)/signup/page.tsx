@@ -90,7 +90,7 @@ export default function SignupPage() {
               required
               value={ringName}
               onChange={(e) => setRingName(e.target.value)}
-              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-amber-400"
+              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
               placeholder="The Underdog"
             />
           </div>
@@ -104,7 +104,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-amber-400"
+              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
               placeholder="you@example.com"
             />
           </div>
@@ -119,7 +119,7 @@ export default function SignupPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-amber-400"
+              className="w-full rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none transition placeholder:text-gray-400 focus:border-amber-400"
               placeholder="Minimum 6 characters"
             />
           </div>
@@ -141,7 +141,7 @@ export default function SignupPage() {
 
         <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-800" />
-          <span className="text-xs uppercase tracking-widest text-gray-500">or</span>
+          <span className="text-xs uppercase tracking-widest text-gray-400">or</span>
           <div className="h-px flex-1 bg-gray-800" />
         </div>
 

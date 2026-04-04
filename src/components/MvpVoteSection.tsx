@@ -93,7 +93,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
           <h2 className="text-lg font-bold text-white">MVP Vote</h2>
           <p className="text-sm text-gray-400">One vote per event.</p>
         </div>
-        <div className="text-xs text-gray-500">Total votes: {totalVotes}</div>
+        <div className="text-xs text-gray-400">Total votes: {totalVotes}</div>
       </div>
 
       {votingOpen ? (
@@ -121,7 +121,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-500">
+                        <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
                           PIXEL
                         </div>
                       )}
@@ -155,7 +155,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
           Results
         </h3>
         {results.length === 0 ? (
-          <p className="text-sm text-gray-500">No votes yet.</p>
+          <p className="text-sm text-gray-400">No votes yet.</p>
         ) : (
           results.map((result) => (
             <div

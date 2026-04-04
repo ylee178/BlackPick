@@ -100,7 +100,7 @@ export default function AdminEventsPage() {
               value={form.name}
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
               required
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none ring-0 placeholder:text-gray-500 focus:border-amber-400"
+              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none ring-0 placeholder:text-gray-400 focus:border-amber-400"
               placeholder="Black Cup 01"
             />
           </div>
@@ -161,7 +161,7 @@ export default function AdminEventsPage() {
             <input
               value={form.mvp_video_url ?? ''}
               onChange={(e) => setForm((prev) => ({ ...prev, mvp_video_url: e.target.value }))}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white placeholder:text-gray-500 focus:border-amber-400"
+              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white placeholder:text-gray-400 focus:border-amber-400"
               placeholder="https://..."
             />
           </div>

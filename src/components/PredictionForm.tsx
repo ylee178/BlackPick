@@ -141,7 +141,7 @@ export default function PredictionForm({
       )}
 
       {message && (
-        <p className="text-xs text-white/40">{message}</p>
+        <p className="text-xs text-white/60">{message}</p>
       )}
     </div>
   );

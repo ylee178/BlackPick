@@ -24,7 +24,7 @@ export default async function EventPage({
 
   if (!event) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-[#0a0a0a] p-8 text-center text-white/30">
+      <div className="rounded-2xl border border-white/5 bg-[#0a0a0a] p-8 text-center text-white/55">
         {t("event.notFound")}
       </div>
     );
@@ -105,8 +105,8 @@ export default async function EventPage({
                 event.status === "live"
                   ? "border-red-500/20 bg-red-500/10 text-red-400"
                   : event.status === "completed"
-                    ? "border-[#ffba3c]/15 text-[#ffba3c]/60"
-                    : "border-white/8 text-white/40"
+                    ? "border-[#ffba3c]/15 text-[#ffba3c]/80"
+                    : "border-white/8 text-white/60"
               }`}>
                 {t(`event.${event.status}`)}
               </span>
@@ -119,18 +119,18 @@ export default async function EventPage({
               {event.name}
             </h1>
 
-            <p className="mt-3 text-sm text-white/30">{event.date}</p>
+            <p className="mt-3 text-sm text-white/55">{event.date}</p>
 
             {event.status === "upcoming" && (
-              <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/30">
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/55">
                 {t("event.upcomingDescription")}
               </p>
             )}
             {event.status === "live" && (
-              <p className="mt-4 text-sm text-white/30">{t("event.liveDescription")}</p>
+              <p className="mt-4 text-sm text-white/55">{t("event.liveDescription")}</p>
             )}
             {event.status === "completed" && (
-              <p className="mt-4 text-sm text-white/30">{t("event.completedDescription")}</p>
+              <p className="mt-4 text-sm text-white/55">{t("event.completedDescription")}</p>
             )}
           </div>
 
@@ -142,7 +142,7 @@ export default async function EventPage({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-white/[0.05] bg-black p-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/25">{t("event.totalFights")}</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{t("event.totalFights")}</p>
                 <p
                   className="mt-2 text-3xl font-black text-white"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -151,7 +151,7 @@ export default async function EventPage({
                 </p>
               </div>
               <div className="rounded-xl border border-white/[0.05] bg-black p-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/25">{t("event.result")}</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{t("event.result")}</p>
                 <p
                   className="mt-2 text-3xl font-black text-[#ffba3c]"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -198,7 +198,7 @@ export default async function EventPage({
             </h2>
           </div>
           <span
-            className="text-sm font-bold text-white/20"
+            className="text-sm font-bold text-white/50"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {fightCount} {t("event.fights")}
