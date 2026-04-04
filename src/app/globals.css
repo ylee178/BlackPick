@@ -60,6 +60,7 @@ body {
   background: var(--retro-bg);
   color: var(--retro-ink);
   font-family: var(--font-sans);
+  line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -80,9 +81,31 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* ── Focus ── */
+
+:focus-visible {
+  outline: 2px solid var(--retro-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 ::selection {
   background: rgba(255, 186, 60, 0.26);
   color: var(--retro-ink);
+}
+
+/* ── Reduced Motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ── Panels ── */
@@ -159,6 +182,7 @@ button:disabled {
 .retro-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+  pointer-events: none;
 }
 
 .retro-button:active {
@@ -307,6 +331,8 @@ button:disabled {
 
 .retro-field:focus {
   border-color: var(--retro-accent);
+  outline: 2px solid rgba(255, 186, 60, 0.3);
+  outline-offset: -1px;
 }
 
 .retro-field option {

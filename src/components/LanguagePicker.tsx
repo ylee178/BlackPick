@@ -161,6 +161,7 @@ export default function LanguagePicker() {
         })}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label="Language"
       >
         <Flag code={current.flag} />
         <span className="hidden text-xs sm:inline">{current.short}</span>
@@ -187,7 +188,7 @@ export default function LanguagePicker() {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-sm transition",
+                  "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-sm transition-colors duration-150",
                   active
                     ? "bg-[var(--bp-accent-dim)] text-[var(--bp-ink)]"
                     : "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"

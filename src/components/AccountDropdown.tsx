@@ -59,6 +59,7 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
         })}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label="Account menu"
       >
         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--bp-accent)] text-[10px] font-bold text-[var(--bp-bg)]">
           {ringName.charAt(0).toUpperCase()}
@@ -88,7 +89,7 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
             <Link
               href="/profile"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
+              className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition-colors duration-150 hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M12 12a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Z" />
@@ -99,7 +100,7 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
             <Link
               href="/events"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
+              className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition-colors duration-150 hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M7 2.75v3.5M17 2.75v3.5M3 8.25h18" />
@@ -114,7 +115,7 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-danger)] transition hover:bg-[rgba(239,68,68,0.08)]"
+              className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-danger)] transition-colors duration-150 hover:bg-[rgba(239,68,68,0.08)]"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

@@ -112,7 +112,8 @@ export default function EventRankingCard({ completedEvents, initialEventIndex, i
             type="button"
             onClick={goLeft}
             disabled={!canGoLeft}
-            className={`flex h-6 w-6 items-center justify-center rounded-[6px] transition ${
+            aria-label="Previous event"
+            className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors duration-150 ${
               canGoLeft
                 ? "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
                 : "pointer-events-none text-[var(--bp-muted)] opacity-20"
@@ -124,7 +125,8 @@ export default function EventRankingCard({ completedEvents, initialEventIndex, i
             type="button"
             onClick={goRight}
             disabled={!canGoRight}
-            className={`flex h-6 w-6 items-center justify-center rounded-[6px] transition ${
+            aria-label="Next event"
+            className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors duration-150 ${
               canGoRight
                 ? "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
                 : "pointer-events-none text-[var(--bp-muted)] opacity-20"

@@ -75,7 +75,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
                 mobile: true,
               })}
             >
-              <span className={active ? "text-[var(--bp-accent)]" : "text-[var(--bp-muted)]"}>
+              <span className={active ? "text-[var(--bp-accent)]" : "text-[var(--bp-muted)]"} aria-hidden="true">
                 {link.icon}
               </span>
               <span className={active ? "text-[var(--bp-accent)]" : "text-[var(--bp-muted)]"}>

@@ -147,7 +147,7 @@ export default function FightCardPicker({
           }
         }}
         className={cn(
-          "flex flex-1 flex-col rounded-[12px] border text-center transition-all cursor-pointer",
+          "flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150 cursor-pointer",
           isPicked
             ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-card-inset)]"
             : "border-[var(--bp-line)] bg-[var(--bp-card-inset)] hover:border-[var(--bp-line-strong)] hover:bg-[var(--bp-card-hover)]",
@@ -196,7 +196,7 @@ export default function FightCardPicker({
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setMethod(active ? "" : m); }}
                     className={cn(
-                      "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition",
+                      "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition-colors duration-150",
                       active
                         ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-accent-dim)] text-[var(--bp-accent)]"
                         : "border-[var(--bp-line)] text-[var(--bp-muted)] hover:border-[var(--bp-line-strong)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--bp-ink)]"
@@ -222,7 +222,7 @@ export default function FightCardPicker({
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setRound(active ? "" : String(r)); }}
                     className={cn(
-                      "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition",
+                      "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition-colors duration-150",
                       active
                         ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-accent-dim)] text-[var(--bp-accent)]"
                         : "border-[var(--bp-line)] text-[var(--bp-muted)] hover:border-[var(--bp-line-strong)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--bp-ink)]"
