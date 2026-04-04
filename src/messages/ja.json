@@ -136,7 +136,9 @@
   "home": {
     "platformLabel": "Who Is The Pick?",
     "heroTitle": "勘じゃない、読みだ。",
-    "heroDescription": "Black Combatの勝敗を予想し、戦績を積み上げろ。誰が本物の格闘通か、ランキングが語る。"
+    "heroDescription": "Black Combatの勝敗を予想し、戦績を積み上げろ。誰が本物の格闘通か、ランキングが語る。",
+    "buyTickets": "チケット購入",
+    "watchLive": "視聴する"
   },
   "rankingPage": {
     "title": "格闘通ランキング",

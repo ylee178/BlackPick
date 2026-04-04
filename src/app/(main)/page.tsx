@@ -197,6 +197,34 @@ export default async function HomePage() {
                 </div>
               ) : null}
 
+              {/* CTA buttons */}
+              {eventStatus === "upcoming" ? (
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <a
+                    href="https://ticket.black-combat.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={retroButtonClassName({ variant: "primary", size: "sm" })}
+                  >
+                    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M2 5.5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1a1.5 1.5 0 0 0 0 3v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a1.5 1.5 0 0 0 0-3v-1Z" />
+                    </svg>
+                    {t("home.buyTickets")}
+                  </a>
+                  <a
+                    href="https://www.youtube.com/@blackcombat"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={retroButtonClassName({ variant: "ghost", size: "sm" })}
+                  >
+                    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+                      <path d="M14.7 4.5a1.8 1.8 0 0 0-1.2-1.2C12.3 3 8 3 8 3s-4.3 0-5.5.3A1.8 1.8 0 0 0 1.3 4.5C1 5.7 1 8 1 8s0 2.3.3 3.5a1.8 1.8 0 0 0 1.2 1.2C3.7 13 8 13 8 13s4.3 0 5.5-.3a1.8 1.8 0 0 0 1.2-1.2C15 10.3 15 8 15 8s0-2.3-.3-3.5ZM6.5 10.2V5.8L10.4 8l-3.9 2.2Z" />
+                    </svg>
+                    {t("home.watchLive")}
+                  </a>
+                </div>
+              ) : null}
+
               {!authUser ? (
                 <div className="mt-4">
                   <Link href="/signup" className={retroButtonClassName({ variant: "ghost", size: "sm" })}>

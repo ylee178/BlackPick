@@ -136,7 +136,9 @@
   "home": {
     "platformLabel": "Who Is The Pick?",
     "heroTitle": "Não é palpite. É leitura de luta.",
-    "heroDescription": "Preveja as lutas do Black Combat, construa seu cartel e prove que você é o verdadeiro entendedor de luta."
+    "heroDescription": "Preveja as lutas do Black Combat, construa seu cartel e prove que você é o verdadeiro entendedor de luta.",
+    "buyTickets": "Comprar Ingressos",
+    "watchLive": "Assistir ao Vivo"
   },
   "rankingPage": {
     "title": "Ranking Fight IQ",

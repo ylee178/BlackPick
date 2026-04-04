@@ -136,7 +136,9 @@
   "home": {
     "platformLabel": "Who Is The Pick?",
     "heroTitle": "찍는 게 아니라, 읽는 거다",
-    "heroDescription": "블랙컴뱃 승부 예측하고, 전적으로 올라서라. 누가 진짜 격잘알인지 랭킹이 말해준다."
+    "heroDescription": "블랙컴뱃 승부 예측하고, 전적으로 올라서라. 누가 진짜 격잘알인지 랭킹이 말해준다.",
+    "buyTickets": "티켓 구매",
+    "watchLive": "시청하기"
   },
   "rankingPage": {
     "title": "격잘알 랭킹",

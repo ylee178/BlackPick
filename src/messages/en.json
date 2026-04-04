@@ -136,7 +136,9 @@
   "home": {
     "platformLabel": "Who Is The Pick?",
     "heroTitle": "It's not guessing. It's reading the fight.",
-    "heroDescription": "Predict Black Combat fights, build your record, and prove you're the real fight expert."
+    "heroDescription": "Predict Black Combat fights, build your record, and prove you're the real fight expert.",
+    "buyTickets": "Buy Tickets",
+    "watchLive": "Watch Live"
   },
   "rankingPage": {
     "title": "Fight IQ Rankings",
