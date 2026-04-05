@@ -258,16 +258,9 @@ export default async function HomePage() {
         <div id="fights" className="flex flex-col gap-6">
           {fights.length > 0 ? (
             <>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold tracking-tight text-[var(--bp-ink)]">
-                  {t("event.fights")} ({fights.length})
-                </h2>
-                {featured ? (
-                  <Link href={`/events/${featured.id}`} className="text-xs font-medium text-[var(--bp-accent)]">
-                    {t("common.viewAll")}
-                  </Link>
-                ) : null}
-              </div>
+              <h2 className="text-lg font-bold tracking-tight text-[var(--bp-ink)]">
+                {t("event.fights")} ({fights.length})
+              </h2>
 
               {fights.map((fight, index) => {
                 const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
@@ -300,12 +293,7 @@ export default async function HomePage() {
 
           {/* Card 1: All-Time Rankings */}
           <section className={retroPanelClassName({ className: "p-4" })}>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("ranking.running")}</p>
-              <Link href="/ranking" className="text-xs font-medium text-[var(--bp-accent)]">
-                {t("common.viewAll")}
-              </Link>
-            </div>
+            <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("ranking.running")}</p>
 
             <div className="mt-3 space-y-1">
               {allTimeUsers.length === 0 ? (
@@ -330,12 +318,7 @@ export default async function HomePage() {
 
           {/* Card 2: P4P Rankings (win rate) */}
           <section className={retroPanelClassName({ className: "p-4" })}>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[var(--bp-ink)]">P4P</p>
-              <Link href="/ranking" className="text-xs font-medium text-[var(--bp-accent)]">
-                {t("common.viewAll")}
-              </Link>
-            </div>
+            <p className="text-sm font-semibold text-[var(--bp-ink)]">P4P</p>
             <p className="mt-0.5 text-[11px] text-[var(--bp-muted)]">{t("common.winRate")}</p>
 
             <div className="mt-3 space-y-1">

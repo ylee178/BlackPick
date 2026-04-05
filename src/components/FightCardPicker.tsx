@@ -271,9 +271,9 @@ export default function FightCardPicker({
   }
 
   return (
-    <div className="flex items-start gap-2 sm:gap-3">
+    <div className="flex items-stretch gap-2 sm:gap-3">
       <FighterCard fighter={fighterA} fighterId={fighterAId} side="left" />
-      <div className="flex flex-col items-center justify-center px-1 pt-10">
+      <div className="flex items-center justify-center px-1">
         <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
       </div>
       <FighterCard fighter={fighterB} fighterId={fighterBId} side="right" />
