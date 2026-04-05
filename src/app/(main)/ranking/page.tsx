@@ -53,7 +53,8 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const { t, locale } = await getTranslations();
   const supabase = await createSupabaseServer();
 
-  const tab = params.tab === "series" || params.tab === "event" ? params.tab : "running";
+  const validTabs = ["running", "series", "event", "streak"] as const;
+  const tab = validTabs.includes(params.tab as any) ? (params.tab as string) : "running";
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
@@ -62,6 +63,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     { key: "running", label: t("ranking.running") },
     { key: "series", label: t("ranking.series") },
     { key: "event", label: t("ranking.event") },
+    { key: "streak", label: t("ranking.winStreak") },
   ];
 
   let users: RankingUser[] = [];
@@ -81,6 +83,19 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     users = (data ?? []) as RankingUser[];
     hasNextPage = users.length > PAGE_SIZE;
     users = users.slice(0, PAGE_SIZE);
+  }
+
+  let streakUsers: RankingUser[] = [];
+  if (tab === "streak") {
+    const { data } = await supabase
+      .from("users")
+      .select("id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score")
+      .gt("current_streak", 0)
+      .order("current_streak", { ascending: false })
+      .order("best_streak", { ascending: false })
+      .limit(PAGE_SIZE);
+
+    streakUsers = (data ?? []) as RankingUser[];
   }
 
   let seriesData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
@@ -268,6 +283,26 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
                 />
               ) : null))}
+            </div>
+          )
+        ) : null}
+
+        {tab === "streak" ? (
+          streakUsers.length === 0 ? (
+            <RetroEmptyState title={t("common.noData")} />
+          ) : (
+            <div className="space-y-2">
+              {streakUsers.map((user, index) => (
+                <RankingRowFull
+                  key={user.id}
+                  rank={index + 1}
+                  name={user.ring_name}
+                  record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
+                  score={`${user.current_streak ?? 0}W`}
+                  unknownLabel={t("ranking.unknown")}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                />
+              ))}
             </div>
           )
         ) : null}

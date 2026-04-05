@@ -73,6 +73,7 @@
     "running": "통합",
     "series": "시리즈별",
     "event": "대회별",
+    "winStreak": "연승",
     "rank": "순위",
     "ringName": "링네임",
     "record": "전적",

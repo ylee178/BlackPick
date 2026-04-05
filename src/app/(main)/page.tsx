@@ -39,6 +39,7 @@ type RankingUser = {
   score: number | null;
   wins: number | null;
   losses: number | null;
+  current_streak?: number | null;
 };
 
 function getStatusTone(status: string) {
@@ -57,7 +58,7 @@ export default async function HomePage() {
   // Fetch all data in parallel
   const [{ data: events }, { data: topUsers }] = await Promise.all([
     supabase.from("events").select("id, name, date, status, series_type").order("date", { ascending: true }),
-    supabase.from("users").select("id, ring_name, score, wins, losses").order("score", { ascending: false }).limit(10),
+    supabase.from("users").select("id, ring_name, score, wins, losses, current_streak").order("score", { ascending: false }).limit(10),
   ]);
 
   const typedEvents = (events ?? []) as EventRow[];
@@ -76,6 +77,12 @@ export default async function HomePage() {
       const rateB = (b.wins ?? 0) / Math.max(1, (b.wins ?? 0) + (b.losses ?? 0));
       return rateB - rateA;
     })
+    .slice(0, 5);
+
+  // Win Streak ranking: sorted by current_streak
+  const streakUsers = [...allTimeUsers]
+    .filter((u) => (u.current_streak ?? 0) > 0)
+    .sort((a, b) => (b.current_streak ?? 0) - (a.current_streak ?? 0))
     .slice(0, 5);
 
   // Fetch fights for featured event
@@ -348,6 +355,27 @@ export default async function HomePage() {
             initialEventIndex={0}
             initialUsers={eventRankUsers}
           />
+
+          {/* Card 4: Win Streak */}
+          <section className={retroPanelClassName({ className: "p-4" })}>
+            <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("ranking.winStreak")}</p>
+
+            <div className="mt-3 space-y-1">
+              {streakUsers.length === 0 ? (
+                <p className="py-3 text-center text-xs text-[var(--bp-muted)]">{t("common.noData")}</p>
+              ) : (
+                streakUsers.map((user, index) => (
+                  <RankingRowCompact
+                    key={user.id}
+                    rank={index + 1}
+                    name={user.ring_name}
+                    value={`${user.current_streak ?? 0}W`}
+                    unknownLabel={t("ranking.unknown")}
+                  />
+                ))
+              )}
+            </div>
+          </section>
 
           {/* Card 4: Sign Up CTA */}
           {!authUser ? (
