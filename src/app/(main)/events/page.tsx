@@ -44,7 +44,7 @@ function EventListSection({
 
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-4 flex items-center gap-2">
         <p className="text-sm font-semibold text-[var(--bp-ink)]">{title}</p>
         <span className="text-xs text-[var(--bp-muted)]">{items.length}</span>
       </div>
@@ -95,7 +95,7 @@ export default async function EventsPage() {
   const featured = liveEvents[0] ?? upcomingEvents[0] ?? null;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>

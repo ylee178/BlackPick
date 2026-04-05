@@ -156,7 +156,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-4">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>

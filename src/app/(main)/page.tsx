@@ -262,13 +262,14 @@ export default async function HomePage() {
       {/* ═══ MAIN CONTENT ═══ */}
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         {/* Fight List */}
-        <div id="fights" className="flex flex-col gap-6">
+        <div id="fights" className="flex flex-col">
           {fights.length > 0 ? (
             <>
-              <h2 className="text-lg font-bold tracking-tight text-[var(--bp-ink)]">
+              <h2 className="mb-4 text-lg font-bold tracking-tight text-[var(--bp-ink)]">
                 {t("event.fights")} ({fights.length})
               </h2>
 
+              <div className="flex flex-col gap-6">
               {fights.map((fight, index) => {
                 const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
                 return (
@@ -283,6 +284,7 @@ export default async function HomePage() {
                   />
                 );
               })}
+              </div>
             </>
           ) : (
             <div className={retroPanelClassName({ className: "p-6 text-center" })}>
@@ -295,9 +297,10 @@ export default async function HomePage() {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-6">
-          <h2 className="text-lg font-bold tracking-tight text-[var(--bp-ink)]">Black Pick Ranking</h2>
+        <div className="flex flex-col">
+          <h2 className="mb-4 text-lg font-bold tracking-tight text-[var(--bp-ink)]">Black Pick Ranking</h2>
 
+          <div className="flex flex-col gap-6">
           {/* Card 1: All-Time Rankings */}
           <section className={retroPanelClassName({ className: "p-4" })}>
             <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("ranking.running")}</p>
@@ -392,6 +395,7 @@ export default async function HomePage() {
               </div>
             </section>
           ) : null}
+          </div>
         </div>
       </div>
     </div>
