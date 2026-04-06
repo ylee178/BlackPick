@@ -61,7 +61,7 @@ function EventListSection({
                 <RetroStatusBadge tone={getStatusTone(event.status)}>
                   {t(`status.${event.status}`)}
                 </RetroStatusBadge>
-                <span className="text-[11px] text-[var(--bp-muted)]">{getSeriesLabel(event.series_type, t)}</span>
+                <span className="text-xs text-[var(--bp-muted)]">{getSeriesLabel(event.series_type, t)}</span>
               </div>
               <p className="mt-1.5 truncate text-sm font-semibold text-[var(--bp-ink)]">
                 {getLocalizedEventName(event, locale as "en" | "ko" | "ja" | "pt-BR", event.name)}
@@ -99,7 +99,7 @@ export default async function EventsPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("event.allEvents")}</h1>
+          <h1 className="text-2xl font-bold text-[var(--bp-ink)]">{t("event.allEvents")}</h1>
           <div className="mt-2 flex gap-2">
             <span className={retroChipClassName({ tone: liveEvents.length > 0 ? "accent" : "neutral" })}>
               {liveEvents.length} {t("status.live")}

@@ -127,7 +127,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={fighterLabel} className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[8px] text-[var(--bp-muted)]">IMG</div>
+                      <div className="flex h-full w-full items-center justify-center text-xs text-[var(--bp-muted)]">IMG</div>
                     )}
                   </div>
                   <p className="min-w-0 truncate text-sm font-medium text-[var(--bp-ink)]">{fighterLabel}</p>
@@ -164,7 +164,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={getLocalizedFighterName(result, locale, result.name)} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[8px] text-[var(--bp-muted)]">IMG</div>
+                    <div className="flex h-full w-full items-center justify-center text-xs text-[var(--bp-muted)]">IMG</div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

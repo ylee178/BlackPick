@@ -6,7 +6,11 @@
     "profile": "プロフィール",
     "login": "ログイン",
     "signup": "新規登録",
-    "admin": "管理者"
+    "admin": "管理者",
+    "picks": "勝負予想",
+    "results": "戦績板",
+    "myRecord": "マイ戦績",
+    "fighters": "選手"
   },
   "event": {
     "upcoming": "開催予定",
@@ -34,16 +38,18 @@
     "completedDescription": "結果が確定しました。あなたの予想やスコアを確認し、イベントMVPに投票しましょう。",
     "eventOverview": "イベント概要",
     "fights": "試合",
+    "fightListTitle": "誰が勝つ？",
+    "fightListDescription": "試合を分析して勝者を予測しよう",
     "status": "ステータス",
-    "totalFights": "試合数",
+    "totalFights": "試合",
     "allEvents": "全イベント"
   },
   "prediction": {
     "selectWinner": "勝者を選択",
     "selectWinnerMessage": "勝者を選択してください。",
     "yourPick": "あなたの予想",
-    "method": "どう決着する？",
-    "round": "何ラウンド？",
+    "method": "どうやって勝つ？",
+    "round": "何ラウンドで決まる？",
     "savePick": "予想を保存",
     "saved": "保存済み",
     "savedMessage": "予想を保存しました。",
@@ -53,6 +59,12 @@
     "noMethod": "決着方法なし",
     "noRound": "ラウンドなし",
     "roundOT": "延長",
+    "wrongPick": "外れたら",
+    "pointsWinner": "勝者的中",
+    "pointsMethod": "決着方法的中",
+    "pointsRound": "ラウンド的中 (R1~R3)",
+    "pointsR4": "R4的中",
+    "editPick": "編集",
     "editUntilStart": "試合開始まで予想を編集できます。",
     "points": "pt",
     "bulk": "全試合予想",
@@ -71,7 +83,7 @@
   },
   "ranking": {
     "running": "通算",
-    "series": "シリーズ別",
+    "series": "リーグ別",
     "event": "イベント別",
     "winStreak": "連勝",
     "rank": "順位",
@@ -112,12 +124,42 @@
     "userExists": "そのメールアドレスは既に登録されています。ログインしてください。",
     "invalidEmail": "有効なメールアドレスを入力してください。",
     "passwordTooShort": "パスワードは6文字以上必要です。",
-    "authUnexpected": "現在、認証を完了できませんでした。"
+    "authUnexpected": "現在、認証を完了できませんでした。",
+    "logout": "ログアウト",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "resetPassword": "パスワード再設定",
+    "resetPasswordDescription": "登録したメールアドレスを入力すると、再設定リンクをお送りします。",
+    "sendResetLink": "再設定リンクを送信",
+    "sending": "送信中...",
+    "resetLinkSent": "メールをご確認ください！再設定リンクを送信しました。",
+    "resetLinkFailed": "再設定リンクの送信に失敗しました。",
+    "newPassword": "新しいパスワード",
+    "updatePassword": "パスワードを変更",
+    "updating": "変更中...",
+    "passwordUpdated": "パスワードが変更されました！ログインページに移動します。",
+    "passwordUpdateFailed": "パスワードの変更に失敗しました。"
+  },
+  "account": {
+    "editProfile": "プロフィール編集",
+    "notificationSettings": "通知設定",
+    "resetRecord": "戦績リセット",
+    "resetRecordConfirm": "本当に戦績をリセットしますか？すべての予想記録、スコア、バッジが削除されます。",
+    "deleteAccount": "アカウント削除",
+    "deleteAccountConfirm": "本当にアカウントを削除しますか？すべてのデータが完全に削除されます。",
+    "save": "保存",
+    "saved": "保存しました",
+    "ringNameTaken": "このリングネームは使用中です",
+    "dangerZone": "危険エリア",
+    "notifFightStart": "試合開始通知",
+    "notifResult": "結果通知",
+    "notifMvpVote": "MVP投票通知",
+    "notifRankingChange": "ランキング変動通知"
   },
   "fighter": {
     "record": "戦績",
     "nationality": "国籍",
-    "weightClass": "階級"
+    "weightClass": "階級",
+    "recentFights": "最近の試合"
   },
   "series": {
     "blackCup": "ブラックカップ",
@@ -129,7 +171,8 @@
     "upcoming": "開催予定",
     "live": "ライブ",
     "completed": "終了",
-    "cancelled": "中止"
+    "cancelled": "中止",
+    "no_contest": "ノーコンテスト"
   },
   "language": {
     "switchTo": "{language}に言語を切り替える"
@@ -143,7 +186,8 @@
   },
   "rankingPage": {
     "title": "格闘通ランキング",
-    "description": "予想戦績で実力を証明するBlack Combatファンの順位表"
+    "description": "予想戦績で実力を証明するBlack Combatファンの順位表",
+    "snapshot": "ランキング TOP 5"
   },
   "countdown": {
     "closesIn": "予想締切まで",
@@ -185,6 +229,66 @@
     "notAuthenticated": "オンボーディングを完了するには、もう一度ログインしてください。",
     "unexpected": "現在リングネームを保存できませんでした。"
   },
+  "results": {
+    "totalEvents": "完了したイベント"
+  },
+  "myRecord": {
+    "methodAccuracy": "決着方法別の正解率",
+    "recentTrend": "最近のスコア推移",
+    "badges": "バッジ",
+    "weightClassBreakdown": "階級別戦績",
+    "hallOfFame": "殿堂入り",
+    "rangeAll": "全大会",
+    "range7days": "7日",
+    "range30days": "30日",
+    "range90days": "90日",
+    "range1year": "1年",
+    "rangeLastEvent": "直近大会",
+    "vsPrevious": "vs 前の{range}",
+    "eventHistory": "参加したイベント",
+    "skippedFights": "不参加の試合",
+    "skipped": "不参加",
+    "dashboard": "ダッシュボード",
+    "allPredictions": "全予測",
+    "searchFighter": "選手を検索...",
+    "searchPlaceholder": "選手名、大会名...",
+    "sortNewest": "新しい順",
+    "sortOldest": "古い順",
+    "sortScoreHigh": "スコア(高)",
+    "sortScoreLow": "スコア(低)",
+    "noPredictions": "まだ予測がありません",
+    "totalCount": "合計{count}件",
+    "winnerCorrect": "勝者的中",
+    "winnerWrong": "勝者不正解",
+    "methodCorrect": "方法的中",
+    "methodWrong": "方法不正解",
+    "roundCorrect": "ラウンド的中",
+    "roundWrong": "ラウンド不正解"
+  },
+  "discussion": {
+    "title": "ディスカッション",
+    "placeholder": "この試合について意見を共有しましょう...",
+    "post": "投稿",
+    "reply": "返信",
+    "delete": "削除",
+    "cancel": "キャンセル",
+    "replyingTo": "返信中",
+    "noComments": "まだコメントはありません。最初のコメントを残しましょう！",
+    "loginRequired": "ディスカッションに参加するにはログインしてください。",
+    "translate": "翻訳",
+    "original": "原文",
+    "viewReplies": "返信{count}件を表示",
+    "hideReplies": "返信を非表示"
+  },
+  "notification": {
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "empty": "まだ通知はありません。",
+    "fightStart": "まもなく試合が始まります",
+    "resultReady": "結果が出ました",
+    "mvpVoteOpen": "MVP投票が開始されました",
+    "rankingChanged": "ランキングが変動しました"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",
@@ -196,6 +300,9 @@
     "of": "/",
     "times": "回",
     "winRate": "勝率",
+    "rankingAllTimeDesc": "累計スコアランキング",
+    "rankingP4pDesc": "階級問わず最高勝率",
+    "rankingStreakDesc": "現在の連勝記録",
     "startPredicting": "予想を始める",
     "pending": "保留中",
     "viewAll": "全て見る",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 import {
   retroButtonClassName,
 } from "@/components/ui/retro";
@@ -33,11 +34,7 @@ const methods = ["KO/TKO", "Submission", "Decision"] as const;
 const rounds = [1, 2, 3, 4] as const;
 
 function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 16 16" className={cn("h-3 w-3", className)} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
-    </svg>
-  );
+  return <Check className={cn("h-3 w-3", className)} strokeWidth={2.5} />;
 }
 
 function RadioDot({ checked }: { checked: boolean }) {

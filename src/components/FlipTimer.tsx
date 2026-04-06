@@ -15,13 +15,15 @@ function getTimeLeft(target: string) {
   };
 }
 
-function Digit({ value, label }: { value: string; label: string }) {
+function DigitCard({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex items-baseline gap-1">
-      <span className="text-xl font-bold tabular-nums text-[var(--bp-ink)] md:text-2xl">
-        {value.padStart(2, "0")}
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="lcd-digit">
+        <span>{value}</span>
+      </div>
+      <span className="text-xs font-bold uppercase tracking-[0.12em] text-white/70">
+        {label}
       </span>
-      <span className="text-[10px] font-medium uppercase text-[var(--bp-muted)]">{label}</span>
     </div>
   );
 }
@@ -32,38 +34,37 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
   const [tl, setTl] = useState({ total: 1, d: 0, h: 0, m: 0, s: 0 });
 
   useEffect(() => {
-    const mountTimer = window.setTimeout(() => {
-      setMounted(true);
-      setTl(getTimeLeft(targetTime));
-    }, 0);
+    setMounted(true);
+    setTl(getTimeLeft(targetTime));
     const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
-    return () => {
-      clearTimeout(mountTimer);
-      clearInterval(i);
-    };
+    return () => clearInterval(i);
   }, [targetTime]);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
 
   if (tl.total <= 0 && mounted) {
     return (
-      <div className="rounded-[12px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-4 py-3 text-center">
+      <div className="rounded-[12px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-4 py-4 text-center">
         <p className="text-sm font-semibold text-[var(--bp-muted)]">{t("countdown.locked")}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-[12px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-4 py-3">
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--bp-muted)]">
-        {t("countdown.closesIn")}
-      </p>
-      <div className="flex items-baseline gap-3" suppressHydrationWarning>
-        <Digit value={mounted ? String(tl.d) : "--"} label={t("countdown.daysShort")} />
-        <span className="text-[var(--bp-muted)]">:</span>
-        <Digit value={mounted ? String(tl.h) : "--"} label={t("countdown.hoursShort")} />
-        <span className="text-[var(--bp-muted)]">:</span>
-        <Digit value={mounted ? String(tl.m) : "--"} label={t("countdown.minutesShort")} />
-        <span className="text-[var(--bp-muted)]">:</span>
-        <Digit value={mounted ? String(tl.s) : "--"} label={t("countdown.secondsShort")} />
+    <div>
+      <div className="rounded-[12px] bg-[#060606] px-6 py-6">
+        <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.12em] text-[var(--bp-muted)]">
+          {t("countdown.closesIn")}
+        </p>
+        <div className="flex items-start justify-center gap-1.5 sm:gap-2" suppressHydrationWarning>
+          <DigitCard value={mounted ? pad(tl.d) : "--"} label={t("countdown.daysShort")} />
+          <span className="lcd-colon">:</span>
+          <DigitCard value={mounted ? pad(tl.h) : "--"} label={t("countdown.hoursShort")} />
+          <span className="lcd-colon">:</span>
+          <DigitCard value={mounted ? pad(tl.m) : "--"} label={t("countdown.minutesShort")} />
+          <span className="lcd-colon">:</span>
+          <DigitCard value={mounted ? pad(tl.s) : "--"} label={t("countdown.secondsShort")} />
+        </div>
       </div>
     </div>
   );

@@ -6,3 +6,7 @@ data/
 /tmp/
 *.log
 .DS_Store
+
+*storybook.log
+Fighter_Images/
+storybook-static

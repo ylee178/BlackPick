@@ -2,10 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { I18nProvider } from "@/lib/i18n-provider";
 import MainNav from "@/components/MainNav";
+import NotificationBell from "@/components/NotificationBell";
 import LanguagePicker from "@/components/LanguagePicker";
 import AccountDropdown from "@/components/AccountDropdown";
 import { getLocale, getTranslations } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
+import { ToastProvider } from "@/components/Toast";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import {
   retroButtonClassName,
@@ -45,18 +47,21 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
 
   return (
     <I18nProvider initialLocale={locale} initialMessages={messages}>
+      <ToastProvider>
       <div className="min-h-[100dvh] bg-[var(--bp-bg)] text-[var(--bp-ink)]">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-[var(--bp-bg)] focus:px-4 focus:py-2 focus:text-[var(--bp-ink)]">
+          Skip to main content
+        </a>
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-[var(--bp-line)] bg-[var(--bp-bg-translucent)] backdrop-blur-xl">
+        <header id="main-header" className="sticky top-0 z-40 border-b border-[var(--bp-line)] bg-[var(--bp-bg-translucent)] backdrop-blur-xl">
           <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
             {/* Logo */}
-            <Link href="/" className="group flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--bp-accent)] text-sm font-extrabold text-[var(--bp-bg)]">
-                BP
-              </div>
-              <span className="text-base font-bold tracking-[-0.01em] text-[var(--bp-ink)] transition group-hover:text-[var(--bp-accent)]">
-                Black Pick
-              </span>
+            <Link href="/" className="group flex items-center">
+              <img
+                src="/bp-logo.svg"
+                alt="Black Pick"
+                className="h-9 transition group-hover:opacity-80"
+              />
             </Link>
 
             {/* Desktop Nav */}
@@ -67,6 +72,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             {/* Actions */}
             <div className="flex items-center gap-2">
               <LanguagePicker />
+              {authUser ? <NotificationBell /> : null}
               {authUser && publicUser ? (
                 <AccountDropdown
                   ringName={publicUser.ring_name?.trim() || authUser.email?.split("@")[0] || "User"}
@@ -103,7 +109,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </header>
 
         {/* Main Content */}
-        <main className="mx-auto max-w-[1200px] px-4 pb-28 pt-10 sm:px-6 lg:pb-10">
+        <main id="main-content" className="mx-auto max-w-[1200px] px-4 pb-28 pt-10 sm:px-6 lg:pb-10">
           {children}
         </main>
 
@@ -112,12 +118,13 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         ) : null}
 
         {/* Mobile Tab Bar */}
-        <nav className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[var(--bp-line)] bg-[var(--bp-bg)] md:hidden">
+        <nav aria-label="Mobile navigation" className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[var(--bp-line)] bg-[var(--bp-bg)] md:hidden">
           <div className="mx-auto max-w-md px-2 pb-1">
             <MainNav mobile />
           </div>
         </nav>
       </div>
+      </ToastProvider>
     </I18nProvider>
   );
 }

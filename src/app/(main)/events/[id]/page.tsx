@@ -1,8 +1,10 @@
 import FightCard from "@/components/FightCard";
+import FightComments from "@/components/FightComments";
 import FlipTimer from "@/components/FlipTimer";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { RetroStatusBadge, retroChipClassName, retroPanelClassName } from "@/components/ui/retro";
+import { fetchBcEventDataFull } from "@/lib/bc-predictions";
 import { getSeriesLabel } from "@/lib/constants";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
@@ -29,6 +31,11 @@ type FightEntry = {
     fighter_b_percentage: number;
     total_predictions: number;
   } | null;
+  bcPrediction: { fighterA_pct: number; fighterB_pct: number } | null;
+  bcWeightClass: string | null;
+  bcIsMainEvent: boolean;
+  bcFighterADivision: { weightClass: string; rank: number | null } | null;
+  bcFighterBDivision: { weightClass: string; rank: number | null } | null;
 };
 
 function getStatusTone(status: FightDisplayState | "cancelled") {
@@ -46,6 +53,12 @@ export default async function EventPage({
   const user = await getUser();
   const { id } = await params;
   const { t, locale } = await getTranslations();
+
+  let userInitial = "?";
+  if (user) {
+    const { data: dbUser } = await supabase.from("users").select("ring_name").eq("id", user.id).single();
+    userInitial = dbUser?.ring_name?.charAt(0) || "?";
+  }
 
   const { data: event } = await supabase
     .from("events")
@@ -71,7 +84,7 @@ export default async function EventPage({
       fighter_b:fighters!fighter_b_id(*)
     `)
     .eq("event_id", id)
-    .order("start_time", { ascending: true });
+    .order("start_time", { ascending: false });
 
   const typedFights = (fights ?? []) as FightWithFighters[];
   const fightIds = typedFights.map((fight) => fight.id);
@@ -108,6 +121,13 @@ export default async function EventPage({
     eventFighterMap.set(fight.fighter_b.id, fight.fighter_b);
   }
 
+  // Fetch BC official site predictions + weight classes + poster
+  const bcResult = await fetchBcEventDataFull(event.name);
+  const bcRawData = bcResult.fights;
+  // Both BC site and our DB now order main event first (DESC by start_time).
+  // Direct index alignment — trim BC data to match DB fight count.
+  const bcFightData = bcRawData.slice(0, typedFights.length);
+
   // eslint-disable-next-line react-hooks/purity -- request-time lock state needs the current server timestamp.
   const nowTimestamp = Date.now();
   const localizedEventName = getLocalizedEventName(event, locale, event.name);
@@ -127,6 +147,13 @@ export default async function EventPage({
       displayState,
       prediction: predictionMap.get(fight.id) ?? null,
       crowdStats: statsMap.get(fight.id) ?? null,
+      bcPrediction: bcFightData[index]
+        ? { fighterA_pct: bcFightData[index].fighterA_pct, fighterB_pct: bcFightData[index].fighterB_pct }
+        : null,
+      bcWeightClass: bcFightData[index]?.weightClass ?? null,
+      bcIsMainEvent: bcFightData[index]?.isMainEvent ?? false,
+      bcFighterADivision: bcFightData[index]?.fighterA_division ?? null,
+      bcFighterBDivision: bcFightData[index]?.fighterB_division ?? null,
     };
   });
 
@@ -150,17 +177,26 @@ export default async function EventPage({
               key={entry.fight.id}
               index={entry.index}
               variant="option-2"
+              isMainEvent={entry.bcIsMainEvent || entry.index === 1}
               fight={entry.fight}
               eventStatus={eventStatus}
               hasStarted={entry.hasStarted}
               prediction={entry.prediction}
               crowdStats={entry.crowdStats}
+              bcPrediction={entry.bcPrediction}
+              bcWeightClass={entry.bcWeightClass}
+              bcFighterADivision={entry.bcFighterADivision}
+              bcFighterBDivision={entry.bcFighterBDivision}
+              seriesLabel={event?.series_type === "black_cup" ? getSeriesLabel(event.series_type, t) : null}
             />
           ))}
         </div>
       </section>
     );
   }
+
+  // Use BC poster URL (auto-detected from BC site)
+  const posterUrl = bcResult.posterUrl;
 
   return (
     <div className="relative flex flex-col gap-10 pb-24 md:pb-0">
@@ -171,58 +207,132 @@ export default async function EventPage({
         watchElementId="event-page-header"
       />
 
-      {/* Event Header */}
-      <section id="event-page-header" className={retroPanelClassName({ className: "p-4 sm:p-5" })}>
-        <div className="flex items-center gap-2">
-          <RetroStatusBadge tone={getStatusTone(event.status as FightDisplayState)}>
-            {t(`status.${event.status}`)}
-          </RetroStatusBadge>
-          <span className={retroChipClassName({ tone: "neutral" })}>{getSeriesLabel(event.series_type, t)}</span>
-        </div>
+      {/* Poster Background Hero */}
+      {posterUrl ? (
+        <div className="relative -mx-4 -mt-10 overflow-hidden sm:-mx-6">
+          {/* Background Image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${posterUrl})` }}
+          />
+          {/* Dark overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[rgba(0,0,0,0.4)] via-[rgba(0,0,0,0.6)] to-[var(--bp-bg)]" />
 
-        <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] sm:text-2xl">
-          {localizedEventName}
-        </h1>
-        <p className="mt-1 text-sm text-[var(--bp-muted)]">{event.date}</p>
+          {/* Content on top of poster */}
+          <div className="relative px-4 pb-8 pt-14 sm:px-6">
+            <section id="event-page-header" className="event-glass-card rounded-[16px] p-4 sm:p-5">
+              <div className="flex items-center gap-2">
+                <RetroStatusBadge tone={getStatusTone(event.status as FightDisplayState)}>
+                  {t(`status.${event.status}`)}
+                </RetroStatusBadge>
+                <span className={retroChipClassName({ tone: "neutral" })}>{getSeriesLabel(event.series_type, t)}</span>
+              </div>
 
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--bp-muted)]">
-          <span>{fightEntries.length} {t("event.totalFights")}</span>
-          <span>·</span>
-          <span>{pickedEntries.length} {t("prediction.yourPick")}</span>
-        </div>
+              <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-white sm:text-2xl">
+                {localizedEventName}
+              </h1>
+              <p className="mt-1 text-sm text-[rgba(255,255,255,0.7)]">{event.date}</p>
 
-        {/* Timer */}
-        {event.status === "upcoming" && earliestStart ? (
-          <div className="mt-4">
-            <FlipTimer targetTime={earliestStart} />
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                <span><span className="font-semibold text-white">{fightEntries.length}</span> <span className="text-[rgba(255,255,255,0.5)]">{t("event.totalFights")}</span></span>
+                <span className="text-[rgba(255,255,255,0.3)]">·</span>
+                <span><span className="font-semibold text-white">{pickedEntries.length}</span> <span className="text-[rgba(255,255,255,0.5)]">{t("prediction.yourPick")}</span></span>
+              </div>
+
+              {event.status === "upcoming" && earliestStart ? (
+                <div className="mt-4">
+                  <FlipTimer targetTime={earliestStart} />
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex gap-2">
+                {liveEntries.length > 0 ? (
+                  <a href="#live" className={retroChipClassName()}>
+                    {t("status.live")} {liveEntries.length}
+                  </a>
+                ) : null}
+                {upcomingEntries.length > 0 ? (
+                  <a href="#upcoming" className={retroChipClassName({ tone: "neutral" })}>
+                    {t("status.upcoming")} {upcomingEntries.length}
+                  </a>
+                ) : null}
+                {completedEntries.length > 0 ? (
+                  <a href="#completed" className={retroChipClassName({ tone: "neutral" })}>
+                    {t("status.completed")} {completedEntries.length}
+                  </a>
+                ) : null}
+              </div>
+            </section>
           </div>
-        ) : null}
-
-        {/* Quick Nav */}
-        <div className="mt-4 flex gap-2">
-          {liveEntries.length > 0 ? (
-            <a href="#live" className={retroChipClassName()}>
-              {t("status.live")} {liveEntries.length}
-            </a>
-          ) : null}
-          {upcomingEntries.length > 0 ? (
-            <a href="#upcoming" className={retroChipClassName({ tone: "neutral" })}>
-              {t("status.upcoming")} {upcomingEntries.length}
-            </a>
-          ) : null}
-          {completedEntries.length > 0 ? (
-            <a href="#completed" className={retroChipClassName({ tone: "neutral" })}>
-              {t("status.completed")} {completedEntries.length}
-            </a>
-          ) : null}
         </div>
-      </section>
+      ) : (
+        <section id="event-page-header" className={retroPanelClassName({ className: "p-4 sm:p-5" })}>
+          <div className="flex items-center gap-2">
+            <RetroStatusBadge tone={getStatusTone(event.status as FightDisplayState)}>
+              {t(`status.${event.status}`)}
+            </RetroStatusBadge>
+            <span className={retroChipClassName({ tone: "neutral" })}>{getSeriesLabel(event.series_type, t)}</span>
+          </div>
+
+          <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] sm:text-2xl">
+            {localizedEventName}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--bp-muted)]">{event.date}</p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+            <span><span className="font-semibold text-[var(--bp-ink)]">{fightEntries.length}</span> <span className="text-[var(--bp-muted)]">{t("event.totalFights")}</span></span>
+            <span className="text-[var(--bp-muted)] opacity-50">·</span>
+            <span><span className="font-semibold text-[var(--bp-ink)]">{pickedEntries.length}</span> <span className="text-[var(--bp-muted)]">{t("prediction.yourPick")}</span></span>
+          </div>
+
+          {event.status === "upcoming" && earliestStart ? (
+            <div className="mt-4">
+              <FlipTimer targetTime={earliestStart} />
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex gap-2">
+            {liveEntries.length > 0 ? (
+              <a href="#live" className={retroChipClassName()}>
+                {t("status.live")} {liveEntries.length}
+              </a>
+            ) : null}
+            {upcomingEntries.length > 0 ? (
+              <a href="#upcoming" className={retroChipClassName({ tone: "neutral" })}>
+                {t("status.upcoming")} {upcomingEntries.length}
+              </a>
+            ) : null}
+            {completedEntries.length > 0 ? (
+              <a href="#completed" className={retroChipClassName({ tone: "neutral" })}>
+                {t("status.completed")} {completedEntries.length}
+              </a>
+            ) : null}
+          </div>
+        </section>
+      )}
 
       {/* Fight Sections */}
       <div className="flex flex-col gap-6">
         {renderFightSection("live", t("status.live"), liveEntries)}
         {renderFightSection("upcoming", t("status.upcoming"), upcomingEntries)}
         {renderFightSection("completed", t("status.completed"), completedEntries)}
+      </div>
+
+      {/* Fight Discussion */}
+      <div className="flex flex-col gap-4">
+        {fightEntries.map((entry) => {
+          const aName = getLocalizedFighterName(entry.fight.fighter_a, locale, entry.fight.fighter_a.name);
+          const bName = getLocalizedFighterName(entry.fight.fighter_b, locale, entry.fight.fighter_b.name);
+          return (
+            <FightComments
+              key={`comments-${entry.fight.id}`}
+              fightId={entry.fight.id}
+              fightLabel={`${aName} vs ${bName}`}
+              currentUserId={user?.id ?? null}
+              currentUserInitial={userInitial}
+            />
+          );
+        })}
       </div>
 
       {/* MVP Video */}

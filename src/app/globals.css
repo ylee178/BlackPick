@@ -240,7 +240,7 @@ button:disabled {
   min-height: 2.75rem;
   padding: 0.65rem 1.1rem;
   border: 1px solid var(--input);
-  border-radius: 14px;
+  border-radius: 9999px;
   background: var(--card);
   color: var(--foreground);
   font-size: 0.875rem;
@@ -275,14 +275,14 @@ button:disabled {
 }
 
 .retro-button-secondary {
-  border-color: var(--input);
-  background: var(--card);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--foreground);
 }
 
 .retro-button-secondary:hover {
-  border-color: var(--bp-accent-border-subtle);
-  background: var(--secondary);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .retro-button-ghost {
@@ -296,9 +296,21 @@ button:disabled {
   background: var(--bp-overlay-subtle);
 }
 
+.retro-button-soft {
+  border: none;
+  border-radius: 9999px;
+  background: var(--bp-accent-dim);
+  color: var(--bp-accent);
+  font-weight: 600;
+}
+
+.retro-button-soft:hover {
+  background: rgba(255, 186, 60, 0.18);
+}
+
 .retro-button-sm {
-  min-height: 2.25rem;
-  padding: 0.4rem 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
   font-size: 0.8125rem;
 }
 
@@ -314,15 +326,15 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  min-height: 1.625rem;
-  padding: 0.15rem 0.65rem;
+  min-height: 1.75rem;
+  padding: 0.2rem 0.65rem;
   border: 1px solid var(--bp-accent-border-subtle);
   border-radius: 8px;
   background: var(--accent);
   color: var(--accent-foreground);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -338,16 +350,16 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0.25rem 0.6rem;
   border: none;
   border-radius: 6px;
   background: var(--bp-overlay-light);
   color: var(--muted-foreground);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  min-height: auto;
+  min-height: 1.5rem;
 }
 
 .retro-status-badge-accent {
@@ -454,7 +466,7 @@ button:disabled {
 }
 
 .retro-nav-link-mobile.retro-nav-link-active {
-  background: var(--accent);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -505,9 +517,176 @@ button:disabled {
     var(--card);
 }
 
+.fighter-card-selected {
+  background:
+    radial-gradient(circle at top right, rgba(255, 186, 60, 0.05), transparent 50%),
+    radial-gradient(circle at bottom left, rgba(255, 186, 60, 0.03), transparent 40%),
+    var(--bp-card-inset) !important;
+}
+
+@keyframes golden-pulse {
+  0% { box-shadow: 0 0 8px 2px rgba(255, 186, 60, 0.18); }
+  25% { box-shadow: 0 0 11px 3px rgba(255, 186, 60, 0.25); }
+  50% { box-shadow: 0 0 14px 4px rgba(255, 186, 60, 0.32); }
+  75% { box-shadow: 0 0 11px 3px rgba(255, 186, 60, 0.25); }
+  100% { box-shadow: 0 0 8px 2px rgba(255, 186, 60, 0.18); }
+}
+
+.retro-label-gold {
+  background: linear-gradient(135deg, #ffba3c, #ffd700, #e5a944);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.avatar-glow {
+  animation: golden-pulse 4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  border-color: rgba(255, 186, 60, 0.3) !important;
+}
+
+.event-glass-card {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .dot-pattern {
   background-image: radial-gradient(rgba(255, 186, 60, 0.08) 1px, transparent 1px);
   background-size: 18px 18px;
+}
+
+/* ── Seven-Segment Font ── */
+@font-face {
+  font-family: "DSEG7";
+  src: url("https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2") format("woff2"),
+       url("https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── LED Digital Clock ── */
+
+.lcd-digit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 60px;
+  border-radius: 6px;
+  background: #060606;
+}
+
+@media (min-width: 640px) {
+  .lcd-digit {
+    width: 62px;
+    height: 70px;
+  }
+}
+
+/* Ghost "88" behind — uses data-ghost attr set in JSX */
+.lcd-digit::before {
+  content: "88";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "DSEG7", monospace;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: rgba(255, 186, 60, 0.06);
+  line-height: 1;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .lcd-digit::before {
+    font-size: 2.75rem;
+  }
+}
+
+.lcd-digit span {
+  position: relative;
+  z-index: 1;
+  font-family: "DSEG7", monospace;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--bp-accent);
+  line-height: 1;
+  text-shadow:
+    0 0 10px rgba(255, 186, 60, 0.6),
+    0 0 25px rgba(255, 186, 60, 0.25),
+    0 0 50px rgba(255, 186, 60, 0.1);
+}
+
+@media (min-width: 640px) {
+  .lcd-digit span {
+    font-size: 2.75rem;
+  }
+}
+
+.lcd-colon {
+  display: flex;
+  align-items: center;
+  font-family: "DSEG7", monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bp-accent);
+  opacity: 0.5;
+  text-shadow: 0 0 8px rgba(255, 186, 60, 0.4);
+  height: 60px;
+}
+
+@media (min-width: 640px) {
+  .lcd-colon {
+    height: 70px;
+    font-size: 1.75rem;
+  }
+}
+
+.lcd-digit-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: #060606;
+  font-family: "DSEG7", monospace;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--bp-accent);
+  text-shadow: 0 0 6px rgba(255, 186, 60, 0.4);
+}
+
+.lcd-colon-mini {
+  font-family: "DSEG7", monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--bp-accent);
+  opacity: 0.35;
+}
+
+/* ── Shimmer animation for skeleton loading ── */
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.2s ease-in-out infinite;
+}
+
+/* ── Percentage unit — top-aligned to number cap height ── */
+
+.pct-unit {
+  vertical-align: top;
+  line-height: 1;
 }
 
 /* ── Utility ── */

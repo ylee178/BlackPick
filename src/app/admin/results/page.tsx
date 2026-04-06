@@ -130,7 +130,7 @@ export default function AdminResultsPage() {
       </div>
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-lg font-semibold text-white">Input Fight Result</h2>
+        <h2 className="text-xl font-semibold text-white">Input Fight Result</h2>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
@@ -223,7 +223,7 @@ export default function AdminResultsPage() {
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Fight Queue</h2>
+          <h2 className="text-xl font-semibold text-white">Fight Queue</h2>
           <button
             onClick={loadFights}
             className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-200 hover:border-amber-400 hover:text-amber-400"

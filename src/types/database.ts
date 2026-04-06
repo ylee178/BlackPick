@@ -20,6 +20,7 @@ export type Database = {
           best_streak: number
           hall_of_fame_count: number
           score: number
+          p4p_score: number
           created_at: string
         }
         Insert: {
@@ -32,6 +33,7 @@ export type Database = {
           best_streak?: number
           hall_of_fame_count?: number
           score?: number
+          p4p_score?: number
           created_at?: string
         }
         Update: {
@@ -44,6 +46,7 @@ export type Database = {
           best_streak?: number
           hall_of_fame_count?: number
           score?: number
+          p4p_score?: number
           created_at?: string
         }
         Relationships: []
@@ -95,6 +98,8 @@ export type Database = {
           date: string
           status: 'upcoming' | 'live' | 'completed'
           mvp_video_url: string | null
+          poster_url: string | null
+          source_event_id: string | null
           created_at: string
         }
         Insert: {
@@ -104,6 +109,8 @@ export type Database = {
           date: string
           status?: 'upcoming' | 'live' | 'completed'
           mvp_video_url?: string | null
+          poster_url?: string | null
+          source_event_id?: string | null
           created_at?: string
         }
         Update: {
@@ -113,6 +120,8 @@ export type Database = {
           date?: string
           status?: 'upcoming' | 'live' | 'completed'
           mvp_video_url?: string | null
+          poster_url?: string | null
+          source_event_id?: string | null
           created_at?: string
         }
         Relationships: []
@@ -124,7 +133,7 @@ export type Database = {
           fighter_a_id: string
           fighter_b_id: string
           start_time: string
-          status: 'upcoming' | 'completed' | 'cancelled'
+          status: 'upcoming' | 'completed' | 'cancelled' | 'no_contest'
           winner_id: string | null
           method: 'KO/TKO' | 'Submission' | 'Decision' | null
           round: number | null
@@ -298,6 +307,277 @@ export type Database = {
           }
         ]
       }
+      fight_comments: {
+        Row: {
+          id: string
+          fight_id: string
+          user_id: string
+          parent_id: string | null
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          fight_id: string
+          user_id: string
+          parent_id?: string | null
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          fight_id?: string
+          user_id?: string
+          parent_id?: string | null
+          body?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'fight_comments_fight_id_fkey'
+            columns: ['fight_id']
+            isOneToOne: false
+            referencedRelation: 'fights'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'fight_comments_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'fight_comments_parent_id_fkey'
+            columns: ['parent_id']
+            isOneToOne: false
+            referencedRelation: 'fight_comments'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: 'fight_start' | 'result' | 'mvp_vote' | 'ranking_change'
+          title: string
+          body: string
+          reference_id: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: 'fight_start' | 'result' | 'mvp_vote' | 'ranking_change'
+          title: string
+          body: string
+          reference_id?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: 'fight_start' | 'result' | 'mvp_vote' | 'ranking_change'
+          title?: string
+          body?: string
+          reference_id?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      comment_translations: {
+        Row: {
+          id: string
+          comment_id: string
+          target_locale: 'en' | 'ko' | 'ja' | 'pt-BR'
+          translated_body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          comment_id: string
+          target_locale: 'en' | 'ko' | 'ja' | 'pt-BR'
+          translated_body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          comment_id?: string
+          target_locale?: 'en' | 'ko' | 'ja' | 'pt-BR'
+          translated_body?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'comment_translations_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: false
+            referencedRelation: 'fight_comments'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          comment_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          comment_id?: string
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'comment_likes_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: false
+            referencedRelation: 'fight_comments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'comment_likes_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      user_weight_class_stats: {
+        Row: {
+          id: string
+          user_id: string
+          weight_class: string
+          wins: number
+          losses: number
+          score: number
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          weight_class: string
+          wins?: number
+          losses?: number
+          score?: number
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          weight_class?: string
+          wins?: number
+          losses?: number
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_weight_class_stats_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      hall_of_fame_entries: {
+        Row: {
+          id: string
+          user_id: string
+          fight_id: string
+          tier: 'sharp_call' | 'sniper' | 'oracle'
+          bonus_points: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          fight_id: string
+          tier: 'sharp_call' | 'sniper' | 'oracle'
+          bonus_points: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          fight_id?: string
+          tier?: 'sharp_call' | 'sniper' | 'oracle'
+          bonus_points?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'hall_of_fame_entries_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'hall_of_fame_entries_fight_id_fkey'
+            columns: ['fight_id']
+            isOneToOne: false
+            referencedRelation: 'fights'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      perfect_card_entries: {
+        Row: {
+          id: string
+          user_id: string
+          event_id: string
+          bonus_points: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_id: string
+          bonus_points?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_id?: string
+          bonus_points?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'perfect_card_entries_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'perfect_card_entries_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       rankings: {
         Row: {
           id: string
@@ -352,6 +632,22 @@ export type Database = {
         Args: {
           p_fight_id: string
         }
+        Returns: undefined
+      }
+      get_streak_multiplier: {
+        Args: {
+          p_streak: number
+        }
+        Returns: number
+      }
+      calculate_p4p_score: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: number
+      }
+      recalculate_all_scores: {
+        Args: Record<string, never>
         Returns: undefined
       }
     }

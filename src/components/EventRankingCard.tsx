@@ -141,7 +141,7 @@ export default function EventRankingCard({ completedEvents, initialEventIndex, i
       {currentEvent ? (
         <Link
           href={`/ranking?tab=event&event=${currentEvent.id}`}
-          className="mt-1 block truncate text-[11px] text-[var(--bp-accent)] hover:underline"
+          className="mt-1 block truncate text-xs text-[var(--bp-accent)] hover:underline"
         >
           {getLocalizedEventName(currentEvent, locale, currentEvent.name)}
         </Link>

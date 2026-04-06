@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Locale } from "@/lib/i18n-provider";
 import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 import {
   retroButtonClassName,
   retroPanelClassName,
@@ -19,14 +20,6 @@ const LANGUAGES: {
   { code: "ja", label: "日本語", short: "JA", flag: "JP" },
   { code: "pt-BR", label: "Português", short: "PT", flag: "BR" },
 ];
-
-function ChevronDown() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
 
 function Trigram({
   x,
@@ -166,7 +159,7 @@ export default function LanguagePicker() {
         <Flag code={current.flag} />
         <span className="hidden text-xs sm:inline">{current.short}</span>
         <span className="text-[var(--bp-muted)]">
-          <ChevronDown />
+          <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
         </span>
       </button>
 
@@ -197,7 +190,7 @@ export default function LanguagePicker() {
               >
                 <Flag code={language.flag} />
                 <span className="flex-1">{language.label}</span>
-                <span className="text-[11px] text-[var(--bp-muted)]">{language.short}</span>
+                <span className="text-xs text-[var(--bp-muted)]">{language.short}</span>
               </button>
             );
           })}

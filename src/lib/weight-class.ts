@@ -26,12 +26,14 @@ export function translateWeightClass(
   locale: string
 ): string {
   if (!koreanWeight) return "";
-  if (locale === "ko") return koreanWeight;
+  // Always strip #C (championship suffix) for display
+  const displayWeight = koreanWeight.replace(/#C/i, "").trim();
+  if (locale === "ko") return displayWeight;
 
-  // Strip ranking info like "#16" and weight like "70kg"
+  // Strip ranking info like "#16", championship "#C", and weight like "70kg"
   const rankMatch = koreanWeight.match(/#\d+/)?.[0] || "";
   const weightMatch = koreanWeight.match(/\d+(\.\d+)?\s*kg/i)?.[0] || "";
-  const clean = koreanWeight.replace(/#\d+/, "").replace(/\d+(\.\d+)?\s*kg/i, "").trim();
+  const clean = koreanWeight.replace(/#C/i, "").replace(/#\d+/, "").replace(/\d+(\.\d+)?\s*kg/i, "").trim();
 
   const translations = WEIGHT_MAP[clean];
   if (translations && translations[locale]) {

@@ -6,7 +6,11 @@
     "profile": "Perfil",
     "login": "Entrar",
     "signup": "Cadastrar-se",
-    "admin": "Admin"
+    "admin": "Admin",
+    "picks": "Palpites",
+    "results": "Placar",
+    "myRecord": "Meu Cartel",
+    "fighters": "Lutadores"
   },
   "event": {
     "upcoming": "Em breve",
@@ -34,16 +38,18 @@
     "completedDescription": "Os resultados saíram. Revise seus palpites, pontuações e vote no MVP do evento.",
     "eventOverview": "Visao geral",
     "fights": "Lutas",
+    "fightListTitle": "Quem leva essa?",
+    "fightListDescription": "Analise as lutas e faca suas escolhas",
     "status": "Status",
-    "totalFights": "Total de lutas",
+    "totalFights": "Lutas",
     "allEvents": "Todos os eventos"
   },
   "prediction": {
     "selectWinner": "Escolha o vencedor",
     "selectWinnerMessage": "Por favor, selecione um vencedor.",
     "yourPick": "Seu palpite",
-    "method": "Como termina?",
-    "round": "Qual round?",
+    "method": "Como vai vencer?",
+    "round": "Em qual round acaba?",
     "savePick": "Salvar palpite",
     "saved": "Salvo",
     "savedMessage": "Palpite salvo.",
@@ -53,6 +59,12 @@
     "noMethod": "Sem método",
     "noRound": "Sem round",
     "roundOT": "OT",
+    "wrongPick": "Se errar",
+    "pointsWinner": "Vencedor correto",
+    "pointsMethod": "Método correto",
+    "pointsRound": "Round correto (R1~R3)",
+    "pointsR4": "R4 correto",
+    "editPick": "Editar",
     "editUntilStart": "Você pode editar seu palpite até o início da luta.",
     "points": "pts",
     "bulk": "Prever todas as lutas",
@@ -71,7 +83,7 @@
   },
   "ranking": {
     "running": "Geral",
-    "series": "Por Série",
+    "series": "Por Liga",
     "event": "Por Evento",
     "winStreak": "Sequência de Vitórias",
     "rank": "Posição",
@@ -112,12 +124,42 @@
     "userExists": "Esse e-mail já está cadastrado. Faça login.",
     "invalidEmail": "Digite um endereço de e-mail válido.",
     "passwordTooShort": "A senha precisa ter pelo menos 6 caracteres.",
-    "authUnexpected": "Não foi possível concluir a autenticação agora."
+    "authUnexpected": "Não foi possível concluir a autenticação agora.",
+    "logout": "Sair",
+    "forgotPassword": "Esqueceu sua senha?",
+    "resetPassword": "Redefinir Senha",
+    "resetPasswordDescription": "Digite seu e-mail e enviaremos um link para redefinir sua senha.",
+    "sendResetLink": "Enviar link",
+    "sending": "Enviando...",
+    "resetLinkSent": "Verifique seu e-mail! Enviamos um link de redefinição.",
+    "resetLinkFailed": "Falha ao enviar link de redefinição.",
+    "newPassword": "Nova senha",
+    "updatePassword": "Atualizar senha",
+    "updating": "Atualizando...",
+    "passwordUpdated": "Senha atualizada! Redirecionando para login.",
+    "passwordUpdateFailed": "Falha ao atualizar a senha."
+  },
+  "account": {
+    "editProfile": "Editar Perfil",
+    "notificationSettings": "Configurações de Notificação",
+    "resetRecord": "Resetar Cartel",
+    "resetRecordConfirm": "Tem certeza que deseja resetar seu cartel? Todos os palpites, pontos e conquistas serão apagados.",
+    "deleteAccount": "Excluir Conta",
+    "deleteAccountConfirm": "Tem certeza que deseja excluir sua conta? Todos os dados serão removidos permanentemente.",
+    "save": "Salvar",
+    "saved": "Salvo",
+    "ringNameTaken": "Este nome de ringue já está em uso",
+    "dangerZone": "Zona de Perigo",
+    "notifFightStart": "Notificações de início de luta",
+    "notifResult": "Notificações de resultado",
+    "notifMvpVote": "Notificações de votação MVP",
+    "notifRankingChange": "Notificações de mudança de ranking"
   },
   "fighter": {
     "record": "Cartel",
     "nationality": "Nacionalidade",
-    "weightClass": "Categoria de peso"
+    "weightClass": "Categoria de peso",
+    "recentFights": "Lutas Recentes"
   },
   "series": {
     "blackCup": "Black Cup",
@@ -129,7 +171,8 @@
     "upcoming": "Em breve",
     "live": "Ao vivo",
     "completed": "Concluído",
-    "cancelled": "Cancelado"
+    "cancelled": "Cancelado",
+    "no_contest": "Sem Resultado"
   },
   "language": {
     "switchTo": "Mudar idioma para {language}"
@@ -143,7 +186,8 @@
   },
   "rankingPage": {
     "title": "Ranking Fight IQ",
-    "description": "Classificação dos fãs do Black Combat comprovada pelo histórico de palpites"
+    "description": "Classificação dos fãs do Black Combat comprovada pelo histórico de palpites",
+    "snapshot": "Ranking TOP 5"
   },
   "countdown": {
     "closesIn": "Palpites encerram em",
@@ -185,6 +229,66 @@
     "notAuthenticated": "Entre novamente para concluir o onboarding.",
     "unexpected": "Nao foi possivel salvar seu nome de ringue agora."
   },
+  "results": {
+    "totalEvents": "eventos concluidos"
+  },
+  "myRecord": {
+    "methodAccuracy": "Precisao por Metodo",
+    "recentTrend": "Tendencia de Pontuacao",
+    "badges": "Conquistas",
+    "weightClassBreakdown": "Cartel por Categoria",
+    "hallOfFame": "Hall da Fama",
+    "rangeAll": "Todos os Eventos",
+    "range7days": "7D",
+    "range30days": "30D",
+    "range90days": "90D",
+    "range1year": "1A",
+    "rangeLastEvent": "Último evento",
+    "vsPrevious": "vs anterior {range}",
+    "eventHistory": "Eventos Participados",
+    "skippedFights": "Lutas perdidas",
+    "skipped": "Nao participou",
+    "dashboard": "Painel",
+    "allPredictions": "Todas as Previsoes",
+    "searchFighter": "Buscar lutador...",
+    "searchPlaceholder": "Lutador, evento...",
+    "sortNewest": "Mais recente",
+    "sortOldest": "Mais antigo",
+    "sortScoreHigh": "Pontuacao (Alta)",
+    "sortScoreLow": "Pontuacao (Baixa)",
+    "noPredictions": "Nenhuma previsao ainda",
+    "totalCount": "{count} no total",
+    "winnerCorrect": "Vencedor correto",
+    "winnerWrong": "Vencedor errado",
+    "methodCorrect": "Metodo correto",
+    "methodWrong": "Metodo errado",
+    "roundCorrect": "Round correto",
+    "roundWrong": "Round errado"
+  },
+  "discussion": {
+    "title": "Discussao",
+    "placeholder": "Compartilhe seus pensamentos sobre esta luta...",
+    "post": "Postar",
+    "reply": "Responder",
+    "delete": "Excluir",
+    "cancel": "Cancelar",
+    "replyingTo": "Respondendo ao comentario",
+    "noComments": "Nenhum comentario ainda. Seja o primeiro!",
+    "loginRequired": "Faca login para participar da discussao.",
+    "translate": "Traduzir",
+    "original": "Original",
+    "viewReplies": "Ver {count} respostas",
+    "hideReplies": "Ocultar respostas"
+  },
+  "notification": {
+    "title": "Notificacoes",
+    "markAllRead": "Marcar tudo como lido",
+    "empty": "Nenhuma notificacao ainda.",
+    "fightStart": "Luta comecando em breve",
+    "resultReady": "Resultados disponiveis",
+    "mvpVoteOpen": "Votacao MVP aberta",
+    "rankingChanged": "Seu ranking mudou"
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Algo deu errado",
@@ -196,6 +300,9 @@
     "of": "de",
     "times": "vezes",
     "winRate": "Taxa de vitória",
+    "rankingAllTimeDesc": "Ranking por pontuação acumulada",
+    "rankingP4pDesc": "Melhor taxa de vitória geral",
+    "rankingStreakDesc": "Sequências de vitórias atuais",
     "startPredicting": "Começar a prever",
     "pending": "PENDENTE",
     "viewAll": "Ver tudo",

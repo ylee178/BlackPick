@@ -3,6 +3,7 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getLocalizedEventName } from "@/lib/localized-name";
+import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   RetroEmptyState,
@@ -35,13 +36,16 @@ function UserExtra({ user, labels }: { user: RankingUser; labels: { streak: stri
   return (
     <div className="hidden items-center gap-5 md:flex">
       <div className="text-center">
-        <p className="text-[10px] text-[var(--bp-muted)]">{labels.streak}</p>
+        <p className="flex items-center justify-center gap-0.5 text-xs text-[var(--bp-muted)]">
+          <Flame className="h-3 w-3 text-[var(--bp-accent)]" strokeWidth={2} />
+          {labels.streak}
+        </p>
         <p className="text-xs font-semibold text-[var(--bp-ink)]">
           {user.current_streak ?? 0}/{user.best_streak ?? 0}
         </p>
       </div>
       <div className="text-center">
-        <p className="text-[10px] text-[var(--bp-muted)]">{labels.hallOfFame}</p>
+        <p className="text-xs text-[var(--bp-muted)]">{labels.hallOfFame}</p>
         <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.hall_of_fame_count ?? 0}</p>
       </div>
     </div>
@@ -53,7 +57,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const { t, locale } = await getTranslations();
   const supabase = await createSupabaseServer();
 
-  const validTabs = ["running", "series", "event", "streak"] as const;
+  const validTabs = ["running", "p4p", "series", "streak", "hof"] as const;
   const tab = validTabs.includes(params.tab as any) ? (params.tab as string) : "running";
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -61,9 +65,10 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
   const tabs = [
     { key: "running", label: t("ranking.running") },
+    { key: "p4p", label: "P4P" },
     { key: "series", label: t("ranking.series") },
-    { key: "event", label: t("ranking.event") },
     { key: "streak", label: t("ranking.winStreak") },
+    { key: "hof", label: t("ranking.hallOfFame") },
   ];
 
   let users: RankingUser[] = [];
@@ -85,6 +90,18 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     users = users.slice(0, PAGE_SIZE);
   }
 
+  let p4pUsers: (RankingUser & { p4p_score: number })[] = [];
+  if (tab === "p4p") {
+    const { data } = await supabase
+      .from("users")
+      .select("id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score, p4p_score")
+      .gt("p4p_score", 0)
+      .order("p4p_score", { ascending: false })
+      .limit(PAGE_SIZE);
+
+    p4pUsers = (data ?? []) as (RankingUser & { p4p_score: number })[];
+  }
+
   let streakUsers: RankingUser[] = [];
   if (tab === "streak") {
     const { data } = await supabase
@@ -96,6 +113,43 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
       .limit(PAGE_SIZE);
 
     streakUsers = (data ?? []) as RankingUser[];
+  }
+
+  let hofUsers: (RankingUser & { oracle: number; sniper: number; sharp_call: number })[] = [];
+  if (tab === "hof") {
+    const { data } = await supabase
+      .from("users")
+      .select("id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score")
+      .gt("hall_of_fame_count", 0)
+      .order("hall_of_fame_count", { ascending: false })
+      .order("score", { ascending: false })
+      .limit(PAGE_SIZE);
+
+    const hofUserIds = (data ?? []).map((u: { id: string }) => u.id);
+
+    // Get tier breakdown per user
+    let tierCounts = new Map<string, { oracle: number; sniper: number; sharp_call: number }>();
+    if (hofUserIds.length > 0) {
+      const { data: entries } = await supabase
+        .from("hall_of_fame_entries")
+        .select("user_id, tier")
+        .in("user_id", hofUserIds);
+
+      for (const e of (entries ?? []) as { user_id: string; tier: string }[]) {
+        if (!tierCounts.has(e.user_id)) tierCounts.set(e.user_id, { oracle: 0, sniper: 0, sharp_call: 0 });
+        const tc = tierCounts.get(e.user_id)!;
+        if (e.tier === "oracle") tc.oracle++;
+        else if (e.tier === "sniper") tc.sniper++;
+        else if (e.tier === "sharp_call") tc.sharp_call++;
+      }
+    }
+
+    hofUsers = (data ?? []).map((u: RankingUser) => ({
+      ...u,
+      oracle: tierCounts.get(u.id)?.oracle ?? 0,
+      sniper: tierCounts.get(u.id)?.sniper ?? 0,
+      sharp_call: tierCounts.get(u.id)?.sharp_call ?? 0,
+    }));
   }
 
   let seriesData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
@@ -159,7 +213,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     <div className="flex flex-col gap-4">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>
+        <h1 className="text-2xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>
         <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("rankingPage.description")}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -177,6 +231,26 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
       {/* Content */}
       <section className={retroPanelClassName({ className: "p-4" })}>
+        {tab === "p4p" ? (
+          p4pUsers.length === 0 ? (
+            <RetroEmptyState title={t("common.noData")} description={t("common.rankingP4pDesc")} />
+          ) : (
+            <div className="space-y-2">
+              {p4pUsers.map((user, index) => (
+                <RankingRowFull
+                  key={user.id}
+                  rank={index + 1}
+                  name={user.ring_name}
+                  record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
+                  score={user.p4p_score}
+                  unknownLabel={t("ranking.unknown")}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                />
+              ))}
+            </div>
+          )
+        ) : null}
+
         {tab === "series" ? (
           <div className="mb-4 flex flex-wrap gap-2">
             {seriesTypes.map((seriesType) => (
@@ -301,6 +375,47 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   score={`${user.current_streak ?? 0}W`}
                   unknownLabel={t("ranking.unknown")}
                   extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                />
+              ))}
+            </div>
+          )
+        ) : null}
+
+        {tab === "hof" ? (
+          hofUsers.length === 0 ? (
+            <RetroEmptyState title={t("common.noData")} />
+          ) : (
+            <div className="space-y-2">
+              {hofUsers.map((user, index) => (
+                <RankingRowFull
+                  key={user.id}
+                  rank={index + 1}
+                  name={user.ring_name}
+                  record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
+                  score={user.hall_of_fame_count ?? 0}
+                  unknownLabel={t("ranking.unknown")}
+                  extra={
+                    <div className="hidden items-center gap-4 md:flex">
+                      {user.oracle > 0 && (
+                        <div className="text-center">
+                          <p className="text-xs text-[var(--bp-accent)]">Oracle</p>
+                          <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.oracle}</p>
+                        </div>
+                      )}
+                      {user.sniper > 0 && (
+                        <div className="text-center">
+                          <p className="text-xs text-[var(--bp-accent)]">Sniper</p>
+                          <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.sniper}</p>
+                        </div>
+                      )}
+                      {user.sharp_call > 0 && (
+                        <div className="text-center">
+                          <p className="text-xs text-[var(--bp-muted)]">Sharp Call</p>
+                          <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.sharp_call}</p>
+                        </div>
+                      )}
+                    </div>
+                  }
                 />
               ))}
             </div>
