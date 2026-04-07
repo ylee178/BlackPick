@@ -8,7 +8,7 @@ import { RetroEmptyState, retroPanelClassName } from "@/components/ui/retro";
 import FighterComments from "@/components/FighterComments";
 import FighterAvatar from "@/components/FighterAvatar";
 import { parseRecord } from "@/lib/parse-record";
-import { GiSwordClash, GiKnockout, GiGrapple, GiFlame } from "react-icons/gi";
+import { Flame } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -117,17 +117,15 @@ export default async function FighterDetailPage({ params }: PageProps) {
         </span>
 
         <div className="relative grid min-h-[340px] grid-cols-[auto_1fr] sm:min-h-[400px]">
-          {/* Image — left, full height, top-aligned so head always shows */}
-          <div className="relative w-[200px] overflow-hidden sm:w-[280px] md:w-[320px]">
+          {/* Image — left, bottom-anchored, original proportions */}
+          <div className="relative w-[200px] sm:w-[280px] md:w-[320px]">
             <FighterAvatar
               src={avatarUrl}
               alt={displayName}
-              className="absolute inset-0 h-full w-full object-cover object-top"
+              className="absolute bottom-0 left-0 h-full w-full object-contain object-bottom"
             />
             {/* Right edge fade */}
             <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#2a2a2a] to-transparent" />
-            {/* Bottom fade to hide skin/body cutoff */}
-            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#2a2a2a] to-transparent" />
           </div>
 
           {/* Info — right */}
@@ -167,17 +165,17 @@ export default async function FighterDetailPage({ params }: PageProps) {
       {/* ═══════════ STAT TILES ═══════════ */}
       <section className="grid grid-cols-4 divide-x divide-[rgba(255,255,255,0.06)] border-b border-[rgba(255,255,255,0.06)] bg-[var(--bp-card)]">
         {[
-          { icon: GiSwordClash, value: totalFights, label: "Fights" },
-          { icon: GiKnockout, value: koWins, label: "KO" },
-          { icon: GiGrapple, value: subWins, label: "SUB" },
-          { icon: GiFlame, value: currentStreak > 0 ? `${currentStreak}` : `${winRate}%`, label: currentStreak > 0 ? "Streak" : "Win %" },
+          { value: totalFights, label: "Fights", hasFlame: false },
+          { value: koWins, label: "KO", hasFlame: false },
+          { value: subWins, label: "SUB", hasFlame: false },
+          { value: currentStreak > 0 ? currentStreak : `${winRate}%`, label: currentStreak > 0 ? "Streak" : "Win %", hasFlame: currentStreak > 0 },
         ].map((stat) => (
-          <div key={stat.label} className="flex items-center justify-center gap-3 py-5">
-            <stat.icon className="text-[28px] text-[var(--bp-muted)] sm:text-[32px]" />
-            <div>
-              <span className="block text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
-              <span className="block text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
+          <div key={stat.label} className="flex flex-col items-center gap-1 py-5">
+            <div className="flex items-center gap-1.5">
+              {stat.hasFlame && <Flame className="h-5 w-5 text-[var(--bp-accent)]" strokeWidth={2} />}
+              <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
             </div>
+            <span className="text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
           </div>
         ))}
       </section>
@@ -235,7 +233,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
         {/* Empty state when no fights */}
         {fightHistory.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-12 text-center">
-            <GiSwordClash className="text-[32px] text-[var(--bp-muted)] opacity-40" />
+            <Flame className="h-8 w-8 text-[var(--bp-muted)] opacity-40" strokeWidth={1.5} />
             <p className="text-sm text-[var(--bp-muted)]">No fight history yet</p>
           </div>
         )}
