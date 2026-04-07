@@ -21,6 +21,33 @@ const WEIGHT_MAP: Record<string, Record<string, string>> = {
   "슈퍼미들급": { en: "Super Middleweight", ja: "スーパーミドル級", "pt-BR": "Peso Super-Médio" },
 };
 
+/** Weight classes ordered from lightest to heaviest */
+const WEIGHT_ORDER: string[] = [
+  "스트로급",
+  "플라이급",
+  "슈퍼밴텀급",
+  "밴텀급",
+  "슈퍼밴텀급",
+  "페더급",
+  "슈퍼페더급",
+  "라이트급",
+  "슈퍼라이트급",
+  "웰터급",
+  "슈퍼웰터급",
+  "미들급",
+  "슈퍼미들급",
+  "라이트헤비급",
+  "헤비급",
+  "캐치웨이트",
+  "오픈웨이트",
+];
+
+export function getWeightClassOrder(koreanWeight: string): number {
+  const clean = koreanWeight.replace(/#C$/i, "").replace(/#\d+/, "").replace(/\d+(\.\d+)?\s*kg/i, "").trim();
+  const idx = WEIGHT_ORDER.indexOf(clean);
+  return idx >= 0 ? idx : WEIGHT_ORDER.length;
+}
+
 export function translateWeightClass(
   koreanWeight: string | null | undefined,
   locale: string

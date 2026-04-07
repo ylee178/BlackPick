@@ -12,6 +12,7 @@ import {
 import { ScoreTrendChart } from "@/components/ScoreTrendChart";
 import { ScoreValue, RankBadge } from "@/components/ui/ranking";
 import { Flame, TrendingUp, TrendingDown } from "lucide-react";
+import { getWeightClassOrder } from "@/lib/weight-class";
 
 export const dynamic = "force-dynamic";
 
@@ -299,7 +300,7 @@ export default async function MyRecordDashboardPage({
     entry.score += p.score ?? 0;
   }
   const weightClasses = [...wcMap.entries()]
-    .sort((a, b) => b[1].score - a[1].score);
+    .sort((a, b) => getWeightClassOrder(a[0]) - getWeightClassOrder(b[0]));
 
   /* ── Event history (right panel) ── */
   const eventMap = new Map<
