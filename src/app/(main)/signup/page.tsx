@@ -94,10 +94,11 @@ export default function SignupPage() {
 
         <form onSubmit={handleSignup} className="mt-5 space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[var(--bp-ink)]">
+            <label htmlFor="signup-email" className="mb-1.5 block text-sm font-medium text-[var(--bp-ink)]">
               {t("auth.email")}
             </label>
             <input
+              id="signup-email"
               type="email"
               required
               value={email}
@@ -108,10 +109,11 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[var(--bp-ink)]">
+            <label htmlFor="signup-password" className="mb-1.5 block text-sm font-medium text-[var(--bp-ink)]">
               {t("auth.password")}
             </label>
             <input
+              id="signup-password"
               type="password"
               required
               minLength={6}

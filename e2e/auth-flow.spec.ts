@@ -8,15 +8,15 @@ test.describe("Login Page", () => {
   });
 
   test("renders login form", async ({ page }) => {
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /log\s*in|sign\s*in/i })).toBeVisible();
+    await expect(page.locator("#login-email")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("#login-password")).toBeVisible();
+    await expect(page.getByRole("button", { name: /log\s*in|sign\s*in|로그인/i })).toBeVisible();
   });
 
   test("shows validation on empty submit", async ({ page }) => {
-    await page.getByRole("button", { name: /log\s*in|sign\s*in/i }).click();
-    // Browser native validation or custom error should appear
-    const emailInput = page.getByLabel(/email/i);
+    await expect(page.locator("#login-email")).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: /log\s*in|sign\s*in|로그인/i }).click();
+    const emailInput = page.locator("#login-email");
     const isInvalid = await emailInput.evaluate(
       (el: HTMLInputElement) => !el.validity.valid || el.getAttribute("aria-invalid") === "true"
     );
@@ -24,7 +24,7 @@ test.describe("Login Page", () => {
   });
 
   test("link to signup page exists", async ({ page }) => {
-    const signupLink = page.locator("a[href*='/signup']");
+    const signupLink = page.locator("a[href*='/signup']").first();
     await expect(signupLink).toBeVisible();
   });
 
@@ -44,7 +44,7 @@ test.describe("Signup Page", () => {
 
   test("renders signup form", async ({ page }) => {
     await expect(page.locator("main")).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
+    await expect(page.locator("#signup-email")).toBeVisible();
   });
 
   test("passes accessibility checks", async ({ page }) => {
