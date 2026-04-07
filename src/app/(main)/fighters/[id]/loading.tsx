@@ -10,26 +10,16 @@ export default function FighterDetailLoading() {
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
       {/* Hero section */}
-      <div className="bg-[#2a2a2a]">
-        <div className="grid min-h-[340px] grid-cols-[auto_1fr] sm:min-h-[400px]">
-          {/* Image placeholder */}
-          <div className="flex w-[200px] items-end justify-center sm:w-[280px] md:w-[320px]">
-            <S className="h-[260px] w-[180px] rounded-xl sm:h-[320px] sm:w-[220px]" />
-          </div>
-
-          {/* Info */}
-          <div className="flex flex-col justify-end pb-8 pr-5 sm:pb-10 sm:pr-8">
-            <S className="h-4 w-28" />
-            <S className="mt-2 h-12 w-64 sm:h-14 sm:w-80" />
-            <div className="mt-3 flex items-center gap-3">
-              <S className="h-6 w-6 rounded" />
-              <S className="h-7 w-20 rounded-xl" />
-            </div>
-            <div className="mt-5 flex items-baseline gap-4">
-              <S className="h-10 w-16" />
-              <S className="h-10 w-14" />
-            </div>
-          </div>
+      <div className="flex min-h-[320px] flex-col items-center justify-center bg-[#2a2a2a] sm:min-h-[380px]">
+        <S className="h-28 w-28 rounded-full sm:h-36 sm:w-36" />
+        <S className="mt-4 h-10 w-48 sm:h-12 sm:w-64" />
+        <div className="mt-3 flex items-center gap-3">
+          <S className="h-5 w-5 rounded" />
+          <S className="h-6 w-20 rounded-xl" />
+        </div>
+        <div className="mt-4 flex items-center gap-4">
+          <S className="h-8 w-14" />
+          <S className="h-8 w-12" />
         </div>
       </div>
 
@@ -45,12 +35,9 @@ export default function FighterDetailLoading() {
 
       {/* Content */}
       <div className="px-4 pt-6 sm:px-6">
-        {/* Section title */}
         <S className="mb-3 h-3 w-24" />
-
-        {/* Fight history */}
         <div className="rounded-[16px] border border-[var(--bp-line)] bg-[var(--bp-card)]">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(5)].map((_, i) => (
             <div
               key={i}
               className="flex items-center gap-3 border-b border-[rgba(255,255,255,0.04)] px-4 py-3 last:border-0"
@@ -61,10 +48,7 @@ export default function FighterDetailLoading() {
                 <S className="h-4 w-28" />
                 <S className="mt-1 h-3 w-16" />
               </div>
-              <div className="text-right">
-                <S className="h-3 w-20" />
-                <S className="mt-1 h-3 w-16" />
-              </div>
+              <S className="h-3 w-16" />
             </div>
           ))}
         </div>
