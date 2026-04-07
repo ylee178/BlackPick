@@ -1,5 +1,6 @@
 import Link from "next/link";
 import FightCardPicker from "@/components/FightCardPicker";
+import FighterAvatar from "@/components/FighterAvatar";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
@@ -122,7 +123,7 @@ function FighterSideStatic({
       )}
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+          <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
         ) : (
           <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
         )}

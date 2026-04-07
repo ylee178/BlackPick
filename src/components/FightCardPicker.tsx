@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n-provider";
 import { useToast } from "@/components/Toast";
 import { getLocalizedFighterName, getLocalizedFighterSubLabel } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
+import FighterAvatar from "@/components/FighterAvatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { cn } from "@/lib/utils";
 import { translateWeightClass } from "@/lib/weight-class";
@@ -187,7 +188,7 @@ export default function FightCardPicker({
             isPicked && "avatar-glow",
           )}>
             {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
             ) : (
               <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
             )}

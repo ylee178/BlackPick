@@ -4,6 +4,7 @@ import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import { countryCodeToFlag } from "@/lib/flags";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
+import FighterAvatar from "@/components/FighterAvatar";
 import { Check, X } from "lucide-react";
 import {
   RetroEmptyState,
@@ -240,7 +241,7 @@ export default async function MyRecordEventPage({ params }: { params: Params }) 
                     {/* Avatar */}
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[rgba(255,255,255,0.08)] bg-[#111]">
                       {avatarUrl ? (
-                        <img src={avatarUrl} alt={winnerLabel} className="h-full w-full object-cover" />
+                        <FighterAvatar src={avatarUrl} alt={winnerLabel} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-base font-bold text-[var(--bp-muted)]">{(winnerFighter?.name ?? "?").charAt(0)}</span>
                       )}

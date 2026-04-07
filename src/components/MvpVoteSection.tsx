@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
+import FighterAvatar from "@/components/FighterAvatar";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
 import { cn } from "@/lib/utils";
@@ -125,7 +126,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
                 >
                   <div className="h-9 w-9 shrink-0 overflow-hidden rounded-[8px] border border-[var(--bp-line)] bg-[var(--bp-card)]">
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt={fighterLabel} className="h-full w-full object-cover" />
+                      <FighterAvatar src={avatarUrl} alt={fighterLabel} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xs text-[var(--bp-muted)]">IMG</div>
                     )}
@@ -162,7 +163,7 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
               <div key={result.fighter_id} className="flex items-center gap-2.5 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] p-2.5">
                 <div className="h-9 w-9 shrink-0 overflow-hidden rounded-[8px] border border-[var(--bp-line)] bg-[var(--bp-card)]">
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt={getLocalizedFighterName(result, locale, result.name)} className="h-full w-full object-cover" />
+                    <FighterAvatar src={avatarUrl} alt={getLocalizedFighterName(result, locale, result.name)} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-[var(--bp-muted)]">IMG</div>
                   )}
