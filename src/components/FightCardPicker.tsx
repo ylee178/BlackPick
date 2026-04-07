@@ -178,7 +178,7 @@ export default function FightCardPicker({
               <RetroLabel
                 size="sm"
                 tone="neutral"
-                icon={<CheckIcon className="h-3.5 w-3.5" />}
+                icon={<CheckIcon className="h-3.5 w-3.5 text-[#4ade80]" />}
               >My Pick</RetroLabel>
             ) : null}
           </div>
