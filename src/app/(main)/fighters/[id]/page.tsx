@@ -92,10 +92,18 @@ export default async function FighterDetailPage({ params }: PageProps) {
     <div>
       {/* Fighter Hero Section */}
       <div className="relative mb-6 overflow-hidden rounded-2xl bg-[#2a2a2a]">
-        {/* Content row */}
-        <div className="relative flex min-h-[240px] items-end sm:min-h-[280px]">
-          {/* Text — left side */}
-          <div className="relative z-10 flex-1 px-5 pb-5 pt-8 sm:px-8 sm:pb-8 sm:pt-10">
+        <div className="flex min-h-[240px] items-end sm:min-h-[280px]">
+          {/* Image — left, anchored to bottom */}
+          <div className="relative h-[240px] w-[200px] shrink-0 sm:h-[280px] sm:w-[240px]">
+            <FighterAvatar
+              src={avatarUrl}
+              alt={displayName}
+              className="absolute bottom-0 left-0 h-full w-full object-contain object-bottom"
+            />
+          </div>
+
+          {/* Info — right of image */}
+          <div className="flex-1 pb-5 pr-5 pt-5 sm:pb-8 sm:pr-8 sm:pt-8">
             {subLabel && (
               <p className="text-sm text-[var(--bp-muted)]">{subLabel}</p>
             )}
@@ -113,15 +121,6 @@ export default async function FighterDetailPage({ params }: PageProps) {
               <span className="text-[#f87171]">{losses}L</span>
               {draws && <span className="text-[var(--bp-muted)]">{draws}D</span>}
             </div>
-          </div>
-
-          {/* Image — right side, anchored to bottom */}
-          <div className="absolute bottom-0 right-0 h-[260px] w-[220px] sm:h-[300px] sm:w-[260px]">
-            <FighterAvatar
-              src={avatarUrl}
-              alt={displayName}
-              className="absolute bottom-0 right-0 h-full w-full object-contain object-bottom"
-            />
           </div>
         </div>
       </div>
