@@ -91,34 +91,37 @@ export default async function FighterDetailPage({ params }: PageProps) {
   return (
     <div>
       {/* Fighter Hero Section */}
-      <div className={retroPanelClassName({ className: "relative mb-6 overflow-hidden p-0" })}>
-        <div className="flex flex-col items-center pt-6 sm:flex-row sm:items-end sm:pt-0">
-          {/* Bust image */}
-          <div className="relative h-48 w-48 shrink-0 sm:h-56 sm:w-56">
+      <div className="relative mb-6 overflow-hidden rounded-2xl bg-[#2a2a2a]">
+        <div className="flex flex-col items-center sm:flex-row sm:items-end">
+          {/* Bust image — anchored to bottom */}
+          <div className="relative mt-4 h-52 w-52 shrink-0 sm:mt-0 sm:h-64 sm:w-64">
             <FighterAvatar
               src={avatarUrl}
               alt={displayName}
-              className="h-full w-full object-cover object-top"
+              className="absolute bottom-0 left-0 h-full w-full object-contain object-bottom"
             />
           </div>
 
-          {/* Info overlay */}
-          <div className="w-full px-4 pb-4 pt-3 sm:pb-5 sm:pl-0 sm:pr-5 sm:pt-5">
-            <h1 className="text-center text-xl font-bold text-[var(--bp-ink)] sm:text-left sm:text-2xl">
-              {displayName} {flag}
+          {/* Info */}
+          <div className="w-full px-5 pb-5 pt-3 sm:pb-6 sm:pl-2 sm:pr-6 sm:pt-6">
+            <h1 className="text-center text-2xl font-bold text-[var(--bp-ink)] sm:text-left sm:text-3xl">
+              {displayName}
             </h1>
-            {subLabel && (
-              <p className="mt-0.5 text-center text-sm text-[var(--bp-muted)] sm:text-left">{subLabel}</p>
-            )}
-            <div className="mt-3 flex items-center justify-center gap-4 sm:justify-start">
-              <div className="flex items-center gap-2 text-lg font-bold">
+            <div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
+              <span className="text-sm text-[var(--bp-muted)]">{flag}</span>
+              {subLabel && (
+                <span className="text-sm text-[var(--bp-muted)]">{subLabel}</span>
+              )}
+              {weightClass && (
+                <span className="rounded-lg bg-[rgba(255,255,255,0.06)] px-2 py-0.5 text-xs text-[var(--bp-muted)]">{weightClass}</span>
+              )}
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-3 sm:justify-start">
+              <div className="flex items-center gap-2 text-xl font-bold">
                 <span className="text-[#4ade80]">{wins}W</span>
                 <span className="text-[#f87171]">{losses}L</span>
                 {draws && <span className="text-[var(--bp-muted)]">{draws}D</span>}
               </div>
-              {weightClass && (
-                <span className="rounded-lg bg-[var(--bp-card-inset)] px-2.5 py-1 text-xs text-[var(--bp-muted)]">{weightClass}</span>
-              )}
             </div>
           </div>
         </div>
