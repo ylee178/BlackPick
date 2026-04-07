@@ -1,13 +1,12 @@
-import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedFighterName } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
-import { retroPanelClassName } from "@/components/ui/retro";
 import FighterGrid from "@/components/FighterGrid";
-import { PIXEL_AVATAR_IDS } from "@/lib/fighter-avatar";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +19,13 @@ export default async function FightersPage() {
     .select("id, name, ring_name, name_en, name_ko, record, nationality, weight_class, image_url")
     .order("name", { ascending: true });
 
+  const pixelDir = path.join(process.cwd(), "public/fighters/pixel");
+  const pixelFiles = new Set(
+    fs.existsSync(pixelDir)
+      ? fs.readdirSync(pixelDir).filter((f) => /^[0-9a-f-]+\.png$/.test(f))
+      : []
+  );
+
   const items = (fighters ?? []).map((f) => ({
     id: f.id,
     name: getLocalizedFighterName(f, locale, f.name),
@@ -27,7 +33,7 @@ export default async function FightersPage() {
     flag: countryCodeToFlag(f.nationality),
     avatarUrl: getFighterAvatarUrl(f),
     weightClass: f.weight_class ? translateWeightClass(f.weight_class, locale) : null,
-    hasPixelArt: PIXEL_AVATAR_IDS.has(f.id),
+    hasPixelArt: pixelFiles.has(`${f.id}.png`),
   }));
 
   // Pixel art fighters first, then the rest

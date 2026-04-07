@@ -11,13 +11,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "file and fighter_id required" }, { status: 400 });
   }
 
+  // Validate fighter ID format
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(fighterId)) {
+    return NextResponse.json({ error: "invalid fighter_id" }, { status: 400 });
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
-  const refDir = path.join(process.cwd(), "Fighter_Images", "refs");
-  if (!fs.existsSync(refDir)) fs.mkdirSync(refDir, { recursive: true });
+  const pixelDir = path.join(process.cwd(), "public/fighters/pixel");
+  if (!fs.existsSync(pixelDir)) fs.mkdirSync(pixelDir, { recursive: true });
 
   const filename = `${fighterId}.png`;
-  const filepath = path.join(refDir, filename);
+  const filepath = path.join(pixelDir, filename);
   fs.writeFileSync(filepath, buffer);
 
-  return NextResponse.json({ path: `/api/fighter-avatar/ref/${fighterId}` });
+  return NextResponse.json({ path: `/fighters/pixel/${filename}` });
 }

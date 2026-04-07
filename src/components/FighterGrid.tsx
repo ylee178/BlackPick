@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useI18n } from "@/lib/i18n-provider";
 import { Search } from "lucide-react";
 import { retroPanelClassName } from "@/components/ui/retro";
+import { parseRecord } from "@/lib/parse-record";
+import FighterAvatar from "@/components/FighterAvatar";
 
 type FighterItem = {
   id: string;
@@ -43,17 +45,7 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
       {/* Grid */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {filtered.map((f) => {
-          let wins = "0";
-          let losses = "0";
-          const wlMatch = f.record.match(/(\d+)W\s+(\d+)L/i);
-          if (wlMatch) {
-            wins = wlMatch[1];
-            losses = wlMatch[2];
-          } else {
-            const parts = f.record.split("-");
-            wins = parts[0] || "0";
-            losses = parts[1] || "0";
-          }
+          const { wins, losses, draws } = parseRecord(f.record);
 
           return (
             <Link
@@ -62,11 +54,11 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
               className={retroPanelClassName({ interactive: true, className: "flex flex-col items-center p-3 text-center" })}
             >
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a]">
-                {f.avatarUrl ? (
-                  <img src={f.avatarUrl} alt={f.name} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-lg font-bold text-[var(--bp-muted)]">{f.name.charAt(0)}</span>
-                )}
+                <FighterAvatar
+                  src={f.avatarUrl || "/fighters/default.png"}
+                  alt={f.name}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <p className="mt-2 truncate text-sm font-semibold text-[var(--bp-ink)]">
                 {f.name} {f.flag}
@@ -74,6 +66,7 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
               <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
                 <span className="text-[#4ade80]">{wins}W</span>{" "}
                 <span className="text-[#f87171]">{losses}L</span>
+                {draws && <>{" "}<span className="text-[var(--bp-muted)]">{draws}D</span></>}
               </p>
               {f.weightClass && (
                 <p className="mt-0.5 truncate text-[11px] text-[var(--bp-muted)]">{f.weightClass}</p>

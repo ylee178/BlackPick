@@ -6,6 +6,8 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { RetroEmptyState, retroPanelClassName } from "@/components/ui/retro";
 import FighterComments from "@/components/FighterComments";
+import FighterAvatar from "@/components/FighterAvatar";
+import { parseRecord } from "@/lib/parse-record";
 
 export const dynamic = "force-dynamic";
 
@@ -58,11 +60,9 @@ export default async function FighterDetailPage({ params }: PageProps) {
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
   const flag = countryCodeToFlag(fighter.nationality);
-  const record = fighter.record || "0-0";
-  const parts = record.split("-");
-  const wins = parts[0] || "0";
-  const losses = parts[1] || "0";
   const weightClass = fighter.weight_class ? translateWeightClass(fighter.weight_class, locale) : null;
+
+  const { wins, losses, draws } = parseRecord(fighter.record);
 
   const fightHistory = (fights ?? []).map((f) => {
     const fa = f.fighter_a as Record<string, string | null> | null;
@@ -90,30 +90,34 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
   return (
     <div>
-      {/* Fighter Profile Header */}
-      <div className={retroPanelClassName({ className: "mb-6 p-4 sm:p-6" })}>
-        <div className="flex items-center gap-4">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-24 sm:w-24">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-            ) : (
-              <span className="text-2xl font-bold text-[var(--bp-muted)]">{displayName.charAt(0)}</span>
-            )}
+      {/* Fighter Hero Section */}
+      <div className={retroPanelClassName({ className: "relative mb-6 overflow-hidden p-0" })}>
+        <div className="flex flex-col items-center pt-6 sm:flex-row sm:items-end sm:pt-0">
+          {/* Bust image */}
+          <div className="relative h-48 w-48 shrink-0 sm:h-56 sm:w-56">
+            <FighterAvatar
+              src={avatarUrl}
+              alt={displayName}
+              className="h-full w-full object-cover object-top"
+            />
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">
+
+          {/* Info overlay */}
+          <div className="w-full px-4 pb-4 pt-3 sm:pb-5 sm:pl-0 sm:pr-5 sm:pt-5">
+            <h1 className="text-center text-xl font-bold text-[var(--bp-ink)] sm:text-left sm:text-2xl">
               {displayName} {flag}
             </h1>
             {subLabel && (
-              <p className="mt-0.5 text-sm text-[var(--bp-muted)]">{subLabel}</p>
+              <p className="mt-0.5 text-center text-sm text-[var(--bp-muted)] sm:text-left">{subLabel}</p>
             )}
-            <div className="mt-2 flex items-center gap-3 text-sm">
-              <span>
-                <span className="font-semibold text-[#4ade80]">{wins}W</span>{" "}
-                <span className="font-semibold text-[#f87171]">{losses}L</span>
-              </span>
+            <div className="mt-3 flex items-center justify-center gap-4 sm:justify-start">
+              <div className="flex items-center gap-2 text-lg font-bold">
+                <span className="text-[#4ade80]">{wins}W</span>
+                <span className="text-[#f87171]">{losses}L</span>
+                {draws && <span className="text-[var(--bp-muted)]">{draws}D</span>}
+              </div>
               {weightClass && (
-                <span className="text-[var(--bp-muted)]">{weightClass}</span>
+                <span className="rounded-lg bg-[var(--bp-card-inset)] px-2.5 py-1 text-xs text-[var(--bp-muted)]">{weightClass}</span>
               )}
             </div>
           </div>

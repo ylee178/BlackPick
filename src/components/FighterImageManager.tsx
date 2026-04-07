@@ -1,398 +1,318 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import Cropper, { Area } from "react-easy-crop";
 import {
   retroPanelClassName,
   retroButtonClassName,
 } from "@/components/ui/retro";
-import { RefreshCw, Upload, Check, ArrowRight, Trash2 } from "lucide-react";
+import { Upload, ZoomIn, ZoomOut, Move, Check, X, Trash2, Search } from "lucide-react";
 
 type FighterItem = {
   id: string;
   name: string;
   ringName: string;
   flag: string;
-  images: string[];
-};
-
-type AllFighter = { id: string; label: string };
-
-type ImageAction = {
-  url: string;
-  action: "keep" | "regen" | "remap";
-  remapTo?: string;
+  hasImage: boolean;
 };
 
 export default function FighterImageManager({
   items,
-  allFighters,
 }: {
   items: FighterItem[];
-  allFighters: AllFighter[];
 }) {
   const [query, setQuery] = useState("");
-  const [actions, setActions] = useState<Record<string, Record<string, ImageAction>>>({});
-  const [flaggedForRegen, setFlaggedForRegen] = useState<Set<string>>(new Set());
-  const [uploadedRefs, setUploadedRefs] = useState<Record<string, string>>({});
-  const [generating, setGenerating] = useState(false);
-  const [generatingId, setGeneratingId] = useState<string | null>(null);
-  const [markedForDelete, setMarkedForDelete] = useState<Set<string>>(new Set());
-  const [fighterImages, setFighterImages] = useState<Record<string, string[]>>(() => {
-    const map: Record<string, string[]> = {};
-    for (const item of items) map[item.id] = [...item.images];
-    return map;
-  });
-  const [regenCount, setRegenCount] = useState(0);
-  const [regenTotal, setRegenTotal] = useState(0);
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editSource, setEditSource] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedArea, setCroppedArea] = useState<Area | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [imageTimestamps, setImageTimestamps] = useState<Record<string, number>>({});
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingFighterId = useRef<string | null>(null);
 
   const filtered = query.trim()
-    ? items.filter(f => f.name.toLowerCase().includes(query.toLowerCase()) || f.ringName.toLowerCase().includes(query.toLowerCase()))
+    ? items.filter(
+        (f) =>
+          f.name.toLowerCase().includes(query.toLowerCase()) ||
+          f.ringName.toLowerCase().includes(query.toLowerCase())
+      )
     : items;
 
-  function toggleRegen(fighterId: string) {
-    setFlaggedForRegen(prev => {
-      const next = new Set(prev);
-      if (next.has(fighterId)) next.delete(fighterId);
-      else next.add(fighterId);
-      return next;
-    });
+  const onCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
+    setCroppedArea(croppedAreaPixels);
+  }, []);
+
+  function startUpload(fighterId: string) {
+    pendingFighterId.current = fighterId;
+    fileInputRef.current?.click();
   }
 
-  function setImageAction(fighterId: string, imageUrl: string, action: "keep" | "regen" | "remap", remapTo?: string) {
-    setActions(prev => ({
-      ...prev,
-      [fighterId]: {
-        ...prev[fighterId],
-        [imageUrl]: { url: imageUrl, action, remapTo },
-      },
-    }));
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !pendingFighterId.current) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditSource(reader.result as string);
+      setEditingId(pendingFighterId.current);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   }
 
-  async function handleUpload(fighterId: string, file: File) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("fighter_id", fighterId);
+  function startEditExisting(fighterId: string) {
+    const ts = imageTimestamps[fighterId] || "";
+    const url = `/fighters/pixel/${fighterId}.png${ts ? `?t=${ts}` : ""}`;
+    setEditSource(url);
+    setEditingId(fighterId);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditSource(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedArea(null);
+  }
+
+  async function saveEdit() {
+    if (!editingId || !editSource || !croppedArea) return;
+    setSaving(true);
 
     try {
+      const canvas = document.createElement("canvas");
+      const size = 512;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d")!;
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = editSource;
+      });
+
+      ctx.drawImage(
+        img,
+        croppedArea.x,
+        croppedArea.y,
+        croppedArea.width,
+        croppedArea.height,
+        0,
+        0,
+        size,
+        size
+      );
+
+      const blob = await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b!), "image/png")
+      );
+
+      const formData = new FormData();
+      formData.append("file", blob, `${editingId}.png`);
+      formData.append("fighter_id", editingId);
+
       const res = await fetch("/api/fighter-avatar/upload", {
         method: "POST",
         body: formData,
       });
+
       if (res.ok) {
-        const data = await res.json();
-        setUploadedRefs(prev => ({ ...prev, [fighterId]: data.path }));
-      }
-    } catch {}
-  }
-
-  async function handleRegenerate(fighterId: string) {
-    setGeneratingId(fighterId);
-    try {
-      const res = await fetch("/api/fighter-avatar/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fighter_id: fighterId }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        // Add new image to this fighter's list without reloading
-        setFighterImages(prev => {
-          const existing = prev[fighterId] || [];
-          const newUrl = data.path + "?t=" + Date.now();
-          // Replace existing v3 or add new
-          const filtered = existing.filter(u => !u.includes("_v3"));
-          return { ...prev, [fighterId]: [...filtered, newUrl] };
-        });
-      }
-    } catch {} finally {
-      setGeneratingId(null);
-    }
-  }
-
-  async function handleRemapAll() {
-    // Collect all remap actions
-    const remaps: { from_fighter: string; image_url: string; to_fighter: string }[] = [];
-    for (const [fighterId, imageActions] of Object.entries(actions)) {
-      for (const [url, action] of Object.entries(imageActions)) {
-        if (action.action === "remap" && action.remapTo) {
-          remaps.push({ from_fighter: fighterId, image_url: url, to_fighter: action.remapTo });
-        }
-      }
-    }
-
-    if (remaps.length === 0) return;
-
-    try {
-      const res = await fetch("/api/fighter-avatar/remap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remaps }),
-      });
-      if (res.ok) {
-        setFighterImages(prev => {
-          const next = { ...prev };
-          for (const remap of remaps) {
-            const filename = remap.image_url.split("/").pop() || "";
-            const vMatch = filename.match(/_v\d+/);
-            const version = vMatch ? vMatch[0] : "";
-            const newUrl = `/fighters/pixel/${remap.to_fighter}${version}.png`;
-            next[remap.from_fighter] = (next[remap.from_fighter] || []).filter(u => !u.includes(filename));
-            next[remap.to_fighter] = [...(next[remap.to_fighter] || []), newUrl];
-          }
+        const now = Date.now();
+        setImageTimestamps((prev) => ({ ...prev, [editingId]: now }));
+        setDeletedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(editingId);
           return next;
         });
-        setActions({});
+        cancelEdit();
       }
-    } catch {}
-  }
-
-  async function handleRegenerateAll() {
-    setGenerating(true);
-    const ids = Array.from(flaggedForRegen);
-    setRegenTotal(ids.length);
-    setRegenCount(0);
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      setGeneratingId(id);
-      setRegenCount(i + 1);
-      try {
-        const res = await fetch("/api/fighter-avatar/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fighter_id: id }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setFighterImages(prev => {
-            const existing = prev[id] || [];
-            const filtered = existing.filter(u => !u.includes("_v3"));
-            return { ...prev, [id]: [...filtered, data.path + "?t=" + Date.now()] };
-          });
-        }
-      } catch {}
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setSaving(false);
     }
-    setFlaggedForRegen(new Set());
-    setGenerating(false);
-    setGeneratingId(null);
-    setRegenCount(0);
-    setRegenTotal(0);
   }
 
-  function toggleDelete(imageUrl: string) {
-    setMarkedForDelete(prev => {
-      const next = new Set(prev);
-      if (next.has(imageUrl)) next.delete(imageUrl);
-      else next.add(imageUrl);
-      return next;
-    });
-  }
-
-  async function handleDeleteAll() {
-    const urls = Array.from(markedForDelete);
-    if (urls.length === 0) return;
+  async function handleDelete(fighterId: string) {
+    const url = `/fighters/pixel/${fighterId}.png`;
     try {
       const res = await fetch("/api/fighter-avatar/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls }),
+        body: JSON.stringify({ urls: [url] }),
       });
       if (res.ok) {
-        // Remove deleted images from state
-        setFighterImages(prev => {
-          const next = { ...prev };
-          for (const [fid, imgs] of Object.entries(next)) {
-            next[fid] = imgs.filter(u => !markedForDelete.has(u.split("?")[0]));
-          }
-          return next;
-        });
-        setMarkedForDelete(new Set());
+        setDeletedIds((prev) => new Set(prev).add(fighterId));
       }
     } catch {}
   }
 
-  const remapCount = Object.values(actions).reduce((sum, ia) => sum + Object.values(ia).filter(a => a.action === "remap" && a.remapTo).length, 0);
+  function getImageUrl(f: FighterItem): string | null {
+    if (deletedIds.has(f.id)) return null;
+    if (!f.hasImage && !imageTimestamps[f.id]) return null;
+    const ts = imageTimestamps[f.id];
+    return `/fighters/pixel/${f.id}.png${ts ? `?t=${ts}` : ""}`;
+  }
 
   return (
     <div>
-      {/* Toolbar */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <input
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search fighter..."
-          className="h-10 w-64 rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[#0a0a0a] px-3 text-sm text-[var(--bp-ink)] placeholder:text-[var(--bp-muted)] focus:border-[var(--bp-accent)] focus:outline-none"
-        />
-        {flaggedForRegen.size > 0 && (
-          <button
-            onClick={handleRegenerateAll}
-            disabled={generating}
-            className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5" })}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} strokeWidth={2} />
-            {generating ? `Generating ${regenCount}/${regenTotal}...` : `Regenerate ${flaggedForRegen.size} flagged`}
-          </button>
-        )}
-        {markedForDelete.size > 0 && (
-          <button
-            onClick={handleDeleteAll}
-            className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1.5 text-[var(--bp-danger)]" })}
-          >
-            <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-            Delete {markedForDelete.size} images
-          </button>
-        )}
-        {remapCount > 0 && (
-          <button
-            onClick={handleRemapAll}
-            className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1.5" })}
-          >
-            <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-            Apply {remapCount} remaps
-          </button>
-        )}
+      {/* Hidden file input */}
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+      />
+
+      {/* Crop Modal */}
+      {editingId && editSource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className={retroPanelClassName({ className: "w-[480px] p-0" })}>
+            {/* Crop area */}
+            <div className="relative h-[400px] w-full">
+              <Cropper
+                image={editSource}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                cropShape="rect"
+                showGrid={false}
+                style={{
+                  containerStyle: { borderRadius: "16px 16px 0 0" },
+                }}
+              />
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              <ZoomOut className="h-4 w-4 text-[var(--bp-muted)]" strokeWidth={2} />
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.05}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 accent-[var(--bp-accent)]"
+              />
+              <ZoomIn className="h-4 w-4 text-[var(--bp-muted)]" strokeWidth={2} />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 border-t border-[rgba(255,255,255,0.06)] px-4 py-3">
+              <button
+                onClick={cancelEdit}
+                className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1" })}
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2} />
+                Cancel
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={saving}
+                className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1" })}
+              >
+                <Check className="h-3.5 w-3.5" strokeWidth={2} />
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="mb-4">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bp-muted)]" strokeWidth={2} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search fighter..."
+            className="h-10 w-full rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[#0a0a0a] pl-9 pr-3 text-sm text-[var(--bp-ink)] placeholder:text-[var(--bp-muted)] focus:border-[var(--bp-accent)] focus:outline-none"
+          />
+        </div>
       </div>
 
-      {/* Fighter cards */}
-      <div className="space-y-3">
-        {filtered.map(f => {
-          const isFlagged = flaggedForRegen.has(f.id);
-          const uploaded = uploadedRefs[f.id];
-          const isGenerating = generatingId === f.id;
+      {/* Fighter grid */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {filtered.map((f) => {
+          const imageUrl = getImageUrl(f);
 
           return (
             <div
               key={f.id}
-              className={retroPanelClassName({
-                className: `p-4 ${isFlagged ? "border-[var(--bp-accent)]" : ""}`,
-              })}
+              className={retroPanelClassName({ className: "p-3" })}
             >
-              {/* Fighter header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-bold text-[var(--bp-ink)]">
-                    {f.name} {f.flag}
-                  </span>
-                  {f.ringName && f.ringName !== f.name && (
-                    <span className="ml-2 text-xs text-[var(--bp-muted)]">{f.ringName}</span>
-                  )}
-                  <span className="ml-2 text-[10px] text-[var(--bp-muted)] opacity-50">{f.id.substring(0, 8)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Upload button */}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={el => { fileInputRefs.current[f.id] = el; }}
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) handleUpload(f.id, file);
-                    }}
+              {/* Image */}
+              <div className="relative mx-auto mb-2 h-28 w-28 overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#2a2a2a]">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={f.ringName || f.name}
+                    className="h-full w-full object-cover"
                   />
-                  <button
-                    onClick={() => fileInputRefs.current[f.id]?.click()}
-                    className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1" })}
-                  >
-                    <Upload className="h-3 w-3" strokeWidth={2} />
-                    Photo
-                  </button>
-                  {/* Flag for regen */}
-                  <button
-                    onClick={() => toggleRegen(f.id)}
-                    className={retroButtonClassName({
-                      variant: isFlagged ? "primary" : "soft",
-                      size: "sm",
-                      className: "gap-1",
-                    })}
-                  >
-                    <RefreshCw className={`h-3 w-3 ${isGenerating ? "animate-spin" : ""}`} strokeWidth={2} />
-                    {isFlagged ? "Flagged" : "Regen"}
-                  </button>
-                </div>
+                ) : (
+                  <img
+                    src="/fighters/default.png"
+                    alt="Default"
+                    className="h-full w-full object-cover opacity-30"
+                  />
+                )}
               </div>
 
-              {/* Images row */}
-              <div className="mt-3 flex flex-wrap gap-3">
-                {(fighterImages[f.id]?.length ?? 0) === 0 && !uploaded && (
-                  <div className="flex h-24 w-24 items-center justify-center rounded-[10px] border border-dashed border-[rgba(255,255,255,0.1)] bg-[#111] text-xs text-[var(--bp-muted)]">
-                    No image
-                  </div>
+              {/* Name */}
+              <div className="mb-2 text-center">
+                <div className="truncate text-sm font-bold text-[var(--bp-ink)]">
+                  {f.ringName || f.name} {f.flag}
+                </div>
+                {f.ringName && f.ringName !== f.name && (
+                  <div className="truncate text-xs text-[var(--bp-muted)]">{f.name}</div>
                 )}
+              </div>
 
-                {(fighterImages[f.id] || []).map(url => {
-                  const version = url.includes("_v3") ? "V3" : url.includes("_v2") ? "V2" : "V1";
-                  const imageAction = actions[f.id]?.[url];
-
-                  return (
-                    <div key={url} className="flex flex-col items-center gap-1.5">
-                      <div className="relative">
-                        <img
-                          src={url}
-                          alt={f.name}
-                          className="h-24 w-24 rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[#2a2a2a] object-cover"
-                        />
-                        <span className="absolute left-1 top-1 rounded bg-[rgba(0,0,0,0.7)] px-1 py-0.5 text-[9px] font-bold text-[var(--bp-muted)]">
-                          {version}
-                        </span>
-                        {markedForDelete.has(url) && (
-                          <div className="absolute inset-0 flex items-center justify-center rounded-[10px] bg-[rgba(0,0,0,0.6)]">
-                            <Trash2 className="h-5 w-5 text-[var(--bp-danger)]" strokeWidth={2} />
-                          </div>
-                        )}
-                      </div>
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => toggleDelete(url)}
-                          className={`flex cursor-pointer items-center justify-center rounded p-1 transition ${markedForDelete.has(url) ? "bg-[rgba(248,113,113,0.15)] text-[var(--bp-danger)]" : "text-[var(--bp-muted)] hover:text-[var(--bp-danger)]"}`}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3 w-3" strokeWidth={2} />
-                        </button>
-                      </div>
-                      {/* Remap dropdown */}
-                      <select
-                        value={imageAction?.action === "remap" ? imageAction.remapTo || "" : ""}
-                        onChange={e => {
-                          const val = e.target.value;
-                          if (val) {
-                            setImageAction(f.id, url, "remap", val);
-                          } else {
-                            setImageAction(f.id, url, "keep");
-                          }
-                        }}
-                        className="w-24 truncate rounded border border-[rgba(255,255,255,0.08)] bg-[#0a0a0a] px-1 py-0.5 text-[10px] text-[var(--bp-muted)] focus:border-[var(--bp-accent)] focus:outline-none"
-                      >
-                        <option value="">This fighter</option>
-                        {allFighters
-                          .filter(af => af.id !== f.id)
-                          .map(af => (
-                            <option key={af.id} value={af.id}>
-                              {af.label}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                  );
-                })}
-
-                {/* Uploaded ref preview */}
-                {uploaded && (
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="relative">
-                      <img
-                        src={uploaded}
-                        alt="Uploaded ref"
-                        className="h-24 w-24 rounded-[10px] border border-[var(--bp-accent)] bg-[#2a2a2a] object-cover"
-                      />
-                      <span className="absolute left-1 top-1 rounded bg-[rgba(0,0,0,0.7)] px-1 py-0.5 text-[9px] font-bold text-[var(--bp-accent)]">
-                        REF
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-[var(--bp-accent)]">Uploaded</span>
-                  </div>
+              {/* Actions */}
+              <div className="flex items-center justify-center gap-1.5">
+                <button
+                  onClick={() => startUpload(f.id)}
+                  className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1 text-xs" })}
+                  title="Upload new image"
+                >
+                  <Upload className="h-3 w-3" strokeWidth={2} />
+                  Upload
+                </button>
+                {imageUrl && (
+                  <>
+                    <button
+                      onClick={() => startEditExisting(f.id)}
+                      className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1 text-xs" })}
+                      title="Edit crop & zoom"
+                    >
+                      <Move className="h-3 w-3" strokeWidth={2} />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(f.id)}
+                      className="flex cursor-pointer items-center justify-center rounded-[10px] p-1.5 text-[var(--bp-muted)] transition hover:bg-[rgba(248,113,113,0.1)] hover:text-[var(--bp-danger)]"
+                      title="Delete image"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
