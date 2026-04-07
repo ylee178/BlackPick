@@ -117,15 +117,17 @@ export default async function FighterDetailPage({ params }: PageProps) {
         </span>
 
         <div className="relative grid min-h-[340px] grid-cols-[auto_1fr] sm:min-h-[400px]">
-          {/* Image — left, full height, bottom-anchored */}
-          <div className="relative w-[200px] sm:w-[280px] md:w-[320px]">
+          {/* Image — left, full height, top-aligned so head always shows */}
+          <div className="relative w-[200px] overflow-hidden sm:w-[280px] md:w-[320px]">
             <FighterAvatar
               src={avatarUrl}
               alt={displayName}
-              className="absolute bottom-0 left-0 h-[340px] w-full object-contain object-bottom sm:h-[400px]"
+              className="absolute inset-0 h-full w-full object-cover object-top"
             />
             {/* Right edge fade */}
             <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#2a2a2a] to-transparent" />
+            {/* Bottom fade to hide skin/body cutoff */}
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#2a2a2a] to-transparent" />
           </div>
 
           {/* Info — right */}
