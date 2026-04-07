@@ -10,16 +10,19 @@ export default function FighterDetailLoading() {
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
       {/* Hero section */}
-      <div className="flex min-h-[320px] flex-col items-center justify-center bg-[#2a2a2a] sm:min-h-[380px]">
-        <S className="h-28 w-28 rounded-full sm:h-36 sm:w-36" />
-        <S className="mt-4 h-10 w-48 sm:h-12 sm:w-64" />
-        <div className="mt-3 flex items-center gap-3">
-          <S className="h-5 w-5 rounded" />
-          <S className="h-6 w-20 rounded-xl" />
-        </div>
-        <div className="mt-4 flex items-center gap-4">
-          <S className="h-8 w-14" />
-          <S className="h-8 w-12" />
+      <div className="flex min-h-[320px] items-center gap-6 bg-[#2a2a2a] px-8 sm:min-h-[380px] sm:gap-10 sm:px-12">
+        <S className="h-32 w-32 shrink-0 rounded-full sm:h-40 sm:w-40" />
+        <div>
+          <S className="h-4 w-28" />
+          <S className="mt-3 h-12 w-56 sm:h-14 sm:w-72" />
+          <div className="mt-3 flex items-center gap-3">
+            <S className="h-5 w-5 rounded" />
+            <S className="h-6 w-20 rounded-xl" />
+          </div>
+          <div className="mt-5 flex items-center gap-4">
+            <S className="h-9 w-16" />
+            <S className="h-9 w-14" />
+          </div>
         </div>
       </div>
 
