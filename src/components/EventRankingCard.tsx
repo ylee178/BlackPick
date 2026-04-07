@@ -150,7 +150,15 @@ export default function EventRankingCard({ completedEvents, initialEventIndex, i
       {/* Rankings list */}
       <div className="mt-3 space-y-1">
         {loading ? (
-          <p className="py-4 text-center text-xs text-[var(--bp-muted)]">{t("common.loading")}</p>
+          <div className="space-y-2 py-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-[10px] bg-[var(--bp-card-inset)] px-3 py-2">
+                <div className="h-4 w-5 animate-shimmer rounded bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,186,60,0.12)] to-[rgba(255,255,255,0.04)] bg-[length:200%_100%]" />
+                <div className="h-4 w-24 animate-shimmer rounded bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,186,60,0.12)] to-[rgba(255,255,255,0.04)] bg-[length:200%_100%]" />
+                <div className="ml-auto h-4 w-14 animate-shimmer rounded bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,186,60,0.12)] to-[rgba(255,255,255,0.04)] bg-[length:200%_100%]" />
+              </div>
+            ))}
+          </div>
         ) : users.length === 0 ? (
           <p className="py-4 text-center text-xs text-[var(--bp-muted)]">{t("common.noData")}</p>
         ) : (
