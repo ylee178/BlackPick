@@ -96,7 +96,9 @@
     "first": "#1",
     "second": "#2",
     "third": "#3",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "weightClass": "Weight Class",
+    "selectWeightClass": "Select a weight class"
   },
   "auth": {
     "email": "Email",

@@ -95,7 +95,9 @@
     "first": "#1",
     "second": "#2",
     "third": "#3",
-    "unknown": "Desconhecido"
+    "unknown": "Desconhecido",
+    "weightClass": "Categoria",
+    "selectWeightClass": "Selecione uma categoria"
   },
   "auth": {
     "email": "E-mail",

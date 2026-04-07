@@ -4,6 +4,7 @@ import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getLocalizedEventName } from "@/lib/localized-name";
 import { Flame } from "lucide-react";
+import { translateWeightClass, getWeightClassOrder } from "@/lib/weight-class";
 import { cn } from "@/lib/utils";
 import {
   RetroEmptyState,
@@ -57,7 +58,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const { t, locale } = await getTranslations();
   const supabase = await createSupabaseServer();
 
-  const validTabs = ["running", "p4p", "series", "streak", "hof"] as const;
+  const validTabs = ["running", "p4p", "weight", "series", "streak", "hof"] as const;
   const tab = validTabs.includes(params.tab as any) ? (params.tab as string) : "running";
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -66,6 +67,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const tabs = [
     { key: "running", label: t("ranking.running") },
     { key: "p4p", label: "P4P" },
+    { key: "weight", label: t("ranking.weightClass") },
     { key: "series", label: t("ranking.series") },
     { key: "streak", label: t("ranking.winStreak") },
     { key: "hof", label: t("ranking.hallOfFame") },
@@ -182,6 +184,51 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     }
   }
 
+  /* ── Weight class ranking ── */
+  let weightClassList: string[] = [];
+  let weightClassUsers: Array<{ user_id: string; weight_class: string; wins: number; losses: number; score: number; user?: RankingUser }> = [];
+  const selectedWeight = params.series || ""; // reuse series param for weight class selection
+
+  if (tab === "weight") {
+    // Get all distinct weight classes
+    const { data: wcData } = await supabase
+      .from("user_weight_class_stats")
+      .select("weight_class");
+
+    const wcSet = new Set<string>();
+    for (const row of (wcData ?? []) as { weight_class: string }[]) {
+      const clean = row.weight_class.replace(/#C$/i, "").trim();
+      if (clean) wcSet.add(clean);
+    }
+    weightClassList = [...wcSet].sort((a, b) => getWeightClassOrder(a) - getWeightClassOrder(b));
+
+    if (selectedWeight) {
+      const { data } = await supabase
+        .from("user_weight_class_stats")
+        .select("user_id, weight_class, wins, losses, score")
+        .eq("weight_class", selectedWeight)
+        .order("score", { ascending: false })
+        .limit(PAGE_SIZE);
+
+      const userIds = [...new Set((data ?? []).map((r: { user_id: string }) => r.user_id))];
+      let userMap = new Map<string, RankingUser>();
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score")
+          .in("id", userIds);
+        for (const u of (userData ?? []) as RankingUser[]) {
+          userMap.set(u.id, u);
+        }
+      }
+
+      weightClassUsers = (data ?? []).map((r: any) => ({
+        ...r,
+        user: userMap.get(r.user_id),
+      }));
+    }
+  }
+
   let eventRankData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
   let eventList: Array<{ id: string; name: string; date: string; status: string }> = [];
   const selectedEvent = params.event || "";
@@ -249,6 +296,40 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               ))}
             </div>
           )
+        ) : null}
+
+        {tab === "weight" ? (
+          <>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {weightClassList.map((wc) => (
+                <Link
+                  key={wc}
+                  href={`/ranking?tab=weight&series=${encodeURIComponent(wc)}`}
+                  className={retroSegmentClassName({ active: selectedWeight === wc })}
+                >
+                  {translateWeightClass(wc, locale)}
+                </Link>
+              ))}
+            </div>
+            {!selectedWeight ? (
+              <RetroEmptyState title={t("ranking.selectWeightClass")} />
+            ) : weightClassUsers.length === 0 ? (
+              <RetroEmptyState title={t("common.noData")} />
+            ) : (
+              <div className="space-y-2">
+                {weightClassUsers.map((row, index) => row.user ? (
+                  <RankingRowFull
+                    key={row.user_id}
+                    rank={index + 1}
+                    name={row.user.ring_name}
+                    record={`${row.wins}W-${row.losses}L`}
+                    score={row.score}
+                    unknownLabel={t("ranking.unknown")}
+                  />
+                ) : null)}
+              </div>
+            )}
+          </>
         ) : null}
 
         {tab === "series" ? (

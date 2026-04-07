@@ -95,7 +95,9 @@
     "first": "#1",
     "second": "#2",
     "third": "#3",
-    "unknown": "不明"
+    "unknown": "不明",
+    "weightClass": "階級別",
+    "selectWeightClass": "階級を選択してください"
   },
   "auth": {
     "email": "メールアドレス",
