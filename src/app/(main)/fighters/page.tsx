@@ -31,7 +31,7 @@ export default async function FightersPage() {
     name: getLocalizedFighterName(f, locale, f.name),
     record: f.record || "0-0",
     flag: countryCodeToFlag(f.nationality),
-    avatarUrl: getFighterAvatarUrl(f),
+    avatarUrl: pixelFiles.has(`${f.id}.png`) ? `/fighters/pixel/${f.id}.png` : "/fighters/default.png",
     weightClass: f.weight_class ? translateWeightClass(f.weight_class, locale) : null,
     hasPixelArt: pixelFiles.has(`${f.id}.png`),
   }));

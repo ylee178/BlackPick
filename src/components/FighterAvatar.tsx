@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_AVATAR } from "@/lib/fighter-avatar";
+const DEFAULT_AVATAR = "/fighters/default.png";
 
 export default function FighterAvatar({
   src,
