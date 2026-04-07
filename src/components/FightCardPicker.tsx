@@ -177,7 +177,7 @@ export default function FightCardPicker({
             {isPicked ? (
               <RetroLabel
                 size="sm"
-                tone="success"
+                tone="neutral"
                 icon={<CheckIcon className="h-3.5 w-3.5" />}
               >My Pick</RetroLabel>
             ) : null}
