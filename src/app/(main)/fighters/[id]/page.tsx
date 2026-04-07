@@ -8,6 +8,7 @@ import { RetroEmptyState, retroPanelClassName } from "@/components/ui/retro";
 import FighterComments from "@/components/FighterComments";
 import FighterAvatar from "@/components/FighterAvatar";
 import { parseRecord } from "@/lib/parse-record";
+import { Swords, Flame, Target, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,6 @@ export default async function FighterDetailPage({ params }: PageProps) {
     return <RetroEmptyState title="Fighter not found" />;
   }
 
-  // Get fight history
   const { data: fights } = await supabase
     .from("fights")
     .select(`
@@ -45,7 +45,6 @@ export default async function FighterDetailPage({ params }: PageProps) {
     .order("start_time", { ascending: false })
     .limit(20);
 
-  // Get user's ring_name for comment avatar
   let currentUserInitial = "?";
   if (authUser) {
     const { data: profile } = await supabase
@@ -57,11 +56,11 @@ export default async function FighterDetailPage({ params }: PageProps) {
   }
 
   const displayName = getLocalizedFighterName(fighter, locale, fighter.name);
+  const ringName = fighter.ring_name || displayName;
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
   const flag = countryCodeToFlag(fighter.nationality);
   const weightClass = fighter.weight_class ? translateWeightClass(fighter.weight_class, locale) : null;
-
   const { wins, losses, draws } = parseRecord(fighter.record);
 
   const fightHistory = (fights ?? []).map((f) => {
@@ -70,6 +69,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
     const isA = fa?.id === id;
     const opponent = isA ? fb : fa;
     const won = f.winner_id === id;
+    const isDraw = f.status === "completed" && !f.winner_id;
     const isNoContest = f.status === "no_contest";
     const isCancelled = f.status === "cancelled";
     const event = f.event as Record<string, string | null> | null;
@@ -79,6 +79,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
       opponentName: opponent ? getLocalizedFighterName(opponent as Parameters<typeof getLocalizedFighterName>[0], locale, opponent?.name ?? "") : "?",
       opponentFlag: countryCodeToFlag(opponent?.nationality),
       won,
+      isDraw,
       isNoContest,
       isCancelled,
       method: f.method,
@@ -88,11 +89,13 @@ export default async function FighterDetailPage({ params }: PageProps) {
     };
   });
 
-  // Compute stats from fight history
+  // Derived stats
   const totalFights = fightHistory.length;
+  const winsCount = fightHistory.filter(f => f.won).length;
   const koWins = fightHistory.filter(f => f.won && f.method && /KO|TKO/i.test(f.method)).length;
   const subWins = fightHistory.filter(f => f.won && f.method && /SUB/i.test(f.method)).length;
-  const winStreak = (() => {
+  const winRate = totalFights > 0 ? Math.round((winsCount / totalFights) * 100) : 0;
+  const currentStreak = (() => {
     let streak = 0;
     for (const f of fightHistory) {
       if (f.won) streak++;
@@ -103,120 +106,143 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
-      {/* ── Hero Section ── */}
-      <div className="relative overflow-hidden bg-[#2a2a2a]">
-        {/* Large faded ring name in background */}
-        <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 select-none text-[120px] font-black leading-none tracking-tighter text-white/[0.03] sm:right-8 sm:text-[180px]">
-          {(fighter.ring_name || displayName).charAt(0)}
-        </div>
+      {/* ═══════════ HERO ═══════════ */}
+      <section className="relative overflow-hidden bg-[#2a2a2a]">
+        {/* Background watermark */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-4 top-1/2 -translate-y-1/2 select-none text-[200px] font-black leading-none tracking-tighter text-white/[0.03] sm:text-[280px]"
+        >
+          {ringName.slice(0, 2)}
+        </span>
 
-        <div className="relative flex min-h-[320px] sm:min-h-[380px]">
-          {/* Image — left, anchored to bottom, large */}
-          <div className="relative w-[240px] shrink-0 sm:w-[300px]">
+        <div className="relative grid min-h-[340px] grid-cols-[auto_1fr] sm:min-h-[400px]">
+          {/* Image — left, full height, bottom-anchored */}
+          <div className="relative w-[200px] sm:w-[280px] md:w-[320px]">
             <FighterAvatar
               src={avatarUrl}
               alt={displayName}
-              className="absolute bottom-0 left-0 h-full w-full object-contain object-bottom"
+              className="absolute bottom-0 left-0 h-[340px] w-full object-contain object-bottom sm:h-[400px]"
             />
-            {/* Gradient fade on right edge */}
-            <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#2a2a2a] to-transparent" />
+            {/* Right edge fade */}
+            <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#2a2a2a] to-transparent" />
           </div>
 
-          {/* Info — right side */}
-          <div className="relative flex flex-1 flex-col justify-end pb-8 pr-5 pt-8 sm:pb-10 sm:pr-8 sm:pt-10">
+          {/* Info — right */}
+          <div className="flex flex-col justify-end pb-8 pr-5 sm:pb-10 sm:pr-8">
+            {/* Sub label (real name) */}
             {subLabel && (
-              <p className="text-sm text-[var(--bp-muted)]">{subLabel}</p>
+              <p className="mb-1 text-sm tracking-wide text-[var(--bp-muted)]">{subLabel}</p>
             )}
-            <h1 className="text-5xl font-black tracking-tight text-[var(--bp-ink)] sm:text-6xl">
-              {displayName}
+
+            {/* Ring name — hero title */}
+            <h1 className="text-5xl font-black tracking-tighter text-[var(--bp-ink)] sm:text-6xl md:text-7xl">
+              {ringName}
             </h1>
-            <div className="mt-2 flex items-center gap-3">
-              <span className="text-2xl">{flag}</span>
+
+            {/* Meta row */}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="text-xl">{flag}</span>
               {weightClass && (
-                <span className="rounded-lg bg-[rgba(255,255,255,0.08)] px-3 py-1 text-sm text-[var(--bp-muted)]">{weightClass}</span>
+                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-medium text-[var(--bp-muted)]">
+                  {weightClass}
+                </span>
               )}
             </div>
 
-            {/* Record */}
-            <div className="mt-5 flex items-center gap-4 text-2xl font-bold sm:text-3xl">
-              <span className="text-[#4ade80]">{wins}W</span>
-              <span className="text-[#f87171]">{losses}L</span>
-              {draws && <span className="text-[var(--bp-muted)]">{draws}D</span>}
+            {/* Record — large */}
+            <div className="mt-5 flex items-baseline gap-4">
+              <span className="text-3xl font-black text-[#4ade80] sm:text-4xl">{wins}W</span>
+              <span className="text-3xl font-black text-[#f87171] sm:text-4xl">{losses}L</span>
+              {draws && (
+                <span className="text-3xl font-black text-[var(--bp-muted)] sm:text-4xl">{draws}D</span>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Stats Bar ── */}
-      <div className="grid grid-cols-4 border-b border-[rgba(255,255,255,0.06)] bg-[#1a1a1a]">
-        <div className="flex flex-col items-center py-4">
-          <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{totalFights}</span>
-          <span className="mt-0.5 text-[11px] text-[var(--bp-muted)]">Fights</span>
-        </div>
-        <div className="flex flex-col items-center py-4">
-          <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{koWins}</span>
-          <span className="mt-0.5 text-[11px] text-[var(--bp-muted)]">KO</span>
-        </div>
-        <div className="flex flex-col items-center py-4">
-          <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{subWins}</span>
-          <span className="mt-0.5 text-[11px] text-[var(--bp-muted)]">SUB</span>
-        </div>
-        <div className="flex flex-col items-center py-4">
-          <span className="text-xl font-bold text-[var(--bp-accent)] sm:text-2xl">{winStreak}</span>
-          <span className="mt-0.5 text-[11px] text-[var(--bp-muted)]">Streak</span>
-        </div>
-      </div>
+      {/* ═══════════ STAT TILES ═══════════ */}
+      <section className="grid grid-cols-4 divide-x divide-[rgba(255,255,255,0.06)] border-b border-[rgba(255,255,255,0.06)] bg-[var(--bp-card)]">
+        {[
+          { icon: Swords, value: totalFights, label: "Fights" },
+          { icon: Target, value: koWins, label: "KO Wins" },
+          { icon: Shield, value: subWins, label: "SUB Wins" },
+          { icon: Flame, value: currentStreak > 0 ? `${currentStreak}` : `${winRate}%`, label: currentStreak > 0 ? "Win Streak" : "Win Rate" },
+        ].map((stat) => (
+          <div key={stat.label} className="flex flex-col items-center gap-1 py-5">
+            <stat.icon className="h-4 w-4 text-[var(--bp-muted)]" strokeWidth={1.5} />
+            <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
+            <span className="text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
+          </div>
+        ))}
+      </section>
 
-      {/* ── Content below hero ── */}
-      <div className="px-4 pt-6 sm:px-6">
+      {/* ═══════════ CONTENT ═══════════ */}
+      <div className="space-y-6 px-4 pb-8 pt-6 sm:px-6">
         {/* Fight History */}
         {fightHistory.length > 0 && (
-          <div className="mb-6">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--bp-muted)]">
+          <section>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--bp-muted)]">
               {t("fighter.recentFights")}
             </h2>
             <div className={retroPanelClassName({ className: "divide-y divide-[rgba(255,255,255,0.04)] p-0" })}>
-              {fightHistory.map((f) => (
-                <div
-                  key={f.id}
-                  className="flex items-center justify-between px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
-                      f.isCancelled || f.isNoContest
-                        ? "bg-[rgba(255,255,255,0.06)] text-[var(--bp-muted)]"
-                        : f.won
-                          ? "bg-[rgba(74,222,128,0.12)] text-[#4ade80]"
-                          : "bg-[rgba(248,113,113,0.12)] text-[#f87171]"
-                    }`}>
-                      {f.isCancelled ? "C" : f.isNoContest ? "NC" : f.won ? "W" : "L"}
+              {fightHistory.map((f) => {
+                const resultLabel = f.isCancelled ? "C" : f.isNoContest ? "NC" : f.isDraw ? "D" : f.won ? "W" : "L";
+                const resultColor = f.isCancelled || f.isNoContest
+                  ? "bg-white/[0.04] text-[var(--bp-muted)]"
+                  : f.isDraw
+                    ? "bg-white/[0.06] text-[var(--bp-muted)]"
+                    : f.won
+                      ? "bg-[#4ade80]/10 text-[#4ade80]"
+                      : "bg-[#f87171]/10 text-[#f87171]";
+
+                return (
+                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                    {/* Result badge */}
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${resultColor}`}>
+                      {resultLabel}
                     </span>
-                    <div>
-                      <span className="text-sm font-medium text-[var(--bp-ink)]">
+
+                    {/* Opponent */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[var(--bp-ink)]">
                         {f.opponentName} {f.opponentFlag}
-                      </span>
+                      </p>
                       {f.method && (
-                        <span className="ml-2 text-xs text-[var(--bp-muted)]">
+                        <p className="text-xs text-[var(--bp-muted)]">
                           {f.method}{f.round ? ` R${f.round}` : ""}
-                        </span>
+                        </p>
                       )}
                     </div>
+
+                    {/* Event + date */}
+                    <div className="shrink-0 text-right">
+                      <p className="truncate text-xs text-[var(--bp-muted)]">{f.eventName}</p>
+                      <p className="text-[11px] text-[var(--bp-muted)] opacity-50">{f.eventDate}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs text-[var(--bp-muted)]">{f.eventName}</span>
-                    <p className="text-[11px] text-[var(--bp-muted)] opacity-60">{f.eventDate}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+          </section>
+        )}
+
+        {/* Empty state when no fights */}
+        {fightHistory.length === 0 && (
+          <div className="flex flex-col items-center gap-2 py-12 text-center">
+            <Swords className="h-8 w-8 text-[var(--bp-muted)] opacity-40" strokeWidth={1.5} />
+            <p className="text-sm text-[var(--bp-muted)]">No fight history yet</p>
           </div>
         )}
 
         {/* Comments */}
-        <FighterComments
-          fighterId={id}
-          currentUserInitial={currentUserInitial}
-        />
+        <section>
+          <FighterComments
+            fighterId={id}
+            currentUserInitial={currentUserInitial}
+          />
+        </section>
       </div>
     </div>
   );
