@@ -76,8 +76,10 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
     return {
       id: f.id,
+      opponentId: opponent?.id ?? null,
       opponentName: opponent ? getLocalizedFighterName(opponent as Parameters<typeof getLocalizedFighterName>[0], locale, opponent?.name ?? "") : "?",
       opponentFlag: countryCodeToFlag(opponent?.nationality),
+      opponentAvatarUrl: opponent ? getFighterAvatarUrl(opponent as Parameters<typeof getFighterAvatarUrl>[0]) : null,
       won,
       isDraw,
       isNoContest,
@@ -206,7 +208,20 @@ export default async function FighterDetailPage({ params }: PageProps) {
                       {resultLabel}
                     </span>
 
-                    {/* Opponent */}
+                    {/* Opponent avatar */}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[rgba(255,255,255,0.08)] bg-[#2a2a2a]">
+                      {f.opponentAvatarUrl ? (
+                        <FighterAvatar
+                          src={f.opponentAvatarUrl}
+                          alt={f.opponentName}
+                          className="h-full w-full object-cover object-top"
+                        />
+                      ) : (
+                        <span className="text-xs font-bold text-[var(--bp-muted)]">{f.opponentName.charAt(0)}</span>
+                      )}
+                    </div>
+
+                    {/* Opponent info */}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-[var(--bp-ink)]">
                         {f.opponentName} {f.opponentFlag}
