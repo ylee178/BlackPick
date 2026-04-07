@@ -8,7 +8,7 @@ import { RetroEmptyState, retroPanelClassName } from "@/components/ui/retro";
 import FighterComments from "@/components/FighterComments";
 import FighterAvatar from "@/components/FighterAvatar";
 import { parseRecord } from "@/lib/parse-record";
-import { Swords, Flame, Target, Shield } from "lucide-react";
+import { GiSwordClash, GiKnockout, GiGrapple, GiFlame } from "react-icons/gi";
 
 export const dynamic = "force-dynamic";
 
@@ -165,13 +165,13 @@ export default async function FighterDetailPage({ params }: PageProps) {
       {/* ═══════════ STAT TILES ═══════════ */}
       <section className="grid grid-cols-4 divide-x divide-[rgba(255,255,255,0.06)] border-b border-[rgba(255,255,255,0.06)] bg-[var(--bp-card)]">
         {[
-          { icon: Swords, value: totalFights, label: "Fights" },
-          { icon: Target, value: koWins, label: "KO Wins" },
-          { icon: Shield, value: subWins, label: "SUB Wins" },
-          { icon: Flame, value: currentStreak > 0 ? `${currentStreak}` : `${winRate}%`, label: currentStreak > 0 ? "Win Streak" : "Win Rate" },
+          { icon: GiSwordClash, value: totalFights, label: "Fights" },
+          { icon: GiKnockout, value: koWins, label: "KO" },
+          { icon: GiGrapple, value: subWins, label: "SUB" },
+          { icon: GiFlame, value: currentStreak > 0 ? `${currentStreak}` : `${winRate}%`, label: currentStreak > 0 ? "Streak" : "Win %" },
         ].map((stat) => (
           <div key={stat.label} className="flex flex-col items-center gap-1 py-5">
-            <stat.icon className="h-4 w-4 text-[var(--bp-muted)]" strokeWidth={1.5} />
+            <stat.icon className="text-[16px] text-[var(--bp-muted)]" />
             <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
             <span className="text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
           </div>
@@ -231,7 +231,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
         {/* Empty state when no fights */}
         {fightHistory.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-12 text-center">
-            <Swords className="h-8 w-8 text-[var(--bp-muted)] opacity-40" strokeWidth={1.5} />
+            <GiSwordClash className="text-[32px] text-[var(--bp-muted)] opacity-40" />
             <p className="text-sm text-[var(--bp-muted)]">No fight history yet</p>
           </div>
         )}

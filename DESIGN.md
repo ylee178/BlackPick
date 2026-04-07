@@ -6,8 +6,11 @@
 - Intuitive over explanatory.
 
 ## Icons
-- All icons MUST use the `lucide-react` library. No inline SVGs, no unicode symbols (✓ ✗ ✕ ✔ etc.) for icons.
-- Brand assets (Google logo, country flags) are the only exception.
+- Primary icon library: `lucide-react`. Use for general UI icons (nav, buttons, actions).
+- Domain-specific icons (combat sports stats, achievements, etc.) may use other libraries (`@phosphor-icons/react`, `react-icons`, custom SVGs) when lucide lacks a fitting option.
+- Within any icon group (e.g. a stats bar, a nav section), all icons MUST come from the same library/style for visual consistency.
+- No inline SVGs or unicode symbols (✓ ✗ ✕ ✔ etc.) for icons.
+- Brand assets (Google logo, country flags) are the only exception to library rules.
 - Icons next to text: always left side first, then text.
 
 ## Accessibility & Interaction
