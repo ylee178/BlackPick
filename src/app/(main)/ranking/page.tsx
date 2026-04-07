@@ -20,6 +20,7 @@ type SearchParams = Promise<{
   page?: string;
   series?: string;
   event?: string;
+  devEmpty?: string;
 }>;
 
 type RankingUser = {
@@ -58,17 +59,21 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const { t, locale } = await getTranslations();
   const supabase = await createSupabaseServer();
 
-  const validTabs = ["running", "p4p", "weight", "series", "streak", "hof"] as const;
+  const validTabs = ["running", "p4p", "weight", "series", "event", "streak", "hof"] as const;
   const tab = validTabs.includes(params.tab as any) ? (params.tab as string) : "running";
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
+  const isDev = process.env.NODE_ENV === "development";
+  const devEmpty = isDev && params.devEmpty === "1";
+  const devSuffix = devEmpty ? "&devEmpty=1" : "";
 
   const tabs = [
     { key: "running", label: t("ranking.running") },
     { key: "p4p", label: "P4P" },
     { key: "weight", label: t("ranking.weightClass") },
     { key: "series", label: t("ranking.series") },
+    { key: "event", label: t("ranking.event") },
     { key: "streak", label: t("ranking.winStreak") },
     { key: "hof", label: t("ranking.hallOfFame") },
   ];
@@ -156,11 +161,16 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
   let seriesData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
   let seriesTypes: string[] = [];
-  const selectedSeries = params.series || "";
+  let selectedSeries = params.series || "";
 
   if (tab === "series") {
     const { data: events } = await supabase.from("events").select("series_type").order("series_type");
     seriesTypes = [...new Set((events ?? []).map((event: { series_type: string }) => event.series_type))];
+
+    // Auto-select first series type if none selected
+    if (!selectedSeries && seriesTypes.length > 0) {
+      selectedSeries = seriesTypes[0];
+    }
 
     if (selectedSeries) {
       const { data: seriesEvents } = await supabase
@@ -187,7 +197,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   /* ── Weight class ranking ── */
   let weightClassList: string[] = [];
   let weightClassUsers: Array<{ user_id: string; weight_class: string; wins: number; losses: number; score: number; user?: RankingUser }> = [];
-  const selectedWeight = params.series || ""; // reuse series param for weight class selection
+  let selectedWeight = params.series || ""; // reuse series param for weight class selection
 
   if (tab === "weight") {
     // Get all distinct weight classes
@@ -201,6 +211,11 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
       if (clean) wcSet.add(clean);
     }
     weightClassList = [...wcSet].sort((a, b) => getWeightClassOrder(a) - getWeightClassOrder(b));
+
+    // Auto-select first weight class if none selected
+    if (!selectedWeight && weightClassList.length > 0) {
+      selectedWeight = weightClassList[0];
+    }
 
     if (selectedWeight) {
       const { data } = await supabase
@@ -231,7 +246,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
   let eventRankData: Array<{ id: string; rank: number | null; score: number | null; user: RankingUser | null }> = [];
   let eventList: Array<{ id: string; name: string; date: string; status: string }> = [];
-  const selectedEvent = params.event || "";
+  let selectedEvent = params.event || "";
 
   if (tab === "event") {
     const { data: availableEvents } = await supabase
@@ -242,6 +257,11 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
       .limit(10);
 
     eventList = availableEvents ?? [];
+
+    // Auto-select first event if none selected
+    if (!selectedEvent && eventList.length > 0) {
+      selectedEvent = eventList[0].id;
+    }
 
     if (selectedEvent) {
       const { data } = await supabase
@@ -256,18 +276,47 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     }
   }
 
+  // In dev empty preview mode, force all data arrays empty
+  if (devEmpty) {
+    users = [];
+    p4pUsers = [];
+    streakUsers = [];
+    hofUsers = [];
+    seriesData = [];
+    weightClassUsers = [];
+    eventRankData = [];
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>
+          {isDev ? (
+            <Link
+              href={devEmpty
+                ? `/ranking?tab=${tab}${params.series ? `&series=${params.series}` : ""}${params.event ? `&event=${params.event}` : ""}`
+                : `/ranking?tab=${tab}${params.series ? `&series=${params.series}` : ""}${params.event ? `&event=${params.event}` : ""}&devEmpty=1`
+              }
+              className={cn(
+                "cursor-pointer rounded-[8px] px-2.5 py-1 text-[11px] font-semibold transition",
+                devEmpty
+                  ? "bg-[#991b1b] text-white"
+                  : "bg-[#333] text-[var(--bp-muted)] hover:text-white"
+              )}
+            >
+              {devEmpty ? "Empty Preview" : "Preview Empty"}
+            </Link>
+          ) : null}
+        </div>
         <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("rankingPage.description")}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           {tabs.map((item) => (
             <Link
               key={item.key}
-              href={`/ranking?tab=${item.key}`}
+              href={`/ranking?tab=${item.key}${devSuffix}`}
               className={retroSegmentClassName({ active: tab === item.key })}
             >
               {item.label}
@@ -304,16 +353,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               {weightClassList.map((wc) => (
                 <Link
                   key={wc}
-                  href={`/ranking?tab=weight&series=${encodeURIComponent(wc)}`}
+                  href={`/ranking?tab=weight&series=${encodeURIComponent(wc)}${devSuffix}`}
                   className={retroSegmentClassName({ active: selectedWeight === wc })}
                 >
                   {translateWeightClass(wc, locale)}
                 </Link>
               ))}
             </div>
-            {!selectedWeight ? (
-              <RetroEmptyState title={t("ranking.selectWeightClass")} />
-            ) : weightClassUsers.length === 0 ? (
+            {weightClassList.length === 0 || weightClassUsers.length === 0 ? (
               <RetroEmptyState title={t("common.noData")} />
             ) : (
               <div className="space-y-2">
@@ -330,36 +377,6 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               </div>
             )}
           </>
-        ) : null}
-
-        {tab === "series" ? (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {seriesTypes.map((seriesType) => (
-              <Link
-                key={seriesType}
-                href={`/ranking?tab=series&series=${seriesType}`}
-                className={retroSegmentClassName({ active: selectedSeries === seriesType })}
-              >
-                {getSeriesLabel(seriesType, t)}
-              </Link>
-            ))}
-          </div>
-        ) : null}
-
-        {tab === "event" ? (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {eventList.map((event) => (
-              <Link
-                key={event.id}
-                href={`/ranking?tab=event&event=${event.id}`}
-                className={retroSegmentClassName({ active: selectedEvent === event.id, className: "max-w-full" })}
-              >
-                <span className="truncate">
-                  {getLocalizedEventName(event, locale, event.name)}
-                </span>
-              </Link>
-            ))}
-          </div>
         ) : null}
 
         {tab === "running" ? (
@@ -381,14 +398,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
               <div className="flex items-center justify-between pt-2">
                 <Link
-                  href={page > 1 ? `/ranking?tab=running&page=${page - 1}` : "#"}
+                  href={page > 1 ? `/ranking?tab=running&page=${page - 1}${devSuffix}` : "#"}
                   className={cn(retroSegmentClassName({ active: false }), page <= 1 && "pointer-events-none opacity-40")}
                 >
                   ←
                 </Link>
                 <span className="text-sm text-[var(--bp-muted)]">{page}</span>
                 <Link
-                  href={hasNextPage ? `/ranking?tab=running&page=${page + 1}` : "#"}
+                  href={hasNextPage ? `/ranking?tab=running&page=${page + 1}${devSuffix}` : "#"}
                   className={cn(retroSegmentClassName({ active: false }), !hasNextPage && "pointer-events-none opacity-40")}
                 >
                   →
@@ -399,47 +416,71 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         ) : null}
 
         {tab === "series" ? (
-          !selectedSeries ? (
-            <RetroEmptyState title={t("common.noData")} description={t("ranking.series")} />
-          ) : seriesData.length === 0 ? (
-            <RetroEmptyState title={t("common.noData")} />
-          ) : (
-            <div className="space-y-2">
-              {seriesData.map((row, index) => (row.user ? (
-                <RankingRowFull
-                  key={row.id}
-                  rank={row.rank || index + 1}
-                  name={row.user.ring_name}
-                  record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
-                  score={row.score ?? row.user.score ?? 0}
-                  unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
-                />
-              ) : null))}
+          <>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {seriesTypes.map((seriesType) => (
+                <Link
+                  key={seriesType}
+                  href={`/ranking?tab=series&series=${seriesType}${devSuffix}`}
+                  className={retroSegmentClassName({ active: selectedSeries === seriesType })}
+                >
+                  {getSeriesLabel(seriesType, t)}
+                </Link>
+              ))}
             </div>
-          )
+            {seriesTypes.length === 0 || seriesData.length === 0 ? (
+              <RetroEmptyState title={t("common.noData")} />
+            ) : (
+              <div className="space-y-2">
+                {seriesData.map((row, index) => (row.user ? (
+                  <RankingRowFull
+                    key={row.id}
+                    rank={row.rank || index + 1}
+                    name={row.user.ring_name}
+                    record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
+                    score={row.score ?? row.user.score ?? 0}
+                    unknownLabel={t("ranking.unknown")}
+                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                  />
+                ) : null))}
+              </div>
+            )}
+          </>
         ) : null}
 
         {tab === "event" ? (
-          !selectedEvent ? (
-            <RetroEmptyState title={t("common.noData")} description={t("ranking.event")} />
-          ) : eventRankData.length === 0 ? (
-            <RetroEmptyState title={t("common.noData")} />
-          ) : (
-            <div className="space-y-2">
-              {eventRankData.map((row, index) => (row.user ? (
-                <RankingRowFull
-                  key={row.id}
-                  rank={row.rank || index + 1}
-                  name={row.user.ring_name}
-                  record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
-                  score={row.score ?? row.user.score ?? 0}
-                  unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
-                />
-              ) : null))}
+          <>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {eventList.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/ranking?tab=event&event=${event.id}${devSuffix}`}
+                  className={retroSegmentClassName({ active: selectedEvent === event.id, className: "max-w-full" })}
+                >
+                  <span className="truncate">
+                    {getLocalizedEventName(event, locale, event.name)}
+                  </span>
+                </Link>
+              ))}
             </div>
-          )
+            {eventList.length === 0 || eventRankData.length === 0 ? (
+              <RetroEmptyState title={t("common.noData")} />
+            ) : (
+              <div className="space-y-2">
+                {eventRankData.map((row, index) => (row.user ? (
+                  <RankingRowFull
+                    key={row.id}
+                    rank={row.rank || index + 1}
+                    name={row.user.ring_name}
+                    record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
+                    score={row.score ?? row.user.score ?? 0}
+                    unknownLabel={t("ranking.unknown")}
+                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                  />
+                ) : null))}
+              </div>
+            )}
+          </>
         ) : null}
 
         {tab === "streak" ? (
