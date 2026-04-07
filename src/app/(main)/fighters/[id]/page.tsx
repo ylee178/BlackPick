@@ -170,10 +170,12 @@ export default async function FighterDetailPage({ params }: PageProps) {
           { icon: GiGrapple, value: subWins, label: "SUB" },
           { icon: GiFlame, value: currentStreak > 0 ? `${currentStreak}` : `${winRate}%`, label: currentStreak > 0 ? "Streak" : "Win %" },
         ].map((stat) => (
-          <div key={stat.label} className="flex flex-col items-center gap-1 py-5">
-            <stat.icon className="text-[16px] text-[var(--bp-muted)]" />
-            <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
-            <span className="text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
+          <div key={stat.label} className="flex items-center justify-center gap-3 py-5">
+            <stat.icon className="text-[28px] text-[var(--bp-muted)] sm:text-[32px]" />
+            <div>
+              <span className="block text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
+              <span className="block text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
+            </div>
           </div>
         ))}
       </section>
