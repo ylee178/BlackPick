@@ -16,8 +16,9 @@ const COUNTRY_LOCALE_MAP: Record<string, Locale> = {
 };
 
 /**
- * If no NEXT_LOCALE cookie and no locale in URL, set cookie from CF-IPCountry
- * so next-intl middleware picks it up.
+ * If no NEXT_LOCALE cookie and no locale in URL, inject CF-IPCountry locale
+ * into the request cookie so next-intl middleware reads it during this request.
+ * next-intl then persists NEXT_LOCALE in the response Set-Cookie automatically.
  */
 function injectCountryLocale(req: NextRequest): void {
   if (req.cookies.get("NEXT_LOCALE")) return;

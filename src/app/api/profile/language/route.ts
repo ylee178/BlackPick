@@ -8,16 +8,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { language } = await req.json();
+  let body: { language?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { language } = body;
   if (!language || !locales.includes(language as Locale)) {
     return NextResponse.json({ error: "Invalid language" }, { status: 400 });
   }
 
   const supabase = await createSupabaseServer();
-  await supabase
+  const { error } = await supabase
     .from("users")
     .update({ preferred_language: language })
     .eq("id", user.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
