@@ -2,6 +2,7 @@ import { Link } from "@/i18n/navigation";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
+import { countryCodeToFlag } from "@/lib/flags";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import FightCard from "@/components/FightCard";
 import FlipTimer from "@/components/FlipTimer";
@@ -145,6 +146,25 @@ export default async function HomePage() {
   const nowTimestamp = Date.now();
   const pickedCount = fights.filter((f) => predictionMap.has(f.id)).length;
 
+  // Black Cup completed: find winning country (most wins)
+  const isBlackCup = featured?.series_type === "black_cup";
+  let blackCupWinnerFlag: string | null = null;
+  if (isBlackCup && eventStatus === "completed") {
+    const countryMap = new Map<string, number>();
+    for (const fight of fights) {
+      if (fight.status !== "completed" || !fight.winner_id) continue;
+      const winner = fight.winner_id === fight.fighter_a_id ? fight.fighter_a : fight.fighter_b;
+      const nat = (winner as Record<string, string | null> | null)?.nationality;
+      if (nat) countryMap.set(nat, (countryMap.get(nat) ?? 0) + 1);
+    }
+    let topCountry = "";
+    let topWins = 0;
+    for (const [country, wins] of countryMap) {
+      if (wins > topWins) { topCountry = country; topWins = wins; }
+    }
+    if (topCountry) blackCupWinnerFlag = countryCodeToFlag(topCountry);
+  }
+
   const localizedEventName = featured ? getLocalizedEventName(featured, locale, featured.name) : "";
 
   return (
@@ -190,6 +210,11 @@ export default async function HomePage() {
                   <RetroLabel size="sm" tone={getStatusTone(featured.status)}>
                     {t(`status.${featured.status}`)}
                   </RetroLabel>
+                  {blackCupWinnerFlag && (
+                    <RetroLabel size="sm" tone="accent">
+                      {blackCupWinnerFlag} WIN
+                    </RetroLabel>
+                  )}
                   <RetroLabel size="sm" tone="neutral">{getSeriesLabel(featured.series_type, t)}</RetroLabel>
                   <span className="text-xs text-[var(--bp-muted)]">{featured.date}</span>
                 </div>
