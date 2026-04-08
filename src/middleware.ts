@@ -1,8 +1,35 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
+import { locales, type Locale } from "./i18n/locales";
 
 const handleI18nRouting = createMiddleware(routing);
+
+// ── CF-IPCountry → locale mapping ──
+
+const COUNTRY_LOCALE_MAP: Record<string, Locale> = {
+  KR: "ko",
+  JP: "ja",
+  ES: "es", MX: "es", AR: "es", CL: "es", CO: "es",
+  CN: "zh-CN",
+  MN: "mn",
+};
+
+/**
+ * If no NEXT_LOCALE cookie and no locale in URL, set cookie from CF-IPCountry
+ * so next-intl middleware picks it up.
+ */
+function injectCountryLocale(req: NextRequest): void {
+  if (req.cookies.get("NEXT_LOCALE")) return;
+
+  const country = req.headers.get("cf-ipcountry");
+  if (!country) return;
+
+  const mapped = COUNTRY_LOCALE_MAP[country.toUpperCase()];
+  if (mapped && locales.includes(mapped)) {
+    req.cookies.set("NEXT_LOCALE", mapped);
+  }
+}
 
 // ── CORS for API routes ──
 
@@ -52,6 +79,9 @@ export default function middleware(req: NextRequest) {
   if (pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
+
+  // Inject country-based locale hint before i18n routing
+  injectCountryLocale(req);
 
   // Everything else → i18n routing
   return handleI18nRouting(req);
