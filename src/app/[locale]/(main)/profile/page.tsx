@@ -4,7 +4,7 @@ import { RetroEmptyState, retroButtonClassName, retroPanelClassName } from "@/co
 import ProfileSettings from "@/components/ProfileSettings";
 import { getUserBadges } from "@/lib/badge-service";
 import { BadgeList } from "@/components/BadgeChip";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 export const dynamic = "force-dynamic";
 

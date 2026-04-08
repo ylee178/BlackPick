@@ -73,6 +73,12 @@ export default function LanguagePicker() {
               onClick={() => {
                 setLocale(l);
                 setOpen(false);
+                // Persist to DB (fire-and-forget)
+                fetch("/api/profile/language", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ language: l }),
+                }).catch(() => {});
               }}
               className={cn(
                 "flex w-full cursor-pointer items-center justify-between rounded-[8px] px-3 py-2 text-sm transition",

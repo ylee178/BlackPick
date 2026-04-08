@@ -2,7 +2,7 @@ import { getUser } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { RetroEmptyState, retroButtonClassName, retroPanelClassName } from "@/components/ui/retro";
 import NotificationSettings from "@/components/NotificationSettings";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 export const dynamic = "force-dynamic";
 

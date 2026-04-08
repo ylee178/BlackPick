@@ -1,6 +1,6 @@
 import { retroPanelClassName, retroButtonClassName } from "@/components/ui/retro";
 import { SearchX, Home } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 export default function NotFound() {
   return (

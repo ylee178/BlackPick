@@ -21,6 +21,7 @@ export type Database = {
           hall_of_fame_count: number
           score: number
           p4p_score: number
+          preferred_language: string | null
           created_at: string
         }
         Insert: {
@@ -34,6 +35,7 @@ export type Database = {
           hall_of_fame_count?: number
           score?: number
           p4p_score?: number
+          preferred_language?: string | null
           created_at?: string
         }
         Update: {
@@ -47,6 +49,7 @@ export type Database = {
           hall_of_fame_count?: number
           score?: number
           p4p_score?: number
+          preferred_language?: string | null
           created_at?: string
         }
         Relationships: []

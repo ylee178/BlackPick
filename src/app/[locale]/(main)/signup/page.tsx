@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { mapAuthErrorCode, mapAuthErrorMessage } from "@/lib/auth-error";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";

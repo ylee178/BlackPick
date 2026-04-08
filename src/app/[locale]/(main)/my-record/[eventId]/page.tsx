@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";

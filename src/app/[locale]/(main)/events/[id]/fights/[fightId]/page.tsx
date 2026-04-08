@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import { fetchBcEventData } from "@/lib/bc-predictions";

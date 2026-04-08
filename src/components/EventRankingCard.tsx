@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedEventName } from "@/lib/localized-name";
 import { retroPanelClassName } from "@/components/ui/retro";

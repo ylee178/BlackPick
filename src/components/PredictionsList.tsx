@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { Search, Check, X, ChevronDown, Filter, ArrowUpDown } from "lucide-react";
 import { RetroLabel } from "@/components/ui/retro";

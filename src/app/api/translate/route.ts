@@ -7,11 +7,14 @@ type TranslatePayload = {
   target_locale?: string;
 };
 
-const VALID_LOCALES = ["en", "ko", "ja", "pt-BR"] as const;
+const VALID_LOCALES = ["en", "ko", "ja", "es", "zh-CN", "mn", "pt-BR"] as const;
 const LOCALE_TO_LANG: Record<string, string> = {
   en: "en",
   ko: "ko",
   ja: "ja",
+  es: "es",
+  "zh-CN": "zh",
+  mn: "mn",
   "pt-BR": "pt",
 };
 

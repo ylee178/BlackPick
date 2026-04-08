@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations, type Locale } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";

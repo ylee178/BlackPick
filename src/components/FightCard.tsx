@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import FightCardPicker from "@/components/FightCardPicker";
 import FighterAvatar from "@/components/FighterAvatar";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
