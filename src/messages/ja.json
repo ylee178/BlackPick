@@ -10,7 +10,9 @@
     "picks": "勝負予想",
     "results": "戦績板",
     "myRecord": "マイ戦績",
-    "fighters": "選手"
+    "fighters": "選手",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー"
   },
   "event": {
     "upcoming": "開催予定",
@@ -39,9 +41,11 @@
     "eventOverview": "イベント概要",
     "fights": "試合",
     "fightListTitle": "誰が勝つ？",
+    "fightResultTitle": "試合結果",
     "fightListDescription": "試合を分析して勝者を予測しよう",
     "status": "ステータス",
     "totalFights": "試合",
+    "picked": "予想済み",
     "allEvents": "全イベント"
   },
   "prediction": {
@@ -76,6 +80,7 @@
     "currentStreak": "現在の連勝",
     "bestStreak": "最高連勝",
     "hallOfFame": "殿堂入り",
+    "perfectCard": "パーフェクト",
     "ranking": "ランキング",
     "recentPredictions": "最近の予想",
     "signInToView": "閲覧するにはログインしてください",

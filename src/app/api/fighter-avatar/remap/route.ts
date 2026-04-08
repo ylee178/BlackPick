@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { getUser } from "@/lib/supabase-server";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const UUID_PNG_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(_v\d+)?\.png$/;
 
 type Remap = {
   from_fighter: string;
@@ -9,6 +14,11 @@ type Remap = {
 };
 
 export async function POST(req: NextRequest) {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { remaps } = (await req.json()) as { remaps: Remap[] };
   if (!remaps || remaps.length === 0) {
     return NextResponse.json({ error: "remaps required" }, { status: 400 });
@@ -18,9 +28,13 @@ export async function POST(req: NextRequest) {
   const results: string[] = [];
 
   for (const remap of remaps) {
-    // Extract filename from URL
     const filename = remap.image_url.split("/").pop();
-    if (!filename) continue;
+    if (!filename || !UUID_PNG_RE.test(filename)) continue;
+
+    if (!UUID_RE.test(remap.to_fighter)) {
+      results.push(`SKIP: invalid to_fighter ID`);
+      continue;
+    }
 
     const srcPath = path.join(pixelDir, filename);
     if (!fs.existsSync(srcPath)) {
@@ -28,11 +42,9 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    // Determine version suffix
     const versionMatch = filename.match(/_v\d+/);
     const version = versionMatch ? versionMatch[0] : "";
 
-    // Move to new fighter ID
     const dstFilename = `${remap.to_fighter}${version}.png`;
     const dstPath = path.join(pixelDir, dstFilename);
 

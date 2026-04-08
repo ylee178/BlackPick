@@ -9,10 +9,15 @@ import {
   retroButtonClassName,
   retroSegmentClassName,
 } from "@/components/ui/retro";
-import { ScoreTrendChart } from "@/components/ScoreTrendChart";
+import nextDynamic from "next/dynamic";
+const ScoreTrendChart = nextDynamic(
+  () => import("@/components/ScoreTrendChart").then((m) => m.ScoreTrendChart),
+);
 import { ScoreValue, RankBadge } from "@/components/ui/ranking";
 import { Flame, TrendingUp, TrendingDown } from "lucide-react";
 import { getWeightClassOrder } from "@/lib/weight-class";
+import { getUserBadges } from "@/lib/badge-service";
+import { BadgeList } from "@/components/BadgeChip";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +128,8 @@ export default async function MyRecordDashboardPage({
       .eq("user_id", authUser.id)
       .order("created_at", { ascending: true }),
   ]);
+
+  const badges = await getUserBadges(supabase, authUser.id);
 
   const wins = profile?.wins ?? 0;
   const losses = profile?.losses ?? 0;
@@ -412,6 +419,11 @@ export default async function MyRecordDashboardPage({
       <h1 className="text-[32px] font-bold leading-tight text-[var(--bp-ink)]">
         {t("myRecord.dashboard")}
       </h1>
+
+      {/* Badges */}
+      {badges.length > 0 && (
+        <BadgeList badges={badges} size="md" />
+      )}
 
       {/* Time range segmented control */}
       <div className="flex flex-wrap gap-2">

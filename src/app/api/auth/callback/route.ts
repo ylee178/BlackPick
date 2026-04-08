@@ -11,5 +11,8 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(new URL(next, request.url));
+  // Only allow internal relative paths — block open redirect
+  const safePath = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+
+  return NextResponse.redirect(new URL(safePath, request.url));
 }

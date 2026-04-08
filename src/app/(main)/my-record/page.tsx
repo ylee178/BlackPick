@@ -92,12 +92,19 @@ export default async function MyRecordPage() {
     eventId: string; eventName: string; eventDate: string;
   }>;
 
+  // Perfect card events for this user
+  const { data: perfectCards } = await supabase
+    .from("perfect_card_entries")
+    .select("event_id")
+    .eq("user_id", authUser.id);
+  const perfectEventIds = new Set((perfectCards ?? []).map((pc) => pc.event_id));
+
   return (
     <div>
       <h1 className="mb-5 text-2xl font-bold text-[var(--bp-ink)]">
         {t("nav.myRecord")} <span className="text-[var(--bp-muted)]">({items.length})</span>
       </h1>
-      <PredictionsList items={items} />
+      <PredictionsList items={items} perfectEventIds={[...perfectEventIds]} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   retroFieldClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
+import { MentionInput, type MentionUser } from "@/components/MentionInput";
 
 type Comment = {
   id: string;
@@ -21,8 +22,6 @@ type Comment = {
   is_liked: boolean;
   users: { id: string; ring_name: string } | null;
 };
-
-type MentionUser = { id: string; ring_name: string };
 
 function detectLang(text: string): string {
   const clean = text.replace(/@\S+/g, "").trim();
@@ -236,6 +235,15 @@ export default function FighterComments({ fighterId, currentUserInitial }: { fig
     try { await fetch(`${API_BASE}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comment_id: commentId }) }); } catch { await fetchComments(); }
   }
 
+  const mentionUsers: MentionUser[] = [];
+  const seenIds = new Set<string>();
+  for (const c of comments) {
+    if (c.users && !seenIds.has(c.users.id) && c.users.id !== currentUserId) {
+      seenIds.add(c.users.id);
+      mentionUsers.push({ id: c.users.id, ring_name: c.users.ring_name });
+    }
+  }
+
   const topLevel = comments.filter((c) => !c.parent_id);
   const flatRepliesMap = new Map<string, Comment[]>();
   const directMap = new Map<string, Comment[]>();
@@ -267,7 +275,7 @@ export default function FighterComments({ fighterId, currentUserInitial }: { fig
         <form onSubmit={handleSubmit} className="mt-4 border-t border-[var(--bp-line)] pt-3">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bp-accent-dim)] text-xs font-bold text-[var(--bp-accent)]">{(currentUserInitial ?? "?").toUpperCase()}</div>
-            <input value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} placeholder={t("discussion.placeholder")} className={cn("w-full", retroFieldClassName("!min-h-[40px] !rounded-[10px] !px-3 !text-sm"))} />
+            <MentionInput value={body} onChange={setBody} mentionUsers={mentionUsers} maxLength={500} placeholder={t("discussion.placeholder")} className={retroFieldClassName("!min-h-[40px] !rounded-[10px] !px-3 !text-sm")} />
             <button type="submit" disabled={submitting || !body.trim()} className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}>
               <Send className="h-3.5 w-3.5" strokeWidth={2} />{submitting ? "..." : t("discussion.post")}
             </button>

@@ -10,7 +10,9 @@
     "picks": "Predict",
     "results": "Scoreboard",
     "myRecord": "My Record",
-    "fighters": "Fighters"
+    "fighters": "Fighters",
+    "terms": "Terms",
+    "privacy": "Privacy"
   },
   "event": {
     "upcoming": "Upcoming",
@@ -40,9 +42,11 @@
     "eventOverview": "Event Overview",
     "fights": "Fights",
     "fightListTitle": "Who's Taking This?",
+    "fightResultTitle": "Fight Results",
     "fightListDescription": "Break down the fights and make your picks",
     "status": "Status",
     "totalFights": "Fights",
+    "picked": "Picked",
     "allEvents": "All Events"
   },
   "prediction": {
@@ -77,6 +81,7 @@
     "currentStreak": "Current Streak",
     "bestStreak": "Best Streak",
     "hallOfFame": "Hall of Fame",
+    "perfectCard": "Perfect",
     "ranking": "Ranking",
     "recentPredictions": "Recent Predictions",
     "signInToView": "Sign in to view",

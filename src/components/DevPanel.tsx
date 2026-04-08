@@ -9,19 +9,19 @@ const isDev = process.env.NODE_ENV === "development";
 export default function DevPanel() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState<"full" | "empty" | null>(null);
+  const [loading, setLoading] = useState<"full" | "empty" | "complete" | null>(null);
   const [message, setMessage] = useState("");
 
   if (!isDev) return null;
 
-  async function runSeed(action: "full" | "empty") {
+  async function runSeed(action: "full" | "empty" | "complete") {
     setLoading(action);
     setMessage("");
     try {
       const res = await fetch("/api/dev/seed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action: action === "complete" ? "complete-fights" : action }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed");
@@ -29,7 +29,9 @@ export default function DevPanel() {
       setMessage(
         action === "full"
           ? `${data.created_users} users · ${data.created_comments ?? 0} comments · ${data.created_likes ?? 0} likes`
-          : `${data.deleted_users ?? 0} users removed`
+          : action === "complete"
+            ? `${data.completed_fights ?? 0} fights · ${data.completed_events ?? 0} events completed`
+            : `${data.deleted_users ?? 0} users removed`
       );
       router.refresh();
     } catch (e) {
@@ -65,18 +67,25 @@ export default function DevPanel() {
       </div>
 
       {/* Actions */}
-      <div className="grid grid-cols-2 gap-2 p-3">
+      <div className="grid grid-cols-3 gap-2 p-3">
         <button
           onClick={() => void runSeed("full")}
           disabled={loading !== null}
-          className="rounded-[8px] bg-[#6d28d9] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#7c3aed] disabled:opacity-50"
+          className="cursor-pointer rounded-[8px] bg-[#6d28d9] px-2 py-2.5 text-xs font-bold text-white transition hover:bg-[#7c3aed] disabled:opacity-50"
         >
           {loading === "full" ? "..." : "Full Data"}
         </button>
         <button
+          onClick={() => void runSeed("complete")}
+          disabled={loading !== null}
+          className="cursor-pointer rounded-[8px] bg-[#0e7490] px-2 py-2.5 text-xs font-bold text-white transition hover:bg-[#0891b2] disabled:opacity-50"
+        >
+          {loading === "complete" ? "..." : "Complete"}
+        </button>
+        <button
           onClick={() => void runSeed("empty")}
           disabled={loading !== null}
-          className="rounded-[8px] bg-[#991b1b] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#b91c1c] disabled:opacity-50"
+          className="cursor-pointer rounded-[8px] bg-[#991b1b] px-2 py-2.5 text-xs font-bold text-white transition hover:bg-[#b91c1c] disabled:opacity-50"
         >
           {loading === "empty" ? "..." : "Empty"}
         </button>

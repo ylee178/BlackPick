@@ -44,7 +44,8 @@ function Dropdown({ label, open, onToggle, children }: { label: React.ReactNode;
   );
 }
 
-export default function PredictionsList({ items }: { items: PredItem[] }) {
+export default function PredictionsList({ items, perfectEventIds: perfectEventIdsArr = [] }: { items: PredItem[]; perfectEventIds?: string[] }) {
+  const perfectEventIds = new Set(perfectEventIdsArr);
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
@@ -236,6 +237,7 @@ export default function PredictionsList({ items }: { items: PredItem[] }) {
                   <span className="truncate">{group.eventName}</span>
                   <span className="shrink-0 text-xs font-normal text-[var(--bp-muted)]">{group.eventDate}</span>
                   {isUpcoming && <RetroLabel size="xs" tone="info">{t("status.upcoming")}</RetroLabel>}
+                  {!isUpcoming && perfectEventIds.has(group.eventId) && <RetroLabel size="xs" tone="accent">Perfect Prediction</RetroLabel>}
                 </Link>
                 {!isUpcoming && (
                   <div className="flex shrink-0 items-center gap-1 rounded-[8px] border border-[rgba(255,255,255,0.06)] bg-[#0a0a0a] px-2.5 py-1 text-xs tabular-nums text-[var(--bp-muted)]">

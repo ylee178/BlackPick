@@ -158,10 +158,10 @@ export default async function AdminEventDetailPage({
     supabase.from('events').select('*').eq('id', id).single(),
     supabase
       .from('fights')
-      .select('*')
+      .select('id, event_id, fighter_a_id, fighter_b_id, winner_id, method, round, start_time, status')
       .eq('event_id', id)
       .order('start_time', { ascending: true }),
-    supabase.from('fighters').select('*').order('name', { ascending: true }),
+    supabase.from('fighters').select('*').order('name', { ascending: true }).limit(500),
   ])
 
   if (!event) {

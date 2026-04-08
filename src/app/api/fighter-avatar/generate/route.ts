@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { getUser } from "@/lib/supabase-server";
+import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
+
+const generateLimiter = createRateLimiter({ limit: 5, windowSeconds: 3600 }); // 5 per hour
 
 const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -22,11 +26,9 @@ const PROMPT_GENERATE = `Create a 90s arcade pixel art portrait of this fighter 
 5) Warm color palette. No purple or magenta tints on skin or lips. No text, no UI, no watermarks.`;
 
 function getApiKey(): string {
-  const envPath = path.join(process.cwd(), ".env");
-  const content = fs.readFileSync(envPath, "utf8");
-  const match = content.match(/GEMINI_API_KEY=(.+)/);
-  if (!match) throw new Error("GEMINI_API_KEY not found");
-  return match[1].trim();
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("GEMINI_API_KEY not found");
+  return key;
 }
 
 function findSourcePhoto(fighterId: string): string | null {
@@ -35,12 +37,15 @@ function findSourcePhoto(fighterId: string): string | null {
   if (fs.existsSync(refPath)) return refPath;
 
   // 2. Manifest
-  const manifestPath = path.join(process.cwd(), "Fighter_Images", "_manifest.json");
+  const baseDir = path.join(process.cwd(), "Fighter_Images");
+  const manifestPath = path.join(baseDir, "_manifest.json");
   if (fs.existsSync(manifestPath)) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
     const entry = manifest.find((e: { db_id?: string }) => e.db_id === fighterId);
     if (entry) {
-      const p = path.join(process.cwd(), "Fighter_Images", entry.filename);
+      const p = path.resolve(baseDir, entry.filename);
+      // Block directory traversal from manifest filenames
+      if (!p.startsWith(baseDir + path.sep)) return null;
       if (fs.existsSync(p)) return p;
     }
   }
@@ -49,9 +54,20 @@ function findSourcePhoto(fighterId: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { allowed, resetInSeconds } = generateLimiter.check(user.id);
+  if (!allowed) return rateLimitResponse(resetInSeconds);
+
   const { fighter_id } = await req.json();
-  if (!fighter_id) {
-    return NextResponse.json({ error: "fighter_id required" }, { status: 400 });
+  if (
+    !fighter_id ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(fighter_id)
+  ) {
+    return NextResponse.json({ error: "valid fighter_id required" }, { status: 400 });
   }
 
   const apiKey = getApiKey();

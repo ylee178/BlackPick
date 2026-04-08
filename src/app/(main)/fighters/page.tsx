@@ -5,10 +5,9 @@ import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import FighterGrid from "@/components/FighterGrid";
-import fs from "fs";
-import path from "path";
+import { getPixelFiles } from "@/lib/pixel-files";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR: 5 minutes
 
 export default async function FightersPage() {
   const supabase = await createSupabaseServer();
@@ -17,14 +16,10 @@ export default async function FightersPage() {
   const { data: fighters } = await supabase
     .from("fighters")
     .select("id, name, ring_name, name_en, name_ko, record, nationality, weight_class, image_url")
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .limit(500);
 
-  const pixelDir = path.join(process.cwd(), "public/fighters/pixel");
-  const pixelFiles = new Set(
-    fs.existsSync(pixelDir)
-      ? fs.readdirSync(pixelDir).filter((f) => /^[0-9a-f-]+\.png$/.test(f))
-      : []
-  );
+  const pixelFiles = getPixelFiles();
 
   const items = (fighters ?? []).map((f) => ({
     id: f.id,

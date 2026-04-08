@@ -613,6 +613,74 @@ export type Database = {
           }
         ]
       }
+      fighter_comments: {
+        Row: {
+          id: string
+          fighter_id: string
+          user_id: string
+          parent_id: string | null
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          fighter_id: string
+          user_id: string
+          parent_id?: string | null
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          fighter_id?: string
+          user_id?: string
+          parent_id?: string | null
+          body?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'fighter_comments_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'fighter_comments_fighter_id_fkey'
+            columns: ['fighter_id']
+            isOneToOne: false
+            referencedRelation: 'fighters'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      fighter_comment_likes: {
+        Row: {
+          comment_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          comment_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          comment_id?: string
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'fighter_comment_likes_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -12,6 +12,9 @@ import {
   retroSegmentClassName,
 } from "@/components/ui/retro";
 import { RankingRowFull } from "@/components/ui/ranking";
+import { getUsersBadgeMap } from "@/lib/badge-service";
+import { BadgeList } from "@/components/BadgeChip";
+import type { EarnedBadge } from "@/lib/badge-config";
 
 const PAGE_SIZE = 50;
 
@@ -34,9 +37,11 @@ type RankingUser = {
   score: number | null;
 };
 
-function UserExtra({ user, labels }: { user: RankingUser; labels: { streak: string; hallOfFame: string } }) {
+function UserExtra({ user, labels, badges }: { user: RankingUser; labels: { streak: string; hallOfFame: string; perfectCard: string }; badges?: EarnedBadge[] }) {
+  const perfectCount = badges?.find((b) => b.type === "perfect_card")?.count ?? 0;
   return (
     <div className="hidden items-center gap-5 md:flex">
+      {badges && badges.length > 0 && <BadgeList badges={badges} size="sm" limit={3} />}
       <div className="text-center">
         <p className="flex items-center justify-center gap-0.5 text-xs text-[var(--bp-muted)]">
           <Flame className="h-3 w-3 text-[var(--bp-accent)]" strokeWidth={2} />
@@ -50,6 +55,12 @@ function UserExtra({ user, labels }: { user: RankingUser; labels: { streak: stri
         <p className="text-xs text-[var(--bp-muted)]">{labels.hallOfFame}</p>
         <p className="text-xs font-semibold text-[var(--bp-ink)]">{user.hall_of_fame_count ?? 0}</p>
       </div>
+      {perfectCount > 0 && (
+        <div className="text-center">
+          <p className="text-xs text-[var(--bp-muted)]">{labels.perfectCard}</p>
+          <p className="text-xs font-semibold text-purple-300">{perfectCount}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -287,6 +298,16 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     eventRankData = [];
   }
 
+  // Batch badge query for visible users
+  const allUserIds = [
+    ...users.map((u) => u.id),
+    ...p4pUsers.map((u) => u.id),
+    ...streakUsers.map((u) => u.id),
+  ];
+  const badgeMap = allUserIds.length > 0
+    ? await getUsersBadgeMap(supabase, allUserIds)
+    : {};
+
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
@@ -340,7 +361,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
                   score={user.p4p_score}
                   unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} badges={badgeMap[user.id]} />}
                 />
               ))}
             </div>
@@ -392,7 +413,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
                   score={user.score ?? 0}
                   unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} badges={badgeMap[user.id]} />}
                 />
               ))}
 
@@ -440,7 +461,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                     record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
                     score={row.score ?? row.user.score ?? 0}
                     unknownLabel={t("ranking.unknown")}
-                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} />}
                   />
                 ) : null))}
               </div>
@@ -475,7 +496,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                     record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
                     score={row.score ?? row.user.score ?? 0}
                     unknownLabel={t("ranking.unknown")}
-                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} />}
                   />
                 ) : null))}
               </div>
@@ -496,7 +517,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
                   score={`${user.current_streak ?? 0}W`}
                   unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame") }} />}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} />}
                 />
               ))}
             </div>

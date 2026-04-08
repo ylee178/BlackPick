@@ -2,7 +2,10 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedFighterName } from "@/lib/localized-name";
 import { countryCodeToFlag } from "@/lib/flags";
-import FighterImageManager from "@/components/FighterImageManager";
+import dynamicImport from "next/dynamic";
+const FighterImageManager = dynamicImport(
+  () => import("@/components/FighterImageManager"),
+);
 import fs from "fs";
 import path from "path";
 

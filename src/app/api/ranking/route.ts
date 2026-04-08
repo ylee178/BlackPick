@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
+function jsonCached(data: unknown, maxAge = 300) {
+  return NextResponse.json(data, {
+    headers: {
+      "Cache-Control": `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
+    },
+  });
+}
+
 const PAGE_SIZE = 50;
 
 export async function GET(request: NextRequest) {
@@ -81,7 +89,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({
+    return jsonCached({
       type,
       page,
       page_size: PAGE_SIZE,
@@ -121,7 +129,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
+  return jsonCached({
     type,
     reference_id: referenceId,
     page,

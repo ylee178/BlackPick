@@ -10,7 +10,9 @@
     "picks": "승부예측",
     "results": "나의 전적",
     "myRecord": "나의 전적",
-    "fighters": "선수"
+    "fighters": "선수",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침"
   },
   "event": {
     "upcoming": "예정",
@@ -40,9 +42,11 @@
     "eventOverview": "이벤트 개요",
     "fights": "경기",
     "fightListTitle": "누가 이길까?",
+    "fightResultTitle": "경기 결과",
     "fightListDescription": "경기를 분석하고 승자를 예측하세요",
     "status": "상태",
-    "totalFights": "총 경기",
+    "totalFights": "경기",
+    "picked": "예측완료",
     "allEvents": "전체 이벤트"
   },
   "prediction": {
@@ -77,6 +81,7 @@
     "currentStreak": "현재 연승",
     "bestStreak": "최고 연승",
     "hallOfFame": "명예의 전당",
+    "perfectCard": "퍼펙트",
     "ranking": "랭킹",
     "recentPredictions": "최근 예측",
     "signInToView": "로그인 후 확인",

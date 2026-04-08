@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
+import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
+
+const commentLimiter = createRateLimiter({ limit: 20, windowSeconds: 60 });
 
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServer();
@@ -58,6 +61,9 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { allowed, resetInSeconds } = commentLimiter.check(user.id);
+  if (!allowed) return rateLimitResponse(resetInSeconds);
 
   let payload: { fighter_id?: string; body?: string; parent_id?: string | null };
   try {

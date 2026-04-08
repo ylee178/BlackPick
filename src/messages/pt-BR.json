@@ -10,7 +10,9 @@
     "picks": "Palpites",
     "results": "Placar",
     "myRecord": "Meu Cartel",
-    "fighters": "Lutadores"
+    "fighters": "Lutadores",
+    "terms": "Termos",
+    "privacy": "Privacidade"
   },
   "event": {
     "upcoming": "Em breve",
@@ -39,9 +41,11 @@
     "eventOverview": "Visao geral",
     "fights": "Lutas",
     "fightListTitle": "Quem leva essa?",
+    "fightResultTitle": "Resultados",
     "fightListDescription": "Analise as lutas e faca suas escolhas",
     "status": "Status",
     "totalFights": "Lutas",
+    "picked": "Palpitado",
     "allEvents": "Todos os eventos"
   },
   "prediction": {
@@ -76,6 +80,7 @@
     "currentStreak": "Sequência atual",
     "bestStreak": "Melhor sequência",
     "hallOfFame": "Hall da Fama",
+    "perfectCard": "Perfeito",
     "ranking": "Ranking",
     "recentPredictions": "Palpites recentes",
     "signInToView": "Entre para visualizar",

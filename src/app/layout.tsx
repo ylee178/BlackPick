@@ -3,12 +3,37 @@ import "./globals.css";
 import DevPanel from "@/components/DevPanel";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { getSiteUrl } from "@/lib/env";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  title: "Black Pick — Who Is The Pick?",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Black Pick — Who Is The Pick?",
+    template: "%s | Black Pick",
+  },
   description: "Black Combat fight prediction platform. Predict fights, build your record, prove you know the game.",
+  openGraph: {
+    type: "website",
+    siteName: "Black Pick",
+    title: "Black Pick — Who Is The Pick?",
+    description: "Black Combat fight prediction platform. Predict fights, build your record.",
+    url: siteUrl,
+    images: [{ url: "/og/default.png", width: 1200, height: 630, alt: "Black Pick" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Black Pick — Who Is The Pick?",
+    description: "Black Combat fight prediction platform.",
+    images: ["/og/default.png"],
+  },
+  robots: {
+    index: process.env.NODE_ENV === "production",
+    follow: process.env.NODE_ENV === "production",
+  },
 };
 
 export default function RootLayout({

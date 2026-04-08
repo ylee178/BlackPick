@@ -113,6 +113,21 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
           {children}
         </main>
 
+        {/* Footer */}
+        <footer className="hidden lg:block border-t border-[var(--bp-line)] py-6">
+          <div className="mx-auto max-w-[1200px] flex items-center justify-between px-4 sm:px-6 text-xs text-[var(--bp-muted)]">
+            <span>&copy; {new Date().getFullYear()} BlackPick</span>
+            <div className="flex items-center gap-4">
+              <Link href="/terms" className="hover:text-[var(--bp-ink)] transition-colors cursor-pointer">
+                {t("nav.terms")}
+              </Link>
+              <Link href="/privacy" className="hover:text-[var(--bp-ink)] transition-colors cursor-pointer">
+                {t("nav.privacy")}
+              </Link>
+            </div>
+          </div>
+        </footer>
+
         {needsRingNameOnboarding ? (
           <RingNameOnboarding email={authUser?.email ?? null} />
         ) : null}

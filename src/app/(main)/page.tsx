@@ -20,7 +20,7 @@ import {
 import { RankingRowCompact } from "@/components/ui/ranking";
 import type { Database } from "@/types/database";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: 1 minute
 
 type EventRow = {
   id: string;
@@ -203,11 +203,11 @@ export default async function HomePage() {
                 </p>
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-                  <span className="font-semibold text-[var(--bp-ink)]">{fights.length} {t("event.totalFights")}</span>
+                  <span className="text-[var(--bp-muted)]"><span className="font-semibold text-[var(--bp-ink)]">{fights.length}</span> {t("event.totalFights")}</span>
                   {authUser ? (
                     <>
                       <span className="text-[var(--bp-muted)]">·</span>
-                      <span className="text-[var(--bp-muted)]">My Pick <span className="font-semibold text-[var(--bp-ink)]">{pickedCount}/{fights.length}</span></span>
+                      <span className="text-[var(--bp-muted)]"><span className="font-semibold text-[var(--bp-ink)]">{pickedCount}/{fights.length}</span> {t("event.picked")}</span>
                     </>
                   ) : null}
                 </div>
@@ -267,7 +267,7 @@ export default async function HomePage() {
           {fights.length > 0 ? (
             <>
               <h2 className="mb-4 text-xl font-bold tracking-tight text-[var(--bp-ink)]">
-                {t("event.fightListTitle")}
+                {eventStatus === "completed" ? t("event.fightResultTitle") : t("event.fightListTitle")}
               </h2>
 
               <div className="flex flex-col gap-6">

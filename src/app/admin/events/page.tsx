@@ -35,6 +35,7 @@ export default function AdminEventsPage() {
       .from('events')
       .select('*')
       .order('date', { ascending: false })
+      .limit(200)
 
     if (error) {
       setError(error.message)

@@ -177,7 +177,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
               {stat.hasFlame && <Flame className="h-5 w-5 text-[var(--bp-accent)]" strokeWidth={2} />}
               <span className="text-xl font-bold text-[var(--bp-ink)] sm:text-2xl">{stat.value}</span>
             </div>
-            <span className="text-[11px] text-[var(--bp-muted)]">{stat.label}</span>
+            <span className="text-xs text-[var(--bp-muted)]">{stat.label}</span>
           </div>
         ))}
       </section>
