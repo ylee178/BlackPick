@@ -92,42 +92,43 @@ export default async function MyRecordPage() {
     eventId: string; eventName: string; eventDate: string;
   }>;
 
-  // Black Cup: compute winning country per event
-  const blackCupWinners: Record<string, string> = {}; // eventId → flag emoji
+  // Black Cup: compute winning country per event (cup matches only)
+  const blackCupWinners: Record<string, string> = {};
   {
-    const bcEvents = new Set<string>();
-    const eventFights = new Map<string, { winnerId: string | null; aId: string | null; bId: string | null; aNat: string | null; bNat: string | null }[]>();
-
-    for (const p of preds ?? []) {
-      const fight = p.fight as Record<string, unknown> | null;
-      if (!fight) continue;
-      const event = fight.event as Record<string, string | null> | null;
-      if (event?.series_type !== "black_cup") continue;
-      const eid = event?.id ?? "";
-      if (!eid) continue;
-      bcEvents.add(eid);
-      const fa = fight.fighter_a as Record<string, string | null> | null;
-      const fb = fight.fighter_b as Record<string, string | null> | null;
-      const arr = eventFights.get(eid) ?? [];
-      arr.push({
-        winnerId: fight.winner_id as string | null,
-        aId: fa?.id ?? null, bId: fb?.id ?? null,
-        aNat: fa?.nationality ?? null, bNat: fb?.nationality ?? null,
-      });
-      eventFights.set(eid, arr);
+    // Collect Black Cup event IDs from user's predictions
+    const bcEventIds = new Set<string>();
+    for (const item of items) {
+      if (!item) continue;
+      // Check series_type from the raw prediction data
+      const pred = (preds ?? []).find((p: RawPred) => p.id === item.id);
+      const fight = pred?.fight as Record<string, unknown> | null;
+      const event = fight?.event as Record<string, string | null> | null;
+      if (event?.series_type === "black_cup" && event?.id) bcEventIds.add(event.id);
     }
 
-    for (const eid of bcEvents) {
-      const countryMap = new Map<string, number>();
-      for (const f of eventFights.get(eid) ?? []) {
-        if (!f.winnerId) continue;
-        const nat = f.winnerId === f.aId ? f.aNat : f.bNat;
-        if (nat) countryMap.set(nat, (countryMap.get(nat) ?? 0) + 1);
+    if (bcEventIds.size > 0) {
+      // Fetch all cup-match fights for these events (not just user's predictions)
+      const { data: cupFights } = await supabase
+        .from("fights")
+        .select("event_id, winner_id, fighter_a_id, fighter_b_id, fighter_a:fighters!fighter_a_id(nationality), fighter_b:fighters!fighter_b_id(nationality)")
+        .in("event_id", [...bcEventIds])
+        .eq("is_cup_match", true)
+        .eq("status", "completed");
+
+      for (const eid of bcEventIds) {
+        const countryMap = new Map<string, number>();
+        for (const f of (cupFights ?? []).filter((cf: { event_id: string }) => cf.event_id === eid)) {
+          if (!f.winner_id) continue;
+          const winnerNat = f.winner_id === f.fighter_a_id
+            ? (f.fighter_a as Record<string, string | null> | null)?.nationality
+            : (f.fighter_b as Record<string, string | null> | null)?.nationality;
+          if (winnerNat) countryMap.set(winnerNat, (countryMap.get(winnerNat) ?? 0) + 1);
+        }
+        let top = "";
+        let topN = 0;
+        for (const [c, n] of countryMap) { if (n > topN) { top = c; topN = n; } }
+        if (top) blackCupWinners[eid] = countryCodeToFlag(top);
       }
-      let top = "";
-      let topN = 0;
-      for (const [c, n] of countryMap) { if (n > topN) { top = c; topN = n; } }
-      if (top) blackCupWinners[eid] = countryCodeToFlag(top);
     }
   }
 

@@ -146,13 +146,15 @@ export default async function HomePage() {
   const nowTimestamp = Date.now();
   const pickedCount = fights.filter((f) => predictionMap.has(f.id)).length;
 
-  // Black Cup completed: find winning country (most wins)
+  // Black Cup completed: find winning country (cup matches only)
   const isBlackCup = featured?.series_type === "black_cup";
   let blackCupWinnerFlag: string | null = null;
   if (isBlackCup && eventStatus === "completed") {
     const countryMap = new Map<string, number>();
     for (const fight of fights) {
       if (fight.status !== "completed" || !fight.winner_id) continue;
+      // Only count cup match fights (skip undercard)
+      if (!(fight as Record<string, unknown>).is_cup_match) continue;
       const winner = fight.winner_id === fight.fighter_a_id ? fight.fighter_a : fight.fighter_b;
       const nat = (winner as Record<string, string | null> | null)?.nationality;
       if (nat) countryMap.set(nat, (countryMap.get(nat) ?? 0) + 1);

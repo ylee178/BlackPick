@@ -140,6 +140,7 @@ export type Database = {
           winner_id: string | null
           method: 'KO/TKO' | 'Submission' | 'Decision' | null
           round: number | null
+          is_cup_match: boolean
           created_at: string
         }
         Insert: {
@@ -149,6 +150,7 @@ export type Database = {
           fighter_b_id: string
           start_time: string
           status?: 'upcoming' | 'completed' | 'cancelled'
+          is_cup_match?: boolean
           winner_id?: string | null
           method?: 'KO/TKO' | 'Submission' | 'Decision' | null
           round?: number | null
@@ -164,6 +166,7 @@ export type Database = {
           winner_id?: string | null
           method?: 'KO/TKO' | 'Submission' | 'Decision' | null
           round?: number | null
+          is_cup_match?: boolean
           created_at?: string
         }
         Relationships: [
