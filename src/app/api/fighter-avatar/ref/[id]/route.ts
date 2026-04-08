@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
-import path from "path";
+import { findFighterReferenceFile, getFighterPixelFilepath } from "@/lib/fighter-reference-files";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const filepath = path.join(process.cwd(), "Fighter_Images", "refs", `${id}.png`);
-
-  if (!fs.existsSync(filepath)) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
+  // Original reference photo takes priority — pixel is the cropped derivative
+  const referenceFile = findFighterReferenceFile(id);
+  if (referenceFile) {
+    const buffer = fs.readFileSync(referenceFile.filepath);
+    return new NextResponse(buffer, {
+      headers: { "Content-Type": referenceFile.contentType, "Cache-Control": "no-cache" },
+    });
   }
 
-  const buffer = fs.readFileSync(filepath);
-  return new NextResponse(buffer, {
-    headers: { "Content-Type": "image/png", "Cache-Control": "no-cache" },
-  });
+  const pixelPath = getFighterPixelFilepath(id);
+  if (fs.existsSync(pixelPath)) {
+    const buffer = fs.readFileSync(pixelPath);
+    return new NextResponse(buffer, {
+      headers: { "Content-Type": "image/png", "Cache-Control": "no-cache" },
+    });
+  }
+
+  return NextResponse.json({ error: "not found" }, { status: 404 });
 }
