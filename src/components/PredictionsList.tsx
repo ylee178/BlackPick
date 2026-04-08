@@ -44,7 +44,7 @@ function Dropdown({ label, open, onToggle, children }: { label: React.ReactNode;
   );
 }
 
-export default function PredictionsList({ items, perfectEventIds: perfectEventIdsArr = [] }: { items: PredItem[]; perfectEventIds?: string[] }) {
+export default function PredictionsList({ items, perfectEventIds: perfectEventIdsArr = [], blackCupWinners = {} }: { items: PredItem[]; perfectEventIds?: string[]; blackCupWinners?: Record<string, string> }) {
   const perfectEventIds = new Set(perfectEventIdsArr);
   const { t } = useI18n();
   const [query, setQuery] = useState("");
@@ -235,9 +235,12 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
                   className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[var(--bp-ink)] transition hover:text-[var(--bp-accent)]"
                 >
                   <span className="truncate">{group.eventName}</span>
-                  <span className="shrink-0 text-xs font-normal text-[var(--bp-muted)]">{group.eventDate}</span>
-                  {isUpcoming && <RetroLabel size="xs" tone="info">{t("status.upcoming")}</RetroLabel>}
+                  {blackCupWinners[group.eventId] && (
+                    <RetroLabel size="xs" tone="neutral">{blackCupWinners[group.eventId]} WIN</RetroLabel>
+                  )}
                   {!isUpcoming && perfectEventIds.has(group.eventId) && <RetroLabel size="xs" tone="accent">Perfect Prediction</RetroLabel>}
+                  {isUpcoming && <RetroLabel size="xs" tone="info">{t("status.upcoming")}</RetroLabel>}
+                  <span className="shrink-0 text-xs font-normal text-[var(--bp-muted)]">{group.eventDate}</span>
                 </Link>
                 {!isUpcoming && (
                   <div className="flex shrink-0 items-center gap-1 rounded-[8px] border border-[rgba(255,255,255,0.06)] bg-[#0a0a0a] px-2.5 py-1 text-xs tabular-nums text-[var(--bp-muted)]">

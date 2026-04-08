@@ -92,6 +92,45 @@ export default async function MyRecordPage() {
     eventId: string; eventName: string; eventDate: string;
   }>;
 
+  // Black Cup: compute winning country per event
+  const blackCupWinners: Record<string, string> = {}; // eventId → flag emoji
+  {
+    const bcEvents = new Set<string>();
+    const eventFights = new Map<string, { winnerId: string | null; aId: string | null; bId: string | null; aNat: string | null; bNat: string | null }[]>();
+
+    for (const p of preds ?? []) {
+      const fight = p.fight as Record<string, unknown> | null;
+      if (!fight) continue;
+      const event = fight.event as Record<string, string | null> | null;
+      if (event?.series_type !== "black_cup") continue;
+      const eid = event?.id ?? "";
+      if (!eid) continue;
+      bcEvents.add(eid);
+      const fa = fight.fighter_a as Record<string, string | null> | null;
+      const fb = fight.fighter_b as Record<string, string | null> | null;
+      const arr = eventFights.get(eid) ?? [];
+      arr.push({
+        winnerId: fight.winner_id as string | null,
+        aId: fa?.id ?? null, bId: fb?.id ?? null,
+        aNat: fa?.nationality ?? null, bNat: fb?.nationality ?? null,
+      });
+      eventFights.set(eid, arr);
+    }
+
+    for (const eid of bcEvents) {
+      const countryMap = new Map<string, number>();
+      for (const f of eventFights.get(eid) ?? []) {
+        if (!f.winnerId) continue;
+        const nat = f.winnerId === f.aId ? f.aNat : f.bNat;
+        if (nat) countryMap.set(nat, (countryMap.get(nat) ?? 0) + 1);
+      }
+      let top = "";
+      let topN = 0;
+      for (const [c, n] of countryMap) { if (n > topN) { top = c; topN = n; } }
+      if (top) blackCupWinners[eid] = countryCodeToFlag(top);
+    }
+  }
+
   // Perfect card events for this user
   const { data: perfectCards } = await supabase
     .from("perfect_card_entries")
@@ -104,7 +143,7 @@ export default async function MyRecordPage() {
       <h1 className="mb-5 text-2xl font-bold text-[var(--bp-ink)]">
         {t("nav.myRecord")} <span className="text-[var(--bp-muted)]">({items.length})</span>
       </h1>
-      <PredictionsList items={items} perfectEventIds={[...perfectEventIds]} />
+      <PredictionsList items={items} perfectEventIds={[...perfectEventIds]} blackCupWinners={blackCupWinners} />
     </div>
   );
 }
