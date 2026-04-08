@@ -1092,6 +1092,65 @@ async function seedMyData(admin: ReturnType<typeof getAdminClient>, userId: stri
   return { predictions: preds.length, wins, losses, score: Math.max(0, totalScore), weightClasses: wcMap.size };
 }
 
+async function completeFights(admin: ReturnType<typeof getAdminClient>) {
+  const methods = ["KO/TKO", "Submission", "Decision"] as const;
+
+  // Find all upcoming/live fights
+  const { data: fights } = await admin
+    .from("fights")
+    .select("id, fighter_a_id, fighter_b_id, status, event_id")
+    .in("status", ["upcoming", "live"]);
+
+  if (!fights || fights.length === 0) {
+    return { completed_fights: 0, completed_events: 0 };
+  }
+
+  let completedFights = 0;
+  const affectedEventIds = new Set<string>();
+
+  for (const fight of fights) {
+    // Random winner (a or b)
+    const winnerId = Math.random() < 0.5 ? fight.fighter_a_id : fight.fighter_b_id;
+    const method = methods[Math.floor(Math.random() * methods.length)];
+    const round = method === "Decision" ? 3 : Math.floor(Math.random() * 3) + 1;
+
+    const { error } = await admin
+      .from("fights")
+      .update({
+        status: "completed",
+        winner_id: winnerId,
+        method,
+        round,
+      })
+      .eq("id", fight.id);
+
+    if (!error) {
+      completedFights++;
+      affectedEventIds.add(fight.event_id);
+    }
+  }
+
+  // Update events to completed if all their fights are now completed/cancelled/no_contest
+  let completedEvents = 0;
+  for (const eventId of affectedEventIds) {
+    const { data: remaining } = await admin
+      .from("fights")
+      .select("id")
+      .eq("event_id", eventId)
+      .in("status", ["upcoming", "live"]);
+
+    if (!remaining || remaining.length === 0) {
+      const { error } = await admin
+        .from("events")
+        .update({ status: "completed" })
+        .eq("id", eventId);
+      if (!error) completedEvents++;
+    }
+  }
+
+  return { completed_fights: completedFights, completed_events: completedEvents };
+}
+
 export async function POST(request: Request) {
   if (!isDev) {
     return NextResponse.json({ error: "Not available" }, { status: 403 });
@@ -1110,6 +1169,11 @@ export async function POST(request: Request) {
 
     if (action === "full") {
       const result = await seedFullData(admin);
+      return NextResponse.json({ ok: true, action, ...result });
+    }
+
+    if (action === "complete-fights") {
+      const result = await completeFights(admin);
       return NextResponse.json({ ok: true, action, ...result });
     }
 

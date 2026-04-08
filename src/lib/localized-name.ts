@@ -1,4 +1,5 @@
-export type AppLocale = "en" | "ko" | "ja" | "pt-BR";
+import type { Locale } from "@/i18n/locales";
+export type AppLocale = Locale;
 
 type LocalizedNameFields = {
   name?: string | null;

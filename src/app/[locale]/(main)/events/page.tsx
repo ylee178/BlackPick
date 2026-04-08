@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import { getTranslations } from "@/lib/i18n-server";
+import { getTranslations, type Locale } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { getLocalizedEventName } from "@/lib/localized-name";
 import {
@@ -37,7 +37,7 @@ function EventListSection({
 }: {
   title: string;
   items: EventRow[];
-  locale: string;
+  locale: Locale;
   t: (key: string) => string;
 }) {
   if (items.length === 0) return null;
@@ -64,7 +64,7 @@ function EventListSection({
                 <span className="text-xs text-[var(--bp-muted)]">{getSeriesLabel(event.series_type, t)}</span>
               </div>
               <p className="mt-1.5 truncate text-sm font-semibold text-[var(--bp-ink)]">
-                {getLocalizedEventName(event, locale as "en" | "ko" | "ja" | "pt-BR", event.name)}
+                {getLocalizedEventName(event, locale, event.name)}
               </p>
               <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{event.date}</p>
             </div>

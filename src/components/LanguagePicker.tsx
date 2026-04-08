@@ -18,7 +18,7 @@ const LANGUAGES: {
   { code: "en", label: "English", short: "EN", flag: "US" },
   { code: "ko", label: "한국어", short: "KO", flag: "KR" },
   { code: "ja", label: "日本語", short: "JA", flag: "JP" },
-  { code: "pt-BR", label: "Português", short: "PT", flag: "BR" },
+  { code: "es", label: "Español", short: "ES", flag: "ES" },
 ];
 
 function Trigram({

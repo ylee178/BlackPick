@@ -63,7 +63,7 @@ export default async function ResultsPage() {
                     </span>
                   </div>
                   <p className="mt-1.5 truncate text-sm font-semibold text-[var(--bp-ink)]">
-                    {getLocalizedEventName(event, locale as "en" | "ko" | "ja" | "pt-BR", event.name)}
+                    {getLocalizedEventName(event, locale, event.name)}
                   </p>
                   <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{event.date}</p>
                 </div>

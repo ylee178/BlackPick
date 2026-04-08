@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DevPanel from "@/components/DevPanel";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
 import { getSiteUrl } from "@/lib/env";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const siteUrl = getSiteUrl();
 
@@ -41,34 +36,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <head>
-        <link
-          rel="preconnect"
-          href="https://cdn.jsdelivr.net"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css"
-        />
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#000000" />
-      </head>
-      <body>
-        {children}
-        <DevPanel />
-      </body>
-    </html>
-  );
+  // html/body is rendered by [locale]/layout.tsx for dynamic lang attribute
+  return children;
 }

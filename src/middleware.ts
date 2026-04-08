@@ -1,10 +1,10 @@
+import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import { routing } from "./i18n/routing";
 
-/**
- * CORS middleware — only applied to /api/* routes.
- * In production, restricts to CORS_ALLOW_ORIGIN env var.
- * In development, allows localhost.
- */
+const handleI18nRouting = createMiddleware(routing);
+
+// ── CORS for API routes ──
 
 function getAllowedOrigins(): string[] {
   const envOrigins = process.env.CORS_ALLOW_ORIGIN;
@@ -13,41 +13,54 @@ function getAllowedOrigins(): string[] {
   return [];
 }
 
-const ALLOW_METHODS = "GET,POST,DELETE,OPTIONS";
-const ALLOW_HEADERS = "Content-Type,Authorization";
-
-function isAllowedOrigin(origin: string | null): string | null {
-  if (!origin) return null;
+function handleApiRequest(req: NextRequest): NextResponse {
+  const origin = req.headers.get("origin");
   const allowed = getAllowedOrigins();
-  if (allowed.length === 0) return null;
-  return allowed.includes(origin) ? origin : null;
-}
+  const matchedOrigin = origin && allowed.includes(origin) ? origin : null;
 
-function applyCorsHeaders(res: NextResponse, origin: string | null) {
-  if (origin) {
-    res.headers.set("Access-Control-Allow-Origin", origin);
-    res.headers.set("Access-Control-Allow-Methods", ALLOW_METHODS);
-    res.headers.set("Access-Control-Allow-Headers", ALLOW_HEADERS);
-    res.headers.set("Access-Control-Max-Age", "86400");
+  if (req.method === "OPTIONS") {
+    const res = new NextResponse(null, { status: 204 });
+    if (matchedOrigin) {
+      res.headers.set("Access-Control-Allow-Origin", matchedOrigin);
+      res.headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+      res.headers.set("Access-Control-Allow-Headers", "Content-Type,Authorization");
+      res.headers.set("Access-Control-Max-Age", "86400");
+      res.headers.set("Vary", "Origin");
+    }
+    return res;
+  }
+
+  const res = NextResponse.next();
+  if (matchedOrigin) {
+    res.headers.set("Access-Control-Allow-Origin", matchedOrigin);
     res.headers.set("Vary", "Origin");
   }
   return res;
 }
 
-export function middleware(req: NextRequest) {
-  const origin = req.headers.get("origin");
-  const allowed = isAllowedOrigin(origin);
+// ── Main middleware ──
 
-  // Preflight
-  if (req.method === "OPTIONS") {
-    const res = new NextResponse(null, { status: 204 });
-    return applyCorsHeaders(res, allowed);
+export default function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // API routes → CORS only, skip i18n
+  if (pathname.startsWith("/api/")) {
+    return handleApiRequest(req);
   }
 
-  const res = NextResponse.next();
-  return applyCorsHeaders(res, allowed);
+  // Admin routes → skip i18n
+  if (pathname.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
+  // Everything else → i18n routing
+  return handleI18nRouting(req);
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    // Match all paths except static files
+    "/((?!_next|_vercel|.*\\..*).*)",
+    "/api/:path*",
+  ],
 };

@@ -1,11 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { I18nProvider } from "@/lib/i18n-provider";
 import MainNav from "@/components/MainNav";
 import NotificationBell from "@/components/NotificationBell";
 import LanguagePicker from "@/components/LanguagePicker";
 import AccountDropdown from "@/components/AccountDropdown";
-import { getLocale, getTranslations } from "@/lib/i18n-server";
+import { getTranslations } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
 import { ToastProvider } from "@/components/Toast";
 import { createSupabaseServer } from "@/lib/supabase-server";
@@ -13,22 +12,7 @@ import {
   retroButtonClassName,
 } from "@/components/ui/retro";
 
-interface Messages {
-  [key: string]: string | Messages;
-}
-
-async function loadMessages(locale: "en" | "ko" | "ja" | "pt-BR"): Promise<Messages> {
-  switch (locale) {
-    case "ko": return (await import("@/messages/ko.json")).default;
-    case "ja": return (await import("@/messages/ja.json")).default;
-    case "pt-BR": return (await import("@/messages/pt-BR.json")).default;
-    default: return (await import("@/messages/en.json")).default;
-  }
-}
-
 export default async function MainLayout({ children }: { children: ReactNode }) {
-  const locale = await getLocale();
-  const messages = await loadMessages(locale);
   const { t } = await getTranslations();
   const supabase = await createSupabaseServer();
   const {
@@ -46,7 +30,6 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
   const needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim());
 
   return (
-    <I18nProvider initialLocale={locale} initialMessages={messages}>
       <ToastProvider>
       <div className="min-h-[100dvh] bg-[var(--bp-bg)] text-[var(--bp-ink)]">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-[var(--bp-bg)] focus:px-4 focus:py-2 focus:text-[var(--bp-ink)]">
@@ -140,6 +123,5 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </nav>
       </div>
       </ToastProvider>
-    </I18nProvider>
   );
 }
