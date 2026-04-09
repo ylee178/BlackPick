@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { ChevronDown, User, Bell, RotateCw, LogOut } from "lucide-react";
+import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy } from "lucide-react";
 import {
   retroButtonClassName,
   retroPanelClassName,
@@ -52,11 +51,21 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
 
   async function handleResetRecord() {
     setResetting(true);
-    await fetch("/api/profile/reset-record", { method: "POST" });
-    setResetting(false);
-    setResetModal(false);
-    setOpen(false);
-    router.refresh();
+    try {
+      const res = await fetch("/api/profile/reset-record", { method: "POST" });
+      if (!res.ok) {
+        window.alert(t("account.resetRecordFailed"));
+        return;
+      }
+
+      setResetModal(false);
+      setOpen(false);
+      router.refresh();
+    } catch {
+      window.alert(t("account.resetRecordFailed"));
+    } finally {
+      setResetting(false);
+    }
   }
 
   const winRate = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
@@ -92,8 +101,8 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
             {/* User info */}
             <div className="border-b border-[var(--bp-line)] px-3 py-2.5">
               <p className="text-sm font-semibold text-[var(--bp-ink)]">{ringName}</p>
-              <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
-                <span className="text-[#4ade80]">{wins}W</span>-<span className="text-[#f87171]">{losses}L</span> · {winRate}% · <span className="text-[var(--bp-accent)]">{score}pts</span>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-[var(--bp-muted)]">
+                <span className="text-[#4ade80]">{wins}W</span>-<span className="text-[#f87171]">{losses}L</span> · {winRate}% · <Trophy className="h-3 w-3 text-[var(--bp-accent)]" strokeWidth={2} /><span className="text-[var(--bp-ink)]">{score}</span>
               </p>
             </div>
 

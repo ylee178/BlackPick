@@ -1095,60 +1095,93 @@ async function seedMyData(admin: ReturnType<typeof getAdminClient>, userId: stri
 async function completeFights(admin: ReturnType<typeof getAdminClient>) {
   const methods = ["KO/TKO", "Submission", "Decision"] as const;
 
-  // Find all upcoming/live fights
+  // Find the latest upcoming/live event (the one featured on homepage)
+  const { data: latestEvent } = await admin
+    .from("events")
+    .select("id, name")
+    .in("status", ["upcoming", "live"])
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latestEvent) {
+    return { completed_fights: 0, completed_events: 0, event_name: null };
+  }
+
   const { data: fights } = await admin
     .from("fights")
-    .select("id, fighter_a_id, fighter_b_id, status, event_id")
+    .select("id, fighter_a_id, fighter_b_id, status")
+    .eq("event_id", latestEvent.id)
     .in("status", ["upcoming", "live"]);
 
   if (!fights || fights.length === 0) {
-    return { completed_fights: 0, completed_events: 0 };
+    return { completed_fights: 0, completed_events: 0, event_name: latestEvent.name };
   }
 
   let completedFights = 0;
-  const affectedEventIds = new Set<string>();
-
   for (const fight of fights) {
-    // Random winner (a or b)
     const winnerId = Math.random() < 0.5 ? fight.fighter_a_id : fight.fighter_b_id;
     const method = methods[Math.floor(Math.random() * methods.length)];
     const round = method === "Decision" ? 3 : Math.floor(Math.random() * 3) + 1;
 
     const { error } = await admin
       .from("fights")
-      .update({
-        status: "completed",
-        winner_id: winnerId,
-        method,
-        round,
-      })
+      .update({ status: "completed", winner_id: winnerId, method, round })
       .eq("id", fight.id);
 
-    if (!error) {
-      completedFights++;
-      affectedEventIds.add(fight.event_id);
-    }
+    if (!error) completedFights++;
   }
 
-  // Update events to completed if all their fights are now completed/cancelled/no_contest
-  let completedEvents = 0;
-  for (const eventId of affectedEventIds) {
-    const { data: remaining } = await admin
+  // Mark event as completed
+  await admin
+    .from("events")
+    .update({ status: "completed" })
+    .eq("id", latestEvent.id);
+
+  return { completed_fights: completedFights, completed_events: 1, event_name: latestEvent.name };
+}
+
+async function resetFights(admin: ReturnType<typeof getAdminClient>) {
+  // Reset the latest event (featured on homepage) back to upcoming
+  const { data: latestEvent } = await admin
+    .from("events")
+    .select("id, name")
+    .eq("status", "completed")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latestEvent) {
+    return { reset_fights: 0, reset_events: 0, event_name: null };
+  }
+
+  let resetCount = 0;
+  const { data: fights } = await admin
+    .from("fights")
+    .select("id")
+    .eq("event_id", latestEvent.id)
+    .eq("status", "completed");
+
+  for (const f of fights ?? []) {
+    await admin
+      .from("predictions")
+      .update({ is_winner_correct: null, is_method_correct: null, is_round_correct: null, score: null })
+      .eq("fight_id", f.id);
+
+    const { error } = await admin
       .from("fights")
-      .select("id")
-      .eq("event_id", eventId)
-      .in("status", ["upcoming", "live"]);
+      .update({ status: "upcoming", winner_id: null, method: null, round: null })
+      .eq("id", f.id);
 
-    if (!remaining || remaining.length === 0) {
-      const { error } = await admin
-        .from("events")
-        .update({ status: "completed" })
-        .eq("id", eventId);
-      if (!error) completedEvents++;
-    }
+    if (!error) resetCount++;
   }
 
-  return { completed_fights: completedFights, completed_events: completedEvents };
+  await admin
+    .from("events")
+    .update({ status: "upcoming" })
+    .eq("id", latestEvent.id);
+
+  return { reset_fights: resetCount, reset_events: 1, event_name: latestEvent.name };
 }
 
 export async function POST(request: Request) {
@@ -1175,6 +1208,21 @@ export async function POST(request: Request) {
     if (action === "complete-fights") {
       const result = await completeFights(admin);
       return NextResponse.json({ ok: true, action, ...result });
+    }
+
+    if (action === "reset-fights") {
+      const result = await resetFights(admin);
+      return NextResponse.json({ ok: true, action, ...result });
+    }
+
+    if (action === "status") {
+      const { data: latest } = await admin
+        .from("events")
+        .select("status")
+        .order("date", { ascending: false })
+        .limit(1)
+        .single();
+      return NextResponse.json({ ok: true, featured_status: latest?.status ?? "unknown" });
     }
 
     if (action === "seed-me") {

@@ -7,7 +7,6 @@ import { ChevronDown, ChevronUp, Heart, Send } from "lucide-react";
 import {
   retroButtonClassName,
   retroFieldClassName,
-  retroPanelClassName,
 } from "@/components/ui/retro";
 import { MentionInput, type MentionUser } from "@/components/MentionInput";
 
@@ -53,7 +52,7 @@ function TranslatableBody({ commentId, body }: { commentId: string; body: string
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment_id: commentId, target_locale: locale }),
+        body: JSON.stringify({ comment_id: commentId, target_locale: locale, comment_type: "fight" }),
       });
       const data = await res.json();
       if (res.ok && data.translated_body) {
@@ -135,14 +134,12 @@ function timeAgo(dateStr: string): string {
 function InlineReplyForm({
   parentId,
   replyName,
-  mentionUsers,
   onSubmit,
   onCancel,
   t,
 }: {
   parentId: string;
   replyName: string;
-  mentionUsers: MentionUser[];
   onSubmit: (parentId: string, body: string) => Promise<void>;
   onCancel: () => void;
   t: (key: string) => string;
@@ -290,7 +287,6 @@ function CommentThread({
   replyingTo,
   onSetReplyTo,
   replyMention,
-  mentionUsers,
   t,
 }: {
   comment: Comment;
@@ -302,7 +298,6 @@ function CommentThread({
   replyingTo: string | null;
   onSetReplyTo: (id: string | null, mention?: string) => void;
   replyMention: string;
-  mentionUsers: MentionUser[];
   t: (key: string) => string;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -372,7 +367,6 @@ function CommentThread({
           <InlineReplyForm
             parentId={comment.id}
             replyName={replyMention}
-            mentionUsers={mentionUsers}
             onSubmit={onReplySubmit}
             onCancel={() => onSetReplyTo(null)}
             t={t}
@@ -617,7 +611,6 @@ export default function FightComments({
                 replyingTo={replyingTo}
                 onSetReplyTo={handleSetReplyTo}
                 replyMention={replyMention}
-                mentionUsers={mentionUsers}
                 t={t}
               />
             ))}

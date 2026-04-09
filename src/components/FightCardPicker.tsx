@@ -237,7 +237,7 @@ export default function FightCardPicker({
         {/* Method/Round options — inside selected card */}
         {isPicked ? (
           <div className="w-full px-3 pb-3 pt-2.5" onClick={(e) => e.stopPropagation()}>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--bp-muted)]">
+            <p className="mb-3 text-xs font-semibold text-[var(--bp-muted)]">
               {t("prediction.method")}
             </p>
             <div className="grid grid-cols-3 gap-1">
@@ -266,7 +266,7 @@ export default function FightCardPicker({
               })}
             </div>
 
-            <p className="mb-1.5 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--bp-muted)]">
+            <p className="mb-3 mt-6 text-xs font-semibold text-[var(--bp-muted)]">
               {t("prediction.round")}
             </p>
             <div className="grid grid-cols-4 gap-1">

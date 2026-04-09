@@ -73,7 +73,9 @@
     "editUntilStart": "Puedes editar tu predicción hasta que comience la pelea.",
     "points": "pts",
     "bulk": "Predecir todas las peleas",
-    "predictAll": "Predecir todo"
+    "predictAll": "Predecir todo",
+    "correct": "¡Acertaste!",
+    "wrong": "No acertaste esta vez"
   },
   "profile": {
     "fightRecord": "Historial de peleas",
@@ -152,8 +154,10 @@
     "notificationSettings": "Configuración de notificaciones",
     "resetRecord": "Restablecer historial",
     "resetRecordConfirm": "¿Seguro que quieres restablecer tu historial? Se eliminarán todas las predicciones, puntuaciones e insignias. Esto no se puede deshacer.",
+    "resetRecordFailed": "No pudimos restablecer tu historial en este momento.",
     "deleteAccount": "Eliminar cuenta",
     "deleteAccountConfirm": "¿Seguro que quieres eliminar tu cuenta? Todos los datos se eliminarán permanentemente. Esto no se puede deshacer.",
+    "deleteAccountFailed": "No pudimos eliminar tu cuenta en este momento.",
     "save": "Guardar",
     "saved": "Guardado",
     "ringNameTaken": "Este nombre de ring ya está en uso",

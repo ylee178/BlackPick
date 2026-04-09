@@ -73,7 +73,9 @@
     "editUntilStart": "You can edit your pick until fight start.",
     "points": "pts",
     "bulk": "Predict all fights",
-    "predictAll": "Predict All"
+    "predictAll": "Predict All",
+    "correct": "You got it right!",
+    "wrong": "Better luck next time"
   },
   "profile": {
     "fightRecord": "Fight Record",
@@ -152,8 +154,10 @@
     "notificationSettings": "Notification Settings",
     "resetRecord": "Reset Record",
     "resetRecordConfirm": "Are you sure you want to reset your record? All predictions, scores, and badges will be deleted. This cannot be undone.",
+    "resetRecordFailed": "We couldn't reset your record right now.",
     "deleteAccount": "Delete Account",
     "deleteAccountConfirm": "Are you sure you want to delete your account? All data will be permanently removed. This cannot be undone.",
+    "deleteAccountFailed": "We couldn't delete your account right now.",
     "save": "Save",
     "saved": "Saved",
     "ringNameTaken": "This ring name is already taken",

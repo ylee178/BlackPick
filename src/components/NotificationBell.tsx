@@ -101,7 +101,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bp-line)] bg-[var(--bp-card)] text-[var(--bp-muted)] transition hover:border-[var(--bp-line-strong)] hover:text-[var(--bp-ink)]"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bp-line)] text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.15)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
         aria-label={unreadCount > 0 ? `${t("notification.title")} (${unreadCount})` : t("notification.title")}
         aria-expanded={open}
         aria-haspopup="dialog"

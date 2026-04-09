@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-provider";
-import { RetroStatusBadge } from "@/components/ui/retro";
+import { RetroLabel } from "@/components/ui/retro";
 import { Clock } from "lucide-react";
 
 type Props = {
@@ -84,19 +84,18 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
       style={{ top: `${headerH}px` }}
     >
       <div className="mx-auto flex min-h-[44px] max-w-[1200px] items-center justify-between gap-4 px-4 py-2 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="shrink-0">
-            <RetroStatusBadge
-              tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
-            >
-              {t(`status.${eventStatus}`)}
-            </RetroStatusBadge>
-          </div>
-          <p className="min-w-0 truncate text-sm font-bold leading-none text-[var(--bp-ink)]">{eventName}</p>
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="min-w-0 truncate text-sm font-bold text-[var(--bp-ink)]">{eventName}</p>
+          <RetroLabel
+            size="xs"
+            tone={eventStatus === "live" ? "danger" : eventStatus === "completed" ? "success" : "info"}
+          >
+            {t(`status.${eventStatus}`)}
+          </RetroLabel>
         </div>
         {tl && (
           <div className="flex shrink-0 items-center gap-0.5" suppressHydrationWarning>
-            <Clock className="mr-1 h-[18px] w-[18px] text-[var(--bp-accent)]" strokeWidth={2} />
+            <Clock className="mr-1 h-4 w-4 shrink-0 text-[var(--bp-accent)]" strokeWidth={2} />
             <MiniDigit value={pad(tl.d)} />
             <span className="lcd-colon-mini">:</span>
             <MiniDigit value={pad(tl.h)} />

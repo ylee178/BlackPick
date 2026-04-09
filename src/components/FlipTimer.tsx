@@ -15,7 +15,7 @@ function getTimeLeft(target: string) {
   };
 }
 
-function DigitCard({ value, label }: { value: string; label: string }) {
+export function DigitCard({ value, label }: { value: string; label?: string }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="lcd-digit">
@@ -50,6 +50,10 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
     );
   }
 
+  const localTime = mounted
+    ? new Date(targetTime).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true })
+    : "";
+
   return (
     <div>
       <div className="rounded-[12px] bg-[#060606] px-6 py-6">
@@ -65,6 +69,9 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
           <span className="lcd-colon">:</span>
           <DigitCard value={mounted ? pad(tl.s) : "--"} label={t("countdown.secondsShort")} />
         </div>
+        <p className="mt-3 text-center text-[11px] uppercase text-[var(--bp-muted)]" suppressHydrationWarning>
+          {localTime}
+        </p>
       </div>
     </div>
   );

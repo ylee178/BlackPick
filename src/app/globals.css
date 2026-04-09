@@ -293,7 +293,6 @@ button:disabled {
 
 .retro-button-ghost:hover {
   color: var(--foreground);
-  background: var(--bp-overlay-subtle);
 }
 
 .retro-button-soft {
@@ -566,6 +565,65 @@ button:disabled {
   font-display: swap;
 }
 
+/* ── 404 LCD Digits (larger than timer) ── */
+
+.lcd-digit-404 {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 88px;
+  border-radius: 8px;
+  background: #060606;
+}
+
+@media (min-width: 640px) {
+  .lcd-digit-404 {
+    width: 96px;
+    height: 112px;
+  }
+}
+
+.lcd-digit-404::before {
+  content: "8";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "DSEG7", monospace;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: rgba(255, 186, 60, 0.06);
+}
+
+@media (min-width: 640px) {
+  .lcd-digit-404::before {
+    font-size: 4.5rem;
+  }
+}
+
+.lcd-digit-404 span {
+  position: relative;
+  z-index: 1;
+  font-family: "DSEG7", monospace;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--bp-accent);
+  line-height: 1;
+  text-shadow:
+    0 0 12px rgba(255, 186, 60, 0.6),
+    0 0 30px rgba(255, 186, 60, 0.25),
+    0 0 60px rgba(255, 186, 60, 0.1);
+}
+
+@media (min-width: 640px) {
+  .lcd-digit-404 span {
+    font-size: 4.5rem;
+  }
+}
+
 /* ── LED Digital Clock ── */
 
 .lcd-digit {
@@ -664,9 +722,12 @@ button:disabled {
 }
 
 .lcd-colon-mini {
+  display: inline-flex;
+  align-items: center;
   font-family: "DSEG7", monospace;
   font-size: 0.75rem;
   font-weight: 700;
+  line-height: 26px;
   color: var(--bp-accent);
   opacity: 0.35;
 }

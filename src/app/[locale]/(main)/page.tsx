@@ -6,7 +6,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import FightCard from "@/components/FightCard";
 import FlipTimer from "@/components/FlipTimer";
-import { Ticket, Play } from "lucide-react";
+import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
 import { fetchBcEventDataFull, type BcFightData } from "@/lib/bc-predictions";
 import StickyEventHeader from "@/components/StickyEventHeader";
@@ -103,7 +103,7 @@ export default async function HomePage() {
       supabase
         .from("fights")
         .select(`
-          id, event_id, fighter_a_id, fighter_b_id, start_time, status, winner_id, method, round,
+          id, event_id, fighter_a_id, fighter_b_id, start_time, status, winner_id, method, round, is_cup_match,
           fighter_a:fighters!fighter_a_id(*),
           fighter_b:fighters!fighter_b_id(*)
         `)
@@ -146,25 +146,40 @@ export default async function HomePage() {
   const nowTimestamp = Date.now();
   const pickedCount = fights.filter((f) => predictionMap.has(f.id)).length;
 
-  // Black Cup completed: find winning country (cup matches only)
+  // Black Cup completed: compute country scores from cup matches
   const isBlackCup = featured?.series_type === "black_cup";
   let blackCupWinnerFlag: string | null = null;
+  let cupScores: { flagA: string; flagB: string; nameA: string; nameB: string; winsA: number; winsB: number } | null = null;
+
+  const countryNames: Record<string, string> = {
+    KR: "Korea", US: "USA", JP: "Japan", CN: "China", MN: "Mongolia",
+    BR: "Brazil", TH: "Thailand", RU: "Russia", AF: "Afghanistan",
+    PH: "Philippines", UZ: "Uzbekistan", KG: "Kyrgyzstan",
+  };
+
   if (isBlackCup && eventStatus === "completed") {
     const countryMap = new Map<string, number>();
     for (const fight of fights) {
       if (fight.status !== "completed" || !fight.winner_id) continue;
-      // Only count cup match fights (skip undercard)
       if (!(fight as Record<string, unknown>).is_cup_match) continue;
       const winner = fight.winner_id === fight.fighter_a_id ? fight.fighter_a : fight.fighter_b;
       const nat = (winner as Record<string, string | null> | null)?.nationality;
       if (nat) countryMap.set(nat, (countryMap.get(nat) ?? 0) + 1);
     }
-    let topCountry = "";
-    let topWins = 0;
-    for (const [country, wins] of countryMap) {
-      if (wins > topWins) { topCountry = country; topWins = wins; }
+    const sorted = [...countryMap.entries()].sort((a, b) => b[1] - a[1]);
+    if (sorted.length >= 2) {
+      cupScores = {
+        flagA: countryCodeToFlag(sorted[0][0]),
+        flagB: countryCodeToFlag(sorted[1][0]),
+        nameA: countryNames[sorted[0][0]] ?? sorted[0][0],
+        nameB: countryNames[sorted[1][0]] ?? sorted[1][0],
+        winsA: sorted[0][1],
+        winsB: sorted[1][1],
+      };
+      blackCupWinnerFlag = cupScores.flagA;
+    } else if (sorted.length === 1) {
+      blackCupWinnerFlag = countryCodeToFlag(sorted[0][0]);
     }
-    if (topCountry) blackCupWinnerFlag = countryCodeToFlag(topCountry);
   }
 
   const localizedEventName = featured ? getLocalizedEventName(featured, locale, featured.name) : "";
@@ -212,11 +227,6 @@ export default async function HomePage() {
                   <RetroLabel size="sm" tone={getStatusTone(featured.status)}>
                     {t(`status.${featured.status}`)}
                   </RetroLabel>
-                  {blackCupWinnerFlag && (
-                    <RetroLabel size="sm" tone="accent">
-                      {blackCupWinnerFlag} WIN
-                    </RetroLabel>
-                  )}
                   <RetroLabel size="sm" tone="neutral">{getSeriesLabel(featured.series_type, t)}</RetroLabel>
                   <span className="text-xs text-[var(--bp-muted)]">{featured.date}</span>
                 </div>
@@ -261,10 +271,38 @@ export default async function HomePage() {
                 ) : null}
               </div>
 
-              {/* Right: Timer */}
+              {/* Right: Timer or Cup Scoreboard */}
               {eventStatus === "upcoming" && earliestStart ? (
                 <div id="home-timer" className="shrink-0">
                   <FlipTimer targetTime={earliestStart} />
+                </div>
+              ) : cupScores ? (
+                <div className="shrink-0 rounded-[12px] bg-[#060606] px-6 py-5">
+                  <p className="mb-3 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--bp-muted)]">
+                    <Trophy className="h-3.5 w-3.5 text-[var(--bp-accent)]" strokeWidth={2} />
+                    Score
+                  </p>
+                  <div className="flex items-center gap-4">
+                    {/* Winner */}
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="text-4xl leading-none">{cupScores.flagA}</span>
+                      <span className="text-xs font-bold text-[var(--bp-ink)]">{cupScores.nameA}</span>
+                    </div>
+                    {/* Score — LCD style like timer */}
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="lcd-digit"><span>{cupScores.winsA}</span></div>
+                        <span className="lcd-colon">:</span>
+                        <div className="lcd-digit"><span>{cupScores.winsB}</span></div>
+                      </div>
+                      <RetroLabel size="sm" tone="accent">{cupScores.flagA} {t("event.win")}</RetroLabel>
+                    </div>
+                    {/* Loser */}
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="text-4xl leading-none">{cupScores.flagB}</span>
+                      <span className="text-xs font-bold text-[var(--bp-ink)]">{cupScores.nameB}</span>
+                    </div>
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -275,11 +313,11 @@ export default async function HomePage() {
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-[var(--bp-muted)]">{t("home.heroDescription")}</p>
               <div className="mt-4 flex gap-2">
-                <Link href="/events" className={retroButtonClassName({ variant: "primary", size: "lg" })}>
-                  {t("nav.events")}
-                </Link>
-                <Link href="/ranking" className={retroButtonClassName({ variant: "ghost", size: "lg" })}>
+                <Link href="/ranking" className={retroButtonClassName({ variant: "primary", size: "lg" })}>
                   {t("nav.ranking")}
+                </Link>
+                <Link href="/fighters" className={retroButtonClassName({ variant: "ghost", size: "lg" })}>
+                  {t("nav.fighters")}
                 </Link>
               </div>
             </>
@@ -324,9 +362,6 @@ export default async function HomePage() {
           ) : (
             <div className={retroPanelClassName({ className: "p-6 text-center" })}>
               <p className="text-sm text-[var(--bp-muted)]">{t("common.noData")}</p>
-              <Link href="/events" className={retroButtonClassName({ variant: "primary", size: "sm", className: "mt-3" })}>
-                {t("nav.events")}
-              </Link>
             </div>
           )}
         </div>

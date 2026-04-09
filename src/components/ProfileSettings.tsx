@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { Save, Trash2 } from "lucide-react";
@@ -26,6 +26,7 @@ export default function ProfileSettings({ ringName: initialRingName, email }: Pr
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState<string | null>(null);
 
   async function handleSaveRingName(e: React.FormEvent) {
     e.preventDefault();
@@ -56,10 +57,24 @@ export default function ProfileSettings({ ringName: initialRingName, email }: Pr
 
   async function handleDeleteAccount() {
     setDeleting(true);
-    await fetch("/api/profile/delete-account", { method: "POST" });
-    const supabase = createBrowserSupabaseClient();
-    await supabase.auth.signOut();
-    router.push("/");
+    setDeleteMsg(null);
+    try {
+      const res = await fetch("/api/profile/delete-account", { method: "POST" });
+      if (!res.ok) {
+        setDeleteMsg(t("account.deleteAccountFailed"));
+        return;
+      }
+
+      const supabase = createBrowserSupabaseClient();
+      await supabase.auth.signOut();
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setDeleteMsg(t("account.deleteAccountFailed"));
+    } finally {
+      setDeleting(false);
+      setDeleteModal(false);
+    }
   }
 
   return (
@@ -107,12 +122,18 @@ export default function ProfileSettings({ ringName: initialRingName, email }: Pr
       <div className="border-t border-[var(--bp-line)] pt-4">
         <button
           type="button"
-          onClick={() => setDeleteModal(true)}
+          onClick={() => {
+            setDeleteMsg(null);
+            setDeleteModal(true);
+          }}
           className="flex cursor-pointer items-center gap-2 text-sm text-[var(--bp-danger)] transition hover:opacity-80"
         >
           <Trash2 className="h-4 w-4" strokeWidth={1.8} />
           {t("account.deleteAccount")}
         </button>
+        {deleteMsg ? (
+          <p className="mt-1.5 text-xs text-[var(--bp-danger)]">{deleteMsg}</p>
+        ) : null}
       </div>
 
       <ConfirmModal

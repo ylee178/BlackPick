@@ -73,7 +73,9 @@
     "editUntilStart": "你可以在比赛开始前编辑预测。",
     "points": "分",
     "bulk": "预测全部比赛",
-    "predictAll": "全部预测"
+    "predictAll": "全部预测",
+    "correct": "猜对了！",
+    "wrong": "很遗憾，没猜中"
   },
   "profile": {
     "fightRecord": "战绩",
@@ -152,8 +154,10 @@
     "notificationSettings": "通知设置",
     "resetRecord": "重置战绩",
     "resetRecordConfirm": "确定要重置你的战绩吗？所有预测、得分和徽章都将被删除。此操作无法撤销。",
+    "resetRecordFailed": "当前无法重置你的战绩。",
     "deleteAccount": "删除账户",
     "deleteAccountConfirm": "确定要删除你的账户吗？所有数据将被永久移除。此操作无法撤销。",
+    "deleteAccountFailed": "当前无法删除你的账户。",
     "save": "保存",
     "saved": "已保存",
     "ringNameTaken": "该擂台名已被占用",

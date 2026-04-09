@@ -21,13 +21,53 @@ export function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-/* ── Score display — trophy icon + value ── */
+/* ── Score display — trophy icon (gold) + value (white) ── */
 
 export function ScoreValue({ value, className }: { value: string | number; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 font-bold tabular-nums text-[var(--bp-accent)]", className)}>
-      <Trophy className="h-3.5 w-3.5" strokeWidth={2} />
+    <span className={cn("inline-flex items-center gap-1 font-bold tabular-nums text-[var(--bp-ink)]", className)}>
+      <Trophy className="h-3.5 w-3.5 text-[var(--bp-accent)]" strokeWidth={2} />
       {value}
+    </span>
+  );
+}
+
+/* ── Points badge — colored +/- points with "pt" suffix ── */
+
+export function PointsBadge({ value, className }: { value: number; className?: string }) {
+  const isPositive = value > 0;
+  return (
+    <span className={cn(
+      "text-xs font-bold tabular-nums",
+      isPositive ? "text-[var(--bp-accent)]" : value < 0 ? "text-[var(--bp-muted)]" : "text-[var(--bp-muted)]",
+      className,
+    )}>
+      {isPositive ? "+" : ""}{value}pt
+    </span>
+  );
+}
+
+/* ── W/L Record — green wins, red losses ── */
+
+export function WLRecord({
+  wins,
+  losses,
+  size = "sm",
+  className,
+}: {
+  wins: number;
+  losses: number;
+  size?: "xs" | "sm";
+  className?: string;
+}) {
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 font-bold tabular-nums",
+      size === "xs" ? "text-xs" : "text-sm",
+      className,
+    )}>
+      <span className="text-[#4ade80]">{wins}W</span>
+      <span className="text-[#f87171]">{losses}L</span>
     </span>
   );
 }

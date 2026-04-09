@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
+import { WLRecord } from "@/components/ui/ranking";
 import { Search } from "lucide-react";
 import { retroPanelClassName } from "@/components/ui/retro";
 import { parseRecord } from "@/lib/parse-record";
@@ -63,10 +64,9 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
               <p className="mt-2 truncate text-sm font-semibold text-[var(--bp-ink)]">
                 {f.name} {f.flag}
               </p>
-              <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
-                <span className="text-[#4ade80]">{wins}W</span>{" "}
-                <span className="text-[#f87171]">{losses}L</span>
-                {draws && <>{" "}<span className="text-[var(--bp-muted)]">{draws}D</span></>}
+              <p className="mt-0.5 flex items-center gap-1 text-xs">
+                <WLRecord wins={Number(wins)} losses={Number(losses)} size="xs" />
+                {draws && <span className="text-[var(--bp-muted)]">{draws}D</span>}
               </p>
               {f.weightClass && (
                 <p className="mt-0.5 truncate text-[11px] text-[var(--bp-muted)]">{f.weightClass}</p>

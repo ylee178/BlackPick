@@ -15,13 +15,15 @@ function FightersIcon() { return <Users className={iconClass} strokeWidth={1.8} 
 function UserIcon() { return <User className={iconClass} strokeWidth={1.8} />; }
 
 export default function MainNav({ mobile = false }: { mobile?: boolean }) {
-  const pathname = usePathname();
-  const { t } = useI18n();
+  const rawPathname = usePathname();
+  const { t, locale } = useI18n();
+  // Strip locale prefix: /en/dashboard → /dashboard
+  const pathname = rawPathname.replace(new RegExp(`^/${locale}`), "") || "/";
 
   const desktopLinks = [
     { href: "/", label: t("nav.picks") || "Picks" },
     { href: "/my-record", label: t("nav.myRecord") || "My Record" },
-    { href: "/my-record/dashboard", label: t("myRecord.dashboard") || "Dashboard" },
+    { href: "/dashboard", label: t("myRecord.dashboard") || "Dashboard" },
     { href: "/ranking", label: t("nav.ranking") || "Ranking" },
     { href: "/fighters", label: t("nav.fighters") || "Fighters" },
   ];
@@ -29,7 +31,7 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   const mobileLinks = [
     { href: "/", label: t("nav.picks") || "Picks", icon: <HomeIcon /> },
     { href: "/my-record", label: t("nav.myRecord") || "My Record", icon: <CalendarIcon /> },
-    { href: "/my-record/dashboard", label: t("myRecord.dashboard") || "Dashboard", icon: <DashboardIcon /> },
+    { href: "/dashboard", label: t("myRecord.dashboard") || "Dashboard", icon: <DashboardIcon /> },
     { href: "/ranking", label: t("nav.ranking") || "Ranking", icon: <TrophyIcon /> },
     { href: "/fighters", label: t("nav.fighters") || "Fighters", icon: <FightersIcon /> },
   ];

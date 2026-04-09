@@ -17,3 +17,12 @@ export const localeDisplayNames: Record<Locale, string> = {
   "zh-CN": "简体中文",
   mn: "Монгол",
 };
+
+export const localeFlags: Record<Locale, string> = {
+  en: "🇺🇸",
+  ko: "🇰🇷",
+  ja: "🇯🇵",
+  es: "🇪🇸",
+  "zh-CN": "🇨🇳",
+  mn: "🇲🇳",
+};

@@ -7,7 +7,6 @@ import { ChevronDown, ChevronUp, Heart, Send } from "lucide-react";
 import {
   retroButtonClassName,
   retroFieldClassName,
-  retroPanelClassName,
 } from "@/components/ui/retro";
 import { MentionInput, type MentionUser } from "@/components/MentionInput";
 
@@ -45,7 +44,7 @@ function TranslatableBody({ commentId, body }: { commentId: string; body: string
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment_id: commentId, target_locale: locale }),
+        body: JSON.stringify({ comment_id: commentId, target_locale: locale, comment_type: "fighter" }),
       });
       const data = await res.json();
       if (res.ok && data.translated_body) { setTranslated(data.translated_body); setShowTranslated(true); }

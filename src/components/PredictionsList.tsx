@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { Search, Check, X, ChevronDown, Filter, ArrowUpDown } from "lucide-react";
 import { RetroLabel } from "@/components/ui/retro";
+import { WLRecord, PointsBadge } from "@/components/ui/ranking";
 
 type PredItem = {
   id: string; createdAt: string;
@@ -244,13 +245,11 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
                 </Link>
                 {!isUpcoming && (
                   <div className="flex shrink-0 items-center gap-1 rounded-[8px] border border-[rgba(255,255,255,0.06)] bg-[#0a0a0a] px-2.5 py-1 text-xs tabular-nums text-[var(--bp-muted)]">
-                    <span className="text-[#4ade80]">{wins}W</span><span className="text-[#f87171]">{losses}L</span>
-                    <span className="mx-1.5 text-[rgba(255,255,255,0.15)]">·</span>
+                    <WLRecord wins={wins} losses={losses} size="xs" />
+                    <span className="mx-1 text-[rgba(255,255,255,0.15)]">·</span>
                     <span>{winRate}%</span>
-                    <span className="mx-1.5 text-[rgba(255,255,255,0.15)]">·</span>
-                    <span className={totalScore >= 0 ? "font-semibold text-[#4ade80]" : "font-semibold text-[#f87171]"}>
-                      {totalScore > 0 ? "+" : ""}{totalScore}pt
-                    </span>
+                    <span className="mx-1 text-[rgba(255,255,255,0.15)]">·</span>
+                    <PointsBadge value={totalScore} />
                   </div>
                 )}
               </div>
@@ -295,10 +294,14 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[rgba(255,255,255,0.08)] bg-[#2a2a2a]">
                           {displayAvatar ? (
-                            <img src={displayAvatar} alt={displayName} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="text-sm font-bold text-[var(--bp-muted)]">{displayInitial}</span>
-                          )}
+                            <img
+                              src={displayAvatar}
+                              alt={displayName}
+                              className="h-full w-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden"); }}
+                            />
+                          ) : null}
+                          <span className={`text-sm font-bold text-[var(--bp-muted)] ${displayAvatar ? "hidden" : ""}`}>{displayInitial}</span>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-[var(--bp-ink)]">

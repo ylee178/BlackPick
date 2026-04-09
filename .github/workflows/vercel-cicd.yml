@@ -1,0 +1,143 @@
+name: Vercel CI/CD
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20.19.0
+  CI_SUPABASE_URL: https://example.supabase.co
+  CI_SUPABASE_ANON_KEY: ci-anon-key
+  CI_SUPABASE_SERVICE_ROLE_KEY: ci-service-role-key
+  CI_SITE_URL: https://ci.blackpick.local
+  CI_CORS_ALLOW_ORIGIN: http://localhost:3000,https://dev.blackpick.io,https://blackpick.io
+
+jobs:
+  verify:
+    name: Verify build health
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ env.CI_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.CI_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ env.CI_SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SITE_URL: ${{ env.CI_SITE_URL }}
+      CORS_ALLOW_ORIGIN: ${{ env.CI_CORS_ALLOW_ORIGIN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Build application
+        run: npm run build
+
+  deploy-dev:
+    name: Deploy develop to dev.blackpick.io
+    if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    environment:
+      name: development
+      url: https://dev.blackpick.io
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull preview environment
+        run: vercel pull --yes --environment=preview --git-branch=develop --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build preview deployment
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy preview deployment
+        run: |
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} \
+            -m githubDeployment=1 \
+            -m githubCommitRef="${GITHUB_REF_NAME}" \
+            -m githubOrg="${GITHUB_REPOSITORY_OWNER}" \
+            -m githubRepo="${GITHUB_REPOSITORY#*/}" \
+            -m githubCommitSha="${GITHUB_SHA}"
+
+  deploy-prod:
+    name: Deploy main to blackpick.io
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: https://blackpick.io
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull production environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build production deployment
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy production deployment
+        run: |
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} \
+            -m githubDeployment=1 \
+            -m githubCommitRef="${GITHUB_REF_NAME}" \
+            -m githubOrg="${GITHUB_REPOSITORY_OWNER}" \
+            -m githubRepo="${GITHUB_REPOSITORY#*/}" \
+            -m githubCommitSha="${GITHUB_SHA}"

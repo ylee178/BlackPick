@@ -72,7 +72,9 @@
     "editUntilStart": "試合開始まで予想を編集できます。",
     "points": "pt",
     "bulk": "全試合予想",
-    "predictAll": "全て予想"
+    "predictAll": "全て予想",
+    "correct": "的中しました！",
+    "wrong": "残念、外れました"
   },
   "profile": {
     "fightRecord": "戦績",
@@ -151,8 +153,10 @@
     "notificationSettings": "通知設定",
     "resetRecord": "戦績リセット",
     "resetRecordConfirm": "本当に戦績をリセットしますか？すべての予想記録、スコア、バッジが削除されます。",
+    "resetRecordFailed": "現在、戦績をリセットできませんでした。",
     "deleteAccount": "アカウント削除",
     "deleteAccountConfirm": "本当にアカウントを削除しますか？すべてのデータが完全に削除されます。",
+    "deleteAccountFailed": "現在、アカウントを削除できませんでした。",
     "save": "保存",
     "saved": "保存しました",
     "ringNameTaken": "このリングネームは使用中です",

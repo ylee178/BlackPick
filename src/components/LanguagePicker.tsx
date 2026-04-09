@@ -2,9 +2,9 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useI18n } from "@/lib/i18n-provider";
-import { locales, localeDisplayNames, type Locale } from "@/i18n/locales";
+import { locales, localeDisplayNames, localeFlags, type Locale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
-import { Globe, Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { retroPanelClassName } from "@/components/ui/retro";
 
 export default function LanguagePicker() {
@@ -47,14 +47,15 @@ export default function LanguagePicker() {
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex cursor-pointer items-center gap-1.5 rounded-[10px] border border-[var(--bp-line)] px-2.5 py-1.5 text-sm text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.15)] hover:text-[var(--bp-ink)]",
-          showHint && "animate-pulse border-[var(--bp-accent)]/40",
+          "flex h-9 cursor-pointer items-center gap-1.5 rounded-[10px] border border-[var(--bp-line)] px-2.5 text-sm text-[var(--bp-ink)] transition hover:border-[rgba(255,255,255,0.15)] hover:bg-[var(--bp-card-inset)]",
+          showHint && "animate-pulse",
         )}
         aria-label="Change language"
         aria-expanded={open}
       >
-        <Globe className="h-4 w-4" strokeWidth={1.5} />
-        <span className="hidden sm:inline">{localeDisplayNames[locale]}</span>
+        <span className="text-base">{localeFlags[locale]}</span>
+        <span className="hidden text-sm sm:inline">{localeDisplayNames[locale]}</span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
       </button>
 
       {open && (
@@ -88,7 +89,10 @@ export default function LanguagePicker() {
                   : "text-[var(--bp-muted)] hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]",
               )}
             >
-              <span>{localeDisplayNames[l]}</span>
+              <span className="flex items-center gap-2">
+                <span>{localeFlags[l]}</span>
+                {localeDisplayNames[l]}
+              </span>
               {l === locale && <Check className="h-3.5 w-3.5 text-[var(--bp-accent)]" strokeWidth={2.5} />}
             </button>
           ))}

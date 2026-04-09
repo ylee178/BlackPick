@@ -6,7 +6,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
-import { Check, MessageCircle } from "lucide-react";
+import { MessageCircle, PartyPopper, Frown } from "lucide-react";
 import {
   getLocalizedFighterName,
   getLocalizedFighterSubLabel,
@@ -14,11 +14,11 @@ import {
 } from "@/lib/localized-name";
 import {
   RetroLabel,
-  RetroStatusBadge,
   retroPanelClassName,
   retroChipClassName,
   retroButtonClassName,
 } from "@/components/ui/retro";
+import { PointsBadge } from "@/components/ui/ranking";
 
 type FighterData = {
   id: string;
@@ -81,27 +81,35 @@ type FightCardProps = {
 function FighterSideStatic({
   fighter,
   locale,
-  crowdPct,
   bcPct,
   bcDivision,
   isWinner,
   isLoser,
-  isPicked,
-  pickLabel,
+  winMethod,
+  winRound,
   winLabel,
-  crowdLabel,
+  bcLabel,
+  isCompleted,
+  predictionResult,
+  predictionScore,
+  correctLabel,
+  wrongLabel,
 }: {
   fighter: FighterData;
   locale: AppLocale;
-  crowdPct: number | undefined;
   bcPct: number | undefined;
   bcDivision?: { weightClass: string; rank: number | null } | null;
   isWinner: boolean;
   isLoser: boolean;
-  isPicked: boolean;
-  pickLabel: string;
+  winMethod?: string | null;
+  winRound?: number | null;
   winLabel: string;
-  crowdLabel: string;
+  bcLabel: string;
+  isCompleted: boolean;
+  predictionResult?: "correct" | "wrong" | null;
+  predictionScore?: number | null;
+  correctLabel: string;
+  wrongLabel: string;
 }) {
   const displayName = getLocalizedFighterName(fighter, locale, fighter.name);
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
@@ -112,8 +120,7 @@ function FighterSideStatic({
         "relative flex flex-1 flex-col items-center justify-center gap-2 rounded-[12px] border p-3 text-center",
         isWinner && "border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.06)]",
         isLoser && "border-[var(--bp-line)] bg-[var(--bp-card-inset)] opacity-50",
-        isPicked && !isWinner && !isLoser && "border-[rgba(229,169,68,0.3)] bg-[var(--bp-accent-dim)]",
-        !isWinner && !isLoser && !isPicked && "border-[var(--bp-line)] bg-[var(--bp-card-inset)]",
+        !isWinner && !isLoser && "border-[var(--bp-line)] bg-[var(--bp-card-inset)]",
       )}
     >
       {isWinner && (
@@ -146,19 +153,42 @@ function FighterSideStatic({
           </p>
         ) : null}
       </div>
-      {isPicked ? (
-        <RetroLabel
-          size="sm"
-          tone="accent"
-          icon={<Check className="h-3 w-3" strokeWidth={2.5} />}
-        >My Pick</RetroLabel>
+      {isWinner && (winMethod || winRound) ? (
+        <p className="text-xs font-semibold text-[#4ade80]">
+          {[winMethod, winRound ? `R${winRound}` : null].filter(Boolean).join(" · ")}
+        </p>
       ) : null}
+      {/* Compact prediction % for completed, full display for live */}
       {typeof bcPct === "number" ? (
-        <div className="mt-2">
-          <p className="text-lg font-extrabold tabular-nums text-[var(--bp-ink)]">
-            {bcPct}<span className="pct-unit text-xs font-semibold text-[var(--bp-muted)]">%</span>
+        isCompleted ? (
+          <p className="text-[11px] text-[var(--bp-muted)]">
+            {bcPct}% {bcLabel}
           </p>
-          <p className="mt-1 text-[11px] text-[var(--bp-muted)]">{crowdLabel}</p>
+        ) : (
+          <div className="mt-2">
+            <p className="text-lg font-extrabold tabular-nums text-[var(--bp-ink)]">
+              {bcPct}<span className="pct-unit text-xs font-semibold text-[var(--bp-muted)]">%</span>
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--bp-muted)]">{bcLabel}</p>
+          </div>
+        )
+      ) : null}
+      {/* Prediction result at bottom of winner card */}
+      {isWinner && predictionResult === "correct" ? (
+        <div className="mt-1 flex items-center gap-1">
+          <PartyPopper className="h-3.5 w-3.5 shrink-0 text-[#4ade80]" strokeWidth={2} />
+          <span className="text-xs font-semibold text-[#4ade80]">{correctLabel}</span>
+          {typeof predictionScore === "number" && predictionScore > 0 ? (
+            <PointsBadge value={predictionScore} className="ml-1" />
+          ) : null}
+        </div>
+      ) : isWinner && predictionResult === "wrong" ? (
+        <div className="mt-1 flex items-center gap-1">
+          <Frown className="h-3.5 w-3.5 shrink-0 text-[#f87171]" strokeWidth={2} />
+          <span className="text-xs font-semibold text-[#f87171]">{wrongLabel}</span>
+          {typeof predictionScore === "number" ? (
+            <PointsBadge value={predictionScore} className="ml-1" />
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -192,38 +222,24 @@ export default async function FightCard({
   const winnerB = !!fight.winner_id && fight.winner_id === fight.fighter_b_id;
   const fighterALabel = getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name);
   const fighterBLabel = getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name);
-  const predictedLabel = prediction
-    ? prediction.winner_id === fight.fighter_a_id ? fighterALabel : fighterBLabel
-    : null;
-  const predictionDetail = [predictedLabel, prediction?.method, prediction?.round ? `R${prediction.round}` : null]
-    .filter(Boolean).join(" · ");
-  const resultLabel = isVoided
-    ? t(`status.${fight.status}`)
-    : fight.winner_id
-      ? `${winnerA ? fighterALabel : fighterBLabel} ${t("event.won")}${fight.method ? ` · ${fight.method}` : ""}${fight.round ? ` · R${fight.round}` : ""}`
-      : t("event.resultPending");
-
-  const statusTone = isVoided ? "danger" : isCompleted ? "success" : isLive ? "danger" : "info";
   const rawWeight = fight.fighter_a.weight_class || fight.fighter_b.weight_class || bcWeightClass;
   const weightLabel = rawWeight ? translateWeightClass(rawWeight, locale) : null;
 
   return (
     <article aria-label={`${fighterALabel} vs ${fighterBLabel}`} className={retroPanelClassName({ interactive: !isUpcoming, className: "overflow-hidden p-3 sm:p-4" })}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="shrink-0 text-xs font-semibold text-[var(--bp-muted)]">
           {t("event.fight")} {String(index).padStart(2, "0")}
         </span>
-        <div className="flex items-center gap-1.5">
-          {weightLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{weightLabel}</span> : null}
-          {seriesLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{seriesLabel}</span> : null}
-          {isMainEvent ? (
-            <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel>
-          ) : null}
-          {isVoided && (
-            <RetroLabel size="md" tone="danger">{isCancelled ? "CAN" : "NC"}</RetroLabel>
-          )}
-        </div>
+        {weightLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{weightLabel}</span> : null}
+        {seriesLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{seriesLabel}</span> : null}
+        {isMainEvent ? (
+          <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel>
+        ) : null}
+        {isVoided && (
+          <RetroLabel size="md" tone="danger">{isCancelled ? "CAN" : "NC"}</RetroLabel>
+        )}
       </div>
 
       {/* Upcoming → interactive picker with radio in fighter cards */}
@@ -258,15 +274,19 @@ export default async function FightCard({
             <FighterSideStatic
               fighter={fight.fighter_a}
               locale={locale}
-              crowdPct={crowdStats?.fighter_a_percentage}
               bcPct={bcPrediction?.fighterA_pct}
               bcDivision={bcFighterADivision}
               isWinner={winnerA}
               isLoser={winnerB}
-              isPicked={!!prediction && prediction.winner_id === fight.fighter_a_id}
-              pickLabel={t("prediction.yourPick")}
+              winMethod={winnerA ? fight.method : null}
+              winRound={winnerA ? fight.round : null}
               winLabel={t("event.win")}
-              crowdLabel={t("event.officialPrediction")}
+              bcLabel={t("event.officialPrediction")}
+              isCompleted={isCompleted}
+              predictionResult={prediction && isCompleted && !isVoided && winnerA ? (prediction.is_winner_correct ? "correct" : prediction.is_winner_correct === false ? "wrong" : null) : null}
+              predictionScore={prediction?.score}
+              correctLabel={t("prediction.correct")}
+              wrongLabel={t("prediction.wrong")}
             />
             <div className="flex items-center justify-center px-1 py-1 sm:py-0">
               <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
@@ -274,37 +294,28 @@ export default async function FightCard({
             <FighterSideStatic
               fighter={fight.fighter_b}
               locale={locale}
-              crowdPct={crowdStats?.fighter_b_percentage}
               bcPct={bcPrediction?.fighterB_pct}
               bcDivision={bcFighterBDivision}
               isWinner={winnerB}
               isLoser={winnerA}
-              isPicked={!!prediction && prediction.winner_id === fight.fighter_b_id}
-              pickLabel={t("prediction.yourPick")}
+              winMethod={winnerB ? fight.method : null}
+              winRound={winnerB ? fight.round : null}
               winLabel={t("event.win")}
-              crowdLabel={t("event.officialPrediction")}
+              bcLabel={t("event.officialPrediction")}
+              isCompleted={isCompleted}
+              predictionResult={prediction && isCompleted && !isVoided && winnerB ? (prediction.is_winner_correct ? "correct" : prediction.is_winner_correct === false ? "wrong" : null) : null}
+              predictionScore={prediction?.score}
+              correctLabel={t("prediction.correct")}
+              wrongLabel={t("prediction.wrong")}
             />
           </div>
 
-          {/* Result bar */}
-          <div className="mt-3 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-[var(--bp-muted)]">
-                {isCompleted ? resultLabel : isLive ? t("event.predictionLocked") : ""}
-              </p>
-              {prediction && !isVoided ? (
-                <RetroStatusBadge tone={prediction.is_winner_correct ? "success" : prediction.is_winner_correct === false ? "danger" : "neutral"}>
-                  {prediction.is_winner_correct ? t("event.win") : prediction.is_winner_correct === false ? t("event.loss") : t("common.pending")}
-                  {typeof prediction.score === "number" ? ` ${prediction.score}pt` : ""}
-                </RetroStatusBadge>
-              ) : null}
+          {/* Prediction locked (live only) */}
+          {isLive ? (
+            <div className="mt-3 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-3 py-2">
+              <p className="text-xs text-[var(--bp-muted)]">{t("event.predictionLocked")}</p>
             </div>
-            {prediction ? (
-              <p className="mt-1 text-xs text-[var(--bp-muted)]">
-                {t("prediction.yourPick")}: <span className="text-[var(--bp-ink)]">{predictionDetail || predictedLabel}</span>
-              </p>
-            ) : null}
-          </div>
+          ) : null}
 
           {!hideDiscussion && (
             <Link
