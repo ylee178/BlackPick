@@ -16,3 +16,4 @@ storybook-static
 e2e/test-results/
 e2e/html-report/
 e2e/.auth/
+.vercel
