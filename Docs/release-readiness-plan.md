@@ -1,7 +1,7 @@
 # Release Readiness Plan
 
 Branch: `codex/release-readiness`
-Baseline: `origin/main` at `312c610` (`Harden admin flows and refresh app shell (#1)`)
+Baseline: `origin/main` at `db1040d` (`Fix GitHub Actions workflow parsing (#2)`)
 
 ## Goal
 
@@ -31,13 +31,13 @@ Ship a stable Black Pick release where:
 - [x] Verify environment variables in Vercel Preview and Production
 - [ ] Verify Supabase Auth site URL and redirect URL allowlist for dev + prod
 - [x] Run one full deploy to dev
-- [ ] Run one full deploy to prod
+- [x] Run one full deploy to prod
 
 ## Phase 2: Admin Access and Routing Safety
 
-- [ ] Verify admin surfaces are not discoverable from normal navigation
-- [ ] Verify non-admin direct access to `/admin` routes is blocked
-- [ ] Verify non-admin direct access to fighter image management is blocked
+- [x] Verify admin surfaces are not discoverable from normal navigation
+- [x] Verify non-admin direct access to `/admin` routes is blocked
+- [x] Verify non-admin direct access to fighter image management is blocked
 - [ ] Verify admin users can still access required tools
 - [ ] Add or tighten regression coverage for admin-only routes if needed
 
@@ -58,9 +58,9 @@ Ship a stable Black Pick release where:
 
 ## Phase 4: CI/CD Reliability
 
-- [ ] Verify `.github/workflows/vercel-cicd.yml` matches the real branch strategy
-- [ ] Verify `develop -> dev.blackpick.io` path actually runs
-- [ ] Verify `main -> blackpick.io` path actually runs
+- [x] Verify `.github/workflows/vercel-cicd.yml` matches the real branch strategy
+- [x] Verify `develop -> dev.blackpick.io` path actually runs
+- [x] Verify `main -> blackpick.io` path actually runs
 - [ ] Confirm production approval flow if GitHub environments are used
 - [ ] Confirm rollback steps are documented and tested
 
@@ -86,6 +86,7 @@ Ship a stable Black Pick release where:
 ### Confirmed
 
 - `origin/main` includes merge commit `312c610`
+- `origin/main` also includes workflow fix merge commit `db1040d`
 - `vercel.json` disables automatic Git-triggered Vercel deployments, so the GitHub Actions flow is the primary deploy path
 - release docs already assume a `develop -> dev` and `main -> prod` promotion model
 - local Vercel link exists:
@@ -111,7 +112,11 @@ Ship a stable Black Pick release where:
 - `www.blackpick.io` is configured to redirect to `blackpick.io`
 - `dev.blackpick.io` is configured for `gitBranch: develop`
 - GitHub Actions dev pipeline now runs successfully on `develop`
-- workflow parser bug in `.github/workflows/vercel-cicd.yml` was fixed on `develop` and on `codex/release-readiness`
+- GitHub Actions production pipeline now runs successfully on `main`
+- workflow parser bug in `.github/workflows/vercel-cicd.yml` was fixed on `main`, `develop`, and `codex/release-readiness`
+- unauthenticated direct access to `/admin` returns `307` to `/{locale}/login`
+- unauthenticated direct access to `/{locale}/fighters/manage` triggers a server redirect to `/{locale}/login`
+- profile HTML does not expose admin navigation links to normal users
 
 ### Gaps Found
 
@@ -121,7 +126,6 @@ Ship a stable Black Pick release where:
 - `https://dev.blackpick.io` currently only responds with `403` when TLS verification is bypassed, which is consistent with DNS not yet pointing at the intended Vercel edge
 - `configVerifiedAt`, `txtVerifiedAt`, and `nsVerifiedAt` are still `null` on the Vercel domain object
 - Supabase Auth site URL / redirect allowlist still needs live verification in the dashboard
-- production deploy flow still needs a live run after the workflow fix lands on `main`
 - GitHub Actions still emits a non-blocking Node 20 deprecation warning for `actions/checkout@v4` and `actions/setup-node@v4`
 
 ## Task 1 Result: Deployment Bootstrap Is The Immediate Critical Path
@@ -176,3 +180,20 @@ After DNS propagates, re-check:
 - `https://blackpick.io`
 - `https://www.blackpick.io`
 - `https://dev.blackpick.io`
+
+## Test Right Now
+
+What already works right now without waiting on DNS:
+
+- public production-style test URL: `https://black-pick.vercel.app`
+- `/admin` protection redirects to login for non-admin users
+- `/{locale}/fighters/manage` protection redirects to login for non-admin users
+- `main` and `develop` GitHub Actions deploy jobs both succeed
+
+What still depends on external dashboard or DNS work:
+
+- `https://blackpick.io`
+- `https://www.blackpick.io`
+- `https://dev.blackpick.io`
+- Supabase Auth redirect allowlist for dev + prod
+- Google login provider credentials / enablement
