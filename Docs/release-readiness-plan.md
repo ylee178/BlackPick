@@ -23,14 +23,15 @@ Ship a stable Black Pick release where:
 
 ## Phase 1: Deployments, Domains, and Environment Wiring
 
-- [ ] Confirm GitHub Actions secrets exist: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-- [ ] Create and protect `develop` branch for dev deployments
-- [ ] Verify Vercel project linkage for both dev and prod deployment flows
-- [ ] Verify `blackpick.io`, `www.blackpick.io`, and `dev.blackpick.io` domain mapping in Vercel
-- [ ] Verify DNS records for apex, `www`, and `dev`
-- [ ] Verify environment variables in Vercel Preview and Production
+- [x] Confirm GitHub Actions secrets exist: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+- [x] Create `develop` branch for dev deployments
+- [x] Verify Vercel project linkage for both dev and prod deployment flows
+- [x] Verify `blackpick.io`, `www.blackpick.io`, and `dev.blackpick.io` domain mapping in Vercel
+- [ ] Fix DNS records for apex, `www`, and `dev`
+- [x] Verify environment variables in Vercel Preview and Production
 - [ ] Verify Supabase Auth site URL and redirect URL allowlist for dev + prod
-- [ ] Run one full deploy to dev and one full deploy to prod
+- [x] Run one full deploy to dev
+- [ ] Run one full deploy to prod
 
 ## Phase 2: Admin Access and Routing Safety
 
@@ -92,39 +93,86 @@ Ship a stable Black Pick release where:
   - org: `team_q2hYuedldbZAA7Ja5ctgAQ5t`
   - project id: `prj_8Jj4c2yp7RyvpYcx8rRW1dvVic3n`
 - Vercel CLI auth works for account `ylee178-7822`
-
-### Gaps Found
-
-- there is currently no `develop` branch on the remote
-- GitHub Actions repository secrets are currently empty via API:
+- GitHub Actions secrets now exist:
   - `VERCEL_TOKEN`
   - `VERCEL_ORG_ID`
   - `VERCEL_PROJECT_ID`
-- GitHub environments are currently empty via API:
+- GitHub environments now exist:
   - `development`
   - `production`
-- Vercel project environment variables are currently empty:
-  - no preview vars
-  - no production vars
-- Vercel account currently has zero configured domains
-- `blackpick.io` and `dev.blackpick.io` are not active Vercel deployments in the current account context
-- domain, DNS, Vercel environment values, and Supabase Auth redirect allowlists still need live verification in their dashboards
+- `develop` branch now exists on the remote
+- Vercel environment variables now exist for:
+  - `Preview (develop)`
+  - `Production`
+- Vercel project domains now exist and are verified:
+  - `blackpick.io`
+  - `www.blackpick.io`
+  - `dev.blackpick.io`
+- `www.blackpick.io` is configured to redirect to `blackpick.io`
+- `dev.blackpick.io` is configured for `gitBranch: develop`
+- GitHub Actions dev pipeline now runs successfully on `develop`
+- workflow parser bug in `.github/workflows/vercel-cicd.yml` was fixed on `develop` and on `codex/release-readiness`
+
+### Gaps Found
+
+- DNS is still pointed at `185.53.179.128` via `ns1.dyna-ns.net` / `ns2.dyna-ns.net`, not Vercel
+- Vercel reports all three domains as `misconfigured: true`
+- `https://blackpick.io` and `https://www.blackpick.io` currently show an expired TLS certificate
+- `https://dev.blackpick.io` currently only responds with `403` when TLS verification is bypassed, which is consistent with DNS not yet pointing at the intended Vercel edge
+- `configVerifiedAt`, `txtVerifiedAt`, and `nsVerifiedAt` are still `null` on the Vercel domain object
+- Supabase Auth site URL / redirect allowlist still needs live verification in the dashboard
+- production deploy flow still needs a live run after the workflow fix lands on `main`
+- GitHub Actions still emits a non-blocking Node 20 deprecation warning for `actions/checkout@v4` and `actions/setup-node@v4`
 
 ## Task 1 Result: Deployment Bootstrap Is The Immediate Critical Path
 
 Before user testing or social login work, the following must exist:
 
-1. Vercel domains
-2. Vercel environment variables
-3. GitHub Actions secrets
-4. `develop` branch
-5. GitHub environments for deploy approvals and visibility
+1. Working DNS to Vercel
+2. Supabase Auth URLs for dev + prod
+3. Proven production deploy
+4. Healthy TLS on custom domains
 
 Without those, `dev.blackpick.io`, `blackpick.io`, and the documented CI/CD flow cannot work yet.
 
 ## Next Up
 
-1. Bootstrap deployment infrastructure
-2. Normalize the branch/release flow around `develop` and `main`
-3. Verify Supabase Auth URLs against dev/prod domains
-4. Then move to auth/social and UAT
+1. Update registrar DNS to Vercel
+2. Verify `blackpick.io` and `dev.blackpick.io` resolve with healthy TLS
+3. Mirror the workflow fix to `main` and run a production deployment
+4. Verify Supabase Auth URLs against dev/prod domains
+5. Then move to admin checks, auth/social, and UAT
+
+## DNS Changes Required At Registrar
+
+Current DNS provider:
+
+- `ns1.dyna-ns.net`
+- `ns2.dyna-ns.net`
+
+Current live records:
+
+- `blackpick.io` -> `A 185.53.179.128`
+- `www.blackpick.io` -> `A 185.53.179.128`
+- `dev.blackpick.io` -> `A 185.53.179.128`
+
+Vercel recommended values:
+
+- apex `blackpick.io`
+  - `A 76.76.21.21`
+- `www.blackpick.io`
+  - `CNAME cname.vercel-dns.com.`
+- `dev.blackpick.io`
+  - `CNAME cname.vercel-dns.com.`
+
+Alternative:
+
+- move nameservers entirely to:
+  - `ns1.vercel-dns.com`
+  - `ns2.vercel-dns.com`
+
+After DNS propagates, re-check:
+
+- `https://blackpick.io`
+- `https://www.blackpick.io`
+- `https://dev.blackpick.io`
