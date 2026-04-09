@@ -6,41 +6,19 @@ import { useI18n } from "@/lib/i18n-provider";
 import { WLRecord } from "@/components/ui/ranking";
 import { ChevronDown, Search } from "lucide-react";
 import { retroFieldClassName, retroPanelClassName } from "@/components/ui/retro";
-import { parseRecord } from "@/lib/parse-record";
 import FighterAvatar from "@/components/FighterAvatar";
-
-type FighterItem = {
-  id: string;
-  name: string;
-  record: string;
-  flag: string;
-  nationalityCode: string | null;
-  avatarUrl: string | null;
-  weightClass: string | null;
-  hasPixelArt?: boolean;
-};
-
-const CUSTOM_REGION_LABELS: Record<string, string> = {
-  KUR: "Kurdistan",
-};
-
-function getRegionLabel(regionDisplayNames: Intl.DisplayNames | null, code: string) {
-  const normalized = code.trim().toUpperCase();
-  if (CUSTOM_REGION_LABELS[normalized]) return CUSTOM_REGION_LABELS[normalized];
-  if (!/^[A-Z]{2}$/.test(normalized) && !/^\d{3}$/.test(normalized)) return normalized;
-
-  try {
-    return regionDisplayNames?.of(normalized) ?? normalized;
-  } catch {
-    return normalized;
-  }
-}
+import {
+  buildCountryOptions,
+  filterAndSortFighters,
+  type FighterGridItem as FighterItem,
+  type FighterGridSort,
+} from "@/lib/fighter-grid";
 
 export default function FighterGrid({ items }: { items: FighterItem[] }) {
   const { t, locale } = useI18n();
   const [query, setQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"name_asc" | "wins_desc" | "losses_desc">("wins_desc");
+  const [sortBy, setSortBy] = useState<FighterGridSort>("wins_desc");
 
   const regionDisplayNames = useMemo(() => {
     try {
@@ -51,60 +29,11 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
   }, [locale]);
 
   const countryOptions = useMemo(() => {
-    const uniqueCodes = Array.from(
-      new Set(items.map((item) => item.nationalityCode).filter((code): code is string => Boolean(code))),
-    );
-
-    return uniqueCodes
-      .map((code) => ({
-        code,
-        label: getRegionLabel(regionDisplayNames, code),
-        flag: items.find((item) => item.nationalityCode === code)?.flag ?? "",
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+    return buildCountryOptions(items, regionDisplayNames);
   }, [items, regionDisplayNames]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-
-    const next = items
-      .map((fighter, index) => {
-        const { wins, losses, draws } = parseRecord(fighter.record);
-        return {
-          ...fighter,
-          wins: Number(wins) || 0,
-          losses: Number(losses) || 0,
-          draws: Number(draws) || 0,
-          originalIndex: index,
-        };
-      })
-      .filter((fighter) => {
-        const matchesQuery = !q || fighter.name.toLowerCase().includes(q);
-        const matchesCountry = countryFilter === "all" || fighter.nationalityCode === countryFilter;
-        return matchesQuery && matchesCountry;
-      });
-
-    if (sortBy === "wins_desc") {
-      next.sort((a, b) => {
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        if (a.losses !== b.losses) return a.losses - b.losses;
-        return a.name.localeCompare(b.name);
-      });
-    } else if (sortBy === "losses_desc") {
-      next.sort((a, b) => {
-        if (b.losses !== a.losses) return b.losses - a.losses;
-        if (b.wins !== a.wins) return b.wins - a.wins;
-        return a.name.localeCompare(b.name);
-      });
-    } else {
-      next.sort((a, b) => {
-        const byName = a.name.localeCompare(b.name);
-        if (byName !== 0) return byName;
-        return a.originalIndex - b.originalIndex;
-      });
-    }
-
-    return next;
+    return filterAndSortFighters(items, { query, countryFilter, sortBy });
   }, [countryFilter, items, query, sortBy]);
 
   return (

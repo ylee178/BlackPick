@@ -45,7 +45,29 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Run unit tests
-        run: npm run test:unit
+        run: npm run test:unit:coverage
+
+      - name: Summarize unit coverage
+        run: |
+          node - <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require("fs");
+          const summary = JSON.parse(fs.readFileSync("coverage/unit/coverage-summary.json", "utf8"));
+          const total = summary.total;
+          console.log("## Unit Coverage");
+          console.log("");
+          console.log(`- Statements: ${total.statements.pct}%`);
+          console.log(`- Branches: ${total.branches.pct}%`);
+          console.log(`- Functions: ${total.functions.pct}%`);
+          console.log(`- Lines: ${total.lines.pct}%`);
+          NODE
+
+      - name: Upload unit coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage
+          path: coverage/unit
+          if-no-files-found: ignore
 
       - name: Build application
         run: npm run build
@@ -133,3 +155,81 @@ jobs:
             -m githubOrg="${GITHUB_REPOSITORY_OWNER}" \
             -m githubRepo="${GITHUB_REPOSITORY#*/}" \
             -m githubCommitSha="${GITHUB_SHA}"
+
+  smoke-dev:
+    name: Smoke test dev.blackpick.io
+    if: github.ref == 'refs/heads/develop' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run deployed smoke tests
+        env:
+          BASE_URL: https://dev.blackpick.io
+        run: npm run test:e2e:smoke
+
+      - name: Upload dev smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-dev
+          path: |
+            e2e/html-report
+            e2e/test-results
+          if-no-files-found: ignore
+
+  smoke-prod:
+    name: Smoke test blackpick.io
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: deploy-prod
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run deployed smoke tests
+        env:
+          BASE_URL: https://blackpick.io
+        run: npm run test:e2e:smoke
+
+      - name: Upload prod smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-prod
+          path: |
+            e2e/html-report
+            e2e/test-results
+          if-no-files-found: ignore

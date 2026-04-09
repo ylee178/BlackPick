@@ -18,6 +18,17 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "html"],
+      reportsDirectory: "./coverage/unit",
+      thresholds: {
+        statements: 70,
+        branches: 65,
+        functions: 65,
+        lines: 70,
+      },
+    },
     projects: [
       {
         test: {

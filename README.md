@@ -25,6 +25,7 @@ Required environment variables live in `.env` and `.env.example`. The important 
 npx tsc --noEmit
 npx eslint .
 npm run test:unit
+npm run test:unit:coverage
 npm run build
 ```
 
@@ -32,6 +33,7 @@ E2E coverage is available through Playwright:
 
 ```bash
 npm run test:e2e
+npm run test:e2e:smoke
 ```
 
 ## Recent Hardening Checklist
