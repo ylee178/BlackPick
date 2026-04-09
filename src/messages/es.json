@@ -171,7 +171,14 @@
     "record": "Historial",
     "nationality": "Nacionalidad",
     "weightClass": "Categoría de peso",
-    "recentFights": "Peleas recientes"
+    "recentFights": "Peleas recientes",
+    "filterCountry": "Filtrar por país",
+    "allCountries": "Todos los países",
+    "sortBy": "Ordenar",
+    "sortWinsDesc": "Más victorias",
+    "sortLossesDesc": "Más derrotas",
+    "sortNameAsc": "Nombre",
+    "noResults": "No hay peleadores que coincidan con este filtro."
   },
   "series": {
     "blackCup": "Black Cup",

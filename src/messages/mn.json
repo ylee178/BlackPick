@@ -171,7 +171,14 @@
     "record": "Амжилт",
     "nationality": "Иргэншил",
     "weightClass": "Жингийн ангилал",
-    "recentFights": "Сүүлийн тулаанууд"
+    "recentFights": "Сүүлийн тулаанууд",
+    "filterCountry": "Улсаар шүүх",
+    "allCountries": "Бүх улс",
+    "sortBy": "Эрэмбэлэх",
+    "sortWinsDesc": "Олон ялалттай",
+    "sortLossesDesc": "Олон ялагдалтай",
+    "sortNameAsc": "Нэрээр",
+    "noResults": "Энэ шүүлтүүрт тохирох тамирчин алга."
   },
   "series": {
     "blackCup": "Black Cup",

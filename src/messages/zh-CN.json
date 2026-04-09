@@ -171,7 +171,14 @@
     "record": "战绩",
     "nationality": "国籍",
     "weightClass": "体重级别",
-    "recentFights": "近期比赛"
+    "recentFights": "近期比赛",
+    "filterCountry": "按国家筛选",
+    "allCountries": "全部国家",
+    "sortBy": "排序",
+    "sortWinsDesc": "按胜场从高到低",
+    "sortLossesDesc": "按负场从高到低",
+    "sortNameAsc": "按名称",
+    "noResults": "没有符合筛选条件的选手。"
   },
   "series": {
     "blackCup": "Black Cup",

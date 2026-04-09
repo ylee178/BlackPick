@@ -168,7 +168,14 @@
     "record": "Cartel",
     "nationality": "Nacionalidade",
     "weightClass": "Categoria de peso",
-    "recentFights": "Lutas Recentes"
+    "recentFights": "Lutas Recentes",
+    "filterCountry": "Filtrar por país",
+    "allCountries": "Todos os países",
+    "sortBy": "Ordenar",
+    "sortWinsDesc": "Mais vitórias",
+    "sortLossesDesc": "Mais derrotas",
+    "sortNameAsc": "Nome",
+    "noResults": "Nenhum lutador corresponde a este filtro."
   },
   "series": {
     "blackCup": "Black Cup",

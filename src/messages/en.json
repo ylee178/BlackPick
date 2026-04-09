@@ -171,7 +171,14 @@
     "record": "Record",
     "nationality": "Nationality",
     "weightClass": "Weight Class",
-    "recentFights": "Recent Fights"
+    "recentFights": "Recent Fights",
+    "filterCountry": "Filter by country",
+    "allCountries": "All countries",
+    "sortBy": "Sort fighters",
+    "sortWinsDesc": "Most wins",
+    "sortLossesDesc": "Most losses",
+    "sortNameAsc": "Name",
+    "noResults": "No fighters match this filter."
   },
   "series": {
     "blackCup": "Black Cup",

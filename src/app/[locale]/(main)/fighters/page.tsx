@@ -25,6 +25,7 @@ export default async function FightersPage() {
     name: getLocalizedFighterName(f, locale, f.name),
     record: f.record || "0-0",
     flag: countryCodeToFlag(f.nationality),
+    nationalityCode: f.nationality?.toUpperCase() ?? null,
     avatarUrl: getFighterPixelPublicUrl(f.id, pixelFiles) ?? "/fighters/default.png",
     weightClass: f.weight_class ? translateWeightClass(f.weight_class, locale) : null,
     hasPixelArt: hasFighterPixelFile(f.id, pixelFiles),

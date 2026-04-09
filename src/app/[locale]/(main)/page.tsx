@@ -262,13 +262,6 @@ export default async function HomePage() {
                   </div>
                 ) : null}
 
-                {!authUser ? (
-                  <div className="mt-4">
-                    <Link href="/signup" className={retroButtonClassName({ variant: "ghost", size: "sm" })}>
-                      {t("nav.signup")}
-                    </Link>
-                  </div>
-                ) : null}
               </div>
 
               {/* Right: Timer or Cup Scoreboard */}
@@ -458,22 +451,6 @@ export default async function HomePage() {
               )}
             </div>
           </section>
-
-          {/* Sign Up CTA */}
-          {!authUser ? (
-            <section className="rounded-[16px] border border-[rgba(229,169,68,0.15)] bg-[var(--bp-card)] p-4">
-              <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("auth.createAccount")}</p>
-              <p className="mt-1 text-xs text-[var(--bp-muted)]">{t("auth.signupDescription")}</p>
-              <div className="mt-3 flex gap-2">
-                <Link href="/signup" className={retroButtonClassName({ variant: "primary", size: "sm" })}>
-                  {t("nav.signup")}
-                </Link>
-                <Link href="/login" className={retroButtonClassName({ variant: "ghost", size: "sm" })}>
-                  {t("nav.login")}
-                </Link>
-              </div>
-            </section>
-          ) : null}
 
           {/* Card 4: League Rankings (bottom) */}
           <LeagueRankingCard

@@ -170,7 +170,14 @@
     "record": "戦績",
     "nationality": "国籍",
     "weightClass": "階級",
-    "recentFights": "最近の試合"
+    "recentFights": "最近の試合",
+    "filterCountry": "国別に表示",
+    "allCountries": "すべての国",
+    "sortBy": "並び替え",
+    "sortWinsDesc": "勝利数が多い順",
+    "sortLossesDesc": "敗戦数が多い順",
+    "sortNameAsc": "名前順",
+    "noResults": "条件に一致する選手がいません。"
   },
   "series": {
     "blackCup": "ブラックカップ",

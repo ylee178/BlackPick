@@ -171,7 +171,14 @@
     "record": "전적",
     "nationality": "국적",
     "weightClass": "체급",
-    "recentFights": "최근 경기"
+    "recentFights": "최근 경기",
+    "filterCountry": "국가별 보기",
+    "allCountries": "전체 국가",
+    "sortBy": "정렬",
+    "sortWinsDesc": "승 많은 순",
+    "sortLossesDesc": "패 많은 순",
+    "sortNameAsc": "이름순",
+    "noResults": "조건에 맞는 선수가 없습니다."
   },
   "series": {
     "blackCup": "블랙컵",
