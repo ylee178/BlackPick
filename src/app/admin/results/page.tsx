@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import type { Database } from '@/types/database'
 
@@ -9,6 +9,7 @@ type FightMethod = Database['public']['Tables']['fights']['Row']['method']
 type FightOption = {
   id: string
   status: Database['public']['Tables']['fights']['Row']['status']
+  result_processed_at: string | null
   fighter_a_id: string
   fighter_b_id: string
   start_time: string
@@ -32,7 +33,7 @@ export default function AdminResultsPage() {
   const [method, setMethod] = useState<NonNullable<FightMethod>>('Decision')
   const [round, setRound] = useState('1')
 
-  async function loadFights() {
+  const loadFights = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -42,6 +43,7 @@ export default function AdminResultsPage() {
         `
         id,
         status,
+        result_processed_at,
         fighter_a_id,
         fighter_b_id,
         start_time,
@@ -50,6 +52,7 @@ export default function AdminResultsPage() {
         fighter_b:fighters!fights_fighter_b_id_fkey(id, name)
       `
       )
+      .is('result_processed_at', null)
       .order('start_time', { ascending: false })
 
     if (error) {
@@ -60,22 +63,13 @@ export default function AdminResultsPage() {
 
     setFights((data as unknown as FightOption[]) ?? [])
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
-    loadFights()
-  }, [])
+    void Promise.resolve().then(loadFights)
+  }, [loadFights])
 
   const selectedFight = fights.find((fight) => fight.id === fightId)
-
-  useEffect(() => {
-    if (!selectedFight) {
-      setWinnerId('')
-      return
-    }
-
-    setWinnerId(selectedFight.fighter_a_id)
-  }, [fightId])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -89,28 +83,20 @@ export default function AdminResultsPage() {
     setError(null)
     setMessage(null)
 
-    const { error: updateError } = await supabase
-      .from('fights')
-      .update({
+    const res = await fetch('/api/admin/results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fight_id: fightId,
         winner_id: winnerId,
         method,
         round: Number(round),
-        status: 'completed',
-      })
-      .eq('id', fightId)
-
-    if (updateError) {
-      setError(updateError.message)
-      setSubmitting(false)
-      return
-    }
-
-    const { error: rpcError } = await supabase.rpc('process_fight_result', {
-      p_fight_id: fightId,
+      }),
     })
 
-    if (rpcError) {
-      setError(rpcError.message)
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null
+      setError(data?.error ?? 'Failed to submit result.')
       setSubmitting(false)
       return
     }
@@ -137,7 +123,12 @@ export default function AdminResultsPage() {
             <label className="mb-2 block text-sm text-gray-300">Fight</label>
             <select
               value={fightId}
-              onChange={(e) => setFightId(e.target.value)}
+              onChange={(e) => {
+                const nextFightId = e.target.value
+                setFightId(nextFightId)
+                const nextFight = fights.find((fight) => fight.id === nextFightId)
+                setWinnerId(nextFight?.fighter_a_id ?? '')
+              }}
               className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
               required
             >

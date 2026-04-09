@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import {
@@ -14,6 +15,7 @@ type FighterItem = {
   ringName: string;
   flag: string;
   hasImage: boolean;
+  imageUrl?: string | null;
 };
 
 export default function FighterImageManager({
@@ -24,6 +26,7 @@ export default function FighterImageManager({
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editSource, setEditSource] = useState<string | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedArea, setCroppedArea] = useState<Area | null>(null);
@@ -58,6 +61,7 @@ export default function FighterImageManager({
     reader.onload = () => {
       setEditSource(reader.result as string);
       setEditingId(pendingFighterId.current);
+      setSourceFile(file);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
     };
@@ -66,10 +70,11 @@ export default function FighterImageManager({
   }
 
   function startEditExisting(fighterId: string) {
-    const ts = imageTimestamps[fighterId] || "";
-    const url = `/fighters/pixel/${fighterId}.png${ts ? `?t=${ts}` : ""}`;
+    const ts = imageTimestamps[fighterId] || Date.now();
+    const url = `/api/fighter-avatar/ref/${fighterId}?t=${ts}`;
     setEditSource(url);
     setEditingId(fighterId);
+    setSourceFile(null);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
   }
@@ -77,6 +82,7 @@ export default function FighterImageManager({
   function cancelEdit() {
     setEditingId(null);
     setEditSource(null);
+    setSourceFile(null);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedArea(null);
@@ -93,7 +99,7 @@ export default function FighterImageManager({
       canvas.height = size;
       const ctx = canvas.getContext("2d")!;
 
-      const img = new Image();
+      const img = new window.Image();
       img.crossOrigin = "anonymous";
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
@@ -120,6 +126,9 @@ export default function FighterImageManager({
       const formData = new FormData();
       formData.append("file", blob, `${editingId}.png`);
       formData.append("fighter_id", editingId);
+      if (sourceFile) {
+        formData.append("source_file", sourceFile, sourceFile.name);
+      }
 
       const res = await fetch("/api/fighter-avatar/upload", {
         method: "POST",
@@ -143,8 +152,8 @@ export default function FighterImageManager({
     }
   }
 
-  async function handleDelete(fighterId: string) {
-    const url = `/fighters/pixel/${fighterId}.png`;
+  async function handleDelete(fighterId: string, imageUrl: string) {
+    const url = imageUrl.split("?")[0];
     try {
       const res = await fetch("/api/fighter-avatar/delete", {
         method: "POST",
@@ -159,9 +168,11 @@ export default function FighterImageManager({
 
   function getImageUrl(f: FighterItem): string | null {
     if (deletedIds.has(f.id)) return null;
-    if (!f.hasImage && !imageTimestamps[f.id]) return null;
     const ts = imageTimestamps[f.id];
-    return `/fighters/pixel/${f.id}.png${ts ? `?t=${ts}` : ""}`;
+    if (ts) {
+      return `/fighters/pixel/${f.id}.png?t=${ts}`;
+    }
+    return f.imageUrl ?? null;
   }
 
   return (
@@ -261,16 +272,21 @@ export default function FighterImageManager({
               {/* Image */}
               <div className="relative mx-auto mb-2 h-28 w-28 overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#2a2a2a]">
                 {imageUrl ? (
-                  <img
+                  <NextImage
                     src={imageUrl}
                     alt={f.ringName || f.name}
-                    className="h-full w-full object-cover"
+                    fill
+                    unoptimized
+                    sizes="112px"
+                    className="object-cover"
                   />
                 ) : (
-                  <img
+                  <NextImage
                     src="/fighters/default.png"
                     alt="Default"
-                    className="h-full w-full object-cover opacity-30"
+                    fill
+                    sizes="112px"
+                    className="object-cover opacity-30"
                   />
                 )}
               </div>
@@ -306,7 +322,7 @@ export default function FighterImageManager({
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(f.id)}
+                      onClick={() => imageUrl && handleDelete(f.id, imageUrl)}
                       className="flex cursor-pointer items-center justify-center rounded-[10px] p-1.5 text-[var(--bp-muted)] transition hover:bg-[rgba(248,113,113,0.1)] hover:text-[var(--bp-danger)]"
                       title="Delete image"
                     >

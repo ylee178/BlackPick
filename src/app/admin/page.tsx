@@ -1,7 +1,9 @@
-import { createSupabaseServer } from '@/lib/supabase-server'
+import { requireAdminPage } from '@/lib/admin-auth'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export default async function AdminDashboardPage() {
-  const supabase = await createSupabaseServer()
+  await requireAdminPage()
+  const supabase = createSupabaseAdmin()
 
   const [
     { count: eventsCount },

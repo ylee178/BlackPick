@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { getUser } from "@/lib/supabase-server";
+import { requireAdminApi } from "@/lib/admin-auth";
+import { invalidatePixelFileCache } from "@/lib/pixel-files";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const UUID_PNG_RE =
@@ -14,10 +15,8 @@ type Remap = {
 };
 
 export async function POST(req: NextRequest) {
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const adminCheck = await requireAdminApi();
+  if (adminCheck.response) return adminCheck.response;
 
   const { remaps } = (await req.json()) as { remaps: Remap[] };
   if (!remaps || remaps.length === 0) {
@@ -52,5 +51,6 @@ export async function POST(req: NextRequest) {
     results.push(`OK: ${filename} -> ${dstFilename}`);
   }
 
+  invalidatePixelFileCache();
   return NextResponse.json({ results });
 }

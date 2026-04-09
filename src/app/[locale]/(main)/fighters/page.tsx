@@ -1,11 +1,10 @@
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedFighterName } from "@/lib/localized-name";
-import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import FighterGrid from "@/components/FighterGrid";
-import { getPixelFiles } from "@/lib/pixel-files";
+import { getFighterPixelPublicUrl, getPixelFiles, hasFighterPixelFile } from "@/lib/pixel-files";
 
 export const revalidate = 300; // ISR: 5 minutes
 
@@ -26,9 +25,9 @@ export default async function FightersPage() {
     name: getLocalizedFighterName(f, locale, f.name),
     record: f.record || "0-0",
     flag: countryCodeToFlag(f.nationality),
-    avatarUrl: pixelFiles.has(`${f.id}.png`) ? `/fighters/pixel/${f.id}.png` : "/fighters/default.png",
+    avatarUrl: getFighterPixelPublicUrl(f.id, pixelFiles) ?? "/fighters/default.png",
     weightClass: f.weight_class ? translateWeightClass(f.weight_class, locale) : null,
-    hasPixelArt: pixelFiles.has(`${f.id}.png`),
+    hasPixelArt: hasFighterPixelFile(f.id, pixelFiles),
   }));
 
   // Pixel art fighters first, then the rest

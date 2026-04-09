@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { getSeriesLabel } from '@/lib/constants'
@@ -27,7 +27,7 @@ export default function AdminEventsPage() {
     mvp_video_url: '',
   })
 
-  async function loadEvents() {
+  const loadEvents = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -45,11 +45,11 @@ export default function AdminEventsPage() {
 
     setEvents(data ?? [])
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
-    loadEvents()
-  }, [])
+    void Promise.resolve().then(loadEvents)
+  }, [loadEvents])
 
   async function handleCreateEvent(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -64,10 +64,15 @@ export default function AdminEventsPage() {
       mvp_video_url: form.mvp_video_url?.trim() ? form.mvp_video_url : null,
     }
 
-    const { error } = await supabase.from('events').insert(payload)
+    const res = await fetch('/api/admin/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
 
-    if (error) {
-      setError(error.message)
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null
+      setError(data?.error ?? 'Failed to create event.')
       setSubmitting(false)
       return
     }

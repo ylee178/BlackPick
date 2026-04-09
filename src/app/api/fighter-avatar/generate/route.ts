@@ -2,17 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
-import { getUser } from "@/lib/supabase-server";
+import { requireAdminApi } from "@/lib/admin-auth";
+import { findFighterReferenceFile } from "@/lib/fighter-reference-files";
+import { invalidatePixelFileCache } from "@/lib/pixel-files";
 import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
 
 const generateLimiter = createRateLimiter({ limit: 5, windowSeconds: 3600 }); // 5 per hour
 
 const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
+const FIGHTER_IMAGE_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "Fighter_Images");
+const PLACEHOLDER_DIR = path.join(
+  /*turbopackIgnore: true*/ process.cwd(),
+  "public",
+  "fighters",
+  "placeholders",
+);
+const PIXEL_OUTPUT_DIR = path.join(
+  /*turbopackIgnore: true*/ process.cwd(),
+  "public",
+  "fighters",
+  "pixel",
+);
 
 const REF_IMAGES = [
-  "public/fighters/placeholders/red_hawk_v3.png",
-  "public/fighters/placeholders/ko_gang_v3.png",
+  "red_hawk_v3.png",
+  "ko_gang_v3.png",
 ];
 
 const PROMPT_STYLE =
@@ -33,19 +48,18 @@ function getApiKey(): string {
 
 function findSourcePhoto(fighterId: string): string | null {
   // 1. User-uploaded ref
-  const refPath = path.join(process.cwd(), "Fighter_Images", "refs", `${fighterId}.png`);
-  if (fs.existsSync(refPath)) return refPath;
+  const referenceFile = findFighterReferenceFile(fighterId);
+  if (referenceFile) return referenceFile.filepath;
 
   // 2. Manifest
-  const baseDir = path.join(process.cwd(), "Fighter_Images");
-  const manifestPath = path.join(baseDir, "_manifest.json");
+  const manifestPath = path.join(FIGHTER_IMAGE_DIR, "_manifest.json");
   if (fs.existsSync(manifestPath)) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
     const entry = manifest.find((e: { db_id?: string }) => e.db_id === fighterId);
     if (entry) {
-      const p = path.resolve(baseDir, entry.filename);
+      const p = path.normalize(path.join(FIGHTER_IMAGE_DIR, entry.filename));
       // Block directory traversal from manifest filenames
-      if (!p.startsWith(baseDir + path.sep)) return null;
+      if (!p.startsWith(FIGHTER_IMAGE_DIR + path.sep)) return null;
       if (fs.existsSync(p)) return p;
     }
   }
@@ -54,10 +68,9 @@ function findSourcePhoto(fighterId: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const adminCheck = await requireAdminApi();
+  if (adminCheck.response) return adminCheck.response;
+  const user = adminCheck.user;
 
   const { allowed, resetInSeconds } = generateLimiter.check(user.id);
   if (!allowed) return rateLimitResponse(resetInSeconds);
@@ -91,7 +104,7 @@ export async function POST(req: NextRequest) {
   // Build Gemini request
   const parts: Array<Record<string, unknown>> = [{ text: PROMPT_STYLE }];
   for (const rp of REF_IMAGES) {
-    const fullPath = path.join(process.cwd(), rp);
+    const fullPath = path.join(PLACEHOLDER_DIR, rp);
     parts.push({
       inlineData: {
         mimeType: "image/png",
@@ -128,8 +141,9 @@ export async function POST(req: NextRequest) {
     for (const part of cand.content?.parts ?? []) {
       if (part.inlineData?.data) {
         const buf = Buffer.from(part.inlineData.data, "base64");
-        const outPath = path.join(process.cwd(), "public/fighters/pixel", `${fighter_id}_v3.png`);
+        const outPath = path.join(PIXEL_OUTPUT_DIR, `${fighter_id}_v3.png`);
         fs.writeFileSync(outPath, buf);
+        invalidatePixelFileCache();
         return NextResponse.json({ success: true, path: `/fighters/pixel/${fighter_id}_v3.png` });
       }
     }

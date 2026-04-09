@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
-import { findFighterReferenceFile, getFighterPixelFilepath } from "@/lib/fighter-reference-files";
+import { findFighterReferenceFile } from "@/lib/fighter-reference-files";
+import { getFighterPixelFilepath } from "@/lib/pixel-files";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const pixelPath = getFighterPixelFilepath(id);
-  if (fs.existsSync(pixelPath)) {
+  if (pixelPath && fs.existsSync(pixelPath)) {
     const buffer = fs.readFileSync(pixelPath);
     return new NextResponse(buffer, {
       headers: { "Content-Type": "image/png", "Cache-Control": "no-cache" },

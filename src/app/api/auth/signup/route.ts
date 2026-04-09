@@ -1,38 +1,23 @@
 import { NextResponse } from "next/server";
 import type { User } from "@supabase/supabase-js";
+import { findAuthUserByEmail } from "@/lib/auth-user-search";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function findAuthUserByEmail(email: string) {
+async function findExistingAuthUserByEmail(email: string) {
   const admin = createSupabaseAdmin();
-  let page = 1;
-
-  while (page <= 10) {
+  return findAuthUserByEmail(email, async ({ page, perPage }) => {
     const { data, error } = await admin.auth.admin.listUsers({
       page,
-      perPage: 200,
+      perPage,
     });
 
     if (error) {
       throw error;
     }
-
-    const matchedUser =
-      data.users.find((user) => user.email?.toLowerCase() === email.toLowerCase()) ?? null;
-
-    if (matchedUser) {
-      return matchedUser;
-    }
-
-    if (data.users.length < 200) {
-      break;
-    }
-
-    page += 1;
-  }
-
-  return null;
+    return data;
+  });
 }
 
 function isConfirmedUser(user: User) {
@@ -61,7 +46,7 @@ export async function POST(request: Request) {
 
   try {
     const admin = createSupabaseAdmin();
-    const existingUser = await findAuthUserByEmail(email);
+    const existingUser = await findExistingAuthUserByEmail(email);
 
     if (existingUser) {
       if (isConfirmedUser(existingUser)) {

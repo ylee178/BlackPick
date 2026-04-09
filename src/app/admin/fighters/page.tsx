@@ -1,8 +1,10 @@
-import { createSupabaseServer } from '@/lib/supabase-server'
+import { requireAdminPage } from '@/lib/admin-auth'
 import { countryCodeToFlag } from '@/lib/flags'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export default async function AdminFightersPage() {
-  const supabase = await createSupabaseServer()
+  await requireAdminPage()
+  const supabase = createSupabaseAdmin()
 
   const { data: fighters, error } = await supabase
     .from('fighters')

@@ -54,6 +54,29 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_users: {
+        Row: {
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'admin_users_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: true
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       fighters: {
         Row: {
           id: string
@@ -140,6 +163,7 @@ export type Database = {
           winner_id: string | null
           method: 'KO/TKO' | 'Submission' | 'Decision' | null
           round: number | null
+          result_processed_at: string | null
           is_cup_match: boolean
           created_at: string
         }
@@ -154,6 +178,7 @@ export type Database = {
           winner_id?: string | null
           method?: 'KO/TKO' | 'Submission' | 'Decision' | null
           round?: number | null
+          result_processed_at?: string | null
           created_at?: string
         }
         Update: {
@@ -166,6 +191,7 @@ export type Database = {
           winner_id?: string | null
           method?: 'KO/TKO' | 'Submission' | 'Decision' | null
           round?: number | null
+          result_processed_at?: string | null
           is_cup_match?: boolean
           created_at?: string
         }
@@ -407,21 +433,21 @@ export type Database = {
         Row: {
           id: string
           comment_id: string
-          target_locale: 'en' | 'ko' | 'ja' | 'pt-BR'
+          target_locale: 'en' | 'ko' | 'ja' | 'es' | 'zh-CN' | 'mn' | 'pt-BR'
           translated_body: string
           created_at: string
         }
         Insert: {
           id?: string
           comment_id: string
-          target_locale: 'en' | 'ko' | 'ja' | 'pt-BR'
+          target_locale: 'en' | 'ko' | 'ja' | 'es' | 'zh-CN' | 'mn' | 'pt-BR'
           translated_body: string
           created_at?: string
         }
         Update: {
           id?: string
           comment_id?: string
-          target_locale?: 'en' | 'ko' | 'ja' | 'pt-BR'
+          target_locale?: 'en' | 'ko' | 'ja' | 'es' | 'zh-CN' | 'mn' | 'pt-BR'
           translated_body?: string
           created_at?: string
         }
@@ -431,6 +457,38 @@ export type Database = {
             columns: ['comment_id']
             isOneToOne: false
             referencedRelation: 'fight_comments'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      fighter_comment_translations: {
+        Row: {
+          id: string
+          comment_id: string
+          target_locale: 'en' | 'ko' | 'ja' | 'es' | 'zh-CN' | 'mn' | 'pt-BR'
+          translated_body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          comment_id: string
+          target_locale: 'en' | 'ko' | 'ja' | 'es' | 'zh-CN' | 'mn' | 'pt-BR'
+          translated_body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          comment_id?: string
+          target_locale?: 'en' | 'ko' | 'ja' | 'es' | 'zh-CN' | 'mn' | 'pt-BR'
+          translated_body?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'fighter_comment_translations_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: false
+            referencedRelation: 'fighter_comments'
             referencedColumns: ['id']
           }
         ]

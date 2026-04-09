@@ -68,7 +68,7 @@ function handleApiRequest(req: NextRequest): NextResponse {
 
 // ── Main middleware ──
 
-export default function middleware(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // API routes → CORS only, skip i18n

@@ -7,14 +7,23 @@ export async function POST() {
   const authUser = await getUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Soft delete — mark as deleted, keep data for recovery
   const admin = createSupabaseAdmin();
-  await admin
+
+  const { error: profileDeleteError } = await admin
     .from("users")
-    .update({ deleted_at: new Date().toISOString() } as Record<string, unknown>)
+    .delete()
     .eq("id", authUser.id);
 
-  // Sign out the auth session
+  if (profileDeleteError) {
+    return NextResponse.json({ error: profileDeleteError.message }, { status: 500 });
+  }
+
+  const { error: authDeleteError } = await admin.auth.admin.deleteUser(authUser.id);
+
+  if (authDeleteError) {
+    return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
+  }
+
   await supabase.auth.signOut();
 
   return NextResponse.json({ ok: true });
