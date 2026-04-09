@@ -348,7 +348,6 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
 
     return {
       id: authUser.id,
-      email: user.email,
       ring_name: user.ring_name,
       wins: user.wins,
       losses: user.losses,
@@ -403,6 +402,7 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
       const fighterBId = fighterIds[fight.b];
       const winnerId = fight.winner === "a" ? fighterAId : fight.winner === "b" ? fighterBId : null;
       const startTime = new Date(`${evt.date}T${String(18 + fi).padStart(2, "0")}:00:00Z`).toISOString();
+      const persistedStatus = fight.status === "no_contest" ? "cancelled" : fight.status;
 
       const { data: insertedFight, error: fightErr } = await admin
         .from("fights")
@@ -411,7 +411,7 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
           fighter_a_id: fighterAId,
           fighter_b_id: fighterBId,
           start_time: startTime,
-          status: fight.status,
+          status: persistedStatus,
           winner_id: winnerId,
           method: fight.method,
           round: fight.round,
@@ -427,7 +427,7 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
         fighterBId,
         method: fight.method,
         round: fight.round,
-        status: fight.status,
+        status: persistedStatus,
         eventIdx: ei,
       });
       createdSeedFights++;

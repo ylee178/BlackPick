@@ -1,0 +1,4 @@
+ALTER TABLE public.fighters
+  ADD COLUMN IF NOT EXISTS ring_name TEXT,
+  ADD COLUMN IF NOT EXISTS name_en TEXT,
+  ADD COLUMN IF NOT EXISTS name_ko TEXT;
