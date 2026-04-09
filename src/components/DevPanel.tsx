@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Settings, Loader2 } from "lucide-react";
-
-const isDev = process.env.NODE_ENV === "development";
+import { isDevelopmentApp } from "@/lib/app-env";
 
 type Mode = "upcoming" | "completed";
 
 export default function DevPanel() {
+  const isDevApp = isDevelopmentApp();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -18,6 +18,8 @@ export default function DevPanel() {
 
   // Fetch actual featured event status on mount
   useEffect(() => {
+    if (!isDevApp) return;
+
     fetch("/api/dev/seed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,9 +28,9 @@ export default function DevPanel() {
       .then((r) => r.json())
       .then((d) => setMode(d.featured_status === "upcoming" || d.featured_status === "live" ? "upcoming" : "completed"))
       .catch(() => setMode("completed"));
-  }, []);
+  }, [isDevApp]);
 
-  if (!isDev) return null;
+  if (!isDevApp) return null;
 
   async function runAction(action: string) {
     setLoading(action);

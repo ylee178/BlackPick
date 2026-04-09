@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/env";
+import { isProductionApp } from "@/lib/app-env";
 
 const siteUrl = getSiteUrl();
+const shouldIndex = isProductionApp();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -26,8 +28,8 @@ export const metadata: Metadata = {
     images: ["/og/default.png"],
   },
   robots: {
-    index: process.env.NODE_ENV === "production",
-    follow: process.env.NODE_ENV === "production",
+    index: shouldIndex,
+    follow: shouldIndex,
   },
 };
 

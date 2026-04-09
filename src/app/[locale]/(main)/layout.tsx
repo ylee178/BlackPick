@@ -8,6 +8,9 @@ import { getTranslations } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
 import { ToastProvider } from "@/components/Toast";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import DevPanel from "@/components/DevPanel";
+import { isAdminUser } from "@/lib/admin-auth";
+import { isDevelopmentApp } from "@/lib/app-env";
 import {
   retroButtonClassName,
 } from "@/components/ui/retro";
@@ -28,6 +31,8 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
     : { data: null };
 
   const needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim());
+  const showDevPanel =
+    isDevelopmentApp() && authUser ? await isAdminUser(authUser) : false;
 
   return (
       <ToastProvider>
@@ -114,6 +119,8 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         {needsRingNameOnboarding ? (
           <RingNameOnboarding email={authUser?.email ?? null} />
         ) : null}
+
+        {showDevPanel ? <DevPanel /> : null}
 
         {/* Mobile Tab Bar */}
         <nav aria-label="Mobile navigation" className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[var(--bp-line)] bg-[var(--bp-bg)] md:hidden">

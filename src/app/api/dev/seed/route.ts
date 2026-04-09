@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdminApi } from "@/lib/admin-auth";
+import { isDevelopmentApp } from "@/lib/app-env";
 
-const isDev = process.env.NODE_ENV === "development";
+const isDev = isDevelopmentApp();
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -1186,10 +1188,15 @@ async function resetFights(admin: ReturnType<typeof getAdminClient>) {
 
 export async function POST(request: Request) {
   if (!isDev) {
-    return NextResponse.json({ error: "Not available" }, { status: 403 });
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   try {
+    const { response } = await requireAdminApi();
+    if (response) {
+      return response;
+    }
+
     const body = await request.json().catch(() => ({}));
     const action = body?.action;
 

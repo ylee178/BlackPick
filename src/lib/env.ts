@@ -1,3 +1,5 @@
+import { normalizeAppEnv } from "@/lib/app-env";
+
 const REQUIRED_SERVER_ENV = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
@@ -10,6 +12,13 @@ export function validateEnv() {
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}`,
+    );
+  }
+
+  const configuredAppEnv = process.env.APP_ENV ?? process.env.NEXT_PUBLIC_APP_ENV;
+  if (configuredAppEnv && !normalizeAppEnv(configuredAppEnv)) {
+    throw new Error(
+      `Invalid APP_ENV/NEXT_PUBLIC_APP_ENV value: ${configuredAppEnv}`,
     );
   }
 }

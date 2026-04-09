@@ -108,6 +108,8 @@ If Vercel asks for domain verification because the domain is attached elsewhere,
 
 Set the required app variables in Vercel for both Preview and Production:
 
+- `APP_ENV`
+- `NEXT_PUBLIC_APP_ENV`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -119,6 +121,8 @@ Suggested values:
 Preview:
 
 ```txt
+APP_ENV=development
+NEXT_PUBLIC_APP_ENV=development
 NEXT_PUBLIC_SITE_URL=https://dev.blackpick.io
 CORS_ALLOW_ORIGIN=https://dev.blackpick.io,https://blackpick.io
 ```
@@ -126,9 +130,13 @@ CORS_ALLOW_ORIGIN=https://dev.blackpick.io,https://blackpick.io
 Production:
 
 ```txt
+APP_ENV=production
+NEXT_PUBLIC_APP_ENV=production
 NEXT_PUBLIC_SITE_URL=https://blackpick.io
 CORS_ALLOW_ORIGIN=https://blackpick.io,https://dev.blackpick.io
 ```
+
+Use a different Supabase project for Preview and Production. The `NEXT_PUBLIC_SUPABASE_URL`, anon key, and service role key should not match between those two environments.
 
 Add optional variables such as Sentry or Gemini keys only in the environments that need them.
 
@@ -182,4 +190,5 @@ The workflow currently gates deployment on:
 npx vercel env pull .env.local
 npx vercel deploy
 npx vercel deploy --prod
+npm run ops:vercel:verify-envs
 ```

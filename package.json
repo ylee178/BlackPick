@@ -10,6 +10,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "ops:remote:verify": "node scripts/ops/verify-remote-schema.mjs",
+    "ops:vercel:verify-envs": "node scripts/ops/verify-vercel-env-separation.mjs",
     "ops:admin:bootstrap": "node scripts/ops/bootstrap-admin.mjs",
     "test:unit": "vitest run --project unit",
     "test:e2e": "npx playwright test",

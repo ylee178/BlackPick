@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/locales";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
-import DevPanel from "@/components/DevPanel";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -42,7 +41,6 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>
-        <DevPanel />
       </body>
     </html>
   );

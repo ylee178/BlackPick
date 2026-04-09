@@ -6,6 +6,7 @@ import { getLocalizedEventName } from "@/lib/localized-name";
 import { Flame } from "lucide-react";
 import { translateWeightClass, getWeightClassOrder } from "@/lib/weight-class";
 import { cn } from "@/lib/utils";
+import { isDevelopmentApp } from "@/lib/app-env";
 import {
   RetroEmptyState,
   retroPanelClassName,
@@ -75,7 +76,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const isDev = process.env.NODE_ENV === "development";
+  const isDev = isDevelopmentApp();
   const devEmpty = isDev && params.devEmpty === "1";
   const devSuffix = devEmpty ? "&devEmpty=1" : "";
 

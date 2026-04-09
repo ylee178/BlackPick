@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { retroButtonClassName } from "@/components/ui/retro";
+import { isDevelopmentApp } from "@/lib/app-env";
 
 export function DevSeedButton({ userId }: { userId: string }) {
+  const isDevApp = isDevelopmentApp();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
-  if (process.env.NODE_ENV !== "development") return null;
+  if (!isDevApp) return null;
 
   async function handleSeed() {
     setLoading(true);

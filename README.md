@@ -13,6 +13,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Required environment variables live in `.env` and `.env.example`. The important ones for local work are:
 
+- `APP_ENV=local`
+- `NEXT_PUBLIC_APP_ENV=local`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -61,12 +63,16 @@ Repeatable rollout helpers:
 
 ```bash
 npm run ops:remote:verify
+npm run ops:vercel:verify-envs
 node scripts/ops/bootstrap-admin.mjs you@example.com
 bash scripts/ops/apply-remote-migrations.sh
 ```
 
 ## Operational Notes
 
+- Preview and production should point at different Supabase projects. `develop` should use the dev Supabase URL/key pair and `main` should use the production pair.
+- Dev-only tooling is now gated by `APP_ENV`/`NEXT_PUBLIC_APP_ENV`, not by `NODE_ENV`. Use `development` for the remote dev site, `production` for the live site, and `local` for local development.
+- `/api/dev/seed` now requires both a development app environment and an authenticated admin user.
 - Result processing now runs through server-only admin APIs. Do not reintroduce browser-side RPC calls for `process_fight_result`.
 - Fighter detail uses original reference photos when available. Profile-style pixel avatars are treated as derivatives.
 - Pixel avatar resolution supports both base files like `<fighter-id>.png` and generated variants like `<fighter-id>_v3.png`.

@@ -29,6 +29,8 @@ Ship a stable Black Pick release where:
 - [x] Verify `blackpick.io`, `www.blackpick.io`, and `dev.blackpick.io` domain mapping in Vercel
 - [ ] Fix DNS records for apex, `www`, and `dev`
 - [x] Verify environment variables in Vercel Preview and Production
+- [ ] Split Preview and Production onto different Supabase projects
+- [ ] Add explicit `APP_ENV` / `NEXT_PUBLIC_APP_ENV` values in Vercel Preview and Production
 - [ ] Verify Supabase Auth site URL and redirect URL allowlist for dev + prod
 - [x] Run one full deploy to dev
 - [x] Run one full deploy to prod
@@ -117,6 +119,9 @@ Ship a stable Black Pick release where:
 - unauthenticated direct access to `/admin` returns `307` to `/{locale}/login`
 - unauthenticated direct access to `/{locale}/fighters/manage` triggers a server redirect to `/{locale}/login`
 - profile HTML does not expose admin navigation links to normal users
+- app env helpers now separate `local`, `development`, and `production` behavior without relying on `NODE_ENV`
+- `/api/dev/seed` now requires both a development app environment and an authenticated admin user
+- `npm run ops:vercel:verify-envs` now checks Vercel Preview/Production env separation and flags unsafe config
 
 ### Gaps Found
 
@@ -127,6 +132,8 @@ Ship a stable Black Pick release where:
 - `configVerifiedAt`, `txtVerifiedAt`, and `nsVerifiedAt` are still `null` on the Vercel domain object
 - Supabase Auth site URL / redirect allowlist still needs live verification in the dashboard
 - GitHub Actions still emits a non-blocking Node 20 deprecation warning for `actions/checkout@v4` and `actions/setup-node@v4`
+- Vercel Preview and Production currently point at the same Supabase URL and service role key
+- Vercel Preview and Production are both missing `APP_ENV` / `NEXT_PUBLIC_APP_ENV`
 
 ## Task 1 Result: Deployment Bootstrap Is The Immediate Critical Path
 

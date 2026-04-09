@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/env";
+import { isProductionApp } from "@/lib/app-env";
 
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = getSiteUrl();
-  const isProduction = process.env.NODE_ENV === "production"
-    && !process.env.VERCEL_ENV?.startsWith("preview");
+  const isProduction = isProductionApp();
 
   return {
     rules: {
