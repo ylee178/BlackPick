@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import {
@@ -12,7 +13,7 @@ import {
 
 export default function ResetPasswordPage() {
   const supabase = createBrowserSupabaseClient();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,10 @@ export default function ResetPasswordPage() {
     setError(null);
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo: buildAuthRedirectUrl("/update-password", {
+        locale,
+        fallbackOrigin: window.location.origin,
+      }),
     });
 
     setLoading(false);

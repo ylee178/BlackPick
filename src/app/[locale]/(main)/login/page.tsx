@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { mapAuthErrorMessage } from "@/lib/auth-error";
+import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import {
@@ -15,7 +16,7 @@ import {
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createBrowserSupabaseClient();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,11 +49,13 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setError(null);
 
-    const origin = window.location.origin;
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/`,
+        redirectTo: buildAuthRedirectUrl("/", {
+          locale,
+          fallbackOrigin: window.location.origin,
+        }),
       },
     });
 
