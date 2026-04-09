@@ -1,5 +1,5 @@
-import { createSupabaseServer } from '@/lib/supabase-server'
-import { createBrowserSupabaseClient } from '@/lib/supabase'
+import { requireAdminPage } from '@/lib/admin-auth'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import type { Database } from '@/types/database'
 
 type Params = Promise<{ id: string }>
@@ -15,13 +15,20 @@ async function EventStatusForm({
   currentStatus: EventStatus
 }) {
   'use client'
-
-  const supabase = createBrowserSupabaseClient()
   const statuses: EventStatus[] = ['upcoming', 'live', 'completed']
 
   async function updateStatus(formData: FormData) {
     const status = formData.get('status') as EventStatus
-    await supabase.from('events').update({ status }).eq('id', eventId)
+    const res = await fetch(`/api/admin/events/${eventId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null
+      alert(data?.error ?? 'Failed to update event status.')
+      return
+    }
     window.location.reload()
   }
 
@@ -60,8 +67,6 @@ async function AddFightForm({
 }) {
   'use client'
 
-  const supabase = createBrowserSupabaseClient()
-
   async function createFight(formData: FormData) {
     const fighter_a_id = String(formData.get('fighter_a_id'))
     const fighter_b_id = String(formData.get('fighter_b_id'))
@@ -78,12 +83,18 @@ async function AddFightForm({
       fighter_b_id,
       start_time: new Date(start_time).toISOString(),
       status: 'upcoming',
+      result_processed_at: null,
     }
 
-    const { error } = await supabase.from('fights').insert(payload)
+    const res = await fetch(`/api/admin/events/${eventId}/fights`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
 
-    if (error) {
-      alert(error.message)
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null
+      alert(data?.error ?? 'Failed to add fight.')
       return
     }
 
@@ -151,17 +162,18 @@ export default async function AdminEventDetailPage({
 }: {
   params: Params
 }) {
+  await requireAdminPage()
   const { id } = await params
-  const supabase = await createSupabaseServer()
+  const supabase = createSupabaseAdmin()
 
   const [{ data: event }, { data: fights }, { data: fighters }] = await Promise.all([
     supabase.from('events').select('*').eq('id', id).single(),
     supabase
       .from('fights')
-      .select('*')
+      .select('id, event_id, fighter_a_id, fighter_b_id, winner_id, method, round, start_time, status')
       .eq('event_id', id)
       .order('start_time', { ascending: true }),
-    supabase.from('fighters').select('*').order('name', { ascending: true }),
+    supabase.from('fighters').select('*').order('name', { ascending: true }).limit(500),
   ])
 
   if (!event) {
@@ -184,7 +196,7 @@ export default async function AdminEventDetailPage({
       </div>
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-lg font-semibold text-white">Fights</h2>
+        <h2 className="text-xl font-semibold text-white">Fights</h2>
         <div className="mt-4 space-y-3">
           {fights?.length ? (
             fights.map((fight) => (
@@ -223,7 +235,7 @@ export default async function AdminEventDetailPage({
       </section>
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-lg font-semibold text-white">Add Fight</h2>
+        <h2 className="text-xl font-semibold text-white">Add Fight</h2>
         <div className="mt-4">
           <AddFightForm eventId={event.id} fighters={fighters ?? []} />
         </div>

@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 
-type RetroPanelTone = "default" | "accent" | "muted";
-type RetroButtonVariant = "primary" | "secondary" | "ghost";
+type RetroPanelTone = "default" | "accent" | "muted" | "flat";
+type RetroButtonVariant = "primary" | "secondary" | "ghost" | "soft";
 type RetroButtonSize = "sm" | "md" | "lg";
 type RetroBadgeTone = "neutral" | "accent" | "success" | "danger" | "info";
-type RetroMeterTone = "accent" | "success" | "info" | "danger";
-
 export function retroPanelClassName({
   tone = "default",
   interactive = false,
@@ -20,6 +18,7 @@ export function retroPanelClassName({
     "retro-panel",
     tone === "accent" && "retro-panel-accent",
     tone === "muted" && "retro-panel-muted",
+    tone === "flat" && "retro-panel-flat",
     interactive && "retro-panel-interactive",
     className
   );
@@ -41,6 +40,7 @@ export function retroButtonClassName({
     variant === "primary" && "retro-button-primary",
     variant === "secondary" && "retro-button-secondary",
     variant === "ghost" && "retro-button-ghost",
+    variant === "soft" && "retro-button-soft",
     size === "sm" && "retro-button-sm",
     size === "lg" && "retro-button-lg",
     block && "w-full justify-center",
@@ -73,6 +73,58 @@ export function retroNavLinkClassName({
   );
 }
 
+export function retroSegmentClassName({
+  active,
+  className,
+}: {
+  active: boolean;
+  className?: string;
+}) {
+  return cn(
+    "inline-flex min-h-9 items-center justify-center rounded-[10px] border px-3.5 py-1.5 text-sm font-medium transition",
+    active
+      ? "border-[rgba(229,169,68,0.25)] bg-[var(--bp-accent-dim)] text-[var(--bp-accent)] font-semibold"
+      : "border-[var(--bp-line)] bg-transparent text-[var(--bp-muted)] hover:border-[var(--bp-line-strong)] hover:text-[var(--bp-ink)]",
+    className
+  );
+}
+
+/**
+ * RetroLabel — the single label/badge component (2 levels)
+ *
+ * Sizes:
+ *   sm  → 12px, h-22px  (inline tags, status badges, rank NEW)
+ *   md  → 12px, h-26px  (emphasized labels, MAIN EVENT, chips, series)
+ *
+ * Tones:
+ *   accent  → gold border + gold bg + gold text
+ *   success → green bg + green text
+ *   danger  → red bg + red text
+ *   info    → blue bg + blue text
+ *   neutral → subtle border + muted bg + muted text
+ *   gold    → golden gradient text, no bg
+ */
+type RetroLabelSize = "xs" | "sm" | "md";
+type RetroLabelTone = "accent" | "success" | "danger" | "info" | "neutral" | "gold";
+
+const labelSizeStyles: Record<RetroLabelSize, string> = {
+  xs: "h-[18px] px-1 text-[10px] rounded-[4px] gap-0.5",
+  sm: "h-[24px] px-1.5 text-xs rounded-[6px] gap-1",
+  md: "h-[26px] px-[7px] text-xs rounded-[6px] gap-1",
+};
+
+const labelToneStyles: Record<RetroLabelTone, string> = {
+  accent: "border border-[rgba(229,169,68,0.3)] bg-[var(--bp-accent-dim)] text-[var(--bp-accent)]",
+  success: "border border-[rgba(34,197,94,0.2)] bg-[rgba(34,197,94,0.12)] text-[var(--bp-success)]",
+  danger: "border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] text-[var(--bp-danger)]",
+  info: "border border-[rgba(59,130,246,0.2)] bg-[rgba(59,130,246,0.12)] text-[#3b82f6]",
+  neutral: "border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[var(--bp-muted)]",
+  gold: "retro-label-gold",
+};
+
+const labelBase = "inline-flex items-center justify-center font-bold uppercase leading-none tracking-[0.04em]";
+
+/** retroChipClassName — returns RetroLabel md classes for use on raw elements (a, span) */
 export function retroChipClassName({
   tone = "accent",
   className,
@@ -80,50 +132,36 @@ export function retroChipClassName({
   tone?: "accent" | "neutral";
   className?: string;
 } = {}) {
-  return cn(
-    "retro-chip",
-    tone === "neutral" && "retro-chip-neutral",
-    className
-  );
+  return cn(labelBase, labelSizeStyles.md, labelToneStyles[tone], className);
 }
 
-export function RetroSectionHeading({
-  eyebrow,
-  title,
-  description,
-  action,
+export function RetroLabel({
+  children,
+  size = "sm",
+  tone = "accent",
+  icon,
   className,
 }: {
-  eyebrow?: string;
-  title?: string;
-  description?: string;
-  action?: ReactNode;
+  children: ReactNode;
+  size?: RetroLabelSize;
+  tone?: RetroLabelTone;
+  icon?: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col gap-4 md:flex-row md:items-start md:justify-between", className)}>
-      <div className="min-w-0">
-        {eyebrow ? <span className={retroChipClassName()}>{eyebrow}</span> : null}
-        {title ? (
-          <h2
-            className="mt-3 text-3xl font-black uppercase leading-[0.92] text-[var(--retro-ink)] md:text-4xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {title}
-          </h2>
-        ) : null}
-        {description ? (
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--retro-muted)]">
-            {description}
-          </p>
-        ) : null}
-      </div>
-
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </div>
+    <span
+      className={cn(labelBase, labelSizeStyles[size], labelToneStyles[tone], className)}
+    >
+      {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
+      {children}
+    </span>
   );
 }
 
+/**
+ * RetroStatusBadge — backward-compatible wrapper around RetroLabel.
+ * Maps old tones to RetroLabel tones.
+ */
 export function RetroStatusBadge({
   children,
   tone = "neutral",
@@ -134,59 +172,9 @@ export function RetroStatusBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "retro-status-badge",
-        tone === "accent" && "retro-status-badge-accent",
-        tone === "success" && "retro-status-badge-success",
-        tone === "danger" && "retro-status-badge-danger",
-        tone === "info" && "retro-status-badge-info",
-        className
-      )}
-    >
+    <RetroLabel size="md" tone={tone as RetroLabelTone} className={className}>
       {children}
-    </span>
-  );
-}
-
-export function RetroMeter({
-  label,
-  value,
-  max,
-  valueLabel,
-  tone = "accent",
-  className,
-}: {
-  label: string;
-  value: number;
-  max: number;
-  valueLabel?: string;
-  tone?: RetroMeterTone;
-  className?: string;
-}) {
-  const ratio = max <= 0 ? 0 : Math.min(100, Math.max(0, (value / max) * 100));
-
-  return (
-    <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--retro-muted)]">
-        <span>{label}</span>
-        <span className="text-[var(--retro-ink)]">{valueLabel ?? `${Math.round(ratio)}%`}</span>
-      </div>
-
-      <div className="retro-meter">
-        <div
-          className={cn(
-            "retro-meter-fill",
-            tone === "success" && "retro-meter-fill-success",
-            tone === "info" && "retro-meter-fill-info",
-            tone === "danger" && "retro-meter-fill-danger"
-          )}
-          style={{ width: `${ratio}%` }}
-        >
-          <span className="retro-meter-sheen" />
-        </div>
-      </div>
-    </div>
+    </RetroLabel>
   );
 }
 
@@ -204,17 +192,34 @@ export function RetroStatTile({
   className?: string;
 }) {
   return (
-    <div className={retroPanelClassName({ tone, className: cn("h-full p-4 md:p-5", className) })}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--retro-muted)]">
-        {label}
-      </p>
-      <p
-        className="mt-3 text-3xl font-black uppercase text-[var(--retro-ink)] md:text-4xl"
-        style={{ fontFamily: "var(--font-display)" }}
-      >
+    <div className={retroPanelClassName({ tone, className: cn("h-full p-3.5", className) })}>
+      <p className="text-xs font-medium text-[var(--bp-muted)]">{label}</p>
+      <p className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[var(--bp-ink)]">
         {value}
       </p>
-      {meta ? <p className="mt-2 text-xs text-[var(--retro-muted)]">{meta}</p> : null}
+      {meta ? <p className="mt-1 text-xs text-[var(--bp-muted)]">{meta}</p> : null}
+    </div>
+  );
+}
+
+export function RetroEmptyState({
+  title,
+  description,
+  action,
+  className,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={retroInsetClassName(cn("rounded-[12px] px-5 py-6 text-center", className))}>
+      <p className="text-lg font-semibold text-[var(--bp-ink)]">{title}</p>
+      {description ? (
+        <p className="mx-auto mt-2 max-w-md text-sm text-[var(--bp-muted)]">{description}</p>
+      ) : null}
+      {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
   );
 }

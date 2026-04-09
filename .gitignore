@@ -1,8 +1,19 @@
 node_modules/
 .next/
+.vercel/
 .env
 .env.local
 data/
 /tmp/
 *.log
 .DS_Store
+
+*storybook.log
+Fighter_Images/
+storybook-static
+
+# Playwright
+e2e/test-results/
+e2e/html-report/
+e2e/.auth/
+.vercel

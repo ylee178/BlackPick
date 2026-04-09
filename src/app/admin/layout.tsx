@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { requireAdminPage } from '@/lib/admin-auth'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard' },
@@ -8,7 +9,9 @@ const navItems = [
   { href: '/admin/results', label: 'Results' },
 ]
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  await requireAdminPage()
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col md:flex-row">

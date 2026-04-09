@@ -48,7 +48,7 @@ export default function CountdownTimer({ targetTime }: Props) {
 
   return (
     <div className="rounded-xl border border-[#ffba3c]/15 bg-[#ffba3c]/[0.03] px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-white/55">{t("countdown.closesIn")}</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t("countdown.closesIn")}</p>
       <p
         className="mt-1 text-2xl font-black tabular-nums text-[#ffba3c]"
         style={{ fontFamily: "var(--font-display)" }}

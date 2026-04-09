@@ -6,7 +6,13 @@
     "profile": "프로필",
     "login": "로그인",
     "signup": "회원가입",
-    "admin": "관리자"
+    "admin": "관리자",
+    "picks": "승부예측",
+    "results": "나의 전적",
+    "myRecord": "나의 전적",
+    "fighters": "선수",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침"
   },
   "event": {
     "upcoming": "예정",
@@ -16,6 +22,7 @@
     "fightCard": "대진표",
     "vs": "VS",
     "crowdPrediction": "대중 예측",
+    "officialPrediction": "공식 대중예측",
     "makeYourPick": "승자 예측하기",
     "predictionLocked": "예측 마감",
     "result": "결과",
@@ -34,16 +41,20 @@
     "completedDescription": "결과가 확정되었습니다. 내 예측과 점수를 확인하고 이벤트 MVP에 투표하세요.",
     "eventOverview": "이벤트 개요",
     "fights": "경기",
+    "fightListTitle": "누가 이길까?",
+    "fightResultTitle": "경기 결과",
+    "fightListDescription": "경기를 분석하고 승자를 예측하세요",
     "status": "상태",
-    "totalFights": "총 경기 수",
+    "totalFights": "경기",
+    "picked": "예측완료",
     "allEvents": "전체 이벤트"
   },
   "prediction": {
     "selectWinner": "승자 선택",
     "selectWinnerMessage": "승자를 선택해 주세요.",
     "yourPick": "내 선택",
-    "method": "방법",
-    "round": "라운드",
+    "method": "어떻게 이길 것 같나요?",
+    "round": "몇 라운드에 끝날까요?",
     "savePick": "예측 저장",
     "saved": "저장됨",
     "savedMessage": "예측이 저장되었습니다.",
@@ -53,10 +64,18 @@
     "noMethod": "방법 없음",
     "noRound": "라운드 없음",
     "roundOT": "연장",
+    "wrongPick": "승자 틀리면 (방법·라운드 무관)",
+    "pointsWinner": "승자 맞출 시",
+    "pointsMethod": "방법 맞출 시",
+    "pointsRound": "라운드 맞출 시 (R1~R3)",
+    "pointsR4": "R4 맞출 시",
+    "editPick": "수정",
     "editUntilStart": "경기 시작 전까지 예측을 수정할 수 있습니다.",
     "points": "점",
     "bulk": "전체 경기 예측",
-    "predictAll": "전체 예측"
+    "predictAll": "전체 예측",
+    "correct": "맞췄습니다!",
+    "wrong": "아쉽네요, 못 맞췄습니다"
   },
   "profile": {
     "fightRecord": "전적",
@@ -64,15 +83,17 @@
     "currentStreak": "현재 연승",
     "bestStreak": "최고 연승",
     "hallOfFame": "명예의 전당",
+    "perfectCard": "퍼펙트",
     "ranking": "랭킹",
     "recentPredictions": "최근 예측",
     "signInToView": "로그인 후 확인",
     "myAccount": "내 계정"
   },
   "ranking": {
-    "running": "진행 중",
-    "series": "시리즈",
-    "event": "이벤트",
+    "running": "통합",
+    "series": "리그별",
+    "event": "대회별",
+    "winStreak": "연승",
     "rank": "순위",
     "ringName": "링네임",
     "record": "전적",
@@ -82,7 +103,9 @@
     "first": "#1",
     "second": "#2",
     "third": "#3",
-    "unknown": "알 수 없음"
+    "unknown": "알 수 없음",
+    "weightClass": "체급별",
+    "selectWeightClass": "체급을 선택하세요"
   },
   "auth": {
     "email": "이메일",
@@ -111,12 +134,44 @@
     "userExists": "이미 가입된 이메일입니다. 로그인해 주세요.",
     "invalidEmail": "올바른 이메일 주소를 입력해 주세요.",
     "passwordTooShort": "비밀번호는 6자 이상이어야 해요.",
-    "authUnexpected": "지금은 인증을 진행하지 못했어요."
+    "authUnexpected": "지금은 인증을 진행하지 못했어요.",
+    "logout": "로그아웃",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "resetPassword": "비밀번호 재설정",
+    "resetPasswordDescription": "가입한 이메일을 입력하면 비밀번호 재설정 링크를 보내드려요.",
+    "sendResetLink": "재설정 링크 보내기",
+    "sending": "전송 중...",
+    "resetLinkSent": "이메일을 확인해 주세요! 비밀번호 재설정 링크를 보냈어요.",
+    "resetLinkFailed": "재설정 링크 전송에 실패했어요.",
+    "newPassword": "새 비밀번호",
+    "updatePassword": "비밀번호 변경",
+    "updating": "변경 중...",
+    "passwordUpdated": "비밀번호가 변경되었어요! 로그인 페이지로 이동합니다.",
+    "passwordUpdateFailed": "비밀번호 변경에 실패했어요."
+  },
+  "account": {
+    "editProfile": "프로필 수정",
+    "notificationSettings": "알림 설정",
+    "resetRecord": "전적 초기화",
+    "resetRecordConfirm": "정말 전적을 초기화하시겠습니까? 모든 예측 기록, 점수, 뱃지가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "resetRecordFailed": "지금은 전적을 초기화하지 못했어요.",
+    "deleteAccount": "계정 삭제",
+    "deleteAccountConfirm": "정말 계정을 삭제하시겠습니까? 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "deleteAccountFailed": "지금은 계정을 삭제하지 못했어요.",
+    "save": "저장",
+    "saved": "저장되었습니다",
+    "ringNameTaken": "이미 사용 중인 링네임입니다",
+    "dangerZone": "위험 구역",
+    "notifFightStart": "경기 시작 알림",
+    "notifResult": "결과 알림",
+    "notifMvpVote": "MVP 투표 알림",
+    "notifRankingChange": "랭킹 변동 알림"
   },
   "fighter": {
     "record": "전적",
     "nationality": "국적",
-    "weightClass": "체급"
+    "weightClass": "체급",
+    "recentFights": "최근 경기"
   },
   "series": {
     "blackCup": "블랙컵",
@@ -128,7 +183,8 @@
     "upcoming": "예정",
     "live": "진행 중",
     "completed": "종료",
-    "cancelled": "취소"
+    "cancelled": "취소",
+    "no_contest": "노 컨테스트"
   },
   "language": {
     "switchTo": "{language}(으)로 언어 변경"
@@ -136,15 +192,22 @@
   "home": {
     "platformLabel": "Who Is The Pick?",
     "heroTitle": "찍는 게 아니라, 읽는 거다",
-    "heroDescription": "블랙컴뱃 승부 예측하고, 전적으로 올라서라. 누가 진짜 격잘알인지 랭킹이 말해준다."
+    "heroDescription": "블랙컴뱃 승부 예측하고, 전적으로 올라서라. 누가 진짜 격잘알인지 랭킹이 말해준다.",
+    "buyTickets": "티켓 구매",
+    "watchLive": "시청하기"
   },
   "rankingPage": {
-    "title": "격잘알 랭킹",
-    "description": "예측 전적으로 증명하는 블랙컴뱃 팬들의 순위"
+    "title": "블랙픽 랭킹",
+    "description": "예측 전적으로 증명하는 블랙컴뱃 팬들의 순위",
+    "snapshot": "랭킹 TOP 5"
   },
   "countdown": {
     "closesIn": "예측 마감까지",
-    "locked": "예측 마감됨"
+    "locked": "예측 마감됨",
+    "daysShort": "일",
+    "hoursShort": "시간",
+    "minutesShort": "분",
+    "secondsShort": "초"
   },
   "mvp": {
     "oneVotePerEvent": "이벤트당 1회 투표할 수 있습니다.",
@@ -178,6 +241,66 @@
     "notAuthenticated": "온보딩을 마치려면 다시 로그인해 주세요.",
     "unexpected": "지금은 링네임을 저장하지 못했어요."
   },
+  "results": {
+    "totalEvents": "완료된 이벤트"
+  },
+  "myRecord": {
+    "methodAccuracy": "방법별 적중률",
+    "recentTrend": "최근 스코어 추이",
+    "badges": "뱃지",
+    "weightClassBreakdown": "체급별 전적",
+    "hallOfFame": "명예의 전당",
+    "rangeAll": "전체 대회",
+    "range7days": "7일",
+    "range30days": "30일",
+    "range90days": "90일",
+    "range1year": "1년",
+    "rangeLastEvent": "최근 대회",
+    "vsPrevious": "vs 이전 {range}",
+    "eventHistory": "참여한 대회",
+    "skippedFights": "참여 안 한 경기",
+    "skipped": "미참여",
+    "dashboard": "대시보드",
+    "allPredictions": "총 예측",
+    "searchFighter": "선수 검색...",
+    "searchPlaceholder": "선수, 대회명 검색...",
+    "sortNewest": "최신순",
+    "sortOldest": "오래된순",
+    "sortScoreHigh": "점수 높은순",
+    "sortScoreLow": "점수 낮은순",
+    "noPredictions": "아직 예측이 없습니다",
+    "totalCount": "총 {count}건",
+    "winnerCorrect": "승자 적중",
+    "winnerWrong": "승자 오답",
+    "methodCorrect": "방법 적중",
+    "methodWrong": "방법 오답",
+    "roundCorrect": "라운드 적중",
+    "roundWrong": "라운드 오답"
+  },
+  "discussion": {
+    "title": "토론",
+    "placeholder": "이 경기에 대한 생각을 나눠보세요...",
+    "post": "게시",
+    "reply": "답글",
+    "delete": "삭제",
+    "cancel": "취소",
+    "replyingTo": "답글 작성 중",
+    "noComments": "아직 댓글이 없습니다. 첫 댓글을 남겨보세요!",
+    "loginRequired": "토론에 참여하려면 로그인하세요.",
+    "translate": "번역",
+    "original": "원문",
+    "viewReplies": "답글 {count}개 보기",
+    "hideReplies": "답글 숨기기"
+  },
+  "notification": {
+    "title": "알림",
+    "markAllRead": "모두 읽음",
+    "empty": "아직 알림이 없습니다.",
+    "fightStart": "곧 경기가 시작됩니다",
+    "resultReady": "결과가 나왔습니다",
+    "mvpVoteOpen": "MVP 투표가 열렸습니다",
+    "rankingChanged": "랭킹이 변동되었습니다"
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",
@@ -189,6 +312,9 @@
     "of": "/",
     "times": "회",
     "winRate": "승률",
+    "rankingAllTimeDesc": "누적 점수 순위",
+    "rankingP4pDesc": "체급 무관 최고 승률",
+    "rankingStreakDesc": "현재 연승 기록",
     "startPredicting": "예측 시작하기",
     "pending": "대기중",
     "viewAll": "전체 보기",

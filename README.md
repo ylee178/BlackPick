@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Black Pick
 
-## Getting Started
+Black Pick is a multilingual fight prediction product built on Next.js 16, React 19, `next-intl`, and Supabase.
 
-First, run the development server:
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Required environment variables live in `.env` and `.env.example`. The important ones for local work are:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `BLACKPICK_ADMIN_EMAILS` for bootstrapping admin access without a seeded `admin_users` row
+- `GEMINI_API_KEY` if you use fighter avatar generation
 
-## Learn More
+## Verification Commands
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx tsc --noEmit
+npx eslint .
+npm run test:unit
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+E2E coverage is available through Playwright:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run test:e2e
+```
 
-## Deploy on Vercel
+## Recent Hardening Checklist
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The current codebase expects these migrations to be applied in order:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `supabase/migrations/202604090001_admin_lockdown.sql`
+- `supabase/migrations/202604090002_profile_integrity.sql`
+
+Those migrations add:
+
+- `admin_users` for explicit admin allowlisting
+- `fights.result_processed_at` for idempotent result processing
+- expanded translation locale support
+- `fighter_comment_translations`
+
+## Admin Bootstrap
+
+There are two supported ways to grant admin access:
+
+1. Set `BLACKPICK_ADMIN_EMAILS=user@example.com,other@example.com`
+2. Insert the authenticated user id into `public.admin_users`
+
+Admin checks are enforced both on `/admin/*` pages and on mutation APIs such as fighter image management and result processing.
+
+Repeatable rollout helpers:
+
+```bash
+npm run ops:remote:verify
+node scripts/ops/bootstrap-admin.mjs you@example.com
+bash scripts/ops/apply-remote-migrations.sh
+```
+
+## Operational Notes
+
+- Result processing now runs through server-only admin APIs. Do not reintroduce browser-side RPC calls for `process_fight_result`.
+- Fighter detail uses original reference photos when available. Profile-style pixel avatars are treated as derivatives.
+- Pixel avatar resolution supports both base files like `<fighter-id>.png` and generated variants like `<fighter-id>_v3.png`.
+- Account deletion is now a real delete flow, not a fake `deleted_at` soft delete.
+
+## Project Structure
+
+- `src/app` app routes, route handlers, admin surfaces
+- `src/components` UI and interactive product components
+- `src/lib` shared product logic, auth helpers, avatar helpers, i18n helpers
+- `supabase/migrations` schema and function migrations
+- `e2e` Playwright coverage
+
+## Next.js Note
+
+This repo is on Next.js 16. Before changing routing or file conventions, check the relevant docs in `node_modules/next/dist/docs/`. The project already uses `proxy.ts` instead of deprecated `middleware.ts`.

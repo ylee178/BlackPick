@@ -1,13 +1,16 @@
-import { createSupabaseServer } from '@/lib/supabase-server'
+import { requireAdminPage } from '@/lib/admin-auth'
 import { countryCodeToFlag } from '@/lib/flags'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export default async function AdminFightersPage() {
-  const supabase = await createSupabaseServer()
+  await requireAdminPage()
+  const supabase = createSupabaseAdmin()
 
   const { data: fighters, error } = await supabase
     .from('fighters')
-    .select('*')
+    .select('id, name, ring_name, record, nationality, weight_class, created_at')
     .order('created_at', { ascending: false })
+    .limit(500)
 
   if (error) {
     return <div className="text-sm text-red-400">{error.message}</div>

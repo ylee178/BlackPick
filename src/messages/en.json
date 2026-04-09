@@ -6,7 +6,13 @@
     "profile": "Profile",
     "login": "Log in",
     "signup": "Sign up",
-    "admin": "Admin"
+    "admin": "Admin",
+    "picks": "Predict",
+    "results": "Scoreboard",
+    "myRecord": "My Record",
+    "fighters": "Fighters",
+    "terms": "Terms",
+    "privacy": "Privacy"
   },
   "event": {
     "upcoming": "Upcoming",
@@ -16,6 +22,7 @@
     "fightCard": "Fight Card",
     "vs": "VS",
     "crowdPrediction": "Crowd",
+    "officialPrediction": "Official Fan Poll",
     "makeYourPick": "Make Your Pick",
     "predictionLocked": "Predictions Locked",
     "result": "Result",
@@ -34,16 +41,20 @@
     "completedDescription": "Results are in. Review your picks, scores, and vote for the event MVP.",
     "eventOverview": "Event Overview",
     "fights": "Fights",
+    "fightListTitle": "Who's Taking This?",
+    "fightResultTitle": "Fight Results",
+    "fightListDescription": "Break down the fights and make your picks",
     "status": "Status",
-    "totalFights": "Total Fights",
+    "totalFights": "Fights",
+    "picked": "Picked",
     "allEvents": "All Events"
   },
   "prediction": {
     "selectWinner": "Pick winner",
     "selectWinnerMessage": "Please select a winner.",
-    "yourPick": "Your pick",
-    "method": "Method",
-    "round": "Round",
+    "yourPick": "Your Pick",
+    "method": "How will they win?",
+    "round": "What round does it end?",
     "savePick": "Save Pick",
     "saved": "Saved",
     "savedMessage": "Prediction saved.",
@@ -53,10 +64,18 @@
     "noMethod": "No Method",
     "noRound": "No Round",
     "roundOT": "OT",
+    "wrongPick": "Wrong winner (method·round ignored)",
+    "pointsWinner": "Correct winner",
+    "pointsMethod": "Correct method",
+    "pointsRound": "Correct round (R1~R3)",
+    "pointsR4": "Correct R4",
+    "editPick": "Edit",
     "editUntilStart": "You can edit your pick until fight start.",
     "points": "pts",
     "bulk": "Predict all fights",
-    "predictAll": "Predict All"
+    "predictAll": "Predict All",
+    "correct": "You got it right!",
+    "wrong": "Better luck next time"
   },
   "profile": {
     "fightRecord": "Fight Record",
@@ -64,15 +83,17 @@
     "currentStreak": "Current Streak",
     "bestStreak": "Best Streak",
     "hallOfFame": "Hall of Fame",
+    "perfectCard": "Perfect",
     "ranking": "Ranking",
     "recentPredictions": "Recent Predictions",
     "signInToView": "Sign in to view",
     "myAccount": "My Account"
   },
   "ranking": {
-    "running": "Running",
-    "series": "Series",
-    "event": "Event",
+    "running": "All-Time",
+    "series": "By League",
+    "event": "By Event",
+    "winStreak": "Win Streak",
     "rank": "Rank",
     "ringName": "Ring Name",
     "record": "Record",
@@ -82,7 +103,9 @@
     "first": "#1",
     "second": "#2",
     "third": "#3",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "weightClass": "Weight Class",
+    "selectWeightClass": "Select a weight class"
   },
   "auth": {
     "email": "Email",
@@ -111,12 +134,44 @@
     "userExists": "That email is already registered. Please log in instead.",
     "invalidEmail": "Please enter a valid email address.",
     "passwordTooShort": "Password must be at least 6 characters.",
-    "authUnexpected": "We couldn't complete authentication right now."
+    "authUnexpected": "We couldn't complete authentication right now.",
+    "logout": "Log out",
+    "forgotPassword": "Forgot your password?",
+    "resetPassword": "Reset Password",
+    "resetPasswordDescription": "Enter your email and we'll send you a link to reset your password.",
+    "sendResetLink": "Send Reset Link",
+    "sending": "Sending...",
+    "resetLinkSent": "Check your email! We sent you a password reset link.",
+    "resetLinkFailed": "Failed to send reset link.",
+    "newPassword": "New Password",
+    "updatePassword": "Update Password",
+    "updating": "Updating...",
+    "passwordUpdated": "Password updated! Redirecting to login.",
+    "passwordUpdateFailed": "Failed to update password."
+  },
+  "account": {
+    "editProfile": "Edit Profile",
+    "notificationSettings": "Notification Settings",
+    "resetRecord": "Reset Record",
+    "resetRecordConfirm": "Are you sure you want to reset your record? All predictions, scores, and badges will be deleted. This cannot be undone.",
+    "resetRecordFailed": "We couldn't reset your record right now.",
+    "deleteAccount": "Delete Account",
+    "deleteAccountConfirm": "Are you sure you want to delete your account? All data will be permanently removed. This cannot be undone.",
+    "deleteAccountFailed": "We couldn't delete your account right now.",
+    "save": "Save",
+    "saved": "Saved",
+    "ringNameTaken": "This ring name is already taken",
+    "dangerZone": "Danger Zone",
+    "notifFightStart": "Fight start notifications",
+    "notifResult": "Result notifications",
+    "notifMvpVote": "MVP vote notifications",
+    "notifRankingChange": "Ranking change notifications"
   },
   "fighter": {
     "record": "Record",
     "nationality": "Nationality",
-    "weightClass": "Weight Class"
+    "weightClass": "Weight Class",
+    "recentFights": "Recent Fights"
   },
   "series": {
     "blackCup": "Black Cup",
@@ -128,7 +183,8 @@
     "upcoming": "Upcoming",
     "live": "Live",
     "completed": "Completed",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "no_contest": "No Contest"
   },
   "language": {
     "switchTo": "Switch language to {language}"
@@ -136,15 +192,22 @@
   "home": {
     "platformLabel": "Who Is The Pick?",
     "heroTitle": "It's not guessing. It's reading the fight.",
-    "heroDescription": "Predict Black Combat fights, build your record, and prove you're the real fight expert."
+    "heroDescription": "Predict Black Combat fights, build your record, and prove you're the real fight expert.",
+    "buyTickets": "Buy Tickets",
+    "watchLive": "Watch Live"
   },
   "rankingPage": {
     "title": "Fight IQ Rankings",
-    "description": "A leaderboard of Black Combat fans proven by prediction records"
+    "description": "A leaderboard of Black Combat fans proven by prediction records",
+    "snapshot": "Ranking TOP 5"
   },
   "countdown": {
     "closesIn": "Predictions close in",
-    "locked": "Predictions locked"
+    "locked": "Predictions locked",
+    "daysShort": "Days",
+    "hoursShort": "Hrs",
+    "minutesShort": "Min",
+    "secondsShort": "Sec"
   },
   "mvp": {
     "oneVotePerEvent": "One vote per event.",
@@ -178,6 +241,66 @@
     "notAuthenticated": "Please sign in again to finish onboarding.",
     "unexpected": "We couldn't save your ring name right now."
   },
+  "results": {
+    "totalEvents": "completed events"
+  },
+  "myRecord": {
+    "methodAccuracy": "Accuracy by Method",
+    "recentTrend": "Recent Score Trend",
+    "badges": "Badges",
+    "weightClassBreakdown": "Weight Class Record",
+    "hallOfFame": "Hall of Fame",
+    "rangeAll": "All Events",
+    "range7days": "7D",
+    "range30days": "30D",
+    "range90days": "90D",
+    "range1year": "1Y",
+    "rangeLastEvent": "Last Event",
+    "vsPrevious": "vs prev {range}",
+    "eventHistory": "Event History",
+    "skippedFights": "Missed Fights",
+    "skipped": "Skipped",
+    "dashboard": "Dashboard",
+    "allPredictions": "All Predictions",
+    "searchFighter": "Search fighter...",
+    "searchPlaceholder": "Fighter, event name...",
+    "sortNewest": "Newest",
+    "sortOldest": "Oldest",
+    "sortScoreHigh": "Score (High)",
+    "sortScoreLow": "Score (Low)",
+    "noPredictions": "No predictions yet",
+    "totalCount": "{count} total",
+    "winnerCorrect": "Winner correct",
+    "winnerWrong": "Winner wrong",
+    "methodCorrect": "Method correct",
+    "methodWrong": "Method wrong",
+    "roundCorrect": "Round correct",
+    "roundWrong": "Round wrong"
+  },
+  "discussion": {
+    "title": "Discussion",
+    "placeholder": "Share your thoughts on this fight...",
+    "post": "Post",
+    "reply": "Reply",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "replyingTo": "Replying to comment",
+    "noComments": "No comments yet. Be the first!",
+    "loginRequired": "Log in to join the discussion.",
+    "translate": "Translate",
+    "original": "Original",
+    "viewReplies": "View {count} replies",
+    "hideReplies": "Hide replies"
+  },
+  "notification": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet.",
+    "fightStart": "Fight starting soon",
+    "resultReady": "Results are in",
+    "mvpVoteOpen": "MVP voting is open",
+    "rankingChanged": "Your ranking changed"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",
@@ -189,6 +312,9 @@
     "of": "of",
     "times": "times",
     "winRate": "Win Rate",
+    "rankingAllTimeDesc": "Cumulative score ranking",
+    "rankingP4pDesc": "Best win rate across all classes",
+    "rankingStreakDesc": "Current win streaks",
     "startPredicting": "Start predicting",
     "pending": "PENDING",
     "viewAll": "View all",

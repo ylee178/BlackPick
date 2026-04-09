@@ -1,7 +1,9 @@
-import { createSupabaseServer } from '@/lib/supabase-server'
+import { requireAdminPage } from '@/lib/admin-auth'
+import { createSupabaseAdmin } from '@/lib/supabase-admin'
 
 export default async function AdminDashboardPage() {
-  const supabase = await createSupabaseServer()
+  await requireAdminPage()
+  const supabase = createSupabaseAdmin()
 
   const [
     { count: eventsCount },
@@ -51,7 +53,7 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-lg font-semibold text-white">Upcoming / Recent Events</h2>
+        <h2 className="text-xl font-semibold text-white">Upcoming / Recent Events</h2>
         <div className="mt-4 space-y-3">
           {upcomingEvents?.length ? (
             upcomingEvents.map((event) => (

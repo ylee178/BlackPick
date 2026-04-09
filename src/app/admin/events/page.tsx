@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { getSeriesLabel } from '@/lib/constants'
@@ -27,7 +27,7 @@ export default function AdminEventsPage() {
     mvp_video_url: '',
   })
 
-  async function loadEvents() {
+  const loadEvents = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -35,6 +35,7 @@ export default function AdminEventsPage() {
       .from('events')
       .select('*')
       .order('date', { ascending: false })
+      .limit(200)
 
     if (error) {
       setError(error.message)
@@ -44,11 +45,11 @@ export default function AdminEventsPage() {
 
     setEvents(data ?? [])
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
-    loadEvents()
-  }, [])
+    void Promise.resolve().then(loadEvents)
+  }, [loadEvents])
 
   async function handleCreateEvent(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -63,10 +64,15 @@ export default function AdminEventsPage() {
       mvp_video_url: form.mvp_video_url?.trim() ? form.mvp_video_url : null,
     }
 
-    const { error } = await supabase.from('events').insert(payload)
+    const res = await fetch('/api/admin/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
 
-    if (error) {
-      setError(error.message)
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null
+      setError(data?.error ?? 'Failed to create event.')
       setSubmitting(false)
       return
     }
@@ -91,7 +97,7 @@ export default function AdminEventsPage() {
       </div>
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-lg font-semibold text-white">Create Event</h2>
+        <h2 className="text-xl font-semibold text-white">Create Event</h2>
 
         <form onSubmit={handleCreateEvent} className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
@@ -182,7 +188,7 @@ export default function AdminEventsPage() {
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">All Events</h2>
+          <h2 className="text-xl font-semibold text-white">All Events</h2>
           <button
             onClick={loadEvents}
             className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-200 hover:border-amber-400 hover:text-amber-400"

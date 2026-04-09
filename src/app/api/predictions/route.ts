@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
+import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
+
+const predictionLimiter = createRateLimiter({ limit: 30, windowSeconds: 60 }); // 30 per min
 
 type PredictionPayload = {
   fight_id?: string;
@@ -15,6 +18,9 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { allowed, resetInSeconds } = predictionLimiter.check(user.id);
+  if (!allowed) return rateLimitResponse(resetInSeconds);
 
   let body: PredictionPayload;
 

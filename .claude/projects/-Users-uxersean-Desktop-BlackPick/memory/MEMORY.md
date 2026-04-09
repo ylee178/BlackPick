@@ -1,0 +1,1 @@
+- [Scoring & P4P System](project_scoring_system.md) — Approved scoring formula (+5/-5), streak multipliers, P4P ranking design
