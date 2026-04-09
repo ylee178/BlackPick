@@ -15,14 +15,6 @@ concurrency:
   group: vercel-cicd-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  NODE_VERSION: 20.19.0
-  CI_SUPABASE_URL: https://example.supabase.co
-  CI_SUPABASE_ANON_KEY: ci-anon-key
-  CI_SUPABASE_SERVICE_ROLE_KEY: ci-service-role-key
-  CI_SITE_URL: https://ci.blackpick.local
-  CI_CORS_ALLOW_ORIGIN: http://localhost:3000,https://dev.blackpick.io,https://blackpick.io
-
 jobs:
   verify:
     name: Verify build health
@@ -31,11 +23,11 @@ jobs:
     permissions:
       contents: read
     env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ env.CI_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.CI_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ env.CI_SUPABASE_SERVICE_ROLE_KEY }}
-      NEXT_PUBLIC_SITE_URL: ${{ env.CI_SITE_URL }}
-      CORS_ALLOW_ORIGIN: ${{ env.CI_CORS_ALLOW_ORIGIN }}
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-service-role-key
+      NEXT_PUBLIC_SITE_URL: https://ci.blackpick.local
+      CORS_ALLOW_ORIGIN: http://localhost:3000,https://dev.blackpick.io,https://blackpick.io
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,7 +35,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20.19.0
           cache: npm
 
       - name: Install dependencies
@@ -79,7 +71,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20.19.0
           cache: npm
 
       - name: Install Vercel CLI
@@ -121,7 +113,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20.19.0
           cache: npm
 
       - name: Install Vercel CLI
