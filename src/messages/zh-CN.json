@@ -226,7 +226,8 @@
     "daysShort": "天",
     "hoursShort": "时",
     "minutesShort": "分",
-    "secondsShort": "秒"
+    "secondsShort": "秒",
+    "selectTimezone": "更改时区"
   },
   "mvp": {
     "oneVotePerEvent": "每场赛事仅可投票一次。",

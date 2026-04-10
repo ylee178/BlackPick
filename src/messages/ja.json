@@ -226,7 +226,8 @@
     "daysShort": "日",
     "hoursShort": "時",
     "minutesShort": "分",
-    "secondsShort": "秒"
+    "secondsShort": "秒",
+    "selectTimezone": "タイムゾーン変更"
   },
   "mvp": {
     "oneVotePerEvent": "イベントごとに1票までです。",

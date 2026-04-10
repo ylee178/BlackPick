@@ -226,7 +226,8 @@
     "daysShort": "Dias",
     "hoursShort": "Hrs",
     "minutesShort": "Min",
-    "secondsShort": "Seg"
+    "secondsShort": "Seg",
+    "selectTimezone": "Alterar fuso horário"
   },
   "mvp": {
     "oneVotePerEvent": "Um voto por evento.",

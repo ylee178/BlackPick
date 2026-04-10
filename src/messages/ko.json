@@ -226,7 +226,8 @@
     "daysShort": "일",
     "hoursShort": "시간",
     "minutesShort": "분",
-    "secondsShort": "초"
+    "secondsShort": "초",
+    "selectTimezone": "시간대 변경"
   },
   "mvp": {
     "oneVotePerEvent": "이벤트당 1회 투표할 수 있습니다.",
