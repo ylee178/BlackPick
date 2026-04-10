@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { logEvent } from "@/lib/analytics";
 import { mapAuthErrorMessage } from "@/lib/auth-error";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
@@ -61,6 +62,7 @@ export default function SignInCard({
       return;
     }
 
+    logEvent("login_completed", { method: "email" });
     window.location.assign(redirectTo);
   };
 

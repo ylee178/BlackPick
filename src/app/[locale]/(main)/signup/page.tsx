@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
+import { logEvent } from "@/lib/analytics";
 import { mapAuthErrorCode } from "@/lib/auth-error";
 import { useI18n } from "@/lib/i18n-provider";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
@@ -56,11 +57,13 @@ export default function SignupPage() {
     setLoading(false);
 
     if (signupPayload?.mode === "signed_in") {
+      logEvent("signup_completed", { method: "email", auto_signed_in: true });
       window.location.assign(nextPath);
       return;
     }
 
     if (signupPayload?.mode === "check_email") {
+      logEvent("signup_completed", { method: "email", auto_signed_in: false });
       setPassword("");
       setMessage(t("auth.signupCheckEmail"));
       return;

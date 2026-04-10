@@ -45,7 +45,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const res = NextResponse.redirect(new URL(safeNext, request.url));
+  // Append a one-shot analytics flag to the destination so the client can
+  // log login_completed with the right provider once the page loads. The
+  // AnalyticsProvider strips this param from the URL after reading it.
+  const provider = data.user?.app_metadata?.provider ?? "unknown";
+  const destUrl = new URL(safeNext, request.url);
+  destUrl.searchParams.set("bp_lm", provider);
+
+  const res = NextResponse.redirect(destUrl);
 
   // Sync user's preferred language to NEXT_LOCALE cookie
   if (data.user) {

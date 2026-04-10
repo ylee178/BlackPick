@@ -1,8 +1,9 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
+import { logEvent } from "@/lib/analytics";
 import { useI18n } from "@/lib/i18n-provider";
 import { useToast } from "@/components/Toast";
 import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
@@ -76,13 +77,65 @@ export default function FightCardPicker({
   const [round, setRound] = useState(initialPrediction?.round ? String(initialPrediction.round) : "");
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(!initialPrediction);
+  const [flowStartTime] = useState(() => Date.now());
   const hasSaved = !!initialPrediction;
   const { toast } = useToast();
+
+  // Analytics: fire prediction_flow_entered once on mount if the user is
+  // arriving without a saved prediction (fresh flow). For re-edits, the
+  // Edit button click handler fires this event separately.
+  // We track this inside a useEffect so it only fires client-side.
+  const flowEnteredRef = useRef(false);
+  useEffect(() => {
+    if (flowEnteredRef.current) return;
+    if (!initialPrediction) {
+      flowEnteredRef.current = true;
+      logEvent(
+        "prediction_flow_entered",
+        { entry_method: "mount" },
+        { fightId },
+      );
+    }
+  }, [initialPrediction, fightId]);
 
   function handleCancel() {
     setWinnerId(initialPrediction?.winner_id ?? "");
     setMethod(initialPrediction?.method ?? "");
     setRound(initialPrediction?.round ? String(initialPrediction.round) : "");
+  }
+
+  // Analytics-aware setters. These wrap the raw state setters and fire the
+  // matching analytics event only on explicit user interaction (not on
+  // reset/cancel). The spec treats these as the funnel steps.
+  function selectWinner(fighterId: string, side: "a" | "b") {
+    setWinnerId(fighterId);
+    logEvent(
+      "prediction_winner_selected",
+      { selected_fighter_id: fighterId, fighter_position: side },
+      { fightId },
+    );
+  }
+
+  function selectMethod(value: string) {
+    setMethod(value);
+    if (value) {
+      logEvent(
+        "prediction_method_selected",
+        { method: value },
+        { fightId },
+      );
+    }
+  }
+
+  function selectRound(value: string) {
+    setRound(value);
+    if (value) {
+      logEvent(
+        "prediction_round_selected",
+        { round: Number(value) },
+        { fightId },
+      );
+    }
   }
 
   async function handleSubmit() {
@@ -110,6 +163,18 @@ export default function FightCardPicker({
         return;
       }
       toast(t("prediction.savedMessage"), "success");
+      logEvent(
+        "prediction_submitted",
+        {
+          winner_id: winnerId,
+          method: method || null,
+          round: round ? Number(round) : null,
+          has_method: !!method,
+          has_round: !!round,
+          time_to_submit_seconds: Math.round((Date.now() - flowStartTime) / 1000),
+        },
+        { fightId },
+      );
       setIsEditing(false);
       startTransition(() => { router.refresh(); });
     } catch {
@@ -143,13 +208,13 @@ export default function FightCardPicker({
         tabIndex={0}
         onClick={() => {
           if (!isEditing) return;
-          setWinnerId(fighterId);
+          selectWinner(fighterId, side === "left" ? "a" : "b");
         }}
         onKeyDown={(e) => {
           if (!isEditing) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setWinnerId(fighterId);
+            selectWinner(fighterId, side === "left" ? "a" : "b");
           }
         }}
         className={cn(
@@ -219,7 +284,7 @@ export default function FightCardPicker({
               className="mt-2 w-full cursor-pointer rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-2 py-1.5 text-xs font-semibold text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)] hover:text-[var(--bp-ink)]"
               onClick={(e) => {
                 e.stopPropagation();
-                setWinnerId(fighterId);
+                selectWinner(fighterId, side === "left" ? "a" : "b");
               }}
             >
               {t("prediction.selectWinner")}
@@ -242,7 +307,7 @@ export default function FightCardPicker({
                     type="button"
                     aria-pressed={active}
                     disabled={!isEditing}
-                    onClick={(e) => { e.stopPropagation(); setMethod(active ? "" : m); }}
+                    onClick={(e) => { e.stopPropagation(); selectMethod(active ? "" : m); }}
                     className={cn(
                       "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition-colors duration-150",
                       active
@@ -271,7 +336,7 @@ export default function FightCardPicker({
                     type="button"
                     aria-pressed={active}
                     disabled={!isEditing}
-                    onClick={(e) => { e.stopPropagation(); setRound(active ? "" : String(r)); }}
+                    onClick={(e) => { e.stopPropagation(); selectRound(active ? "" : String(r)); }}
                     className={cn(
                       "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition-colors duration-150",
                       active
@@ -350,7 +415,15 @@ export default function FightCardPicker({
             ) : (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                  logEvent(
+                    "prediction_flow_entered",
+                    { entry_method: "edit_button" },
+                    { fightId },
+                  );
+                }}
                 className="mt-3 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-3 py-2 text-xs font-semibold text-[var(--bp-ink)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)]"
               >
                 <Pencil className="h-3 w-3" strokeWidth={1.8} />
