@@ -92,6 +92,7 @@ export default function SocialAuthButtons({
       redirectTo: buildAuthRedirectUrl(callbackPath, {
         fallbackOrigin: window.location.origin,
         localize: false,
+        preferFallbackOrigin: true,
       }),
     };
 

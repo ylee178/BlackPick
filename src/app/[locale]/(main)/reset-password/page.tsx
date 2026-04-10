@@ -30,6 +30,7 @@ export default function ResetPasswordPage() {
       redirectTo: buildAuthRedirectUrl("/update-password", {
         locale,
         fallbackOrigin: window.location.origin,
+        preferFallbackOrigin: true,
       }),
     });
 

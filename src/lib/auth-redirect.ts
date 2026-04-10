@@ -4,6 +4,7 @@ type BuildAuthRedirectUrlOptions = {
   fallbackOrigin?: string | null;
   locale?: Locale | null;
   localize?: boolean;
+  preferFallbackOrigin?: boolean;
 };
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
@@ -74,11 +75,25 @@ export function getAuthOrigin(fallbackOrigin?: string | null) {
   return normalizedFallback ?? "http://localhost:3000";
 }
 
+function getAuthOriginWithPreference(options?: BuildAuthRedirectUrlOptions) {
+  const normalizedFallback = normalizeOrigin(options?.fallbackOrigin);
+
+  // Browser-initiated auth flows on dev/staging domains should be allowed to
+  // round-trip through the exact origin the user is currently on. This avoids
+  // preview/dev OAuth flows unexpectedly bouncing back to the canonical prod
+  // origin just because NODE_ENV is "production" in deployed builds.
+  if (options?.preferFallbackOrigin && normalizedFallback && !isLocalOrigin(normalizedFallback)) {
+    return normalizedFallback;
+  }
+
+  return getAuthOrigin(options?.fallbackOrigin);
+}
+
 export function buildAuthRedirectUrl(
   path: string,
   options?: BuildAuthRedirectUrlOptions,
 ) {
-  const origin = getAuthOrigin(options?.fallbackOrigin);
+  const origin = getAuthOriginWithPreference(options);
   const normalizedPath = normalizePath(path);
   const finalPath =
     options?.localize === false
