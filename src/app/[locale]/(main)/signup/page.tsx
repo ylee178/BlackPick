@@ -72,8 +72,8 @@ export default function SignupPage() {
     setError(t("auth.authUnexpected"));
   };
   return (
-    <div className="mx-auto max-w-md">
-      <section className={retroPanelClassName({ className: "p-5 sm:p-6" })}>
+    <div className="flex w-full flex-1 items-center justify-center">
+      <section className={retroPanelClassName({ className: "w-full max-w-md p-5 sm:p-6" })}>
         <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("auth.createAccount")}</h1>
         <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("auth.signupDescription")}</p>
 

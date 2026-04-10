@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { WLRecord } from "@/components/ui/ranking";
-import { ChevronDown, Search } from "lucide-react";
+import { ArrowUpAZ, ChevronDown, Globe, Search } from "lucide-react";
 import { retroFieldClassName, retroPanelClassName } from "@/components/ui/retro";
 import { parseRecord } from "@/lib/parse-record";
 import FighterAvatar from "@/components/FighterAvatar";
@@ -134,10 +134,11 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
         </div>
 
         <div className="relative">
+          <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bp-muted)]" strokeWidth={1.8} />
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className={retroFieldClassName("appearance-none px-3 pr-9")}
+            className={retroFieldClassName("appearance-none pl-9 pr-9")}
             aria-label={t("fighter.filterCountry")}
           >
             <option value="all">{t("fighter.allCountries")}</option>
@@ -151,10 +152,11 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
         </div>
 
         <div className="relative">
+          <ArrowUpAZ className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bp-muted)]" strokeWidth={1.8} />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className={retroFieldClassName("appearance-none px-3 pr-9")}
+            className={retroFieldClassName("appearance-none pl-9 pr-9")}
             aria-label={t("fighter.sortBy")}
           >
             <option value="name_asc">{t("fighter.sortNameAsc")}</option>

@@ -161,7 +161,7 @@ export default async function MyRecordDashboardPage({
     return (
       <div className="mx-auto max-w-md">
         <SignInCard
-          eyebrow={t("nav.dashboard")}
+          eyebrow={t("myRecord.dashboard")}
           title={t("auth.dashboardGateTitle")}
           description={t("auth.dashboardGateDescription")}
           redirectTo="/dashboard"
