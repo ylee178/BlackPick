@@ -152,6 +152,7 @@
     "updating": "Atualizando...",
     "passwordUpdated": "Senha atualizada! Redirecionando para login.",
     "passwordUpdateFailed": "Falha ao atualizar a senha.",
+    "passwordResetLoginPrompt": "Senha alterada. Entre com sua nova senha.",
     "dashboardGateTitle": "Entre para abrir seu dashboard.",
     "dashboardGateDescription": "Acompanhe sua tendência de pontos, sequência, badges e categorias mais fortes em um só lugar.",
     "myRecordGateTitle": "Entre para ver seu histórico.",

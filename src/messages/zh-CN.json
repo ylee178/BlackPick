@@ -152,6 +152,7 @@
     "updating": "更新中...",
     "passwordUpdated": "密码已更新！正在跳转到登录页。",
     "passwordUpdateFailed": "更新密码失败。",
+    "passwordResetLoginPrompt": "密码已更改。请使用新密码登录。",
     "dashboardGateTitle": "登录后查看你的仪表盘。",
     "dashboardGateDescription": "在一个地方查看你的分数走势、连胜、徽章和最强量级。",
     "myRecordGateTitle": "登录后查看你的战绩。",
