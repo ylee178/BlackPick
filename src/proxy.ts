@@ -80,6 +80,12 @@ const METADATA_PATHS = new Set([
   "/manifest.webmanifest",
 ]);
 
+// Path prefixes that must bypass i18n routing. /email/ hosts dynamic PNG
+// routes (icon-shield, icon-key) referenced by the Supabase auth email
+// templates; they live outside the [locale] segment and must be served
+// as-is without a locale prefix.
+const BYPASS_PREFIXES = ["/email/"];
+
 export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -95,6 +101,11 @@ export default function proxy(req: NextRequest) {
 
   // Root-level metadata file conventions → skip i18n
   if (METADATA_PATHS.has(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Non-locale-prefixed path trees (e.g. /email/*) → skip i18n
+  if (BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 
