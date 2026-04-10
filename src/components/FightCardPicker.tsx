@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
 import { logEvent } from "@/lib/analytics";
@@ -81,22 +81,17 @@ export default function FightCardPicker({
   const hasSaved = !!initialPrediction;
   const { toast } = useToast();
 
-  // Analytics: fire prediction_flow_entered once on mount if the user is
-  // arriving without a saved prediction (fresh flow). For re-edits, the
-  // Edit button click handler fires this event separately.
-  // We track this inside a useEffect so it only fires client-side.
-  const flowEnteredRef = useRef(false);
+  // Re-edit entries of an existing prediction are tracked by the Edit
+  // button click handler below. This effect only handles the fresh-flow
+  // case (user arrives at a fight card without a saved prediction).
+  const hadInitialPrediction = !!initialPrediction;
   useEffect(() => {
-    if (flowEnteredRef.current) return;
-    if (!initialPrediction) {
-      flowEnteredRef.current = true;
-      logEvent(
-        "prediction_flow_entered",
-        { entry_method: "mount" },
-        { fightId },
-      );
-    }
-  }, [initialPrediction, fightId]);
+    if (hadInitialPrediction) return;
+    logEvent("prediction_flow_entered", { entry_method: "mount" }, { fightId });
+    // `fightId` is a stable string prop; `hadInitialPrediction` captures the
+    // initial value so this effect fires exactly once per fight card mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleCancel() {
     setWinnerId(initialPrediction?.winner_id ?? "");

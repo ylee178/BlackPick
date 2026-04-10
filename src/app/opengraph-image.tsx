@@ -1,4 +1,10 @@
 import { ImageResponse } from "next/og";
+import {
+  BRAND_ACCENT,
+  BRAND_ACCENT_DIM,
+  BRAND_BG,
+  BRAND_BG_LIGHT,
+} from "@/lib/brand-tokens";
 
 export const alt = "Black Pick — Who Is The Pick?";
 export const size = { width: 1200, height: 630 };
@@ -15,7 +21,7 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)",
+          background: `linear-gradient(145deg, ${BRAND_BG} 0%, ${BRAND_BG_LIGHT} 50%, ${BRAND_BG} 100%)`,
           padding: 80,
         }}
       >
@@ -27,7 +33,7 @@ export default function OGImage() {
             left: 0,
             right: 0,
             height: 6,
-            background: "#ffba3c",
+            background: BRAND_ACCENT,
           }}
         />
 
@@ -45,7 +51,7 @@ export default function OGImage() {
               fontSize: 28,
               fontWeight: 700,
               letterSpacing: "0.3em",
-              color: "#ffba3c",
+              color: BRAND_ACCENT,
               textTransform: "uppercase",
             }}
           >
@@ -81,7 +87,7 @@ export default function OGImage() {
             right: 60,
             fontSize: 18,
             fontWeight: 600,
-            color: "rgba(255,186,60,0.6)",
+            color: BRAND_ACCENT_DIM,
             letterSpacing: "0.15em",
           }}
         >

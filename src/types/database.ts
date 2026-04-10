@@ -82,7 +82,7 @@ export type Database = {
           event_type: string
           fight_id: string | null
           event_id: string | null
-          metadata: Record<string, unknown>
+          metadata: Json
           created_at: string
         }
         Insert: {
@@ -92,7 +92,7 @@ export type Database = {
           event_type: string
           fight_id?: string | null
           event_id?: string | null
-          metadata?: Record<string, unknown>
+          metadata?: Json
           created_at?: string
         }
         Update: {
@@ -102,7 +102,7 @@ export type Database = {
           event_type?: string
           fight_id?: string | null
           event_id?: string | null
-          metadata?: Record<string, unknown>
+          metadata?: Json
           created_at?: string
         }
         Relationships: []

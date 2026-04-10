@@ -10,16 +10,22 @@
 
 // P0 critical event subset — 9 events that must be captured at launch.
 // More event types will be added in P1 (comments, MVP, rankings, etc.)
-export type EventType =
-  | "session_start"
-  | "page_view"
-  | "prediction_flow_entered"
-  | "prediction_winner_selected"
-  | "prediction_method_selected"
-  | "prediction_round_selected"
-  | "prediction_submitted"
-  | "signup_completed"
-  | "login_completed";
+// The API route (`/api/analytics/event`) validates incoming events against
+// this same list — it imports EVENT_TYPES directly so the union and the
+// runtime allowlist cannot drift.
+export const EVENT_TYPES = [
+  "session_start",
+  "page_view",
+  "prediction_flow_entered",
+  "prediction_winner_selected",
+  "prediction_method_selected",
+  "prediction_round_selected",
+  "prediction_submitted",
+  "signup_completed",
+  "login_completed",
+] as const;
+
+export type EventType = (typeof EVENT_TYPES)[number];
 
 const SESSION_STORAGE_KEY = "bp_session_id";
 

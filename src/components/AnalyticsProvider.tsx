@@ -51,9 +51,13 @@ export default function AnalyticsProvider() {
     }
   }, []);
 
-  // Page view — fires on every pathname change (client navigation)
+  // Page view — fires on every real pathname change (client navigation).
+  // The same-path guard prevents duplicate logging when `usePathname` fires
+  // with an unchanged value (e.g., after a history.replaceState in this same
+  // component stripping the `bp_lm` query param).
   useEffect(() => {
     if (!pathname) return;
+    if (prevPathRef.current === pathname) return;
 
     logEvent("page_view", {
       path: pathname,

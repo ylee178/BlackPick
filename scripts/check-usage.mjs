@@ -82,14 +82,23 @@ async function main() {
   console.log(`   Project: ${PROD_REF}`);
   console.log();
 
+  // Run all 4 independent queries in parallel via allSettled so one
+  // failing query never masks the others.
+  const [dbSizeResult, totalUsersResult, mauResult, eventsResult] = await Promise.allSettled([
+    queryProd("SELECT pg_database_size(current_database()) AS size_bytes"),
+    queryProd("SELECT COUNT(*)::int AS total_users FROM auth.users"),
+    queryProd(
+      "SELECT COUNT(DISTINCT id)::int AS mau FROM auth.users WHERE last_sign_in_at >= NOW() - INTERVAL '30 days'",
+    ),
+    queryProd("SELECT COUNT(*)::int AS total_events FROM public.user_events"),
+  ]);
+
   let worstLevel = 0;
   const findings = [];
 
   // 1. Database size
-  try {
-    const [{ size_bytes }] = await queryProd(
-      "SELECT pg_database_size(current_database()) AS size_bytes",
-    );
+  if (dbSizeResult.status === "fulfilled") {
+    const size_bytes = dbSizeResult.value[0].size_bytes;
     const ratio = size_bytes / FREE_DB_BYTES;
     const s = statusFor(ratio);
     findings.push({
@@ -100,47 +109,42 @@ async function main() {
       status: s,
     });
     worstLevel = Math.max(worstLevel, s.level);
-  } catch (err) {
+  } else {
     findings.push({
       metric: "Database size",
       value: "ERROR",
       limit: formatBytes(FREE_DB_BYTES),
       percent: "—",
       status: { symbol: "❌", label: "ERROR", level: 3 },
-      error: String(err),
+      error: String(dbSizeResult.reason),
     });
     worstLevel = 3;
   }
 
   // 2. Total auth users
-  try {
-    const [{ total_users }] = await queryProd(
-      "SELECT COUNT(*)::int AS total_users FROM auth.users",
-    );
+  if (totalUsersResult.status === "fulfilled") {
     findings.push({
       metric: "Total auth users",
-      value: String(total_users),
+      value: String(totalUsersResult.value[0].total_users),
       limit: "(no limit, see MAU)",
       percent: "—",
       status: { symbol: "ℹ️", label: "INFO", level: 0 },
     });
-  } catch (err) {
+  } else {
     findings.push({
       metric: "Total auth users",
       value: "ERROR",
       limit: "—",
       percent: "—",
       status: { symbol: "❌", label: "ERROR", level: 3 },
-      error: String(err),
+      error: String(totalUsersResult.reason),
     });
     worstLevel = 3;
   }
 
   // 3. MAU (last 30 days)
-  try {
-    const [{ mau }] = await queryProd(
-      "SELECT COUNT(DISTINCT id)::int AS mau FROM auth.users WHERE last_sign_in_at >= NOW() - INTERVAL '30 days'",
-    );
+  if (mauResult.status === "fulfilled") {
+    const mau = mauResult.value[0].mau;
     const ratio = mau / FREE_MAU;
     const s = statusFor(ratio);
     findings.push({
@@ -151,38 +155,35 @@ async function main() {
       status: s,
     });
     worstLevel = Math.max(worstLevel, s.level);
-  } catch (err) {
+  } else {
     findings.push({
       metric: "MAU (30d)",
       value: "ERROR",
       limit: String(FREE_MAU),
       percent: "—",
       status: { symbol: "❌", label: "ERROR", level: 3 },
-      error: String(err),
+      error: String(mauResult.reason),
     });
     worstLevel = 3;
   }
 
   // 4. Analytics volume
-  try {
-    const [{ total_events }] = await queryProd(
-      "SELECT COUNT(*)::int AS total_events FROM public.user_events",
-    );
+  if (eventsResult.status === "fulfilled") {
     findings.push({
       metric: "user_events rows",
-      value: String(total_events),
+      value: String(eventsResult.value[0].total_events),
       limit: "(counts against DB size)",
       percent: "—",
       status: { symbol: "ℹ️", label: "INFO", level: 0 },
     });
-  } catch (err) {
+  } else {
     findings.push({
       metric: "user_events rows",
       value: "ERROR",
       limit: "—",
       percent: "—",
       status: { symbol: "❌", label: "ERROR", level: 3 },
-      error: String(err),
+      error: String(eventsResult.reason),
     });
     worstLevel = 3;
   }

@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
+import { createRateLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const signupLimiter = createRateLimiter({ limit: 5, windowSeconds: 60 });
 
 function getSignupRateLimitKey(request: Request, email: string) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const firstForwardedIp = forwardedFor?.split(",")[0]?.trim();
-  const edgeIp = request.headers.get("cf-connecting-ip")?.trim();
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  const ip = firstForwardedIp || edgeIp || realIp || "unknown";
-
-  return `${ip}:${email}`;
+  return `${getClientIp(request)}:${email}`;
 }
 
 export async function POST(request: Request) {

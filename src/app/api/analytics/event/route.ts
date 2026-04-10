@@ -1,31 +1,20 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
+import { createRateLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { EVENT_TYPES } from "@/lib/analytics";
+import type { Json } from "@/types/database";
 
 // Allow generous ingest: 60 events per minute per IP (analytics is bursty on page load)
 const analyticsLimiter = createRateLimiter({ limit: 60, windowSeconds: 60 });
 
-// P0 event types — only these are accepted. Expand as P1/P2 events are added.
-const VALID_EVENT_TYPES = new Set([
-  "session_start",
-  "page_view",
-  "prediction_flow_entered",
-  "prediction_winner_selected",
-  "prediction_method_selected",
-  "prediction_round_selected",
-  "prediction_submitted",
-  "signup_completed",
-  "login_completed",
-]);
-
-function getRateLimitKey(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  return forwardedFor?.split(",")[0]?.trim() ?? "unknown";
-}
+// Single source of truth for the accepted event list: derived from the
+// EventType union so the client and server can never drift apart.
+const VALID_EVENT_TYPES = new Set<string>(EVENT_TYPES);
 
 export async function POST(request: Request) {
-  // Rate limit by IP
-  const { allowed, resetInSeconds } = analyticsLimiter.check(getRateLimitKey(request));
+  // Rate limit by IP — uses the shared extractor that handles Vercel/CF/nginx
+  // forwarding headers in priority order.
+  const { allowed, resetInSeconds } = analyticsLimiter.check(getClientIp(request));
   if (!allowed) {
     return rateLimitResponse(resetInSeconds);
   }
@@ -35,7 +24,7 @@ export async function POST(request: Request) {
     session_id?: string;
     fight_id?: string | null;
     event_id?: string | null;
-    metadata?: Record<string, unknown>;
+    metadata?: Json;
   } = {};
 
   try {
@@ -58,22 +47,27 @@ export async function POST(request: Request) {
     return new NextResponse(null, { status: 204 });
   }
 
-  // Optional: grab the authenticated user (if available) for richer analytics.
-  // We use getUser() which reads the session cookie — cheap, no extra DB call.
+  // Resolve the authenticated user via getSession() — this is a LOCAL JWT
+  // decode with NO network roundtrip to Supabase Auth. We chose getSession
+  // over getUser() here because analytics is best-effort and not a trust
+  // boundary: logging an event for a technically-revoked-but-still-cookie'd
+  // session is harmless, while the per-event auth roundtrip at 10+ events/
+  // session would rapidly exhaust the Supabase Free tier egress budget.
   const supabase = await createSupabaseServer();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user?.id ?? null;
 
   // Insert event. Errors are swallowed — analytics must never cause 5xx.
   try {
     await supabase.from("user_events").insert({
-      user_id: user?.id ?? null,
+      user_id: userId,
       session_id: sessionId,
       event_type: eventType,
       fight_id: body.fight_id ?? null,
       event_id: body.event_id ?? null,
-      metadata: body.metadata ?? {},
+      metadata: body.metadata ?? ({} as Json),
     });
   } catch {
     // Silent fail — log to Sentry if wired, but don't fail the request

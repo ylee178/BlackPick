@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BRAND_ACCENT, BRAND_BG } from "@/lib/brand-tokens";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
@@ -13,7 +14,7 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0a0a0a",
+          background: BRAND_BG,
           borderRadius: 36,
         }}
       >
@@ -21,7 +22,7 @@ export default function AppleIcon() {
           style={{
             fontSize: 80,
             fontWeight: 800,
-            color: "#ffba3c",
+            color: BRAND_ACCENT,
             letterSpacing: "-0.04em",
           }}
         >
