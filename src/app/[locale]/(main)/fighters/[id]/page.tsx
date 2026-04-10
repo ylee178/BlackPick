@@ -59,7 +59,6 @@ export default async function FighterDetailPage({ params }: PageProps) {
   const ringName = fighter.ring_name || displayName;
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
-  const detailImageUrl = `/api/fighter-avatar/ref/${fighter.id}`;
   const flag = countryCodeToFlag(fighter.nationality);
   const weightClass = fighter.weight_class ? translateWeightClass(fighter.weight_class, locale) : null;
   const { wins, losses, draws } = parseRecord(fighter.record);
@@ -123,8 +122,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
           {/* Image — left, bottom-anchored, original proportions */}
           <div className="relative w-[200px] sm:w-[280px] md:w-[320px]">
             <FighterAvatar
-              src={detailImageUrl}
-              fallbackSrc={avatarUrl}
+              src={avatarUrl}
               alt={displayName}
               className="absolute bottom-0 left-0 h-full w-full object-contain object-bottom"
             />
