@@ -1,0 +1,157 @@
+#!/usr/bin/env node
+/**
+ * Post-deploy smoke test against the live production site.
+ *
+ * This is a thin safety net — it doesn't replace E2E or integration tests.
+ * The goal is to catch obvious deploy breakage within seconds:
+ *  - the homepage 5xx'd
+ *  - the locale router stopped working
+ *  - the login page is missing the social buttons
+ *  - the OAuth callback route 404'd
+ *  - the legal pages disappeared
+ *
+ * Each check is a single HTTP request with explicit expectations. Run via:
+ *   node scripts/smoke-prod.mjs
+ *   BASE_URL=https://staging.blackpick.io node scripts/smoke-prod.mjs
+ */
+
+const BASE = process.env.BASE_URL || "https://blackpick.io";
+
+/** @typedef {{ name: string, fn: () => Promise<void> }} Check */
+
+/** @type {Check[]} */
+const checks = [];
+
+function check(name, fn) {
+  checks.push({ name, fn });
+}
+
+async function fetchOk(path, opts = {}) {
+  const url = `${BASE}${path}`;
+  const res = await fetch(url, {
+    redirect: "manual",
+    headers: { "User-Agent": "blackpick-smoke/1.0" },
+    ...opts,
+  });
+  return { url, status: res.status, headers: res.headers, body: await res.text() };
+}
+
+function assert(cond, msg) {
+  if (!cond) throw new Error(msg);
+}
+
+// ───────────────────────────────────────────────────────────
+// Checks
+// ───────────────────────────────────────────────────────────
+
+check("/  redirects to a locale", async () => {
+  const r = await fetchOk("/");
+  assert(
+    r.status === 307 || r.status === 308 || r.status === 302,
+    `expected 30x redirect, got ${r.status}`,
+  );
+});
+
+check("/en  homepage renders 200", async () => {
+  const r = await fetchOk("/en");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  assert(r.body.length > 1000, `body suspiciously small (${r.body.length} chars)`);
+});
+
+check("/ko  homepage renders 200", async () => {
+  const r = await fetchOk("/ko");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+});
+
+check("/en/login  shows the social buttons", async () => {
+  const r = await fetchOk("/en/login");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  assert(
+    r.body.includes("Continue with Google"),
+    "login page missing 'Continue with Google' — auth UI may have regressed",
+  );
+  assert(
+    r.body.includes("Continue with Facebook"),
+    "login page missing 'Continue with Facebook' — auth UI may have regressed",
+  );
+});
+
+check("/en/en  must NOT exist (regression for double-locale-prefix bug)", async () => {
+  const r = await fetchOk("/en/en");
+  assert(
+    r.status === 404 || r.status === 307 || r.status === 308,
+    `/en/en should be 404 or redirect, got ${r.status} — locale router may be double-prefixing`,
+  );
+});
+
+check("/api/auth/callback  without code → redirect to /login with error", async () => {
+  const r = await fetchOk("/api/auth/callback");
+  assert(
+    r.status >= 300 && r.status < 400,
+    `expected redirect, got ${r.status}`,
+  );
+  const location = r.headers.get("location") || "";
+  assert(
+    location.includes("/login") && location.includes("error="),
+    `expected redirect to /login?error=..., got ${location}`,
+  );
+});
+
+check("/en/fighters  renders fighter list", async () => {
+  const r = await fetchOk("/en/fighters");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+});
+
+check("/en/privacy  legal page renders", async () => {
+  const r = await fetchOk("/en/privacy");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+});
+
+check("/en/terms  legal page renders", async () => {
+  const r = await fetchOk("/en/terms");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+});
+
+check("/robots.txt  served", async () => {
+  const r = await fetchOk("/robots.txt");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  assert(r.body.includes("User-Agent") || r.body.includes("User-agent"), "missing User-agent directive");
+});
+
+// ───────────────────────────────────────────────────────────
+// Runner
+// ───────────────────────────────────────────────────────────
+
+async function main() {
+  console.log(`🔥 BlackPick prod smoke test  →  ${BASE}`);
+  console.log();
+
+  const failures = [];
+  for (const { name, fn } of checks) {
+    try {
+      await fn();
+      console.log(`  ✓  ${name}`);
+    } catch (err) {
+      console.log(`  ✗  ${name}`);
+      console.log(`     ${err.message}`);
+      failures.push({ name, message: err.message });
+    }
+  }
+
+  console.log();
+  if (failures.length === 0) {
+    console.log(`✅ ${checks.length}/${checks.length} smoke checks passed.`);
+    process.exit(0);
+  }
+
+  console.log(`❌ ${failures.length}/${checks.length} smoke checks failed.`);
+  console.log();
+  console.log("Consider rolling back the latest deployment. Use:");
+  console.log("  vercel rollback <previous-deployment-url>");
+  process.exit(1);
+}
+
+main().catch((err) => {
+  console.error("Smoke runner crashed:", err);
+  process.exit(2);
+});

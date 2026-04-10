@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { mapAuthErrorMessage } from "@/lib/auth-error";
-import { getSafeAuthNext } from "@/lib/auth-next";
+import { buildOAuthCallbackPath } from "@/lib/auth/oauth-redirect";
 import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
@@ -66,19 +66,10 @@ export default function SocialAuthButtons({
     onStart?.();
     onError?.(null);
 
-    // PKCE flow with @supabase/ssr stores the verifier in an HttpOnly cookie,
-    // so the code MUST be exchanged server-side. We point the provider at the
-    // API callback route (which lives outside the [locale] segment — hence
-    // `localize: false`) and carry the post-login destination in `next`.
-    //
-    // We deliberately do NOT prepend `/${locale}` here. The destination might
-    // already include a locale prefix (e.g. when the upstream caller used
-    // window.location.pathname which is locale-prefixed), and double-prefixing
-    // produced /en/en bugs. Instead, pass the raw safe path through and let
-    // the next-intl middleware (proxy.ts) resolve the locale on the final
-    // redirect after the callback exchange.
-    const safeNext = getSafeAuthNext(redirectTo);
-    const callbackPath = `/api/auth/callback?next=${encodeURIComponent(safeNext)}`;
+    // The contract for this URL — must hit /api/auth/callback (PKCE), must
+    // not double-prefix locale, must reject open redirects — is enforced by
+    // src/lib/auth/oauth-redirect.ts and its accompanying unit tests.
+    const callbackPath = buildOAuthCallbackPath(redirectTo);
 
     const options: Parameters<typeof supabase.auth.signInWithOAuth>[0]["options"] = {
       redirectTo: buildAuthRedirectUrl(callbackPath, {

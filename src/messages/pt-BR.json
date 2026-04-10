@@ -22,6 +22,7 @@
     "fightCard": "Card de Lutas",
     "vs": "VS",
     "crowdPrediction": "Público",
+    "officialPrediction": "Pesquisa Oficial dos Fãs",
     "makeYourPick": "Faça seu palpite",
     "predictionLocked": "Palpites bloqueados",
     "result": "Resultado",
@@ -72,7 +73,9 @@
     "editUntilStart": "Você pode editar seu palpite até o início da luta.",
     "points": "pts",
     "bulk": "Prever todas as lutas",
-    "predictAll": "Prever tudo"
+    "predictAll": "Prever tudo",
+    "correct": "Você acertou!",
+    "wrong": "Mais sorte na próxima"
   },
   "profile": {
     "fightRecord": "Cartel de lutas",
