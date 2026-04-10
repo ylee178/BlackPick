@@ -16,6 +16,32 @@ function inferReferrer(referrerUrl: string): string {
 }
 
 /**
+ * Classify the current device from the UA string. Three buckets are enough
+ * to answer "does our mobile funnel convert worse than desktop?" — anything
+ * finer (OS/browser version) is noise for launch-week analytics.
+ */
+function inferDeviceType(userAgent: string): "mobile" | "tablet" | "desktop" {
+  if (!userAgent) return "desktop";
+  // iPad must be checked before Mobile because iPadOS 13+ reports as Mac
+  if (/iPad/i.test(userAgent) || /Tablet/i.test(userAgent)) return "tablet";
+  if (/Mobi|Android|iPhone/i.test(userAgent)) return "mobile";
+  return "desktop";
+}
+
+/**
+ * Pick up standard UTM parameters from the current URL if present. Returns
+ * undefined for missing keys so we don't bloat the metadata JSON with nulls.
+ */
+function extractUtmParams(params: URLSearchParams): Record<string, string> {
+  const utm: Record<string, string> = {};
+  for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
+    const value = params.get(key);
+    if (value) utm[key] = value;
+  }
+  return utm;
+}
+
+/**
  * Analytics session + page view tracker. Place once in the locale layout.
  * Fires session_start on mount and page_view on every pathname change.
  */
@@ -30,10 +56,13 @@ export default function AnalyticsProvider() {
     sessionStartedRef.current = true;
 
     const params = new URLSearchParams(window.location.search);
+    const utm = extractUtmParams(params);
     logEvent("session_start", {
       referrer: params.get("ref") ?? inferReferrer(document.referrer),
       notification_id: params.get("nid") ?? undefined,
       path: window.location.pathname,
+      device_type: inferDeviceType(navigator.userAgent),
+      ...utm,
     });
 
     // One-shot OAuth login detection — the callback route appends `bp_lm`
