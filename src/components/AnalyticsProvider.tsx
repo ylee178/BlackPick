@@ -4,14 +4,42 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { logEvent } from "@/lib/analytics";
 
+/**
+ * Map a referrer URL to a coarse bucket for attribution analytics.
+ * Parses the hostname properly (not substring) so that google.com.fake
+ * or ...?q=google.com in a query string don't false-match.
+ */
 function inferReferrer(referrerUrl: string): string {
   if (!referrerUrl) return "direct";
-  if (referrerUrl.includes("youtube.com")) return "social_youtube";
-  if (referrerUrl.includes("instagram.com")) return "social_instagram";
-  if (referrerUrl.includes("discord.com")) return "social_discord";
-  if (referrerUrl.includes("google.com")) return "organic_search";
-  if (referrerUrl.includes("naver.com")) return "organic_search";
-  if (referrerUrl.includes("daum.net")) return "organic_search";
+  let hostname: string;
+  try {
+    hostname = new URL(referrerUrl).hostname.toLowerCase();
+  } catch {
+    return "unknown";
+  }
+  if (!hostname) return "unknown";
+
+  // Helper: match `domain.tld` as an exact host or any subdomain of it.
+  const matches = (suffix: string) =>
+    hostname === suffix || hostname.endsWith(`.${suffix}`);
+
+  if (matches("youtube.com") || matches("youtu.be")) return "social_youtube";
+  if (matches("instagram.com")) return "social_instagram";
+  if (matches("discord.com") || matches("discord.gg")) return "social_discord";
+  if (matches("twitter.com") || matches("x.com") || matches("t.co")) return "social_twitter";
+  if (matches("facebook.com") || matches("fb.com")) return "social_facebook";
+  if (matches("reddit.com")) return "social_reddit";
+  if (matches("tiktok.com")) return "social_tiktok";
+
+  // Search engines — cover major global + KR/JP/CN TLDs
+  if (hostname.includes("google.")) return "organic_search";
+  if (matches("bing.com")) return "organic_search";
+  if (matches("duckduckgo.com")) return "organic_search";
+  if (matches("naver.com")) return "organic_search";
+  if (matches("daum.net")) return "organic_search";
+  if (matches("yahoo.co.jp") || matches("yahoo.com")) return "organic_search";
+  if (matches("baidu.com")) return "organic_search";
+
   return "unknown";
 }
 
@@ -19,11 +47,18 @@ function inferReferrer(referrerUrl: string): string {
  * Classify the current device from the UA string. Three buckets are enough
  * to answer "does our mobile funnel convert worse than desktop?" — anything
  * finer (OS/browser version) is noise for launch-week analytics.
+ *
+ * iPadOS 13+ reports as "Macintosh" with no "iPad" token — we use the
+ * touchscreen heuristic (maxTouchPoints > 1 on a Mac) to rescue it.
  */
-function inferDeviceType(userAgent: string): "mobile" | "tablet" | "desktop" {
+function inferDeviceType(
+  userAgent: string,
+  maxTouchPoints = 0,
+): "mobile" | "tablet" | "desktop" {
   if (!userAgent) return "desktop";
-  // iPad must be checked before Mobile because iPadOS 13+ reports as Mac
   if (/iPad/i.test(userAgent) || /Tablet/i.test(userAgent)) return "tablet";
+  // iPadOS 13+ disguise: Macintosh UA + touchscreen = actually an iPad
+  if (/Macintosh/i.test(userAgent) && maxTouchPoints > 1) return "tablet";
   if (/Mobi|Android|iPhone/i.test(userAgent)) return "mobile";
   return "desktop";
 }
@@ -60,8 +95,11 @@ export default function AnalyticsProvider() {
     logEvent("session_start", {
       referrer: params.get("ref") ?? inferReferrer(document.referrer),
       notification_id: params.get("nid") ?? undefined,
-      path: window.location.pathname,
-      device_type: inferDeviceType(navigator.userAgent),
+      landing_path: window.location.pathname,
+      device_type: inferDeviceType(
+        navigator.userAgent,
+        navigator.maxTouchPoints ?? 0,
+      ),
       ...utm,
     });
 

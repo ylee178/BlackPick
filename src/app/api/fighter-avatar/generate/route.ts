@@ -90,7 +90,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No source photo found" }, { status: 404 });
   }
 
-  // Face crop
+  // Face crop — temp file lives for the duration of this request. Wrap the
+  // rest of the function in try/finally so the temp file is always cleaned
+  // up even if Gemini / remove.bg / the write step throws.
   const facePath = `/tmp/pixel_face_${fighter_id.substring(0, 8)}.png`;
   try {
     const r = execSync(`/tmp/face_crop "${srcPath}" "${facePath}" 0.7`, {
@@ -102,57 +104,82 @@ export async function POST(req: NextRequest) {
     fs.copyFileSync(srcPath, facePath);
   }
 
-  // Build Gemini request
-  const parts: Array<Record<string, unknown>> = [{ text: PROMPT_STYLE }];
-  for (const rp of REF_IMAGES) {
-    const fullPath = path.join(PLACEHOLDER_DIR, rp);
+  try {
+    // Build Gemini request
+    const parts: Array<Record<string, unknown>> = [{ text: PROMPT_STYLE }];
+    for (const rp of REF_IMAGES) {
+      const fullPath = path.join(PLACEHOLDER_DIR, rp);
+      parts.push({
+        inlineData: {
+          mimeType: "image/png",
+          data: fs.readFileSync(fullPath).toString("base64"),
+        },
+      });
+    }
+    parts.push({ text: PROMPT_GENERATE });
     parts.push({
       inlineData: {
         mimeType: "image/png",
-        data: fs.readFileSync(fullPath).toString("base64"),
+        data: fs.readFileSync(facePath).toString("base64"),
       },
     });
-  }
-  parts.push({ text: PROMPT_GENERATE });
-  parts.push({
-    inlineData: {
-      mimeType: "image/png",
-      data: fs.readFileSync(facePath).toString("base64"),
-    },
-  });
 
-  const url = `${API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: { responseModalities: ["IMAGE"] },
-    }),
-  });
+    const url = `${API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+    let data: { error?: { message?: string }; candidates?: unknown[] };
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: { responseModalities: ["IMAGE"] },
+        }),
+      });
+      data = await res.json();
+    } catch (err) {
+      console.error("Gemini request failed", err);
+      return NextResponse.json(
+        { error: "Image generation service unavailable" },
+        { status: 502 },
+      );
+    }
 
-  const data = await res.json();
-  try { fs.unlinkSync(facePath); } catch {}
+    if (data.error) {
+      return NextResponse.json({ error: data.error.message }, { status: 500 });
+    }
 
-  if (data.error) {
-    return NextResponse.json({ error: data.error.message }, { status: 500 });
-  }
-
-  for (const cand of data.candidates ?? []) {
-    for (const part of cand.content?.parts ?? []) {
-      if (part.inlineData?.data) {
-        const rawBuffer = Buffer.from(part.inlineData.data, "base64");
-        const buf = await removeBackgroundWithRemoveBg(
-          rawBuffer,
-          `${fighter_id}_v3.png`,
-        );
-        const outPath = path.join(PIXEL_OUTPUT_DIR, `${fighter_id}_v3.png`);
-        fs.writeFileSync(outPath, buf);
-        invalidatePixelFileCache();
-        return NextResponse.json({ success: true, path: `/fighters/pixel/${fighter_id}_v3.png` });
+    for (const cand of (data.candidates ?? []) as Array<{
+      content?: { parts?: Array<{ inlineData?: { data?: string } }> };
+    }>) {
+      for (const part of cand.content?.parts ?? []) {
+        if (part.inlineData?.data) {
+          const rawBuffer = Buffer.from(part.inlineData.data, "base64");
+          let buf: Buffer;
+          try {
+            buf = await removeBackgroundWithRemoveBg(rawBuffer, `${fighter_id}_v3.png`);
+          } catch (err) {
+            console.error("remove.bg failed, falling back to raw Gemini output", err);
+            // Graceful fallback: if remove.bg is down or rate-limited, ship
+            // the flat-background version rather than blocking generation.
+            buf = rawBuffer;
+          }
+          const outPath = path.join(PIXEL_OUTPUT_DIR, `${fighter_id}_v3.png`);
+          fs.writeFileSync(outPath, buf);
+          invalidatePixelFileCache();
+          return NextResponse.json({
+            success: true,
+            path: `/fighters/pixel/${fighter_id}_v3.png`,
+          });
+        }
       }
     }
-  }
 
-  return NextResponse.json({ error: "No image generated" }, { status: 500 });
+    return NextResponse.json({ error: "No image generated" }, { status: 500 });
+  } finally {
+    try {
+      fs.unlinkSync(facePath);
+    } catch {
+      // Temp file already gone — fine.
+    }
+  }
 }

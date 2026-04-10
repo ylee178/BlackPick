@@ -145,9 +145,29 @@ export default function FighterImageManager({
           return next;
         });
         cancelEdit();
+      } else {
+        // Surface server-side failures instead of silently closing the editor.
+        // Admin tool — window.alert is acceptable here because there's no
+        // toast provider wired at the admin layout level and we need the
+        // signal to be unmissable (the whole point of this edit cycle is
+        // the image landing in prod).
+        let detail = "";
+        try {
+          const payload = (await res.json()) as { error?: string };
+          detail = payload.error ?? "";
+        } catch {
+          // Non-JSON body — fall back to status only.
+        }
+        console.error("Fighter image upload failed", res.status, detail);
+        window.alert(
+          `Save failed (HTTP ${res.status})${detail ? `: ${detail}` : "."}`,
+        );
       }
     } catch (err) {
       console.error("Save failed:", err);
+      window.alert(
+        `Save failed due to a network error. Check the browser console for details.`,
+      );
     } finally {
       setSaving(false);
     }
@@ -163,8 +183,14 @@ export default function FighterImageManager({
       });
       if (res.ok) {
         setDeletedIds((prev) => new Set(prev).add(fighterId));
+      } else {
+        console.error("Fighter image delete failed", res.status);
+        window.alert(`Delete failed (HTTP ${res.status}).`);
       }
-    } catch {}
+    } catch (err) {
+      console.error("Fighter image delete failed", err);
+      window.alert("Delete failed due to a network error.");
+    }
   }
 
   function getImageUrl(f: FighterItem): string | null {
