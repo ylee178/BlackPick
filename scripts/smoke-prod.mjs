@@ -118,6 +118,41 @@ check("/robots.txt  served", async () => {
   assert(r.body.includes("User-Agent") || r.body.includes("User-agent"), "missing User-agent directive");
 });
 
+check("/opengraph-image  serves a real PNG (not a 307 to /en/...)", async () => {
+  const r = await fetchOk("/opengraph-image");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  const contentType = r.headers.get("content-type") || "";
+  assert(
+    contentType.startsWith("image/"),
+    `expected image content-type, got ${contentType}`,
+  );
+  assert(r.body.length > 1000, `PNG suspiciously small (${r.body.length} bytes)`);
+});
+
+check("/apple-icon  serves a real PNG", async () => {
+  const r = await fetchOk("/apple-icon");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  const contentType = r.headers.get("content-type") || "";
+  assert(
+    contentType.startsWith("image/"),
+    `expected image content-type, got ${contentType}`,
+  );
+});
+
+check("/api/analytics/event  accepts POST + returns 204", async () => {
+  const url = `${BASE}/api/analytics/event`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": "blackpick-smoke/1.0" },
+    body: JSON.stringify({
+      event_type: "session_start",
+      session_id: `smoke-${Date.now()}`,
+      metadata: { referrer: "smoke_test" },
+    }),
+  });
+  assert(res.status === 204, `expected 204, got ${res.status}`);
+});
+
 // ───────────────────────────────────────────────────────────
 // Runner
 // ───────────────────────────────────────────────────────────
