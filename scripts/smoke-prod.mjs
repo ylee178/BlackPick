@@ -63,17 +63,20 @@ check("/ko  homepage renders 200", async () => {
   assert(r.status === 200, `expected 200, got ${r.status}`);
 });
 
-check("/en/login  shows the social buttons", async () => {
+check("/en/login  shows the Google social button", async () => {
   const r = await fetchOk("/en/login");
   assert(r.status === 200, `expected 200, got ${r.status}`);
   assert(
     r.body.includes("Continue with Google"),
     "login page missing 'Continue with Google' — auth UI may have regressed",
   );
-  assert(
-    r.body.includes("Continue with Facebook"),
-    "login page missing 'Continue with Facebook' — auth UI may have regressed",
-  );
+  // Facebook is behind NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN=true. Once Meta
+  // App Review is approved and the env var is flipped, uncomment the
+  // assertion below to lock the button in as a smoke check.
+  // assert(
+  //   r.body.includes("Continue with Facebook"),
+  //   "login page missing 'Continue with Facebook' — check the env flag",
+  // );
 });
 
 check("/en/en  must NOT exist (regression for double-locale-prefix bug)", async () => {

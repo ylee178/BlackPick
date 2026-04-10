@@ -2,6 +2,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Enable the Facebook button for every test in this suite. In production
+// this flag is off until the Meta App Review is approved; the test file
+// covers both providers because the button wiring is the same regardless
+// of the current deployment's environment state.
+vi.stubEnv("NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN", "true");
+
 // Mock the i18n provider so the component can render without an I18nProvider
 // wrapper. We return the key as the translation so assertions can match by key.
 vi.mock("@/lib/i18n-provider", () => ({
@@ -140,5 +146,22 @@ describe("<SocialAuthButtons /> contract", () => {
 
     // mapAuthErrorMessage maps "provider is not enabled" → t("auth.providerUnavailable")
     expect(onError).toHaveBeenCalledWith("auth.providerUnavailable");
+  });
+});
+
+describe("<SocialAuthButtons /> Facebook feature flag", () => {
+  it("hides the Facebook button when NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN is not 'true'", () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN", "");
+    render(<SocialAuthButtons redirectTo="/" />);
+    expect(screen.getByRole("button", { name: /auth\.googleLogin/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /auth\.facebookLogin/ })).not.toBeInTheDocument();
+    vi.stubEnv("NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN", "true"); // restore for other suites
+  });
+
+  it("hides the Facebook button when the env var is the literal string 'false'", () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN", "false");
+    render(<SocialAuthButtons redirectTo="/" />);
+    expect(screen.queryByRole("button", { name: /auth\.facebookLogin/ })).not.toBeInTheDocument();
+    vi.stubEnv("NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN", "true");
   });
 });

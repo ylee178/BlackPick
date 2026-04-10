@@ -39,7 +39,7 @@ function FacebookIcon() {
   );
 }
 
-const PROVIDERS: Array<{
+const ALL_PROVIDERS: Array<{
   provider: SocialProvider;
   icon: ReactNode;
   labelKey: "auth.googleLogin" | "auth.facebookLogin";
@@ -56,6 +56,23 @@ export default function SocialAuthButtons({
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { t } = useI18n();
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null);
+
+  // Facebook is hidden until Meta App Review is approved and the provider
+  // credentials are wired into Supabase. To reveal the button, set
+  // NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN=true in Vercel env (no code redeploy
+  // needed — the var is baked into the client bundle at build time, so a
+  // redeploy IS required, but no code change).
+  //
+  // The flag is read inside the component (not at module scope) so that
+  // vi.stubEnv in unit tests actually takes effect before the component
+  // renders; module-level reads run before any test setup.
+  const providers = useMemo(() => {
+    const facebookEnabled =
+      process.env.NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN === "true";
+    return ALL_PROVIDERS.filter(
+      (p) => p.provider !== "facebook" || facebookEnabled,
+    );
+  }, []);
 
   async function handleOAuth(provider: SocialProvider) {
     // Top-of-handler guard prevents racing a second click before React
@@ -98,7 +115,7 @@ export default function SocialAuthButtons({
 
   return (
     <div className="space-y-2">
-      {PROVIDERS.map(({ provider, icon, labelKey }) => (
+      {providers.map(({ provider, icon, labelKey }) => (
         <button
           key={provider}
           type="button"
