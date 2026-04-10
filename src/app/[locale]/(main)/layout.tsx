@@ -67,16 +67,27 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                   isAdmin={isAdmin}
                 />
               ) : (
-                <Link
-                  href="/login"
-                  className={retroButtonClassName({
-                    variant: "ghost",
-                    size: "sm",
-                    className: "hidden sm:inline-flex",
-                  })}
-                >
-                  {t("nav.login")}
-                </Link>
+                <>
+                  <Link
+                    href="/login"
+                    className={retroButtonClassName({
+                      variant: "ghost",
+                      size: "sm",
+                      className: "hidden sm:inline-flex",
+                    })}
+                  >
+                    {t("nav.login")}
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className={retroButtonClassName({
+                      variant: "primary",
+                      size: "sm",
+                    })}
+                  >
+                    {t("nav.signup")}
+                  </Link>
+                </>
               )}
             </div>
           </div>
