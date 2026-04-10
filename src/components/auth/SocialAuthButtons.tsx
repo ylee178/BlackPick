@@ -54,7 +54,7 @@ export default function SocialAuthButtons({
   onStart,
 }: SocialAuthButtonsProps) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null);
 
   async function handleOAuth(provider: SocialProvider) {
@@ -70,10 +70,15 @@ export default function SocialAuthButtons({
     // so the code MUST be exchanged server-side. We point the provider at the
     // API callback route (which lives outside the [locale] segment — hence
     // `localize: false`) and carry the post-login destination in `next`.
+    //
+    // We deliberately do NOT prepend `/${locale}` here. The destination might
+    // already include a locale prefix (e.g. when the upstream caller used
+    // window.location.pathname which is locale-prefixed), and double-prefixing
+    // produced /en/en bugs. Instead, pass the raw safe path through and let
+    // the next-intl middleware (proxy.ts) resolve the locale on the final
+    // redirect after the callback exchange.
     const safeNext = getSafeAuthNext(redirectTo);
-    const localizedNext =
-      safeNext === "/" ? `/${locale}` : `/${locale}${safeNext}`;
-    const callbackPath = `/api/auth/callback?next=${encodeURIComponent(localizedNext)}`;
+    const callbackPath = `/api/auth/callback?next=${encodeURIComponent(safeNext)}`;
 
     const options: Parameters<typeof supabase.auth.signInWithOAuth>[0]["options"] = {
       redirectTo: buildAuthRedirectUrl(callbackPath, {
