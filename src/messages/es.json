@@ -152,6 +152,7 @@
     "updating": "Actualizando...",
     "passwordUpdated": "¡Contraseña actualizada! Redirigiendo al inicio de sesión.",
     "passwordUpdateFailed": "No se pudo actualizar la contraseña.",
+    "passwordResetLoginPrompt": "Contraseña cambiada. Inicia sesión con tu nueva contraseña.",
     "dashboardGateTitle": "Inicia sesión para abrir tu panel.",
     "dashboardGateDescription": "Sigue tu tendencia de puntos, rachas, insignias y tus categorías más fuertes en un solo lugar.",
     "myRecordGateTitle": "Inicia sesión para ver tu historial.",

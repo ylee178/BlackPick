@@ -152,6 +152,7 @@
     "updating": "Updating...",
     "passwordUpdated": "Password updated! Redirecting to login.",
     "passwordUpdateFailed": "Failed to update password.",
+    "passwordResetLoginPrompt": "Password changed. Please log in with your new password.",
     "dashboardGateTitle": "Log in to open your dashboard.",
     "dashboardGateDescription": "Track your score trend, streaks, badges, and strongest weight classes in one place.",
     "myRecordGateTitle": "Log in to open your record.",
