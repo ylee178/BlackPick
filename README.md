@@ -17,6 +17,7 @@ Required environment variables live in `.env` and `.env.example`. The important 
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `GEMINI_API_KEY` if you use fighter avatar generation
+- `REMOVE_BG_API_KEY` if you use fighter avatar background removal
 
 ## Verification Commands
 
@@ -66,6 +67,7 @@ bash scripts/ops/apply-remote-migrations.sh
 - Result processing now runs through server-only admin APIs. Do not reintroduce browser-side RPC calls for `process_fight_result`.
 - Fighter detail uses original reference photos when available. Profile-style pixel avatars are treated as derivatives.
 - Pixel avatar resolution supports both base files like `<fighter-id>.png` and generated variants like `<fighter-id>_v3.png`.
+- The current avatar-generation workflow is: face crop -> Gemini generate with a flat color background -> remove.bg post-process -> save transparent PNG.
 - Account deletion is now a real delete flow, not a fake `deleted_at` soft delete.
 - User email addresses stay in Supabase Auth. Do not store them in `public.users`.
 

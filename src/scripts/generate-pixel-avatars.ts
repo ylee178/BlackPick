@@ -1,13 +1,15 @@
 /**
  * Generate pixel art avatars for all fighters
  *
- * Pipeline: Fighter photo → Face crop (Swift Vision) → Gemini pixel art → Save
+ * Pipeline: Fighter photo → Face crop (Swift Vision) → Gemini pixel art with
+ * color background → remove.bg post-process → Save
  *
  * Usage:
  *   npx tsx src/scripts/generate-pixel-avatars.ts
  *
  * Requires:
- *   - GEMINI_API_KEY in .env
+ *   - GEMINI_API_KEY in .env.local or .env
+ *   - REMOVE_BG_API_KEY in .env.local or .env
  *   - /tmp/face_crop binary (built from Swift)
  *   - Fighter_Images/ with downloaded photos
  */
@@ -15,6 +17,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
+import { removeBackgroundWithRemoveBg } from "@/lib/remove-bg";
 
 const FIGHTER_IMAGES_DIR = path.resolve(process.cwd(), "Fighter_Images");
 const OUTPUT_DIR = path.resolve(process.cwd(), "public/fighters/pixel");
@@ -33,7 +36,7 @@ const PROMPT_GENERATE = `Transform this fighter photo into the EXACT same pixel 
 1) LIKENESS IS #1 PRIORITY — the pixel art must be clearly recognizable as this specific person. Preserve their exact facial structure, eye shape, nose, jawline, skin tone, and hairstyle.
 2) Neo Geo / King of Fighters arcade sprite aesthetic — same pixel size and shading as references.
 3) Framing: head to trapezius muscles (upper shoulders visible), front-facing, centered on square canvas.
-4) Background: solid dark gray (#2A2A2A) — NOT transparent, NOT checkerboard, just flat dark gray fill.
+4) Background: solid dark gray (#2A2A2A) — NOT transparent, NOT checkerboard, just flat dark gray fill. Keep it clean and clearly separable from the fighter silhouette because a background-removal post-process will run after generation.
 5) Consistent warm color palette matching the reference images — avoid cold/blue tones.
 6) Preserve the lighting and shadows from the original photo — add realistic shading and depth to the pixel art, not flat colors.
 7) No text, no UI elements, no watermarks.`;
@@ -48,12 +51,44 @@ type ManifestEntry = {
   filename: string;
 };
 
-function loadEnvKey(): string {
-  const envPath = path.resolve(process.cwd(), ".env");
-  const envContent = fs.readFileSync(envPath, "utf8");
-  const match = envContent.match(/GEMINI_API_KEY=(.+)/);
-  if (!match) throw new Error("GEMINI_API_KEY not found in .env");
-  return match[1].trim();
+function readEnvValue(filePath: string, key: string): string | null {
+  if (!fs.existsSync(filePath)) return null;
+
+  const envContent = fs.readFileSync(filePath, "utf8");
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = envContent.match(new RegExp(`^${escapedKey}=(.+)$`, "m"));
+
+  return match?.[1]?.trim() ?? null;
+}
+
+function loadEnvFile() {
+  const envPaths = [
+    path.resolve(process.cwd(), ".env.local"),
+    path.resolve(process.cwd(), ".env"),
+  ];
+
+  let geminiApiKey = process.env.GEMINI_API_KEY ?? null;
+  let removeBgApiKey = process.env.REMOVE_BG_API_KEY ?? null;
+
+  for (const envPath of envPaths) {
+    geminiApiKey ??= readEnvValue(envPath, "GEMINI_API_KEY");
+    removeBgApiKey ??= readEnvValue(envPath, "REMOVE_BG_API_KEY");
+  }
+
+  if (!geminiApiKey) {
+    throw new Error("GEMINI_API_KEY not found in .env.local or .env");
+  }
+
+  if (!removeBgApiKey) {
+    throw new Error("REMOVE_BG_API_KEY not found in .env.local or .env");
+  }
+
+  process.env.GEMINI_API_KEY ??= geminiApiKey;
+  process.env.REMOVE_BG_API_KEY ??= removeBgApiKey;
+
+  return {
+    geminiApiKey,
+  };
 }
 
 function faceCrop(inputPath: string, outputPath: string): boolean {
@@ -126,7 +161,7 @@ async function generatePixelArt(
 }
 
 async function main() {
-  const apiKey = loadEnvKey();
+  const { geminiApiKey } = loadEnvFile();
 
   // Ensure output dir
   if (!fs.existsSync(OUTPUT_DIR)) {
@@ -183,16 +218,21 @@ async function main() {
     }
 
     // Generate pixel art
-    const pixelData = await generatePixelArt(apiKey, facePath, refPaths);
+    const pixelData = await generatePixelArt(geminiApiKey, facePath, refPaths);
     if (!pixelData) {
       console.log(`    ✗ Pixel art generation failed`);
       failed++;
       continue;
     }
 
+    const transparentPixelData = await removeBackgroundWithRemoveBg(
+      pixelData,
+      outputFile,
+    );
+
     // Save
-    fs.writeFileSync(outputPath, pixelData);
-    console.log(`    ✓ ${outputFile} (${Math.round(pixelData.length / 1024)}KB)`);
+    fs.writeFileSync(outputPath, transparentPixelData);
+    console.log(`    ✓ ${outputFile} (${Math.round(transparentPixelData.length / 1024)}KB)`);
     success++;
 
     // Cleanup temp face

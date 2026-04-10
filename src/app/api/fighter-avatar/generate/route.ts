@@ -6,6 +6,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { findFighterReferenceFile } from "@/lib/fighter-reference-files";
 import { invalidatePixelFileCache } from "@/lib/pixel-files";
 import { createRateLimiter, rateLimitResponse } from "@/lib/rate-limit";
+import { removeBackgroundWithRemoveBg } from "@/lib/remove-bg";
 
 const generateLimiter = createRateLimiter({ limit: 5, windowSeconds: 3600 }); // 5 per hour
 
@@ -37,7 +38,7 @@ const PROMPT_GENERATE = `Create a 90s arcade pixel art portrait of this fighter 
 1) LIKENESS — must be clearly recognizable as this specific person. Preserve exact facial features, skin tone, hairstyle, facial hair.
 2) High-detail sprite with visible individual pixels, bold dark outlines, dramatic cel-shading with deep shadows.
 3) FRAMING — face fills exactly 70% of canvas height (forehead to chin). Upper shoulders/trapezius at bottom. Front-facing, centered, square canvas.
-4) Background: solid dark gray (#2A2A2A) — flat fill only.
+4) Background: solid dark gray (#2A2A2A) — flat fill only. Keep the background clean and clearly separable from the fighter silhouette because a background-removal post-process will run after generation.
 5) Warm color palette. No purple or magenta tints on skin or lips. No text, no UI, no watermarks.`;
 
 function getApiKey(): string {
@@ -140,7 +141,11 @@ export async function POST(req: NextRequest) {
   for (const cand of data.candidates ?? []) {
     for (const part of cand.content?.parts ?? []) {
       if (part.inlineData?.data) {
-        const buf = Buffer.from(part.inlineData.data, "base64");
+        const rawBuffer = Buffer.from(part.inlineData.data, "base64");
+        const buf = await removeBackgroundWithRemoveBg(
+          rawBuffer,
+          `${fighter_id}_v3.png`,
+        );
         const outPath = path.join(PIXEL_OUTPUT_DIR, `${fighter_id}_v3.png`);
         fs.writeFileSync(outPath, buf);
         invalidatePixelFileCache();
