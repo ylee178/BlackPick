@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import LoadingButtonContent from '@/components/ui/LoadingButtonContent'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import type { Database } from '@/types/database'
 
@@ -201,9 +202,12 @@ export default function AdminResultsPage() {
             <button
               type="submit"
               disabled={submitting}
+              aria-busy={submitting}
               className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? 'Processing...' : 'Submit Result'}
+              <LoadingButtonContent loading={submitting} loadingLabel="Processing...">
+                Submit Result
+              </LoadingButtonContent>
             </button>
           </div>
         </form>

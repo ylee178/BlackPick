@@ -13,6 +13,10 @@ export function mapAuthErrorMessage(rawMessage: string, t: (key: string) => stri
     return t("auth.userExists");
   }
 
+  if (message.includes("provider is not enabled") || message.includes("unsupported provider")) {
+    return t("auth.providerUnavailable");
+  }
+
   return rawMessage;
 }
 

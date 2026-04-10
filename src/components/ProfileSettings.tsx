@@ -5,6 +5,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { Save, Trash2 } from "lucide-react";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
@@ -105,10 +106,12 @@ export default function ProfileSettings({ ringName: initialRingName, email }: Pr
           <button
             type="submit"
             disabled={saving || !ringName.trim() || ringName === initialRingName}
+            aria-busy={saving}
             className={retroButtonClassName({ variant: "soft", size: "sm", className: "gap-1.5" })}
           >
-            <Save className="h-3.5 w-3.5" strokeWidth={2} />
-            {saving ? "..." : t("account.save")}
+            <LoadingButtonContent loading={saving} icon={<Save className="h-3.5 w-3.5" strokeWidth={2} />}>
+              {t("account.save")}
+            </LoadingButtonContent>
           </button>
         </div>
         {saveMsg && (

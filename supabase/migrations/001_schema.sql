@@ -13,7 +13,6 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Users (linked to Supabase Auth)
 CREATE TABLE public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email TEXT UNIQUE NOT NULL,
     ring_name TEXT UNIQUE NOT NULL,
     wins INT NOT NULL DEFAULT 0,
     losses INT NOT NULL DEFAULT 0,

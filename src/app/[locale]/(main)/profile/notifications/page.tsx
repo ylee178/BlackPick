@@ -16,14 +16,9 @@ export default async function NotificationSettingsPage() {
         title={t("account.notificationSettings")}
         description={t("profile.signInToView")}
         action={
-          <div className="flex gap-2">
-            <Link href="/login" className={retroButtonClassName({ variant: "ghost" })}>
-              {t("nav.login")}
-            </Link>
-            <Link href="/signup" className={retroButtonClassName({ variant: "primary" })}>
-              {t("nav.signup")}
-            </Link>
-          </div>
+          <Link href="/login" className={retroButtonClassName({ variant: "ghost" })}>
+            {t("nav.login")}
+          </Link>
         }
       />
     );

@@ -1,4 +1,5 @@
 import { requireAdminPage } from '@/lib/admin-auth'
+import PendingSubmitButton from '@/components/ui/PendingSubmitButton'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import type { Database } from '@/types/database'
 
@@ -48,12 +49,12 @@ async function EventStatusForm({
           ))}
         </select>
       </div>
-      <button
-        type="submit"
-        className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300"
+      <PendingSubmitButton
+        className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+        loadingLabel="Updating..."
       >
         Update Status
-      </button>
+      </PendingSubmitButton>
     </form>
   )
 }
@@ -146,12 +147,12 @@ async function AddFightForm({
       </div>
 
       <div className="md:col-span-2">
-        <button
-          type="submit"
-          className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300"
+        <PendingSubmitButton
+          className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          loadingLabel="Adding..."
         >
           Add Fight
-        </button>
+        </PendingSubmitButton>
       </div>
     </form>
   )

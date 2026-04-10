@@ -110,21 +110,15 @@ export async function POST(request: Request) {
       throw existingUserError;
     }
 
-    if (!authUser.email) {
-      return NextResponse.json({ code: "missing_email" }, { status: 400 });
-    }
-
     const mutation = existingUser
       ? admin
           .from("users")
           .update({
-            email: authUser.email,
             ring_name: ringName,
           })
           .eq("id", authUser.id)
       : admin.from("users").insert({
           id: authUser.id,
-          email: authUser.email,
           ring_name: ringName,
         });
 

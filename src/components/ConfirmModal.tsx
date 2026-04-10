@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { retroButtonClassName, retroPanelClassName } from "@/components/ui/retro";
 
 type Props = {
@@ -80,13 +81,14 @@ export default function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={loading}
+            aria-busy={loading}
             className={retroButtonClassName({
               variant: danger ? "primary" : "primary",
               size: "sm",
               className: danger ? "!bg-[var(--bp-danger)] !border-[var(--bp-danger)] !text-white hover:!bg-[#dc2626]" : undefined,
             })}
           >
-            {loading ? "..." : confirmLabel}
+            <LoadingButtonContent loading={loading}>{confirmLabel}</LoadingButtonContent>
           </button>
         </div>
       </div>

@@ -25,16 +25,20 @@ export default async function FightersPage() {
     name: getLocalizedFighterName(f, locale, f.name),
     record: f.record || "0-0",
     flag: countryCodeToFlag(f.nationality),
+    nationalityCode: f.nationality?.toUpperCase() ?? null,
     avatarUrl: getFighterPixelPublicUrl(f.id, pixelFiles) ?? "/fighters/default.png",
     weightClass: f.weight_class ? translateWeightClass(f.weight_class, locale) : null,
     hasPixelArt: hasFighterPixelFile(f.id, pixelFiles),
   }));
 
-  // Pixel art fighters first, then the rest
+  // Default order matches FighterGrid's name_asc client sort:
+  // pixel-art fighters first, then alphabetical by localized name.
+  // Keeping SSR order in sync avoids a re-sort flash after hydration.
   items.sort((a, b) => {
-    if (a.hasPixelArt && !b.hasPixelArt) return -1;
-    if (!a.hasPixelArt && b.hasPixelArt) return 1;
-    return 0;
+    const aHasPhoto = a.hasPixelArt ? 1 : 0;
+    const bHasPhoto = b.hasPixelArt ? 1 : 0;
+    if (aHasPhoto !== bHasPhoto) return bHasPhoto - aHasPhoto;
+    return a.name.localeCompare(b.name, locale, { sensitivity: "base" });
   });
 
   return (

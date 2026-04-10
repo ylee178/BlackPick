@@ -5,9 +5,15 @@ import { useI18n } from "@/lib/i18n-provider";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Heart, Send } from "lucide-react";
 import {
+  buildReplyMaps,
+  sortTopLevelComments,
+  type DiscussionSortMode,
+} from "@/lib/discussion";
+import {
   retroButtonClassName,
   retroFieldClassName,
 } from "@/components/ui/retro";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { MentionInput, type MentionUser } from "@/components/MentionInput";
 
 type Comment = {
@@ -88,6 +94,64 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(days / 7)}w`;
 }
 
+function InlineReplyForm({
+  parentId,
+  replyName,
+  onSubmit,
+  onCancel,
+  t,
+}: {
+  parentId: string;
+  replyName: string;
+  onSubmit: (parentId: string, body: string) => Promise<void>;
+  onCancel: () => void;
+  t: (key: string) => string;
+}) {
+  const [body, setBody] = useState(replyName ? `@${replyName} ` : "");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim()) return;
+    setSubmitting(true);
+    await onSubmit(parentId, body.trim());
+    setBody("");
+    setSubmitting(false);
+  }
+
+  return (
+    <>
+      <form onSubmit={handleSubmit} className="mt-1.5 flex gap-2">
+        <input
+          autoFocus
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          maxLength={500}
+          placeholder={t("discussion.placeholder")}
+          className={retroFieldClassName("!min-h-[36px] !rounded-[10px] !px-3 !py-1.5 !text-sm")}
+        />
+        <button
+          type="submit"
+          disabled={submitting || !body.trim()}
+          aria-busy={submitting}
+          className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}
+        >
+          <LoadingButtonContent
+            loading={submitting}
+            icon={<Send className="h-3.5 w-3.5" strokeWidth={2} />}
+            spinnerClassName="h-3.5 w-3.5"
+          >
+            {t("discussion.post")}
+          </LoadingButtonContent>
+        </button>
+      </form>
+      <button type="button" onClick={onCancel} className="mt-1 cursor-pointer text-xs text-[var(--bp-accent)] hover:opacity-80">
+        {t("discussion.cancel")}
+      </button>
+    </>
+  );
+}
+
 function CommentRow({ comment, isReply, currentUserId, onDelete, onLike, onReply, t }: {
   comment: Comment; isReply: boolean; currentUserId: string | null;
   onDelete: (id: string) => void; onLike: (id: string) => void; onReply: (c: Comment) => void; t: (k: string) => string;
@@ -148,11 +212,13 @@ function CommentThread({ comment, replies, currentUserId, onDelete, onLike, onRe
       )}
       {replyingTo === comment.id && currentUserId && (
         <div className={cn("mt-2", replyCount > 0 && "ml-[19px]")}>
-          <form onSubmit={async (e) => { e.preventDefault(); const input = (e.target as HTMLFormElement).elements.namedItem("reply") as HTMLInputElement; if (input.value.trim()) { await onReplySubmit(comment.id, input.value.trim()); } }} className="mt-1.5 flex gap-2">
-            <input name="reply" autoFocus defaultValue={replyMention ? `@${replyMention} ` : ""} maxLength={500} placeholder={t("discussion.placeholder")} className={retroFieldClassName("!min-h-[36px] !rounded-[10px] !px-3 !py-1.5 !text-sm")} />
-            <button type="submit" className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}><Send className="h-3.5 w-3.5" strokeWidth={2} />{t("discussion.post")}</button>
-          </form>
-          <button type="button" onClick={() => onSetReplyTo(null)} className="mt-1 cursor-pointer text-xs text-[var(--bp-accent)] hover:opacity-80">{t("discussion.cancel")}</button>
+          <InlineReplyForm
+            parentId={comment.id}
+            replyName={replyMention}
+            onSubmit={onReplySubmit}
+            onCancel={() => onSetReplyTo(null)}
+            t={t}
+          />
         </div>
       )}
     </div>
@@ -171,6 +237,35 @@ function CommentSkeleton({ isReply = false }: { isReply?: boolean }) {
   );
 }
 
+function SortToggle({ value, onChange, t }: {
+  value: DiscussionSortMode;
+  onChange: (value: DiscussionSortMode) => void;
+  t: (k: string) => string;
+}) {
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-[var(--bp-line)] bg-[var(--bp-card)] p-1">
+      {(["top", "new"] as const).map((option) => {
+        const active = value === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+              active
+                ? "bg-[var(--bp-accent)] text-black"
+                : "text-[var(--bp-muted)] hover:text-[var(--bp-ink)]",
+            )}
+          >
+            {option === "top" ? t("discussion.sortTop") : t("discussion.sortNew")}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 const MIN_SKELETON_MS = 850;
 const API_BASE = "/api/fighter-comments";
 
@@ -180,6 +275,7 @@ export default function FighterComments({ fighterId, currentUserInitial }: { fig
   const [body, setBody] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyMention, setReplyMention] = useState("");
+  const [sortMode, setSortMode] = useState<DiscussionSortMode>("top");
   const [loading, setLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -243,18 +339,15 @@ export default function FighterComments({ fighterId, currentUserInitial }: { fig
     }
   }
 
-  const topLevel = comments.filter((c) => !c.parent_id);
-  const flatRepliesMap = new Map<string, Comment[]>();
-  const directMap = new Map<string, Comment[]>();
-  for (const c of comments) { if (c.parent_id) { const arr = directMap.get(c.parent_id) ?? []; arr.push(c); directMap.set(c.parent_id, arr); } }
-  function collect(rootId: string, parentId: string) {
-    for (const child of directMap.get(parentId) ?? []) { const arr = flatRepliesMap.get(rootId) ?? []; arr.push(child); flatRepliesMap.set(rootId, arr); collect(rootId, child.id); }
-  }
-  for (const tl of topLevel) collect(tl.id, tl.id);
+  const { topLevel, flatRepliesMap } = buildReplyMaps(comments);
+  const sortedTopLevel = sortTopLevelComments(topLevel, flatRepliesMap, sortMode);
 
   return (
     <div>
-      <p className="text-sm font-semibold text-[var(--bp-muted)]">{t("discussion.title")}</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-[var(--bp-muted)]">{t("discussion.title")}</p>
+        <SortToggle value={sortMode} onChange={setSortMode} t={t} />
+      </div>
       <div className="mt-3" aria-live="polite">
         {loading ? (
           <div className="space-y-4"><CommentSkeleton /><CommentSkeleton /><CommentSkeleton /></div>
@@ -262,7 +355,7 @@ export default function FighterComments({ fighterId, currentUserInitial }: { fig
           <p className="py-6 text-center text-xs text-[var(--bp-muted)]">{t("discussion.noComments")}</p>
         ) : (
           <div className={cn("space-y-4 transition-opacity duration-300", showContent ? "opacity-100" : "opacity-0")}>
-            {topLevel.map((comment) => (
+            {sortedTopLevel.map((comment) => (
               <CommentThread key={comment.id} comment={comment} replies={flatRepliesMap.get(comment.id) ?? []} currentUserId={currentUserId}
                 onDelete={handleDelete} onLike={handleLike} onReplySubmit={handleReplySubmit} replyingTo={replyingTo}
                 onSetReplyTo={(id, m) => { setReplyingTo(id); setReplyMention(m ?? ""); }} replyMention={replyMention} t={t} />
@@ -275,8 +368,19 @@ export default function FighterComments({ fighterId, currentUserInitial }: { fig
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bp-accent-dim)] text-xs font-bold text-[var(--bp-accent)]">{(currentUserInitial ?? "?").toUpperCase()}</div>
             <MentionInput value={body} onChange={setBody} mentionUsers={mentionUsers} maxLength={500} placeholder={t("discussion.placeholder")} className={retroFieldClassName("!min-h-[40px] !rounded-[10px] !px-3 !text-sm")} />
-            <button type="submit" disabled={submitting || !body.trim()} className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}>
-              <Send className="h-3.5 w-3.5" strokeWidth={2} />{submitting ? "..." : t("discussion.post")}
+            <button
+              type="submit"
+              disabled={submitting || !body.trim()}
+              aria-busy={submitting}
+              className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}
+            >
+              <LoadingButtonContent
+                loading={submitting}
+                icon={<Send className="h-3.5 w-3.5" strokeWidth={2} />}
+                spinnerClassName="h-3.5 w-3.5"
+              >
+                {t("discussion.post")}
+              </LoadingButtonContent>
             </button>
           </div>
         </form>

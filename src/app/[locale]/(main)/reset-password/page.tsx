@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
@@ -77,9 +78,12 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className={retroButtonClassName({ variant: "primary", size: "lg", block: true })}
             >
-              {loading ? t("auth.sending") : t("auth.sendResetLink")}
+              <LoadingButtonContent loading={loading} loadingLabel={t("auth.sending")}>
+                {t("auth.sendResetLink")}
+              </LoadingButtonContent>
             </button>
           </form>
         )}

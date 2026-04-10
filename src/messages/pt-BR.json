@@ -111,6 +111,7 @@
     "login": "Entrar",
     "signup": "Cadastrar-se",
     "googleLogin": "Continuar com Google",
+    "facebookLogin": "Continuar com Facebook",
     "or": "ou",
     "signupEyebrow": "Entre no Black Pick",
     "createAccount": "Criar conta",
@@ -119,10 +120,11 @@
     "loginTitle": "Entrar",
     "loginDescription": "Volte para a arena e acompanhe seus palpites.",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "Mínimo de 6 caracteres",
-    "creatingAccount": "Criando conta...",
-    "signingIn": "Entrando...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "Mínimo de 6 caracteres",
+  "creatingAccount": "Criando conta...",
+  "signupCheckEmail": "Verifique seu e-mail para confirmar sua conta. Se esse endereço puder se cadastrar, um link de confirmação chegará em breve.",
+  "signingIn": "Entrando...",
     "redirecting": "Redirecionando...",
     "alreadyHaveAccount": "Já tem uma conta?",
     "noAccount": "Ainda não tem conta?",
@@ -131,7 +133,9 @@
     "userExists": "Esse e-mail já está cadastrado. Faça login.",
     "invalidEmail": "Digite um endereço de e-mail válido.",
     "passwordTooShort": "A senha precisa ter pelo menos 6 caracteres.",
+    "providerUnavailable": "Esse login social ainda não está disponível. Use o login por email por enquanto.",
     "authUnexpected": "Não foi possível concluir a autenticação agora.",
+    "oauthCallbackFailed": "Não conseguimos concluir esse login social. Tente novamente.",
     "logout": "Sair",
     "forgotPassword": "Esqueceu sua senha?",
     "resetPassword": "Redefinir Senha",
@@ -144,7 +148,13 @@
     "updatePassword": "Atualizar senha",
     "updating": "Atualizando...",
     "passwordUpdated": "Senha atualizada! Redirecionando para login.",
-    "passwordUpdateFailed": "Falha ao atualizar a senha."
+    "passwordUpdateFailed": "Falha ao atualizar a senha.",
+    "dashboardGateTitle": "Entre para abrir seu dashboard.",
+    "dashboardGateDescription": "Acompanhe sua tendência de pontos, sequência, badges e categorias mais fortes em um só lugar.",
+    "myRecordGateTitle": "Entre para ver seu histórico.",
+    "myRecordGateDescription": "Revise todos os seus palpites, placares por evento e resultados em uma única tela.",
+    "eventRecordGateTitle": "Entre para ver este relatório do evento.",
+    "eventRecordGateDescription": "Veja como você pontuou neste card, luta por luta."
   },
   "account": {
     "editProfile": "Editar Perfil",
@@ -168,7 +178,14 @@
     "record": "Cartel",
     "nationality": "Nacionalidade",
     "weightClass": "Categoria de peso",
-    "recentFights": "Lutas Recentes"
+    "recentFights": "Lutas Recentes",
+    "filterCountry": "Filtrar por país",
+    "allCountries": "Todos os países",
+    "sortBy": "Ordenar",
+    "sortWinsDesc": "Mais vitórias",
+    "sortLossesDesc": "Mais derrotas",
+    "sortNameAsc": "Nome",
+    "noResults": "Nenhum lutador corresponde a este filtro."
   },
   "series": {
     "blackCup": "Black Cup",
@@ -191,6 +208,7 @@
     "heroTitle": "Não é palpite. É leitura de luta.",
     "heroDescription": "Preveja as lutas do Black Combat, construa seu cartel e prove que você é o verdadeiro entendedor de luta.",
     "buyTickets": "Comprar Ingressos",
+    "soldOut": "Esgotado",
     "watchLive": "Assistir ao Vivo"
   },
   "rankingPage": {
@@ -287,7 +305,11 @@
     "translate": "Traduzir",
     "original": "Original",
     "viewReplies": "Ver {count} respostas",
-    "hideReplies": "Ocultar respostas"
+    "hideReplies": "Ocultar respostas",
+    "sortTop": "Principais",
+    "sortNew": "Recentes",
+    "previewTitle": "Principais comentarios",
+    "viewAll": "Ver toda a discussão"
   },
   "notification": {
     "title": "Notificacoes",

@@ -51,16 +51,26 @@ function withLocale(path: string, locale?: Locale | null) {
 }
 
 export function getAuthOrigin(fallbackOrigin?: string | null) {
+  const configuredOrigin = getConfiguredSiteOrigin();
   const normalizedFallback = normalizeOrigin(fallbackOrigin);
+
+  // In production, always prefer the canonical configured origin to avoid
+  // host-header confusion, multi-domain misconfig, or an attacker-controlled
+  // Host header shaping OAuth redirect URLs. Only fall back to runtime origin
+  // if no canonical origin is configured at all.
+  if (process.env.NODE_ENV === "production") {
+    if (configuredOrigin) return configuredOrigin;
+    if (normalizedFallback) return normalizedFallback;
+    return "http://localhost:3000";
+  }
+
+  // In dev/preview, prefer the runtime origin so localhost and per-preview
+  // deployments work without needing per-environment SITE_URL overrides.
+  // Only fall through to configured origin if there's no runtime origin.
   if (normalizedFallback && !isLocalOrigin(normalizedFallback)) {
     return normalizedFallback;
   }
-
-  const configuredOrigin = getConfiguredSiteOrigin();
-  if (configuredOrigin) {
-    return configuredOrigin;
-  }
-
+  if (configuredOrigin) return configuredOrigin;
   return normalizedFallback ?? "http://localhost:3000";
 }
 

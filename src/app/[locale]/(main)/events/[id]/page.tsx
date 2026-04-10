@@ -4,8 +4,10 @@ import FlipTimer from "@/components/FlipTimer";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { RetroStatusBadge, retroChipClassName, retroPanelClassName } from "@/components/ui/retro";
+import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventDataFull } from "@/lib/bc-predictions";
 import { getSeriesLabel } from "@/lib/constants";
+import { getEarliestFightStart, sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
@@ -62,7 +64,7 @@ export default async function EventPage({
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, date, status, mvp_video_url, series_type")
+    .select("id, name, date, status, mvp_video_url, series_type, source_event_id")
     .eq("id", id)
     .single();
 
@@ -86,9 +88,13 @@ export default async function EventPage({
     .eq("event_id", id)
     .order("start_time", { ascending: false });
 
-  const typedFights = (fights ?? []) as FightWithFighters[];
+  const rawFights = (fights ?? []) as FightWithFighters[];
+  const bcResult = await fetchBcEventDataFull(event.name, event.source_event_id);
+  const officialCard =
+    bcResult.sourceEventId ? await fetchBcOfficialEventCard(bcResult.sourceEventId).catch(() => []) : [];
+  const typedFights = sortFightsByOfficialCardOrder(rawFights, officialCard);
   const fightIds = typedFights.map((fight) => fight.id);
-  const earliestStart = typedFights[0]?.start_time ?? null;
+  const earliestStart = getEarliestFightStart(typedFights);
 
   const [{ data: predictions }, { data: statsData }] = await Promise.all([
     user && fightIds.length > 0
@@ -121,8 +127,6 @@ export default async function EventPage({
     eventFighterMap.set(fight.fighter_b.id, fight.fighter_b);
   }
 
-  // Fetch BC official site predictions + weight classes + poster
-  const bcResult = await fetchBcEventDataFull(event.name);
   const bcRawData = bcResult.fights;
   // Both BC site and our DB now order main event first (DESC by start_time).
   // Direct index alignment — trim BC data to match DB fight count.
@@ -330,6 +334,8 @@ export default async function EventPage({
               fightLabel={`${aName} vs ${bName}`}
               currentUserId={user?.id ?? null}
               currentUserInitial={userInitial}
+              mode="preview"
+              viewAllHref={`/events/${event.id}/fights/${entry.fight.id}`}
             />
           );
         })}

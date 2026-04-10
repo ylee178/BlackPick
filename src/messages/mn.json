@@ -114,6 +114,7 @@
     "login": "Нэвтрэх",
     "signup": "Бүртгүүлэх",
     "googleLogin": "Google-ээр үргэлжлүүлэх",
+    "facebookLogin": "Facebook-ээр үргэлжлүүлэх",
     "or": "эсвэл",
     "signupEyebrow": "Black Pick-д нэгдээрэй",
     "createAccount": "Бүртгэл үүсгэх",
@@ -122,10 +123,11 @@
     "loginTitle": "Нэвтрэх",
     "loginDescription": "Дахин аренад орж, сонголтуудаа хянаарай.",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "Хамгийн багадаа 6 тэмдэгт",
-    "creatingAccount": "Бүртгэл үүсгэж байна...",
-    "signingIn": "Нэвтэрч байна...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "Хамгийн багадаа 6 тэмдэгт",
+  "creatingAccount": "Бүртгэл үүсгэж байна...",
+  "signupCheckEmail": "Бүртгэлээ баталгаажуулахын тулд имэйлээ шалгана уу. Хэрэв энэ хаягаар бүртгүүлэх боломжтой бол баталгаажуулах холбоос удахгүй очно.",
+  "signingIn": "Нэвтэрч байна...",
     "redirecting": "Шилжүүлж байна...",
     "alreadyHaveAccount": "Бүртгэлтэй юу?",
     "noAccount": "Бүртгэл байхгүй юу?",
@@ -134,7 +136,9 @@
     "userExists": "Энэ имэйл аль хэдийн бүртгэгдсэн байна. Оронд нь нэвтэрнэ үү.",
     "invalidEmail": "Хүчинтэй имэйл хаяг оруулна уу.",
     "passwordTooShort": "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.",
+    "providerUnavailable": "Энэ сошиал нэвтрэлт одоогоор бэлэн биш байна. Түр хугацаанд имэйлээр нэвтэрнэ үү.",
     "authUnexpected": "Одоогоор баталгаажуулалтыг дуусгаж чадсангүй.",
+    "oauthCallbackFailed": "Сошиал нэвтрэлтийг дуусгаж чадсангүй. Дахин оролдоно уу.",
     "logout": "Гарах",
     "forgotPassword": "Нууц үгээ мартсан уу?",
     "resetPassword": "Нууц үг сэргээх",
@@ -147,7 +151,13 @@
     "updatePassword": "Нууц үг шинэчлэх",
     "updating": "Шинэчилж байна...",
     "passwordUpdated": "Нууц үг шинэчлэгдлээ! Нэвтрэх хуудас руу шилжүүлж байна.",
-    "passwordUpdateFailed": "Нууц үгийг шинэчилж чадсангүй."
+    "passwordUpdateFailed": "Нууц үгийг шинэчилж чадсангүй.",
+    "dashboardGateTitle": "Нэвтэрч өөрийн dashboard-оо нээгээрэй.",
+    "dashboardGateDescription": "Онооны чиг хандлага, цуврал, badge, хамгийн хүчтэй жингийн ангиллаа нэг дороос хараарай.",
+    "myRecordGateTitle": "Нэвтэрч өөрийн амжилтын түүхээ үзээрэй.",
+    "myRecordGateDescription": "Бүх таамаг, эвентийн дүн, зөв таасан үр дүнгээ нэг газраас шалгаарай.",
+    "eventRecordGateTitle": "Нэвтэрч энэ эвентийн тайланг үзээрэй.",
+    "eventRecordGateDescription": "Энэ карт дээр тулаан тус бүрээр хэдэн оноо авснаа хараарай."
   },
   "account": {
     "editProfile": "Профайл засах",
@@ -171,7 +181,14 @@
     "record": "Амжилт",
     "nationality": "Иргэншил",
     "weightClass": "Жингийн ангилал",
-    "recentFights": "Сүүлийн тулаанууд"
+    "recentFights": "Сүүлийн тулаанууд",
+    "filterCountry": "Улсаар шүүх",
+    "allCountries": "Бүх улс",
+    "sortBy": "Эрэмбэлэх",
+    "sortWinsDesc": "Олон ялалттай",
+    "sortLossesDesc": "Олон ялагдалтай",
+    "sortNameAsc": "Нэрээр",
+    "noResults": "Энэ шүүлтүүрт тохирох тамирчин алга."
   },
   "series": {
     "blackCup": "Black Cup",
@@ -194,6 +211,7 @@
     "heroTitle": "Энэ бол таавар биш. Энэ бол тулааныг унших чадвар.",
     "heroDescription": "Black Combat-ийн тулаануудыг таамаглаж, амжилтаа бүрдүүлж, жинхэнэ тулааны шинжээч гэдгээ батлаарай.",
     "buyTickets": "Тасалбар авах",
+    "soldOut": "Зарагдсан",
     "watchLive": "Шууд үзэх"
   },
   "rankingPage": {
@@ -290,7 +308,11 @@
     "translate": "Орчуулах",
     "original": "Эх",
     "viewReplies": "{count} хариуг харах",
-    "hideReplies": "Хариунуудыг нуух"
+    "hideReplies": "Хариунуудыг нуух",
+    "sortTop": "Шилдэг",
+    "sortNew": "Шинэ",
+    "previewTitle": "Онцлох сэтгэгдлүүд",
+    "viewAll": "Бүх хэлэлцүүлгийг үзэх"
   },
   "notification": {
     "title": "Мэдэгдлүүд",

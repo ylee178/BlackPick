@@ -238,7 +238,9 @@ export default async function FightCard({
           <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel>
         ) : null}
         {isVoided && (
-          <RetroLabel size="md" tone="danger">{isCancelled ? "CAN" : "NC"}</RetroLabel>
+          <RetroLabel size="md" tone="danger">
+            {isCancelled ? t("status.cancelled") : t("status.no_contest")}
+          </RetroLabel>
         )}
       </div>
 

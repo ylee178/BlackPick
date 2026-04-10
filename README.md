@@ -16,7 +16,6 @@ Required environment variables live in `.env` and `.env.example`. The important 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `BLACKPICK_ADMIN_EMAILS` for bootstrapping admin access without a seeded `admin_users` row
 - `GEMINI_API_KEY` if you use fighter avatar generation
 
 ## Verification Commands
@@ -50,10 +49,7 @@ Those migrations add:
 
 ## Admin Bootstrap
 
-There are two supported ways to grant admin access:
-
-1. Set `BLACKPICK_ADMIN_EMAILS=user@example.com,other@example.com`
-2. Insert the authenticated user id into `public.admin_users`
+Grant admin access by inserting the authenticated user id into `public.admin_users`.
 
 Admin checks are enforced both on `/admin/*` pages and on mutation APIs such as fighter image management and result processing.
 
@@ -71,6 +67,7 @@ bash scripts/ops/apply-remote-migrations.sh
 - Fighter detail uses original reference photos when available. Profile-style pixel avatars are treated as derivatives.
 - Pixel avatar resolution supports both base files like `<fighter-id>.png` and generated variants like `<fighter-id>_v3.png`.
 - Account deletion is now a real delete flow, not a fake `deleted_at` soft delete.
+- User email addresses stay in Supabase Auth. Do not store them in `public.users`.
 
 ## Project Structure
 

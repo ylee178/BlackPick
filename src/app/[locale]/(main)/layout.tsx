@@ -7,6 +7,7 @@ import AccountDropdown from "@/components/AccountDropdown";
 import { getTranslations } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
 import { ToastProvider } from "@/components/Toast";
+import { isAdminUser } from "@/lib/admin-auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import {
   retroButtonClassName,
@@ -26,6 +27,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         .eq("id", authUser.id)
         .maybeSingle()
     : { data: null };
+  const isAdmin = authUser ? await isAdminUser(authUser) : false;
 
   const needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim());
 
@@ -62,30 +64,19 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                   score={publicUser.score ?? 0}
                   wins={publicUser.wins ?? 0}
                   losses={publicUser.losses ?? 0}
+                  isAdmin={isAdmin}
                 />
               ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className={retroButtonClassName({
-                      variant: "ghost",
-                      size: "sm",
-                      className: "hidden sm:inline-flex",
-                    })}
-                  >
-                    {t("nav.login")}
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className={retroButtonClassName({
-                      variant: "primary",
-                      size: "sm",
-                      className: "hidden sm:inline-flex",
-                    })}
-                  >
-                    {t("nav.signup")}
-                  </Link>
-                </>
+                <Link
+                  href="/login"
+                  className={retroButtonClassName({
+                    variant: "ghost",
+                    size: "sm",
+                    className: "hidden sm:inline-flex",
+                  })}
+                >
+                  {t("nav.login")}
+                </Link>
               )}
             </div>
           </div>

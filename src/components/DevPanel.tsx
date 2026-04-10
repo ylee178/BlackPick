@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Settings, Loader2 } from "lucide-react";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -119,24 +120,30 @@ export default function DevPanel() {
               <button
                 onClick={() => void toggleMode("upcoming")}
                 disabled={loading !== null}
+                aria-busy={loading === "reset-fights"}
                 className={`flex-1 cursor-pointer px-3 py-2 text-xs font-bold transition ${
                   mode === "upcoming"
                     ? "bg-[#0e7490] text-white"
                     : "bg-[#1a1a1a] text-[#666] hover:text-white"
                 } disabled:opacity-50`}
               >
-                {loading === "reset-fights" ? "..." : "Upcoming"}
+                <LoadingButtonContent loading={loading === "reset-fights"} spinnerClassName="h-3 w-3">
+                  Upcoming
+                </LoadingButtonContent>
               </button>
               <button
                 onClick={() => void toggleMode("completed")}
                 disabled={loading !== null}
+                aria-busy={loading === "complete-fights"}
                 className={`flex-1 cursor-pointer px-3 py-2 text-xs font-bold transition ${
                   mode === "completed"
                     ? "bg-[#0e7490] text-white"
                     : "bg-[#1a1a1a] text-[#666] hover:text-white"
                 } disabled:opacity-50`}
               >
-                {loading === "complete-fights" ? "..." : "Completed"}
+                <LoadingButtonContent loading={loading === "complete-fights"} spinnerClassName="h-3 w-3">
+                  Completed
+                </LoadingButtonContent>
               </button>
             </div>
           </div>
@@ -148,16 +155,22 @@ export default function DevPanel() {
               <button
                 onClick={() => void runAction("full")}
                 disabled={loading !== null}
+                aria-busy={loading === "full"}
                 className="flex-1 cursor-pointer rounded-[8px] bg-[#6d28d9] px-2 py-2 text-xs font-bold text-white transition hover:bg-[#7c3aed] disabled:opacity-50"
               >
-                {loading === "full" ? "..." : "Seed"}
+                <LoadingButtonContent loading={loading === "full"} spinnerClassName="h-3 w-3">
+                  Seed
+                </LoadingButtonContent>
               </button>
               <button
                 onClick={() => void runAction("empty")}
                 disabled={loading !== null}
+                aria-busy={loading === "empty"}
                 className="flex-1 cursor-pointer rounded-[8px] bg-[#991b1b] px-2 py-2 text-xs font-bold text-white transition hover:bg-[#b91c1c] disabled:opacity-50"
               >
-                {loading === "empty" ? "..." : "Empty"}
+                <LoadingButtonContent loading={loading === "empty"} spinnerClassName="h-3 w-3">
+                  Empty
+                </LoadingButtonContent>
               </button>
             </div>
           </div>

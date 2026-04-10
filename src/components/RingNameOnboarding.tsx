@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { getRingNameValidationError, normalizeRingName } from "@/lib/ring-name";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
@@ -150,9 +151,12 @@ export default function RingNameOnboarding({ email }: RingNameOnboardingProps) {
           <button
             type="submit"
             disabled={submitting}
+            aria-busy={submitting}
             className={retroButtonClassName({ variant: "primary", size: "lg", block: true })}
           >
-            {submitting ? t("onboarding.submitting") : t("onboarding.submit")}
+            <LoadingButtonContent loading={submitting} loadingLabel={t("onboarding.submitting")}>
+              {t("onboarding.submit")}
+            </LoadingButtonContent>
           </button>
         </form>
       </div>

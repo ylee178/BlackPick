@@ -12,7 +12,6 @@ export type Database = {
       users: {
         Row: {
           id: string
-          email: string
           ring_name: string
           wins: number
           losses: number
@@ -26,7 +25,6 @@ export type Database = {
         }
         Insert: {
           id: string
-          email: string
           ring_name: string
           wins?: number
           losses?: number
@@ -40,7 +38,6 @@ export type Database = {
         }
         Update: {
           id?: string
-          email?: string
           ring_name?: string
           wins?: number
           losses?: number

@@ -3,7 +3,7 @@ import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import { countryCodeToFlag } from "@/lib/flags";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
-import { RetroEmptyState } from "@/components/ui/retro";
+import SignInCard from "@/components/auth/SignInCard";
 import PredictionsList from "@/components/PredictionsList";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,16 @@ export default async function MyRecordPage() {
   const { t, locale } = await getTranslations();
 
   if (!authUser) {
-    return <RetroEmptyState title={t("common.loginRequired")} />;
+    return (
+      <div className="mx-auto max-w-md">
+        <SignInCard
+          eyebrow={t("nav.myRecord")}
+          title={t("auth.myRecordGateTitle")}
+          description={t("auth.myRecordGateDescription")}
+          redirectTo="/my-record"
+        />
+      </div>
+    );
   }
 
   const { data: preds } = await supabase

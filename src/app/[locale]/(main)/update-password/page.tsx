@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
@@ -83,9 +84,12 @@ export default function UpdatePasswordPage() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className={retroButtonClassName({ variant: "primary", size: "lg", block: true })}
             >
-              {loading ? t("auth.updating") : t("auth.updatePassword")}
+              <LoadingButtonContent loading={loading} loadingLabel={t("auth.updating")}>
+                {t("auth.updatePassword")}
+              </LoadingButtonContent>
             </button>
           </form>
         )}

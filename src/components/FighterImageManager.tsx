@@ -3,6 +3,7 @@
 import NextImage from "next/image";
 import { useState, useRef, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroPanelClassName,
   retroButtonClassName,
@@ -235,10 +236,17 @@ export default function FighterImageManager({
               <button
                 onClick={saveEdit}
                 disabled={saving}
+                aria-busy={saving}
                 className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1" })}
               >
-                <Check className="h-3.5 w-3.5" strokeWidth={2} />
-                {saving ? "Saving..." : "Save"}
+                <LoadingButtonContent
+                  loading={saving}
+                  loadingLabel="Saving..."
+                  icon={<Check className="h-3.5 w-3.5" strokeWidth={2} />}
+                  spinnerClassName="h-3.5 w-3.5"
+                >
+                  Save
+                </LoadingButtonContent>
               </button>
             </div>
           </div>

@@ -113,6 +113,7 @@
     "login": "ログイン",
     "signup": "新規登録",
     "googleLogin": "Googleで続行",
+    "facebookLogin": "Facebookで続行",
     "or": "または",
     "signupEyebrow": "Black Pickへようこそ",
     "createAccount": "アカウント作成",
@@ -121,10 +122,11 @@
     "loginTitle": "ログイン",
     "loginDescription": "アリーナに戻って、あなたの予想を追いましょう。",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "6文字以上",
-    "creatingAccount": "アカウント作成中...",
-    "signingIn": "ログイン中...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "6文字以上",
+  "creatingAccount": "アカウント作成中...",
+  "signupCheckEmail": "メールを確認してアカウントを認証してください。そのアドレスで登録できる場合、確認リンクがまもなく届きます。",
+  "signingIn": "ログイン中...",
     "redirecting": "移動中...",
     "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
     "noAccount": "アカウントをお持ちではありませんか？",
@@ -133,7 +135,9 @@
     "userExists": "そのメールアドレスは既に登録されています。ログインしてください。",
     "invalidEmail": "有効なメールアドレスを入力してください。",
     "passwordTooShort": "パスワードは6文字以上必要です。",
+    "providerUnavailable": "このソーシャルログインはまだ利用できません。ひとまずメールログインを使ってください。",
     "authUnexpected": "現在、認証を完了できませんでした。",
+    "oauthCallbackFailed": "ソーシャルログインを完了できませんでした。もう一度お試しください。",
     "logout": "ログアウト",
     "forgotPassword": "パスワードをお忘れですか？",
     "resetPassword": "パスワード再設定",
@@ -146,7 +150,13 @@
     "updatePassword": "パスワードを変更",
     "updating": "変更中...",
     "passwordUpdated": "パスワードが変更されました！ログインページに移動します。",
-    "passwordUpdateFailed": "パスワードの変更に失敗しました。"
+    "passwordUpdateFailed": "パスワードの変更に失敗しました。",
+    "dashboardGateTitle": "ログインしてダッシュボードを開きましょう。",
+    "dashboardGateDescription": "スコア推移、連勝、バッジ、得意階級までまとめて確認できます。",
+    "myRecordGateTitle": "ログインしてあなたの戦績を確認しましょう。",
+    "myRecordGateDescription": "予想履歴、イベントごとの成績、的中結果を一か所で見返せます。",
+    "eventRecordGateTitle": "ログインしてこのイベント結果を確認しましょう。",
+    "eventRecordGateDescription": "このカードでどの試合を当てたかを試合ごとに確認できます。"
   },
   "account": {
     "editProfile": "プロフィール編集",
@@ -170,7 +180,14 @@
     "record": "戦績",
     "nationality": "国籍",
     "weightClass": "階級",
-    "recentFights": "最近の試合"
+    "recentFights": "最近の試合",
+    "filterCountry": "国別に表示",
+    "allCountries": "すべての国",
+    "sortBy": "並び替え",
+    "sortWinsDesc": "勝利数が多い順",
+    "sortLossesDesc": "敗戦数が多い順",
+    "sortNameAsc": "名前順",
+    "noResults": "条件に一致する選手がいません。"
   },
   "series": {
     "blackCup": "ブラックカップ",
@@ -193,6 +210,7 @@
     "heroTitle": "勘じゃない、読みだ。",
     "heroDescription": "Black Combatの勝敗を予想し、戦績を積み上げろ。誰が本物の格闘通か、ランキングが語る。",
     "buyTickets": "チケット購入",
+    "soldOut": "完売",
     "watchLive": "視聴する"
   },
   "rankingPage": {
@@ -289,7 +307,11 @@
     "translate": "翻訳",
     "original": "原文",
     "viewReplies": "返信{count}件を表示",
-    "hideReplies": "返信を非表示"
+    "hideReplies": "返信を非表示",
+    "sortTop": "人気順",
+    "sortNew": "新着順",
+    "previewTitle": "注目コメント",
+    "viewAll": "すべての議論を見る"
   },
   "notification": {
     "title": "通知",

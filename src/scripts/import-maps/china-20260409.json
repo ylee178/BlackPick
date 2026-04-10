@@ -1,0 +1,38 @@
+[
+  {
+    "sourceName": "금도장군",
+    "fighterId": "d9421485-39b7-46c7-a4b0-20a578b47f51",
+    "ringName": "금도장군",
+    "name": "Liu Yaocheng"
+  },
+  {
+    "sourceName": "금사자",
+    "fighterId": "8c8ef9b4-7d62-4162-ac2f-833a8d6961ea",
+    "ringName": "금사자",
+    "name": "Tuolie Bahetijiang"
+  },
+  {
+    "sourceName": "오공",
+    "fighterId": "022dc6e9-64eb-4a82-9a5f-48c6d461fc28",
+    "ringName": "오공",
+    "name": "Huang Yuele"
+  },
+  {
+    "sourceName": "팔콘",
+    "fighterId": "5cbb5b60-3e84-4d30-975e-126a928f190c",
+    "ringName": "팔콘",
+    "name": "Silangraopeng"
+  },
+  {
+    "sourceName": "흑랑",
+    "fighterId": "0dd577de-e2bd-434c-b71a-b6fb98c7f89a",
+    "ringName": "흑랑",
+    "name": "Yang Fuchong"
+  },
+  {
+    "sourceName": "흑수리",
+    "fighterId": "ddced3e3-bb52-4b55-bdf0-d00b89ca3ae5",
+    "ringName": "흑수리",
+    "name": "Yibugele"
+  }
+]

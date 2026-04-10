@@ -12,6 +12,11 @@
 
 import axios from "axios";
 import * as cheerio from "cheerio";
+import {
+  fetchBcEventList,
+  fetchBcOfficialEventCard,
+  type BcEventCategory,
+} from "../lib/bc-official";
 
 // ── Types ──────────────────────────────────────────────
 
@@ -125,7 +130,7 @@ function parseEventDetail(html: string): CrawledFight[] {
   // Each fight card is a flex div inside the fightcard area
   // Structure: div(flex) > div(fighter_img left) + div(info center) + div(fighter_img right)
   const fightCards = $(".fightcard > div > div").filter(function () {
-    return $(this).css("display") === "flex" || $(this).attr("style")?.includes("display:flex");
+    return Boolean($(this).css("display") === "flex" || $(this).attr("style")?.includes("display:flex"));
   });
 
   fightCards.each((_, card) => {
@@ -221,13 +226,11 @@ function parseEventDetail(html: string): CrawledFight[] {
 async function crawlAllEvents(): Promise<CrawledEvent[]> {
   const allEvents: CrawledEvent[] = [];
 
-  for (const category of CATEGORIES) {
+  for (const category of CATEGORIES as readonly BcEventCategory[]) {
     console.log(`\n📋 Crawling category: ${category}`);
-    const listUrl = `${BASE_URL}/event.php?page=10&eventCategory=${category}`;
 
     try {
-      const listHtml = await fetchPage(listUrl);
-      const events = parseEventList(listHtml, category);
+      const events = await fetchBcEventList(category);
       console.log(`  Found ${events.length} events`);
 
       for (const event of events) {
@@ -235,15 +238,45 @@ async function crawlAllEvents(): Promise<CrawledEvent[]> {
         console.log(`  🥊 Crawling event: ${event.name} (seq=${event.sourceId})`);
 
         try {
-          const detailUrl = `${BASE_URL}/eventDetail.php?eventSeq=${event.sourceId}`;
-          const detailHtml = await fetchPage(detailUrl);
-          const fights = parseEventDetail(detailHtml);
+          const officialFights = await fetchBcOfficialEventCard(event.sourceId);
+          const fights = officialFights.map((fight) => ({
+            fighterA: {
+              sourceId: fight.fighterA.sourceId,
+              name: fight.fighterA.name ?? "",
+              ringName: fight.fighterA.ringName ?? "",
+              nationality: fight.fighterA.nationality ? `fi-${fight.fighterA.nationality.toLowerCase()}` : "",
+              record: fight.fighterA.record ?? "",
+              weightClass: fight.fighterA.weightClass ?? "",
+              division: fight.fighterA.division ?? "",
+            },
+            fighterB: {
+              sourceId: fight.fighterB.sourceId,
+              name: fight.fighterB.name ?? "",
+              ringName: fight.fighterB.ringName ?? "",
+              nationality: fight.fighterB.nationality ? `fi-${fight.fighterB.nationality.toLowerCase()}` : "",
+              record: fight.fighterB.record ?? "",
+              weightClass: fight.fighterB.weightClass ?? "",
+              division: fight.fighterB.division ?? "",
+            },
+          }));
           console.log(`    Found ${fights.length} fights`);
 
-          allEvents.push({ ...event, fights });
+          allEvents.push({
+            sourceId: event.sourceId,
+            name: event.name ?? "",
+            date: event.date ?? "",
+            category: event.category,
+            fights,
+          });
         } catch (err: any) {
           console.error(`    ❌ Failed to crawl event ${event.sourceId}: ${err.message}`);
-          allEvents.push({ ...event, fights: [] });
+          allEvents.push({
+            sourceId: event.sourceId,
+            name: event.name ?? "",
+            date: event.date ?? "",
+            category: event.category,
+            fights: [],
+          });
         }
       }
     } catch (err: any) {

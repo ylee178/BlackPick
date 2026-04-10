@@ -2,8 +2,10 @@
 
 import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
+import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
 import { useI18n } from "@/lib/i18n-provider";
 import { useToast } from "@/components/Toast";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { getLocalizedFighterName, getLocalizedFighterSubLabel } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import FighterAvatar from "@/components/FighterAvatar";
@@ -56,26 +58,12 @@ function CheckIcon({ className }: { className?: string }) {
   return <Check className={cn("h-3 w-3", className)} strokeWidth={2} />;
 }
 
-function RadioDot({ checked }: { checked: boolean }) {
-  if (checked) {
-    return (
-      <span className="flex h-[18px] w-[18px] min-h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-[var(--bp-accent)]">
-        <CheckIcon className="h-2.5 w-2.5 text-[var(--bp-bg)]" />
-      </span>
-    );
-  }
-  return (
-    <span className="block h-[18px] w-[18px] min-h-[18px] min-w-[18px] shrink-0 rounded-full border-2 border-[rgba(255,255,255,0.25)]" />
-  );
-}
-
 export default function FightCardPicker({
   fightId,
   fighterA,
   fighterB,
   fighterAId,
   fighterBId,
-  crowdStats,
   bcPrediction,
   bcFighterADivision,
   bcFighterBDivision,
@@ -112,6 +100,11 @@ export default function FightCardPicker({
         }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        const nextPath = getSafeAuthNext(`${window.location.pathname}${window.location.search}`);
+        window.location.assign(buildLocalizedAuthPath("login", locale, nextPath));
+        return;
+      }
       if (!res.ok) {
         toast(data.error || t("prediction.failedToSave"), "error");
         return;
@@ -343,10 +336,15 @@ export default function FightCardPicker({
                   type="button"
                   onClick={(e) => { e.stopPropagation(); void handleSubmit(); }}
                   disabled={loading}
+                  aria-busy={loading}
                   className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#2563eb] py-2 text-xs font-bold text-white transition hover:bg-[#1d4ed8] disabled:opacity-50"
                 >
-                  {loading && <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-                  {t("prediction.savePick")}
+                  <LoadingButtonContent
+                    loading={loading}
+                    spinnerClassName="h-3 w-3"
+                  >
+                    {t("prediction.savePick")}
+                  </LoadingButtonContent>
                 </button>
               </div>
             ) : (
