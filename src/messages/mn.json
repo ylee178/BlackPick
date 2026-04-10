@@ -226,7 +226,8 @@
     "daysShort": "Өдөр",
     "hoursShort": "Цаг",
     "minutesShort": "Мин",
-    "secondsShort": "Сек"
+    "secondsShort": "Сек",
+    "selectTimezone": "Цагийн бүсийг солих"
   },
   "mvp": {
     "oneVotePerEvent": "Нэг тэмцээнд нэг санал.",

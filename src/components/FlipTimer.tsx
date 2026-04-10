@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
+import TimezoneSelect from "@/components/TimezoneSelect";
+import {
+  detectUserTimezone,
+  formatTimeInTimezone,
+  loadStoredTimezone,
+  saveStoredTimezone,
+} from "@/lib/timezone";
 
 function getTimeLeft(target: string) {
   const diff = new Date(target).getTime() - Date.now();
@@ -29,9 +36,15 @@ export function DigitCard({ value, label }: { value: string; label?: string }) {
 }
 
 export default function FlipTimer({ targetTime }: { targetTime: string }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [tl, setTl] = useState({ total: 1, d: 0, h: 0, m: 0, s: 0 });
+
+  // Timezone preference — null until we've hydrated from the browser, so
+  // the first server-rendered pass shows a placeholder instead of a time
+  // in whatever timezone the SSR host happens to be in (typically UTC).
+  const [detectedTz, setDetectedTz] = useState<string | null>(null);
+  const [selectedTz, setSelectedTz] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -39,6 +52,18 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
     const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
     return () => clearInterval(i);
   }, [targetTime]);
+
+  useEffect(() => {
+    const detected = detectUserTimezone();
+    setDetectedTz(detected);
+    const stored = loadStoredTimezone();
+    setSelectedTz(stored ?? detected);
+  }, []);
+
+  const handleTimezoneChange = (tz: string) => {
+    setSelectedTz(tz);
+    saveStoredTimezone(tz);
+  };
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -50,9 +75,10 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
     );
   }
 
-  const localTime = mounted
-    ? new Date(targetTime).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true })
-    : "";
+  const localTime =
+    mounted && selectedTz
+      ? formatTimeInTimezone(targetTime, selectedTz, locale)
+      : "";
 
   return (
     <div>
@@ -69,9 +95,34 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
           <span className="lcd-colon">:</span>
           <DigitCard value={mounted ? pad(tl.s) : "--"} label={t("countdown.secondsShort")} />
         </div>
-        <p className="mt-3 text-center text-[11px] uppercase text-[var(--bp-muted)]" suppressHydrationWarning>
-          {localTime}
-        </p>
+
+        {/* Absolute time label + timezone dropdown. Only renders after the
+            component has hydrated so users never see a misleading initial
+            time in the wrong timezone. */}
+        <div
+          className="mt-3 flex flex-wrap items-center justify-center gap-2"
+          suppressHydrationWarning
+        >
+          {mounted && selectedTz ? (
+            <>
+              <span className="text-[11px] uppercase text-[var(--bp-muted)]">
+                {localTime}
+              </span>
+              <TimezoneSelect
+                value={selectedTz}
+                detected={detectedTz ?? selectedTz}
+                onChange={handleTimezoneChange}
+                locale={locale}
+                ariaLabel={t("countdown.selectTimezone")}
+              />
+            </>
+          ) : (
+            <span className="text-[11px] uppercase text-[var(--bp-muted)]">
+              {/* Placeholder keeps the layout stable between SSR and client hydrate. */}
+              &nbsp;
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
