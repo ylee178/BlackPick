@@ -33,7 +33,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
 
   return (
       <ToastProvider>
-      <div className="min-h-[100dvh] bg-[var(--bp-bg)] text-[var(--bp-ink)]">
+      <div className="flex min-h-[100dvh] flex-col bg-[var(--bp-bg)] text-[var(--bp-ink)]">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-[var(--bp-bg)] focus:px-4 focus:py-2 focus:text-[var(--bp-ink)]">
           Skip to main content
         </a>
@@ -94,7 +94,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         </header>
 
         {/* Main Content */}
-        <main id="main-content" className="mx-auto max-w-[1200px] px-4 pb-28 pt-10 sm:px-6 lg:pb-10">
+        <main id="main-content" className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-4 pb-28 pt-10 sm:px-6 lg:pb-10">
           {children}
         </main>
 

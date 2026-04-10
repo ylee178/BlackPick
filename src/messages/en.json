@@ -86,7 +86,7 @@
     "perfectCard": "Perfect",
     "ranking": "Ranking",
     "recentPredictions": "Recent Predictions",
-    "signInToView": "Sign in to view",
+    "signInToView": "Log in to view",
     "myAccount": "My Account"
   },
   "ranking": {
@@ -117,17 +117,17 @@
     "facebookLogin": "Continue with Facebook",
     "or": "or",
     "signupEyebrow": "Join Black Pick",
-    "createAccount": "Create Account",
+    "createAccount": "Sign up",
     "signupDescription": "Create your account first. Your ring name comes next on the home screen.",
     "loginEyebrow": "Welcome Back",
-    "loginTitle": "Sign In",
+    "loginTitle": "Log in",
     "loginDescription": "Step back into the arena and track your picks.",
     "emailPlaceholder": "you@example.com",
   "passwordPlaceholder": "••••••••",
   "passwordHint": "Minimum 6 characters",
-  "creatingAccount": "Creating Account...",
+  "creatingAccount": "Signing up...",
   "signupCheckEmail": "Check your email to confirm your account. If that address can sign up, a confirmation link will arrive shortly.",
-  "signingIn": "Signing In...",
+  "signingIn": "Logging in...",
     "redirecting": "Redirecting...",
     "alreadyHaveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
@@ -152,11 +152,11 @@
     "updating": "Updating...",
     "passwordUpdated": "Password updated! Redirecting to login.",
     "passwordUpdateFailed": "Failed to update password.",
-    "dashboardGateTitle": "Sign in to open your dashboard.",
+    "dashboardGateTitle": "Log in to open your dashboard.",
     "dashboardGateDescription": "Track your score trend, streaks, badges, and strongest weight classes in one place.",
-    "myRecordGateTitle": "Sign in to open your record.",
+    "myRecordGateTitle": "Log in to open your record.",
     "myRecordGateDescription": "Review every pick, event scorecard, and prediction result from one home base.",
-    "eventRecordGateTitle": "Sign in to open this event report.",
+    "eventRecordGateTitle": "Log in to open this event report.",
     "eventRecordGateDescription": "See how you scored on this card, fight by fight."
   },
   "account": {
@@ -187,7 +187,7 @@
     "sortBy": "Sort fighters",
     "sortWinsDesc": "Most wins",
     "sortLossesDesc": "Most losses",
-    "sortNameAsc": "Name",
+    "sortNameAsc": "Name (A-Z)",
     "noResults": "No fighters match this filter."
   },
   "series": {
@@ -256,7 +256,7 @@
     "tooLong": "Your ring name must stay within 20 characters.",
     "invalidCharacters": "Use only letters, numbers, spaces, hyphens, or underscores.",
     "taken": "That ring name is already taken.",
-    "notAuthenticated": "Please sign in again to finish onboarding.",
+    "notAuthenticated": "Please log in again to finish onboarding.",
     "unexpected": "We couldn't save your ring name right now."
   },
   "results": {

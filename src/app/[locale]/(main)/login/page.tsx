@@ -26,7 +26,7 @@ export default function LoginPage() {
   const initialError = mapLoginErrorCode(searchParams.get("error"), t);
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="flex w-full flex-1 items-center justify-center">
       <SignInCard
         eyebrow={t("auth.loginEyebrow")}
         title={t("auth.loginTitle")}
@@ -35,6 +35,7 @@ export default function LoginPage() {
         showSignupLink
         signupHref={buildLocalizedAuthPath("signup", locale, nextPath)}
         initialError={initialError}
+        className="w-full max-w-md"
       />
     </div>
   );
