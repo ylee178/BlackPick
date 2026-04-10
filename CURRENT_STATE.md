@@ -1,88 +1,150 @@
-# BlackPick — Current State (2026-04-08, Session 2)
+# BlackPick — Current State (2026-04-10, OAuth Launch + Test Foundation)
 
 ## Branch
-`feature/fighter-image-management`
+`feature/i18n-migration`
+
+## Latest Commits (today)
+- `8bdadae` test: Phase 1 — Silicon Valley grade test foundation
+- `e8b0897` fix(auth): stop double-prefixing locale on OAuth callback redirect
+- `dc96f5b` feat: BC integration, OAuth PKCE fix, admin lockdown, i18n expansion
+
+## Production
+- **URL**: https://blackpick.io
+- **Latest deploy**: `black-pick-huwc1wulm-uxerseans-projects.vercel.app` (today)
+- **Health**: 10/10 smoke checks pass
 
 ---
 
-## Completed (Session 2)
+## Completed (this session)
 
-### Security — ALL DONE
-- ~~#1 API키 로테이션~~ → .env가 Git에 커밋된 적 없어 불필요
-- ~~#2 fighter-avatar API 인증~~ → getUser() 추가 완료
-- ~~#3 Path traversal 차단~~ → UUID 검증 완료
-- ~~#4 Auth callback open redirect~~ → 내부 경로만 허용
-- ~~#5 generate rate limiting~~ → 5/hr
-- ~~#6 Gemini API키 process.env~~ → 완료
-- ~~#7 댓글/예측 rate limiting~~ → 20-30/min
+### Auth — Google OAuth live on prod
+- ~~PKCE bypass~~ → SocialAuthButtons routes through `/api/auth/callback`
+- ~~Locale double-prefix `/en/en`~~ → raw path through callback, middleware handles locale
+- ~~Callback error swallowing~~ → exchange errors redirect to `/login?error=oauth_exchange_failed`
+- ~~Host-header trust in production~~ → `NEXT_PUBLIC_SITE_URL` canonical origin enforced
+- ~~OAuth credentials wiring~~ → DEV/PROD isolated client_id/secret in respective Supabase projects
+- ~~Ring-name INSERT failure on PROD~~ → `public.users.email` column dropped (backed up to `/tmp/prod-users-email-backup.json`)
 
-### Legal — DONE
-- ~~#8 이용약관~~ → /terms (ko/en)
-- ~~#9 개인정보처리방침~~ → /privacy (ko/en)
+### Codex WIP shipped
+- ~~30+ uncommitted files (1361/1024 LoC)~~ → analyzed, deemed ship-ready, single bundled commit + deployed
+- BC official data integration (bc-official, bc-ticket, fight-alignment) live
+- Discussion threading utility shared between Fighter and Fight comments
+- Admin lockdown via `admin_users` table (env-based admin email check removed)
+- Dev seed route overhaul
+- Loading UI primitives (LoadingButtonContent, PendingSubmitButton)
+- 7-locale i18n expansion (+36 lines per file)
 
-### Infra/Ops — DONE
-- ~~#10 에러 페이지~~ → error.tsx, not-found.tsx, global-error.tsx
-- ~~#11 SEO~~ → robots.ts, sitemap.ts, OG/Twitter meta
-- ~~#12 CORS~~ → middleware.ts (API routes only)
-- ~~#13 env validation~~ → instrumentation.ts + .env.example
-- ~~#14 Sentry~~ → config files ready (.bak, 패키지 설치 필요)
-- ~~#15 백업/롤백~~ → docs/backup-rollback.md
+### Supabase config
+- ~~PROD `site_url` was localhost~~ → `https://blackpick.io`
+- ~~PROD `uri_allow_list` empty~~ → `https://blackpick.io/**`
+- DEV/PROD Google provider both ON with isolated credentials, cross-checked
+- Migration `202604090003_public_profile_privacy.sql` applied to PROD
 
-### Performance HIGH — DONE
-- ~~#16 ISR~~ → home/events/fighters revalidate 60-300초
-- ~~#17 .limit()~~ → fighters, admin에 limit 추가
-- ~~#18 SELECT *~~ → admin fighters 필요 컬럼만 (events는 타입 제약으로 유지)
-- ~~#19 loading.tsx~~ → events/[id]/ 추가
-- ~~#20 FighterAvatar~~ → Next.js Image 전환
-- ~~#21 fs.readdirSync~~ → pixel-files.ts 서버 전용 캐시
-- ~~#22 Cache-Control~~ → ranking s-maxage=300, events/stats s-maxage=60
+### Phase 1 test foundation
+- ~~OAuth helper extracted~~ → `src/lib/auth/oauth-redirect.ts` + 28 unit cases
+- ~~SocialAuthButtons contract tests~~ → 8 component cases (mocked Supabase client)
+- ~~Schema drift script~~ → `npm run check:schema-drift` (DEV ↔ PROD info_schema diff)
+- ~~i18n key integrity~~ → `npm run check:i18n` (caught 4 real missing keys on first run, all fixed)
+- ~~Prod smoke test~~ → `npm run smoke:prod` (10 live checks)
+- ~~vitest config split (unit + component projects)~~
+- ~~`npm run deploy` gate~~ → predeploy → vercel --prod → smoke
+- ~~GitHub Actions workflow~~ → `.github/workflows/test.yml`
+- ~~Regression simulation~~ → tests verified to fail when bugs reintroduced
 
-### Performance MEDIUM — PARTIALLY DONE
-- ~~#24 dynamic import~~ → ScoreTrendChart, FighterImageManager
-- ~~#25 loading.tsx~~ → results, dashboard, terminal 추가
-- #23 axios 제거 → scripts에만 사용, 스킵
-- #26 불필요 "use client" 정리 → 미착수
+### i18n keys backfilled
+- ~~`ja.json` missing `event.officialPrediction`~~
+- ~~`pt-BR.json` missing `event.officialPrediction`, `prediction.correct`, `prediction.wrong`~~
 
 ---
 
 ## Remaining Tasks
 
-### Feature Gaps (다음 세션)
+### Launch blockers
+| # | Task | Status |
+|---|------|--------|
+| 1 | Facebook OAuth setup (Meta console + Supabase wire-in) | **Pending** — Google pattern verified, same template applies |
+| 2 | Manual e2e test of Google OAuth from multiple locales | **Partial** — Sean confirmed login works, ring-name save works |
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Badge System UI | **Missing** | DB에 기록 있음 (oracle/sniper/sharp_call). 9개 뱃지 시각 표시 미구현 |
-| @Mention Autocomplete | **Missing** | FightComments에는 구현됨, FighterComments에만 없음. MentionInput 공유 컴포넌트 추출 필요 |
-| Perfect Card | Done (logic) | **UI 뱃지 표시 미구현** |
+### Launch nice-to-have
+| # | Task | Notes |
+|---|------|-------|
+| 3 | Supabase migration history sync | PROD schema is correct but migration tracking table doesn't have 202604090001/2/3 records. Cosmetic — `IF NOT EXISTS` guards make re-running safe. |
+| 4 | OG image | `public/og/default.png` (1200x630) still missing per session 2 notes |
+| 5 | Sentry production DSN | Package installed, config ready, DSN env var needs value |
 
-### Accessibility (LOW)
+### Phase 2 test infrastructure (next session)
+- BlackPick_Test new Supabase project (~5 min create)
+- Real DB integration test for ring-name route (covers Bug 3 class directly)
+- Test data factories with `@faker-js/faker`
+- `supabase gen types` automation + diff against committed `database.ts`
+- Direct middleware/proxy.ts unit tests
+- lefthook pre-commit hook
+- Coverage measurement (no thresholds yet)
 
-| # | Task |
-|---|------|
-| 27 | FightCardPicker nested-interactive 구조 리팩토링 |
-| 28 | 선수 디테일 페이지 color contrast 3건 수정 |
-| 29 | ~~console.error 민감 정보~~ → error.tsx에서 prod 제외 처리 완료 |
-| 30 | Tailwind 번들 크기 검증 |
-| 31 | 모바일/브라우저 호환성 테스트 |
-| 32 | RLS 의존도 줄이기 |
+### Phase 3 test infrastructure (later)
+- Route handler unit tests for auth/admin critical paths
+- Playwright OAuth stub flow (no real Google in CI)
+- Coverage thresholds for `src/lib/auth/**`
+- BC scraper isolation test (mock fetch)
 
-### Pending Infra
-- Sentry: `npm install @sentry/nextjs` + DSN 설정 후 .bak 파일 rename
-- OG 이미지: `public/og/default.png` (1200x630) 디자인 필요
-- CORS: prod 도메인 확정 후 `CORS_ALLOW_ORIGIN` 설정
-- Supabase dev/prod 프로젝트 분리 (Dashboard 설정)
+### Lower-priority backlog
+- ~~i18n drift~~ done
+- Sentry DSN activation
+- OG default image design
+- 31 fighter pixel art outpaint touchups (per session 2)
+- Mobile/browser compatibility manual test
+- RLS dependency reduction (architecture work, post-launch)
 
 ---
 
 ## Recommended Next Steps
 
 ```
-1. 기능 갭 (badge UI, @mention autocomplete, Perfect Card 뱃지)
-2. 접근성 (#27-28, #30-32)
-3. Sentry 패키지 설치 + 활성화
-4. OG 이미지 디자인
-5. 이미지 보정 (31개 outpaint)
+1. Facebook OAuth (Meta console + Supabase wire-in via existing automation)
+2. Manual e2e: Google login from /ko, /ja, /es, /zh-CN, /mn pages
+3. Phase 2 test infra (BlackPick_Test + ring-name integration test)
+4. Sentry DSN + OG image
+5. Migration history sync (cosmetic cleanup)
 ```
+
+---
+
+## Schema (PROD)
+
+| Table | Columns | Notes |
+|---|---|---|
+| `users` | 11 (id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score, created_at, p4p_score, preferred_language) | email column dropped today |
+| `admin_users` | 2 (user_id, created_at) | seeded with Sean (ylee178@gmail.com) |
+| `events` | 9 | sync with DEV |
+| `fights` | 12 | sync with DEV (incl. result_processed_at) |
+| `predictions` | 12 | sync with DEV |
+| `fighters` | 10 | sync with DEV |
+| `fighter_comments` | 6 | sync with DEV |
+
+Drift: none (verified by `npm run check:schema-drift`)
+
+## OAuth Clients
+
+| Environment | Google Client ID prefix | Supabase project | Redirect URI |
+|---|---|---|---|
+| DEV | `312732011458-6dd753flhh...` | `lqyzivuxznybmlnlexmq` | `https://lqyzivuxznybmlnlexmq.supabase.co/auth/v1/callback` |
+| PROD | `312732011458-ju6m9oe4s2b...` | `nxjwthpydynoecrvggih` | `https://nxjwthpydynoecrvggih.supabase.co/auth/v1/callback` |
+
+OAuth Consent Screen: published, `email`/`profile`/`openid` scopes, blackpick.io domain verified via Google Search Console.
+
+## Test Surface (Phase 1)
+
+| Layer | Files | Cases | Runtime |
+|---|---|---|---|
+| Unit (vitest) | `src/lib/**/*.test.ts` | 28 + 9 existing | <300ms |
+| Component (vitest jsdom) | `src/components/**/*.test.tsx` | 8 | ~600ms |
+| Schema drift script | `scripts/check-schema-drift.mjs` | 7 tables | ~2s |
+| i18n integrity script | `scripts/check-i18n-keys.mjs` | 7 locales | <1s |
+| Prod smoke script | `scripts/smoke-prod.mjs` | 10 checks | ~5s |
+
+`npm run test:fast` = 5 files / 45 cases / 1.22s
+`npm run predeploy` = i18n + schema-drift + tests + build
+`npm run deploy` = predeploy + `vercel --prod` + smoke
 
 ---
 
@@ -94,6 +156,6 @@ DevPanel (dev only, 우하단 톱니):
 - **Empty** — 시드 데이터 전부 삭제
 
 ## Fighter Images
-- 84개 픽셀아트 in `public/fighters/pixel/`
+- 84개 픽셀아트 in `public/fighters/pixel/` (오늘 6개 추가됨)
 - 배경: #2A2A2A
-- 머리 잘린 이미지 31개 — 리스트: Wiki_Sean/BlackPick/2026-04-08-session.md
+- 머리 잘린 이미지 31개 — 리스트는 `Wiki_Sean/BlackPick/2026-04-08-session.md`
