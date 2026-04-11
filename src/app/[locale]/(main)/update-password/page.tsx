@@ -57,8 +57,8 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md">
-      <section className={retroPanelClassName({ className: "p-5 sm:p-6" })}>
+    <div className="flex w-full flex-1 items-center justify-center">
+      <section className={retroPanelClassName({ className: "w-full max-w-md p-5 sm:p-6" })}>
         <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("auth.resetPassword")}</h1>
 
         {success ? (

@@ -146,7 +146,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span className="text-xl">{flag}</span>
               {weightClass && (
-                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-medium text-[var(--bp-muted)]">
+                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
                   {weightClass}
                 </span>
               )}
