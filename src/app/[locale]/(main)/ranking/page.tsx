@@ -344,7 +344,10 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                 <Link
                   key={wc}
                   href={`/ranking?tab=weight&series=${encodeURIComponent(wc)}`}
-                  className={retroSegmentClassName({ active: selectedWeight === wc })}
+                  className={retroSegmentClassName({
+                    active: selectedWeight === wc,
+                    className: "uppercase tracking-[0.04em]",
+                  })}
                 >
                   {translateWeightClass(wc, locale)}
                 </Link>

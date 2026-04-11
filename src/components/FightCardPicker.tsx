@@ -260,7 +260,9 @@ export default function FightCardPicker({
               return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
             })()}</p>
             {divRank ? (
-              <p className="mt-0.5 text-xs font-semibold text-[var(--bp-accent)]">#{divRank} {divWeight}</p>
+              <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
+                #{divRank} {divWeight}
+              </p>
             ) : null}
           </div>
 

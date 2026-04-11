@@ -148,7 +148,7 @@ function FighterSideStatic({
           })()}
         </p>
         {bcDivision?.rank ? (
-          <p className="mt-0.5 text-xs font-semibold text-[var(--bp-accent)]">
+          <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
             #{bcDivision.rank} {translateWeightClass(bcDivision.weightClass, locale)}
           </p>
         ) : null}

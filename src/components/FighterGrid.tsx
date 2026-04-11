@@ -190,7 +190,9 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
                 {f.draws > 0 && <span className="text-[var(--bp-muted)]">{f.draws}D</span>}
               </p>
               {f.weightClass && (
-                <p className="mt-0.5 truncate text-[11px] text-[var(--bp-muted)]">{f.weightClass}</p>
+                <p className="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--bp-muted)]">
+                  {f.weightClass}
+                </p>
               )}
             </Link>
           );
