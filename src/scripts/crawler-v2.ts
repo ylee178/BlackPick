@@ -1,5 +1,6 @@
 import axios, {AxiosInstance} from 'axios';
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 
 type EventCategory = 'BC' | 'N' | 'R' | 'C';
 type WinnerSide = 'A' | 'B' | null;
@@ -93,7 +94,7 @@ function extractFighterIdFromHref(href: string | undefined): string | null {
   return match?.[1] ?? null;
 }
 
-function extractNationalityFromNode(node: cheerio.Cheerio<any>): string | null {
+function extractNationalityFromNode(node: cheerio.Cheerio<AnyNode>): string | null {
   const flag = node.find('span.fi').first();
   if (!flag.length) return null;
 
@@ -172,7 +173,7 @@ function detectWinnerFromFight($: cheerio.CheerioAPI, fightEl: cheerio.Element):
   return null;
 }
 
-function parseNameBlocks(sideNode: cheerio.Cheerio<any>): {
+function parseNameBlocks(sideNode: cheerio.Cheerio<AnyNode>): {
   name: string | null;
   ringName: string | null;
   record: string | null;
@@ -222,7 +223,7 @@ function parseNameBlocks(sideNode: cheerio.Cheerio<any>): {
 function splitFightSides(
   $: cheerio.CheerioAPI,
   fightEl: cheerio.Element
-): {left: cheerio.Cheerio<any>; right: cheerio.Cheerio<any>} | null {
+): {left: cheerio.Cheerio<AnyNode>; right: cheerio.Cheerio<AnyNode>} | null {
   const fight = $(fightEl);
 
   const alignedDivs = fight

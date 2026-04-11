@@ -96,6 +96,12 @@ export default async function FightDetailPage({
   const bc = bcFightData[fightIndex] ?? null;
 
   const eventStatus = event.status as "upcoming" | "live" | "completed";
+  // Date.now() is intentionally impure here — this server component runs once
+  // per request and we need the request-time clock to compare against the
+  // fight start time. The React Compiler "impure during render" check is
+  // suppressed for this single line because there is no pure substitute for
+  // "current time at request" in a server-rendered timestamp comparison.
+  // eslint-disable-next-line react-hooks/purity
   const nowTimestamp = Date.now();
   const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
   const localizedEventName = getLocalizedEventName(event, locale, event.name);

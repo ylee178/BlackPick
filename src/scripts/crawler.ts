@@ -64,9 +64,9 @@ async function fetchPage(url: string): Promise<string> {
         timeout: 15000,
       });
       return data;
-    } catch (err: any) {
+    } catch (err) {
       console.warn(
-        `  [retry ${attempt}/${MAX_RETRIES}] ${url}: ${err.message}`
+        `  [retry ${attempt}/${MAX_RETRIES}] ${url}: ${(err instanceof Error ? err.message : String(err))}`
       );
       if (attempt === MAX_RETRIES) throw err;
       await sleep(2000 * attempt);
@@ -268,8 +268,8 @@ async function crawlAllEvents(): Promise<CrawledEvent[]> {
             category: event.category,
             fights,
           });
-        } catch (err: any) {
-          console.error(`    ❌ Failed to crawl event ${event.sourceId}: ${err.message}`);
+        } catch (err) {
+          console.error(`    ❌ Failed to crawl event ${event.sourceId}: ${(err instanceof Error ? err.message : String(err))}`);
           allEvents.push({
             sourceId: event.sourceId,
             name: event.name ?? "",
@@ -279,8 +279,8 @@ async function crawlAllEvents(): Promise<CrawledEvent[]> {
           });
         }
       }
-    } catch (err: any) {
-      console.error(`  ❌ Failed to crawl category ${category}: ${err.message}`);
+    } catch (err) {
+      console.error(`  ❌ Failed to crawl category ${category}: ${(err instanceof Error ? err.message : String(err))}`);
     }
   }
 

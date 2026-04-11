@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Geist } from "next/font/google";
+import Link from "next/link";
 import { Home } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -44,13 +45,13 @@ export default function GlobalNotFound() {
           </p>
 
           <div className="mt-8">
-            <a
+            <Link
               href="/"
               className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] bg-[var(--bp-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:opacity-90"
             >
               <Home className="h-4 w-4" strokeWidth={2} />
               Back to the ring
-            </a>
+            </Link>
           </div>
         </div>
       </body>

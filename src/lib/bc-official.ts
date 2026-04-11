@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 
 export type BcEventCategory = "BC" | "N" | "R" | "C";
 
@@ -61,7 +62,7 @@ function extractFighterIdFromHref(href: string | undefined): string | null {
   return href.match(/\/fighter\/(\d+)/)?.[1] ?? null;
 }
 
-function extractNationalityFromNode(node: cheerio.Cheerio<any>): string | null {
+function extractNationalityFromNode(node: cheerio.Cheerio<AnyNode>): string | null {
   const flag = node.find("span.fi").first();
   if (!flag.length) return null;
   const classAttr = flag.attr("class") || "";
