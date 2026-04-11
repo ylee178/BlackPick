@@ -38,9 +38,17 @@ const SERVER_SNAPSHOT: TimezoneSnapshot = { tz: null, detected: null };
 // on every call without a real change.
 let cachedSnapshot: TimezoneSnapshot | null = null;
 
+// In-memory override that takes precedence over localStorage. We need
+// this so the user's selection survives within the current session even
+// when `localStorage.setItem` is a no-op (private browsing mode, quota
+// errors, security restrictions). The pre-refactor implementation kept
+// the choice in component state, which gave the same effective
+// guarantee; the external store needs an explicit fallback.
+let sessionOverride: string | null = null;
+
 function computeClientSnapshot(): TimezoneSnapshot {
   const detected = detectUserTimezone();
-  const tz = loadStoredTimezone() ?? detected;
+  const tz = sessionOverride ?? loadStoredTimezone() ?? detected;
   if (
     cachedSnapshot &&
     cachedSnapshot.tz === tz &&
@@ -87,6 +95,10 @@ export function useTimezone() {
   );
 
   const setTz = useCallback((next: string) => {
+    // Set the in-memory override first so subsequent reads see the new
+    // value even if localStorage is unavailable. The persistence is
+    // best-effort.
+    sessionOverride = next;
     saveStoredTimezone(next);
     cachedSnapshot = null;
     if (typeof window !== "undefined") {
