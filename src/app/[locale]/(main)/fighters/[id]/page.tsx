@@ -1,5 +1,6 @@
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
+import { Link } from "@/i18n/navigation";
 import { getLocalizedFighterName, getLocalizedFighterSubLabel } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
@@ -201,8 +202,8 @@ export default async function FighterDetailPage({ params }: PageProps) {
                       ? "bg-[#4ade80]/10 text-[#4ade80]"
                       : "bg-[#f87171]/10 text-[#f87171]";
 
-                return (
-                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                const rowInner = (
+                  <>
                     {/* Result badge */}
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${resultColor}`}>
                       {resultLabel}
@@ -238,6 +239,23 @@ export default async function FighterDetailPage({ params }: PageProps) {
                       <p className="truncate text-xs text-[var(--bp-muted)]">{f.eventName}</p>
                       <p className="text-[11px] text-[var(--bp-muted)] opacity-50">{f.eventDate}</p>
                     </div>
+                  </>
+                );
+
+                // Link the whole row to the opponent's detail page when we
+                // have an opponent id. Fallback to a plain div if the
+                // opponent record is missing (e.g. deleted fighter).
+                return f.opponentId ? (
+                  <Link
+                    key={f.id}
+                    href={`/fighters/${f.opponentId}`}
+                    className="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-[var(--bp-card-inset)]"
+                  >
+                    {rowInner}
+                  </Link>
+                ) : (
+                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                    {rowInner}
                   </div>
                 );
               })}
