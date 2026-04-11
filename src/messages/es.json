@@ -158,7 +158,10 @@
     "myRecordGateTitle": "Inicia sesión para ver tu historial.",
     "myRecordGateDescription": "Revisa todas tus predicciones, resultados por evento y aciertos desde un solo lugar.",
     "eventRecordGateTitle": "Inicia sesión para ver este reporte del evento.",
-    "eventRecordGateDescription": "Mira cómo puntuaste en esta cartelera, pelea por pelea."
+    "eventRecordGateDescription": "Mira cómo puntuaste en esta cartelera, pelea por pelea.",
+    "pickGateTitle": "Regístrate para asegurar tu pronóstico.",
+    "pickGateDescription": "Son 10 segundos. Guardaremos tu predicción en cuanto estés dentro.",
+    "pickGateEmailSignup": "Registrarse con correo"
   },
   "account": {
     "editProfile": "Editar perfil",
@@ -355,6 +358,7 @@
     "joinMembership": "Únete a la membresía para ver repeticiones completas de las peleas",
     "platform": "Plataforma",
     "fighters": "Peleadores",
-    "latestResults": "Últimos resultados"
+    "latestResults": "Últimos resultados",
+    "close": "Cerrar"
   }
 }

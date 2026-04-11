@@ -158,7 +158,10 @@
     "myRecordGateTitle": "Entre para ver seu histórico.",
     "myRecordGateDescription": "Revise todos os seus palpites, placares por evento e resultados em uma única tela.",
     "eventRecordGateTitle": "Entre para ver este relatório do evento.",
-    "eventRecordGateDescription": "Veja como você pontuou neste card, luta por luta."
+    "eventRecordGateDescription": "Veja como você pontuou neste card, luta por luta.",
+    "pickGateTitle": "Cadastre-se para travar seu palpite.",
+    "pickGateDescription": "Leva 10 segundos. Salvamos sua previsão assim que você entrar.",
+    "pickGateEmailSignup": "Cadastrar com e-mail"
   },
   "account": {
     "editProfile": "Editar Perfil",
@@ -355,6 +358,7 @@
     "joinMembership": "Assine para replays completos",
     "platform": "Plataforma",
     "fighters": "Lutadores",
-    "latestResults": "Últimos resultados"
+    "latestResults": "Últimos resultados",
+    "close": "Fechar"
   }
 }

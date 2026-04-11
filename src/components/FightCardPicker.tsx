@@ -15,6 +15,12 @@ import { cn } from "@/lib/utils";
 import { translateWeightClass } from "@/lib/weight-class";
 import { Check, Pencil } from "lucide-react";
 import { RetroLabel } from "@/components/ui/retro";
+import SignupGateModal from "@/components/SignupGateModal";
+import {
+  loadPendingPick,
+  savePendingPick,
+  clearPendingPick,
+} from "@/lib/pending-pick";
 
 type FighterData = {
   id: string;
@@ -50,6 +56,12 @@ type Props = {
     method?: string | null;
     round?: number | null;
   } | null;
+  /**
+   * Whether the current viewer has a Supabase session. Anonymous viewers are
+   * routed through the signup gate on the first fighter click instead of
+   * touching local pick state.
+   */
+  isAuthenticated: boolean;
 };
 
 const methods = ["KO/TKO", "Submission", "Decision"] as const;
@@ -69,6 +81,7 @@ export default function FightCardPicker({
   bcFighterADivision,
   bcFighterBDivision,
   initialPrediction,
+  isAuthenticated,
 }: Props) {
   const router = useRouter();
   const { t, locale } = useI18n();
@@ -112,6 +125,10 @@ export default function FightCardPicker({
   const canSave = !!winnerId && !!method && !!round;
   const { toast } = useToast();
 
+  // Signup-gate modal visibility. Only opens when an anonymous user clicks
+  // a fighter — the first and simplest wall we put up before touching state.
+  const [signupGateOpen, setSignupGateOpen] = useState(false);
+
   // Re-edit entries of an existing prediction are tracked by the Edit
   // button click handler below. This effect only handles the fresh-flow
   // case (user arrives at a fight card without a saved prediction).
@@ -123,6 +140,51 @@ export default function FightCardPicker({
     // initial value so this effect fires exactly once per fight card mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Restore a pending pick after the user returns from OAuth / signup.
+  // When an anonymous user clicks a fighter, selectWinner stashes the intent
+  // to localStorage and opens the signup gate. The OAuth redirect is a
+  // full-page navigation, so after auth the page re-mounts; we check for a
+  // matching stash and reapply the selection exactly once.
+  //
+  // Guards:
+  //  - Skip when there's already a saved prediction (initialPrediction)
+  //    or any selection on screen — a stale stash should never override a
+  //    real committed pick from the DB.
+  //  - Depend on [isAuthenticated, fightId] so the effect re-runs if auth
+  //    state resolves late (instead of silently losing the pending pick).
+  //  - loadPendingPick() returns null after consumption, so subsequent
+  //    runs with the same deps are no-ops — idempotent by design.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    // Don't ambush an existing prediction with a stale stash. If the user
+    // has anything committed or drafted, trust that and drop the stash.
+    if (initialPrediction || winnerId) {
+      clearPendingPick();
+      return;
+    }
+    const pending = loadPendingPick();
+    if (!pending || pending.fightId !== fightId) return;
+    clearPendingPick();
+    setWinnerId(pending.fighterId);
+    setDraftByFighter((prev) => ({
+      ...prev,
+      [pending.fighterId]: prev[pending.fighterId] ?? { method: "", round: "" },
+    }));
+    setIsEditing(true);
+    logEvent(
+      "prediction_winner_selected",
+      {
+        selected_fighter_id: pending.fighterId,
+        fighter_position: pending.side,
+        restored_after_signup: true,
+      },
+      { fightId },
+    );
+    // initialPrediction/winnerId intentionally excluded from deps — they
+    // are guards read at effect-run time, not triggers for re-run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, fightId]);
 
   function handleCancel() {
     if (savedSnapshot) {
@@ -140,6 +202,20 @@ export default function FightCardPicker({
   // matching analytics event only on explicit user interaction (not on
   // reset/cancel). The spec treats these as the funnel steps.
   function selectWinner(fighterId: string, side: "a" | "b") {
+    // Signup gate: anonymous users must sign up before we touch any state.
+    // Stash the intent so we can restore it after they return from OAuth,
+    // then open the modal and bail out. No winner change, no draft memory
+    // mutation, nothing — just park and prompt.
+    if (!isAuthenticated) {
+      savePendingPick({ fightId, fighterId, side });
+      logEvent(
+        "signup_gate_shown",
+        { fighter_position: side },
+        { fightId },
+      );
+      setSignupGateOpen(true);
+      return;
+    }
     // Clicking the already-picked fighter while idle re-opens the editor;
     // while editing it's a no-op (the picker is already visible).
     if (fighterId === winnerId) {
@@ -505,12 +581,24 @@ export default function FightCardPicker({
   }
 
   return (
-    <div role="radiogroup" aria-label={t("prediction.selectWinner")} className="flex flex-col items-stretch gap-2 sm:flex-row sm:gap-3">
-      <FighterCard fighter={fighterA} fighterId={fighterAId} side="left" />
-      <div className="flex items-center justify-center px-1 py-1 sm:py-0">
-        <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
+    <>
+      <div role="radiogroup" aria-label={t("prediction.selectWinner")} className="flex flex-col items-stretch gap-2 sm:flex-row sm:gap-3">
+        <FighterCard fighter={fighterA} fighterId={fighterAId} side="left" />
+        <div className="flex items-center justify-center px-1 py-1 sm:py-0">
+          <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
+        </div>
+        <FighterCard fighter={fighterB} fighterId={fighterBId} side="right" />
       </div>
-      <FighterCard fighter={fighterB} fighterId={fighterBId} side="right" />
-    </div>
+      <SignupGateModal
+        open={signupGateOpen}
+        onClose={() => {
+          // User dismissed the gate without signing up — drop the stash
+          // so a future mount (same tab, within TTL) doesn't silently
+          // ambush them with the old selection.
+          clearPendingPick();
+          setSignupGateOpen(false);
+        }}
+      />
+    </>
   );
 }

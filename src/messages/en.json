@@ -158,7 +158,10 @@
     "myRecordGateTitle": "Log in to open your record.",
     "myRecordGateDescription": "Review every pick, event scorecard, and prediction result from one home base.",
     "eventRecordGateTitle": "Log in to open this event report.",
-    "eventRecordGateDescription": "See how you scored on this card, fight by fight."
+    "eventRecordGateDescription": "See how you scored on this card, fight by fight.",
+    "pickGateTitle": "Sign up to lock in your pick.",
+    "pickGateDescription": "Takes 10 seconds. We'll save your prediction the moment you're in.",
+    "pickGateEmailSignup": "Sign up with email"
   },
   "account": {
     "editProfile": "Edit Profile",
@@ -355,6 +358,7 @@
     "joinMembership": "Join membership for full fight replays",
     "platform": "Platform",
     "fighters": "Fighters",
-    "latestResults": "Latest results"
+    "latestResults": "Latest results",
+    "close": "Close"
   }
 }
