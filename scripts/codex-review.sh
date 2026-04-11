@@ -92,10 +92,32 @@ if [ "$MODE" = "review" ]; then
     if [ ${#REVIEW_ARGS[@]} -eq 0 ]; then
         REVIEW_ARGS=(--base develop)
     fi
-    exec "$CODEX_BIN" review \
+
+    # Capture stdout via tee + a temp file so we can:
+    #   1) stream output live to the caller (so they see progress), and
+    #   2) detect the silent-pass failure mode where `codex review`
+    #      exits 0 but emits nothing (network glitch / model timeout).
+    # Without this, the wrapper would `exec` straight through and a PR
+    # could be treated as having passed the review gate while no review
+    # actually ran.
+    REVIEW_OUTPUT=$(mktemp)
+    trap 'rm -f "$REVIEW_OUTPUT"' EXIT
+
+    set -o pipefail
+    if ! "$CODEX_BIN" review \
         -c model="$MODEL" \
         -c model_reasoning_effort="$EFFORT" \
-        "${REVIEW_ARGS[@]}"
+        "${REVIEW_ARGS[@]}" 2>&1 | tee "$REVIEW_OUTPUT"; then
+        echo "ERROR: codex review failed (model=$MODEL, effort=$EFFORT)." >&2
+        exit 4
+    fi
+
+    if [ ! -s "$REVIEW_OUTPUT" ]; then
+        echo "ERROR: codex review returned empty output (model=$MODEL, effort=$EFFORT)." >&2
+        echo "Do not treat this PR as having passed the review gate." >&2
+        exit 5
+    fi
+    exit 0
 fi
 
 # Free-form prompt mode: read from stdin into a temp file
