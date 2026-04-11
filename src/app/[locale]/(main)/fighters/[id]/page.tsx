@@ -224,7 +224,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
                     {/* Opponent info */}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-[var(--bp-ink)]">
+                      <p className="truncate text-sm font-medium text-[var(--bp-ink)] transition-colors group-hover:text-[var(--bp-accent)]">
                         {f.opponentName} {f.opponentFlag}
                       </p>
                       {f.method && (
@@ -244,12 +244,16 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
                 // Link the whole row to the opponent's detail page when we
                 // have an opponent id. Fallback to a plain div if the
-                // opponent record is missing (e.g. deleted fighter).
+                // opponent record is missing (e.g. deleted fighter). Uses
+                // the `group` pattern so only the opponent name turns
+                // accent-gold on hover — we intentionally avoid any
+                // background / border change on the row because that
+                // would fight the parent retro panel's outline.
                 return f.opponentId ? (
                   <Link
                     key={f.id}
                     href={`/fighters/${f.opponentId}`}
-                    className="flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-[var(--bp-card-inset)]"
+                    className="group flex cursor-pointer items-center gap-3 px-4 py-3"
                   >
                     {rowInner}
                   </Link>
