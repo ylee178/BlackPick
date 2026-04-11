@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { retroPanelClassName, retroButtonClassName } from "@/components/ui/retro";
 import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 
@@ -35,13 +36,13 @@ export default function Error({
             <RotateCcw className="h-4 w-4" />
             Try again
           </button>
-          <a
+          <Link
             href="/"
             className={retroButtonClassName({ variant: "ghost", size: "sm" })}
           >
             <Home className="h-4 w-4" />
             Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

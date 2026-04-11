@@ -98,7 +98,11 @@ async function loadEventFights(eventId: string): Promise<FightRow[]> {
     .order("start_time", { ascending: true });
 
   if (error) throw error;
-  return ((data ?? []) as any[]).map((row) => ({
+  type RawFightRow = Record<string, unknown> & {
+    fighter_a: unknown;
+    fighter_b: unknown;
+  };
+  return ((data ?? []) as RawFightRow[]).map((row) => ({
     ...row,
     fighter_a: Array.isArray(row.fighter_a) ? row.fighter_a[0] : row.fighter_a,
     fighter_b: Array.isArray(row.fighter_b) ? row.fighter_b[0] : row.fighter_b,

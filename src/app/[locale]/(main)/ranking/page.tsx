@@ -70,7 +70,8 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const supabase = await createSupabaseServer();
 
   const validTabs = ["running", "p4p", "weight", "series", "event", "streak", "hof"] as const;
-  const tab = validTabs.includes(params.tab as any) ? (params.tab as string) : "running";
+  type RankingTab = (typeof validTabs)[number];
+  const tab = validTabs.includes(params.tab as RankingTab) ? (params.tab as string) : "running";
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
@@ -142,7 +143,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     const hofUserIds = (data ?? []).map((u: { id: string }) => u.id);
 
     // Get tier breakdown per user
-    let tierCounts = new Map<string, { oracle: number; sniper: number; sharp_call: number }>();
+    const tierCounts = new Map<string, { oracle: number; sniper: number; sharp_call: number }>();
     if (hofUserIds.length > 0) {
       const { data: entries } = await supabase
         .from("hall_of_fame_entries")
@@ -233,7 +234,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         .limit(PAGE_SIZE);
 
       const userIds = [...new Set((data ?? []).map((r: { user_id: string }) => r.user_id))];
-      let userMap = new Map<string, RankingUser>();
+      const userMap = new Map<string, RankingUser>();
       if (userIds.length > 0) {
         const { data: userData } = await supabase
           .from("users")
@@ -244,7 +245,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         }
       }
 
-      weightClassUsers = (data ?? []).map((r: any) => ({
+      type WeightClassRow = {
+        user_id: string;
+        weight_class: string;
+        wins: number;
+        losses: number;
+        score: number;
+      };
+      weightClassUsers = ((data ?? []) as WeightClassRow[]).map((r) => ({
         ...r,
         user: userMap.get(r.user_id),
       }));
