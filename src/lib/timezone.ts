@@ -4,7 +4,13 @@
  * one place so components can stay dumb.
  */
 
-const STORAGE_KEY = "bp_user_timezone";
+/**
+ * localStorage key for the user's chosen timezone. Exported so the
+ * `useTimezone` hook can filter cross-tab `storage` events to only
+ * react to writes that actually concern this preference.
+ */
+export const TIMEZONE_STORAGE_KEY = "bp_user_timezone";
+const STORAGE_KEY = TIMEZONE_STORAGE_KEY;
 
 /**
  * Curated market-specific fallback list, used when the runtime does not

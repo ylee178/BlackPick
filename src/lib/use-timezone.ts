@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import {
+  TIMEZONE_STORAGE_KEY,
   detectUserTimezone,
   loadStoredTimezone,
   saveStoredTimezone,
@@ -71,19 +72,32 @@ function getServerSnapshot(): TimezoneSnapshot {
 
 function subscribe(listener: () => void): () => void {
   if (typeof window === "undefined") return () => {};
-  const handler = () => {
-    // Invalidate so the next `getSnapshot` picks up whatever the writer
-    // just committed to localStorage.
+
+  const handleLocalChange = () => {
+    // Same-tab update from `setTz`. The session override has already
+    // been written by the caller; just invalidate the cache and notify.
     cachedSnapshot = null;
     listener();
   };
-  window.addEventListener(EVENT_NAME, handler);
+
+  const handleStorageChange = (event: StorageEvent) => {
+    // Cross-tab update: another tab persisted a timezone via
+    // localStorage. We must clear our session override so the new
+    // localStorage value wins — otherwise this tab would keep showing
+    // its own previous selection forever after one local `setTz` call.
+    if (event.key !== null && event.key !== TIMEZONE_STORAGE_KEY) return;
+    sessionOverride = null;
+    cachedSnapshot = null;
+    listener();
+  };
+
+  window.addEventListener(EVENT_NAME, handleLocalChange);
   // `storage` fires only on OTHER tabs, which is exactly what we need
   // for cross-tab sync. Same-tab updates are delivered via EVENT_NAME.
-  window.addEventListener("storage", handler);
+  window.addEventListener("storage", handleStorageChange);
   return () => {
-    window.removeEventListener(EVENT_NAME, handler);
-    window.removeEventListener("storage", handler);
+    window.removeEventListener(EVENT_NAME, handleLocalChange);
+    window.removeEventListener("storage", handleStorageChange);
   };
 }
 
