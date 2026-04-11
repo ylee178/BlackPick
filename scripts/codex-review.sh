@@ -49,7 +49,11 @@ if [ "${1:-}" = "review" ]; then
     shift
 fi
 
-# Profile selection: first remaining positional arg > env var > default
+# Profile selection: first remaining positional arg > env var > default.
+# A bare token that doesn't look like a flag must be a profile alias —
+# anything else is a typo and we exit hard so the wrapper never silently
+# forwards garbage to `codex review` as a positional [PROMPT] (P3 from
+# 2026-04-12 codex review).
 ARG_PROFILE="${1:-}"
 case "$ARG_PROFILE" in
     lite)  PROFILE="blackpick_lite" ; shift ;;
@@ -57,7 +61,13 @@ case "$ARG_PROFILE" in
     "")    PROFILE="${CODEX_PROFILE:-blackpick}" ;;
     blackpick|blackpick_lite|blackpick_max)
            PROFILE="$ARG_PROFILE" ; shift ;;
-    *)     PROFILE="${CODEX_PROFILE:-blackpick}" ;;
+    -*)    PROFILE="${CODEX_PROFILE:-blackpick}" ;;
+    *)
+        echo "ERROR: unknown profile alias '$ARG_PROFILE'." >&2
+        echo "Valid: lite, max, blackpick, blackpick_lite, blackpick_max." >&2
+        echo "If you meant to pass a flag, prefix it with '--' (e.g. --base develop)." >&2
+        exit 7
+        ;;
 esac
 
 # Inline the profile values so we can override on subcommands that don't
@@ -86,37 +96,59 @@ if [ "$MODE" = "review" ]; then
     # `codex review` rejects positional [PROMPT] when --base/--commit is
     # used (CLI clap rule), and it does not accept --profile. Override
     # the model + reasoning effort via `-c` instead. Forward any extra
-    # args the caller passed (--base, --commit, --uncommitted, --title);
-    # default to `--base develop` if nothing was passed.
+    # args the caller passed (--base, --commit, --uncommitted, --title).
     REVIEW_ARGS=("$@")
-    if [ ${#REVIEW_ARGS[@]} -eq 0 ]; then
-        REVIEW_ARGS=(--base develop)
+
+    # Inject `--base develop` as the comparison target unless the caller
+    # already specified one (--base, --commit, or --uncommitted). The
+    # earlier version only injected when the arg list was completely
+    # empty, which silently broke the documented contract for callers
+    # like `... review --title "..."` (P2 from 2026-04-12 codex review).
+    HAS_TARGET=false
+    for arg in "${REVIEW_ARGS[@]:-}"; do
+        case "$arg" in
+            --base|--base=*|--commit|--commit=*|--uncommitted)
+                HAS_TARGET=true
+                break
+                ;;
+        esac
+    done
+    if [ "$HAS_TARGET" = false ]; then
+        REVIEW_ARGS=(--base develop "${REVIEW_ARGS[@]:-}")
     fi
 
-    # Capture stdout via tee + a temp file so we can:
-    #   1) stream output live to the caller (so they see progress), and
-    #   2) detect the silent-pass failure mode where `codex review`
-    #      exits 0 but emits nothing (network glitch / model timeout).
-    # Without this, the wrapper would `exec` straight through and a PR
-    # could be treated as having passed the review gate while no review
-    # actually ran.
-    REVIEW_OUTPUT=$(mktemp)
-    trap 'rm -f "$REVIEW_OUTPUT"' EXIT
+    # Capture only stdout to a temp file so codex's startup PATH
+    # warnings (or any other stderr-only chatter) cannot fool the
+    # wrapper into thinking a real review ran. Stderr still passes
+    # through to the caller's terminal so progress diagnostics are
+    # visible. The earlier `2>&1 | tee` version had this exact bug —
+    # flagged as P1 in the 2026-04-12 codex review.
+    #
+    # We don't stream stdout live; instead we capture, cat at the end,
+    # then verify the file is non-empty. Streaming via process
+    # substitution introduced an async tee race that could leave the
+    # temp file empty even after a successful run.
+    REVIEW_STDOUT=$(mktemp)
+    trap 'rm -f "$REVIEW_STDOUT"' EXIT
 
-    set -o pipefail
     if ! "$CODEX_BIN" review \
         -c model="$MODEL" \
         -c model_reasoning_effort="$EFFORT" \
-        "${REVIEW_ARGS[@]}" 2>&1 | tee "$REVIEW_OUTPUT"; then
+        "${REVIEW_ARGS[@]}" \
+        > "$REVIEW_STDOUT"; then
+        # Replay whatever did make it to stdout before the failure.
+        cat "$REVIEW_STDOUT"
         echo "ERROR: codex review failed (model=$MODEL, effort=$EFFORT)." >&2
         exit 4
     fi
 
-    if [ ! -s "$REVIEW_OUTPUT" ]; then
-        echo "ERROR: codex review returned empty output (model=$MODEL, effort=$EFFORT)." >&2
+    if [ ! -s "$REVIEW_STDOUT" ]; then
+        echo "ERROR: codex review returned empty stdout (model=$MODEL, effort=$EFFORT)." >&2
         echo "Do not treat this PR as having passed the review gate." >&2
         exit 5
     fi
+
+    cat "$REVIEW_STDOUT"
     exit 0
 fi
 
