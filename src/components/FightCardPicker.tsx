@@ -72,13 +72,44 @@ export default function FightCardPicker({
 }: Props) {
   const router = useRouter();
   const { t, locale } = useI18n();
+  const initialMethod = initialPrediction?.method ?? "";
+  const initialRound = initialPrediction?.round ? String(initialPrediction.round) : "";
   const [winnerId, setWinnerId] = useState(initialPrediction?.winner_id ?? "");
-  const [method, setMethod] = useState(initialPrediction?.method ?? "");
-  const [round, setRound] = useState(initialPrediction?.round ? String(initialPrediction.round) : "");
+  const [method, setMethod] = useState(initialMethod);
+  const [round, setRound] = useState(initialRound);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(!initialPrediction);
   const [flowStartTime] = useState(() => Date.now());
-  const hasSaved = !!initialPrediction;
+  // Latest committed (DB-saved) state. Used as the revert target for Cancel
+  // and to drive the "saved" badge after the user starts drafting an opponent.
+  const [savedSnapshot, setSavedSnapshot] = useState<
+    { winnerId: string; method: string; round: string } | null
+  >(() =>
+    initialPrediction
+      ? {
+          winnerId: initialPrediction.winner_id,
+          method: initialMethod,
+          round: initialRound,
+        }
+      : null,
+  );
+  // Per-fighter draft memory. Switching to the opponent after a save shows
+  // whatever method/round the user had previously sketched out for that
+  // fighter (so they don't lose work when toggling back and forth).
+  const [draftByFighter, setDraftByFighter] = useState<
+    Record<string, { method: string; round: string }>
+  >(() =>
+    initialPrediction
+      ? {
+          [initialPrediction.winner_id]: {
+            method: initialMethod,
+            round: initialRound,
+          },
+        }
+      : {},
+  );
+  const hasSaved = savedSnapshot !== null;
+  const canSave = !!winnerId && !!method && !!round;
   const { toast } = useToast();
 
   // Re-edit entries of an existing prediction are tracked by the Edit
@@ -94,16 +125,41 @@ export default function FightCardPicker({
   }, []);
 
   function handleCancel() {
-    setWinnerId(initialPrediction?.winner_id ?? "");
-    setMethod(initialPrediction?.method ?? "");
-    setRound(initialPrediction?.round ? String(initialPrediction.round) : "");
+    if (savedSnapshot) {
+      setWinnerId(savedSnapshot.winnerId);
+      setMethod(savedSnapshot.method);
+      setRound(savedSnapshot.round);
+    } else {
+      setWinnerId("");
+      setMethod("");
+      setRound("");
+    }
   }
 
   // Analytics-aware setters. These wrap the raw state setters and fire the
   // matching analytics event only on explicit user interaction (not on
   // reset/cancel). The spec treats these as the funnel steps.
   function selectWinner(fighterId: string, side: "a" | "b") {
+    // Clicking the already-picked fighter while idle re-opens the editor;
+    // while editing it's a no-op (the picker is already visible).
+    if (fighterId === winnerId) {
+      if (!isEditing) setIsEditing(true);
+      return;
+    }
+    // Build the parked map locally so the read for the incoming fighter is
+    // consistent with the write for the outgoing fighter (no setState
+    // callback / closure interleaving to reason about).
+    const parked: Record<string, { method: string; round: string }> = winnerId
+      ? { ...draftByFighter, [winnerId]: { method, round } }
+      : draftByFighter;
+    const incoming = parked[fighterId] ?? { method: "", round: "" };
+    setDraftByFighter(parked);
     setWinnerId(fighterId);
+    setMethod(incoming.method);
+    setRound(incoming.round);
+    // Always enter edit mode on a switch so the method/round picker shows
+    // on the newly-selected card.
+    setIsEditing(true);
     logEvent(
       "prediction_winner_selected",
       { selected_fighter_id: fighterId, fighter_position: side },
@@ -113,6 +169,12 @@ export default function FightCardPicker({
 
   function selectMethod(value: string) {
     setMethod(value);
+    if (winnerId) {
+      setDraftByFighter((prev) => ({
+        ...prev,
+        [winnerId]: { method: value, round },
+      }));
+    }
     if (value) {
       logEvent(
         "prediction_method_selected",
@@ -124,6 +186,12 @@ export default function FightCardPicker({
 
   function selectRound(value: string) {
     setRound(value);
+    if (winnerId) {
+      setDraftByFighter((prev) => ({
+        ...prev,
+        [winnerId]: { method, round: value },
+      }));
+    }
     if (value) {
       logEvent(
         "prediction_round_selected",
@@ -170,6 +238,13 @@ export default function FightCardPicker({
         },
         { fightId },
       );
+      // Commit the new snapshot — this becomes the revert target for any
+      // subsequent Cancel and the source of "saved" UI affordances.
+      setSavedSnapshot({ winnerId, method, round });
+      setDraftByFighter((prev) => ({
+        ...prev,
+        [winnerId]: { method, round },
+      }));
       setIsEditing(false);
       startTransition(() => { router.refresh(); });
     } catch {
@@ -202,24 +277,19 @@ export default function FightCardPicker({
         aria-label={`${displayName} ${isPicked ? "selected" : ""}`}
         tabIndex={0}
         onClick={() => {
-          if (!isEditing) return;
           selectWinner(fighterId, side === "left" ? "a" : "b");
         }}
         onKeyDown={(e) => {
-          if (!isEditing) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             selectWinner(fighterId, side === "left" ? "a" : "b");
           }
         }}
         className={cn(
-          "flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150",
+          "flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150 cursor-pointer",
           isPicked
             ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-card-inset)] fighter-card-selected"
-            : "border-[var(--bp-line)] bg-[var(--bp-card-inset)]",
-          isEditing && "cursor-pointer",
-          isEditing && !isPicked && "hover:border-[var(--bp-line-strong)] hover:bg-[var(--bp-card-hover)]",
-          !isEditing && !isPicked && "opacity-50",
+            : "border-[var(--bp-line)] bg-[var(--bp-card-inset)] hover:border-[var(--bp-line-strong)] hover:bg-[var(--bp-card-hover)]",
         )}
       >
         <div className={cn(
@@ -275,7 +345,7 @@ export default function FightCardPicker({
             </div>
           ) : null}
 
-          {!isPicked && isEditing ? (
+          {!isPicked ? (
             <button
               type="button"
               className="mt-2 w-full cursor-pointer rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-2 py-1.5 text-xs font-semibold text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)] hover:text-[var(--bp-ink)]"
@@ -397,9 +467,9 @@ export default function FightCardPicker({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); void handleSubmit(); }}
-                  disabled={loading}
+                  disabled={loading || !canSave}
                   aria-busy={loading}
-                  className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#2563eb] py-2 text-xs font-bold text-white transition hover:bg-[#1d4ed8] disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#2563eb] py-2 text-xs font-bold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <LoadingButtonContent
                     loading={loading}
