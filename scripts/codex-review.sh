@@ -97,7 +97,14 @@ if [ "$MODE" = "review" ]; then
     # used (CLI clap rule), and it does not accept --profile. Override
     # the model + reasoning effort via `-c` instead. Forward any extra
     # args the caller passed (--base, --commit, --uncommitted, --title).
-    REVIEW_ARGS=("$@")
+    # Capture passthrough args without tripping `set -u` on an empty
+    # `$@`. The `${REVIEW_ARGS[@]+...}` idiom expands to nothing when
+    # the array is unset, instead of producing a stray empty string
+    # token like `${REVIEW_ARGS[@]:-}` does.
+    REVIEW_ARGS=()
+    if [ "$#" -gt 0 ]; then
+        REVIEW_ARGS=("$@")
+    fi
 
     # Inject `--base develop` as the comparison target unless the caller
     # already specified one (--base, --commit, or --uncommitted). The
@@ -105,16 +112,18 @@ if [ "$MODE" = "review" ]; then
     # empty, which silently broke the documented contract for callers
     # like `... review --title "..."` (P2 from 2026-04-12 codex review).
     HAS_TARGET=false
-    for arg in "${REVIEW_ARGS[@]:-}"; do
-        case "$arg" in
-            --base|--base=*|--commit|--commit=*|--uncommitted)
-                HAS_TARGET=true
-                break
-                ;;
-        esac
-    done
+    if [ "${#REVIEW_ARGS[@]}" -gt 0 ]; then
+        for arg in "${REVIEW_ARGS[@]}"; do
+            case "$arg" in
+                --base|--base=*|--commit|--commit=*|--uncommitted)
+                    HAS_TARGET=true
+                    break
+                    ;;
+            esac
+        done
+    fi
     if [ "$HAS_TARGET" = false ]; then
-        REVIEW_ARGS=(--base develop "${REVIEW_ARGS[@]:-}")
+        REVIEW_ARGS=(--base develop ${REVIEW_ARGS[@]+"${REVIEW_ARGS[@]}"})
     fi
 
     # Capture only stdout to a temp file so codex's startup PATH
@@ -134,7 +143,7 @@ if [ "$MODE" = "review" ]; then
     if ! "$CODEX_BIN" review \
         -c model="$MODEL" \
         -c model_reasoning_effort="$EFFORT" \
-        "${REVIEW_ARGS[@]}" \
+        ${REVIEW_ARGS[@]+"${REVIEW_ARGS[@]}"} \
         > "$REVIEW_STDOUT"; then
         # Replay whatever did make it to stdout before the failure.
         cat "$REVIEW_STDOUT"
