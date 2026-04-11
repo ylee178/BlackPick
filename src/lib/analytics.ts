@@ -23,6 +23,10 @@ export const EVENT_TYPES = [
   "prediction_submitted",
   "signup_completed",
   "login_completed",
+  // Fired when an anonymous user clicks a fighter card and we intercept
+  // with the signup gate modal instead of letting the pick proceed. Tracks
+  // the top of the signup funnel that is driven by pick intent.
+  "signup_gate_shown",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

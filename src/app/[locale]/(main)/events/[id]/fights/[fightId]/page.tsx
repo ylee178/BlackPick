@@ -134,6 +134,7 @@ export default async function FightDetailPage({
         bcFighterADivision={bc?.fighterA_division ?? null}
         bcFighterBDivision={bc?.fighterB_division ?? null}
         hideDiscussion
+        isAuthenticated={!!user}
       />
 
 

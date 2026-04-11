@@ -158,7 +158,10 @@
     "myRecordGateTitle": "登录后查看你的战绩。",
     "myRecordGateDescription": "把你的全部预测、赛事成绩单和命中结果集中查看。",
     "eventRecordGateTitle": "登录后查看这场赛事报告。",
-    "eventRecordGateDescription": "逐场查看你在这张赛卡上拿到了多少分。"
+    "eventRecordGateDescription": "逐场查看你在这张赛卡上拿到了多少分。",
+    "pickGateTitle": "注册后即可锁定你的预测。",
+    "pickGateDescription": "只需 10 秒。注册后我们会立刻保存你的预测。",
+    "pickGateEmailSignup": "用邮箱注册"
   },
   "account": {
     "editProfile": "编辑资料",
@@ -355,6 +358,7 @@
     "joinMembership": "加入会员以观看完整比赛回放",
     "platform": "平台",
     "fighters": "选手",
-    "latestResults": "最新结果"
+    "latestResults": "最新结果",
+    "close": "关闭"
   }
 }

@@ -374,6 +374,7 @@ export default async function HomePage() {
                     bcFighterADivision={bc?.fighterA_division ?? null}
                     bcFighterBDivision={bc?.fighterB_division ?? null}
                     seriesLabel={featured?.series_type === "black_cup" ? getSeriesLabel(featured.series_type, t) : null}
+                    isAuthenticated={!!authUser}
                   />
                 );
               })}

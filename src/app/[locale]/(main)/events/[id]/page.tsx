@@ -193,6 +193,7 @@ export default async function EventPage({
               bcFighterADivision={entry.bcFighterADivision}
               bcFighterBDivision={entry.bcFighterBDivision}
               seriesLabel={event?.series_type === "black_cup" ? getSeriesLabel(event.series_type, t) : null}
+              isAuthenticated={!!user}
             />
           ))}
         </div>

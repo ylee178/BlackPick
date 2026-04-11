@@ -158,7 +158,10 @@
     "myRecordGateTitle": "로그인하고 당신의 전적을 확인하세요.",
     "myRecordGateDescription": "예측 기록, 이벤트 성적표, 적중 결과를 한 곳에서 쭉 볼 수 있어요.",
     "eventRecordGateTitle": "로그인하고 이 이벤트 리포트를 확인하세요.",
-    "eventRecordGateDescription": "이 카드에서 경기별로 어떻게 점수를 얻었는지 바로 볼 수 있어요."
+    "eventRecordGateDescription": "이 카드에서 경기별로 어떻게 점수를 얻었는지 바로 볼 수 있어요.",
+    "pickGateTitle": "픽을 잠그려면 가입하세요.",
+    "pickGateDescription": "10초면 끝나요. 가입하는 순간 예측을 저장해둘게요.",
+    "pickGateEmailSignup": "이메일로 가입"
   },
   "account": {
     "editProfile": "프로필 수정",
@@ -355,6 +358,7 @@
     "joinMembership": "멤버십 가입으로 풀 경기 다시보기",
     "platform": "플랫폼",
     "fighters": "선수",
-    "latestResults": "최신 결과"
+    "latestResults": "최신 결과",
+    "close": "닫기"
   }
 }

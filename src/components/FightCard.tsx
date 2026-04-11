@@ -75,6 +75,11 @@ type FightCardProps = {
   bcFighterADivision?: { weightClass: string; rank: number | null } | null;
   bcFighterBDivision?: { weightClass: string; rank: number | null } | null;
   hideDiscussion?: boolean;
+  /**
+   * Forwarded to FightCardPicker. Anonymous viewers hit a signup gate on
+   * the first fighter click; authed viewers get the normal pick flow.
+   */
+  isAuthenticated: boolean;
 };
 
 /** Static (non-interactive) fighter card for completed/live states */
@@ -209,6 +214,7 @@ export default async function FightCard({
   bcFighterBDivision,
   seriesLabel,
   hideDiscussion,
+  isAuthenticated,
 }: FightCardProps) {
   const { t, locale } = await getTranslations();
   const isCancelled = fight.status === "cancelled";
@@ -258,6 +264,7 @@ export default async function FightCard({
             bcFighterADivision={bcFighterADivision ?? null}
             bcFighterBDivision={bcFighterBDivision ?? null}
             initialPrediction={prediction}
+            isAuthenticated={isAuthenticated}
           />
           {!hideDiscussion && (
             <Link
