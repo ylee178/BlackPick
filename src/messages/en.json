@@ -75,7 +75,8 @@
     "bulk": "Predict all fights",
     "predictAll": "Predict All",
     "correct": "You got it right!",
-    "wrong": "Better luck next time"
+    "wrong": "Better luck next time",
+    "allPredictedToast": "All picks locked in. Good luck out there."
   },
   "profile": {
     "fightRecord": "Fight Record",

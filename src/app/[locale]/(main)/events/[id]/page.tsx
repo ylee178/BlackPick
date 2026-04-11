@@ -1,3 +1,4 @@
+import AllPredictedToast from "@/components/AllPredictedToast";
 import EventDateLine from "@/components/EventDateLine";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
@@ -167,6 +168,12 @@ export default async function EventPage({
   const completedEntries = fightEntries.filter((entry) => entry.displayState === "completed");
   const pickedEntries = fightEntries.filter((entry) => entry.prediction);
 
+  // "All predicted" toast inputs: only upcoming (pickable) fights count
+  // toward the total, so cancelled / no-contest / already-started fights
+  // are naturally excluded from both the numerator and the denominator.
+  const predictableTotal = upcomingEntries.length;
+  const predictedCount = upcomingEntries.filter((entry) => entry.prediction).length;
+
   function renderFightSection(sectionId: string, label: string, items: FightEntry[]) {
     if (items.length === 0) return null;
 
@@ -206,6 +213,17 @@ export default async function EventPage({
 
   return (
     <div className="relative flex flex-col gap-10 pb-24 md:pb-0">
+      <AllPredictedToast
+        // Key the component by (user, event) so any identity change
+        // remounts it and resets the "already fired this mount" ref —
+        // protects against a stale fire lock leaking across navigations
+        // or auth state changes within the same client tree.
+        key={`${user?.id ?? "anon"}:${id}`}
+        userId={user?.id ?? null}
+        eventId={id}
+        predictableTotal={predictableTotal}
+        predictedCount={predictedCount}
+      />
       <StickyEventHeader
         eventName={localizedEventName}
         eventStatus={eventStatus}

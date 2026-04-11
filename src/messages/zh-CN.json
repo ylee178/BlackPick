@@ -75,7 +75,8 @@
     "bulk": "预测全部比赛",
     "predictAll": "全部预测",
     "correct": "猜对了！",
-    "wrong": "很遗憾，没猜中"
+    "wrong": "很遗憾，没猜中",
+    "allPredictedToast": "所有预测已保存。祝你好运。"
   },
   "profile": {
     "fightRecord": "战绩",

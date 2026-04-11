@@ -75,7 +75,8 @@
     "bulk": "Predecir todas las peleas",
     "predictAll": "Predecir todo",
     "correct": "¡Acertaste!",
-    "wrong": "No acertaste esta vez"
+    "wrong": "No acertaste esta vez",
+    "allPredictedToast": "Todos tus pronósticos quedaron guardados. Suerte."
   },
   "profile": {
     "fightRecord": "Historial de peleas",
