@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Info } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
+import { useClockTick } from "@/lib/use-sync-store";
 
-function getTimeLeft(target: string) {
-  const diff = new Date(target).getTime() - Date.now();
+type TimeLeft = { total: number; d: number; h: number; m: number; s: number };
+
+const EMPTY_TIME_LEFT: TimeLeft = { total: 1, d: 0, h: 0, m: 0, s: 0 };
+
+function getTimeLeft(target: string, nowMs: number): TimeLeft {
+  const diff = new Date(target).getTime() - nowMs;
   if (diff <= 0) return { total: 0, d: 0, h: 0, m: 0, s: 0 };
   return {
     total: diff,
@@ -36,15 +40,11 @@ export function DigitCard({ value, label }: { value: string; label?: string }) {
  */
 export default function FlipTimer({ targetTime }: { targetTime: string }) {
   const { t } = useI18n();
-  const [mounted, setMounted] = useState(false);
-  const [tl, setTl] = useState({ total: 1, d: 0, h: 0, m: 0, s: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-    setTl(getTimeLeft(targetTime));
-    const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
-    return () => clearInterval(i);
-  }, [targetTime]);
+  // Shared 1Hz external store — returns 0 before hydration, then live
+  // Date.now() values. See `src/lib/use-sync-store.ts` for the rationale.
+  const now = useClockTick();
+  const mounted = now !== 0;
+  const tl = mounted ? getTimeLeft(targetTime, now) : EMPTY_TIME_LEFT;
 
   const pad = (n: number) => String(n).padStart(2, "0");
 

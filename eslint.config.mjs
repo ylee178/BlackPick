@@ -17,20 +17,6 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   ...storybook.configs["flat/recommended"],
-  {
-    rules: {
-      // `react-hooks/set-state-in-effect` was added in a recent
-      // eslint-plugin-react-hooks bump and flags the canonical SSR-safe
-      // hydration pattern `useEffect(() => setMounted(true), [])` used by
-      // FlipClock, FlipTimer, NotificationBell, TimezoneSelect, and
-      // use-timezone. Refactoring all of those to useSyncExternalStore is a
-      // separate, risky change; the legitimate hydration use of this pattern
-      // is well-established and we are not chasing a stylistic warning into
-      // an architectural rewrite. Re-evaluate if/when we migrate those
-      // components to a different mount-detection strategy.
-      "react-hooks/set-state-in-effect": "off",
-    },
-  },
 ]);
 
 export default eslintConfig;
