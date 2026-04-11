@@ -331,6 +331,26 @@
     "mvpVoteOpen": "MVP投票が開始されました",
     "rankingChanged": "ランキングが変動しました"
   },
+  "share": {
+    "trigger": "シェア",
+    "dialogTitle": "ピックをシェア",
+    "eyebrow": "Black Pick の予想",
+    "subtitle": "Black Pick でピックを保存",
+    "noFights": "このカードにはまだ試合がありません。",
+    "noPick": "この試合のピックは保存されていません。",
+    "methodNotSet": "決まり手未設定",
+    "ctaMakeYourPicks": "自分のピックを作る",
+    "ctaSubtitle": "このカードの予想を自分で設定しましょう。",
+    "shareText": "{username} さんの {event} のピックを見てみよう",
+    "copyLink": "リンクをコピー",
+    "copied": "リンクをコピーしました",
+    "copyFailed": "コピーに失敗しました — 長押しで手動コピーしてください。",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "メール",
+    "channelSms": "SMS"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",

@@ -331,6 +331,26 @@
     "mvpVoteOpen": "La votación de MVP está abierta",
     "rankingChanged": "Tu clasificación cambió"
   },
+  "share": {
+    "trigger": "Compartir",
+    "dialogTitle": "Comparte tus pronósticos",
+    "eyebrow": "Pronóstico de Black Pick",
+    "subtitle": "Pronóstico confirmado en Black Pick",
+    "noFights": "Aún no hay peleas en este cartel.",
+    "noPick": "No hay pronóstico guardado para esta pelea.",
+    "methodNotSet": "Método no definido",
+    "ctaMakeYourPicks": "Haz tus propios pronósticos",
+    "ctaSubtitle": "Entra y define tus predicciones para este cartel.",
+    "shareText": "Mira los pronósticos de {username} para {event}",
+    "copyLink": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "copyFailed": "No se pudo copiar — mantén presionado para copiar manualmente.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "Correo",
+    "channelSms": "SMS"
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Algo salió mal",

@@ -331,6 +331,26 @@
     "mvpVoteOpen": "Votacao MVP aberta",
     "rankingChanged": "Seu ranking mudou"
   },
+  "share": {
+    "trigger": "Compartilhar",
+    "dialogTitle": "Compartilhe seus palpites",
+    "eyebrow": "Palpite do Black Pick",
+    "subtitle": "Palpites travados no Black Pick",
+    "noFights": "Ainda não há lutas neste card.",
+    "noPick": "Nenhum palpite salvo para esta luta.",
+    "methodNotSet": "Método não definido",
+    "ctaMakeYourPicks": "Faça seus próprios palpites",
+    "ctaSubtitle": "Entre e defina suas previsões para este card.",
+    "shareText": "Veja os palpites de {username} para {event}",
+    "copyLink": "Copiar link",
+    "copied": "Link copiado",
+    "copyFailed": "Não foi possível copiar — mantenha pressionado para copiar manualmente.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "E-mail",
+    "channelSms": "SMS"
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Algo deu errado",

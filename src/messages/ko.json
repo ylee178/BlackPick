@@ -331,6 +331,26 @@
     "mvpVoteOpen": "MVP 투표가 열렸습니다",
     "rankingChanged": "랭킹이 변동되었습니다"
   },
+  "share": {
+    "trigger": "공유",
+    "dialogTitle": "픽 공유하기",
+    "eyebrow": "블랙픽 예측",
+    "subtitle": "블랙픽에서 픽 확정",
+    "noFights": "아직 이 카드에 경기가 없습니다.",
+    "noPick": "이 경기에는 저장된 픽이 없습니다.",
+    "methodNotSet": "방법 미설정",
+    "ctaMakeYourPicks": "내 픽 만들기",
+    "ctaSubtitle": "이 카드의 예측을 직접 설정해보세요.",
+    "shareText": "{username} 님의 {event} 픽을 확인해보세요",
+    "copyLink": "링크 복사",
+    "copied": "링크 복사됨",
+    "copyFailed": "복사에 실패했어요 — 길게 눌러 직접 복사해주세요.",
+    "channelTwitter": "X",
+    "channelFacebook": "페이스북",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "이메일",
+    "channelSms": "문자"
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",
