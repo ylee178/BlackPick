@@ -224,7 +224,7 @@
     "closesIn": "预测截止倒计时",
     "eventStartsIn": "比赛开始倒计时",
     "locked": "预测已锁定",
-    "lockedHint": "倒计时结束后预测将无法修改",
+    "lockedHint": "时间结束时预测锁定",
     "daysShort": "天",
     "hoursShort": "时",
     "minutesShort": "分",

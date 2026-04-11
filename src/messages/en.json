@@ -224,7 +224,7 @@
     "closesIn": "Predictions close in",
     "eventStartsIn": "Event starts in",
     "locked": "Predictions locked",
-    "lockedHint": "Predictions lock when the countdown ends",
+    "lockedHint": "Predictions lock when time's up",
     "daysShort": "Days",
     "hoursShort": "Hrs",
     "minutesShort": "Min",

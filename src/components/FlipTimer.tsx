@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Info } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
 
 function getTimeLeft(target: string) {
@@ -87,8 +88,9 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
             label={t("countdown.secondsShort")}
           />
         </div>
-        <p className="mt-4 text-center text-sm text-[var(--bp-muted)]">
-          {t("countdown.lockedHint")}
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[var(--bp-muted)]">
+          <Info className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+          <span>{t("countdown.lockedHint")}</span>
         </p>
       </div>
     </div>

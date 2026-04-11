@@ -224,7 +224,7 @@
     "closesIn": "予想締切まで",
     "eventStartsIn": "イベント開始まで",
     "locked": "予想受付終了",
-    "lockedHint": "カウントダウンが終わると予想は変更できません",
+    "lockedHint": "時間切れで予想は締め切られます",
     "daysShort": "日",
     "hoursShort": "時",
     "minutesShort": "分",
