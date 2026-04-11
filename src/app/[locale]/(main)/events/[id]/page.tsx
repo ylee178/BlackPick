@@ -1,5 +1,7 @@
 import AllPredictedToast from "@/components/AllPredictedToast";
 import EventDateLine from "@/components/EventDateLine";
+import ShareMenu from "@/components/ShareMenu";
+import { buildSharePath } from "@/lib/share-url";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import FlipTimer from "@/components/FlipTimer";
@@ -59,9 +61,11 @@ export default async function EventPage({
   const { t, locale } = await getTranslations();
 
   let userInitial = "?";
+  let userRingName: string | null = null;
   if (user) {
     const { data: dbUser } = await supabase.from("users").select("ring_name").eq("id", user.id).single();
-    userInitial = dbUser?.ring_name?.charAt(0) || "?";
+    userRingName = dbUser?.ring_name ?? null;
+    userInitial = userRingName?.charAt(0) || "?";
   }
 
   const { data: event } = await supabase
@@ -342,6 +346,19 @@ export default async function EventPage({
           </div>
         </section>
       )}
+
+      {/* Share CTA — visible only when the authed viewer has at least one
+          saved pick on this card, and only if they have a ring name (the
+          URL segment). Uses the same ShareMenu as the public share page. */}
+      {userRingName && pickedEntries.length > 0 ? (
+        <div className="flex justify-end">
+          <ShareMenu
+            url={buildSharePath(userRingName, event.id)}
+            title={`${userRingName} · ${localizedEventName}`}
+            text={t("share.shareText", { username: userRingName, event: localizedEventName })}
+          />
+        </div>
+      ) : null}
 
       {/* Fight Sections */}
       <div className="flex flex-col gap-6">

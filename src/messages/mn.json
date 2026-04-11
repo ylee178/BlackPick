@@ -331,6 +331,26 @@
     "mvpVoteOpen": "MVP санал хураалт нээлттэй байна",
     "rankingChanged": "Таны чансаа өөрчлөгдлөө"
   },
+  "share": {
+    "trigger": "Хуваалцах",
+    "dialogTitle": "Таамгаа хуваалцах",
+    "eyebrow": "Black Pick-ийн таамаг",
+    "subtitle": "Black Pick дээр таамаг хадгалагдсан",
+    "noFights": "Энэ карт дээр одоогоор тулаан байхгүй.",
+    "noPick": "Энэ тулаанд хадгалсан таамаг алга.",
+    "methodNotSet": "Арга сонгогдоогүй",
+    "ctaMakeYourPicks": "Өөрийн таамгаа оруул",
+    "ctaSubtitle": "Энэ картын таамгаа өөрөө тохируулна уу.",
+    "shareText": "{username}-ийн {event}-ийн таамгийг үзээрэй",
+    "copyLink": "Холбоос хуулах",
+    "copied": "Холбоос хуулагдлаа",
+    "copyFailed": "Хуулж чадсангүй — гараар удаан дараад хуулна уу.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "И-мэйл",
+    "channelSms": "SMS"
+  },
   "common": {
     "loading": "Ачаалж байна...",
     "error": "Ямар нэг зүйл буруу боллоо",

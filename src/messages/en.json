@@ -331,6 +331,26 @@
     "mvpVoteOpen": "MVP voting is open",
     "rankingChanged": "Your ranking changed"
   },
+  "share": {
+    "trigger": "Share",
+    "dialogTitle": "Share your picks",
+    "eyebrow": "A Black Pick prediction",
+    "subtitle": "Locked in on Black Pick",
+    "noFights": "No fights on this card yet.",
+    "noPick": "No pick saved for this fight.",
+    "methodNotSet": "Method not set",
+    "ctaMakeYourPicks": "Make your own picks",
+    "ctaSubtitle": "Tap through to set your predictions for this card.",
+    "shareText": "Check out {username}'s picks for {event}",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Couldn't copy — long-press to copy manually.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "Email",
+    "channelSms": "SMS"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",
