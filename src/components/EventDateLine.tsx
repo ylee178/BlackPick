@@ -3,7 +3,7 @@
 import { CalendarDays } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
 import { useTimezone } from "@/lib/use-timezone";
-import { getTimezoneAbbreviation } from "@/lib/timezone";
+import TimezoneSelect from "@/components/TimezoneSelect";
 
 type EventDateLineProps = {
   /** Calendar day of the event in `YYYY-MM-DD` form (`events.date`). */
@@ -15,13 +15,15 @@ type EventDateLineProps = {
 };
 
 /**
- * Subtext line under the event title showing date + time + timezone, all
- * localized to the viewer's currently selected timezone (shared with
- * FlipTimer via the `useTimezone` hook). Calendar icon is on the left.
+ * Subtext line under the event title showing date + time + an inline
+ * timezone picker, all localized to the viewer's currently selected
+ * timezone (shared with FlipTimer via the `useTimezone` hook). The
+ * calendar icon anchors the line on the left and the timezone picker is
+ * the only timezone control on the page now — FlipTimer is purely the
+ * countdown.
  *
  * Hydration-safe: while the timezone is unknown (first server pass) we
- * render only the calendar day so the layout does not flash an
- * incorrect time anchored to the SSR host's clock.
+ * render only the calendar day so the layout never flashes a wrong time.
  */
 export default function EventDateLine({
   eventDate,
@@ -29,37 +31,38 @@ export default function EventDateLine({
   className,
 }: EventDateLineProps) {
   const { locale } = useI18n();
-  const { tz: selectedTz } = useTimezone();
+  const { tz, detected, setTz } = useTimezone();
 
-  const dateLabel = formatDateLabel(eventDate, selectedTz, startTime, locale);
+  const dateLabel = formatDateLabel(eventDate, tz, startTime, locale);
   const timeLabel =
-    selectedTz && startTime
-      ? formatTimeLabel(startTime, selectedTz, locale)
-      : null;
-  const tzLabel =
-    selectedTz && startTime
-      ? getTimezoneAbbreviation(selectedTz, locale) || tzCity(selectedTz)
-      : null;
+    tz && startTime ? formatTimeLabel(startTime, tz, locale) : null;
 
   return (
-    <p
-      className={`flex flex-wrap items-center gap-1.5 text-xs text-[var(--bp-muted)] ${className ?? ""}`}
+    <div
+      className={`flex flex-wrap items-center gap-2 text-sm text-[var(--bp-muted)] ${className ?? ""}`}
     >
-      <CalendarDays className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden />
+      <CalendarDays
+        className="h-4 w-4 shrink-0"
+        strokeWidth={1.8}
+        aria-hidden
+      />
       <span>{dateLabel}</span>
       {timeLabel ? (
         <>
-          <span className="text-[var(--bp-muted)] opacity-50">·</span>
+          <span className="opacity-50">·</span>
           <span suppressHydrationWarning>{timeLabel}</span>
         </>
       ) : null}
-      {tzLabel ? (
-        <>
-          <span className="text-[var(--bp-muted)] opacity-50">·</span>
-          <span suppressHydrationWarning>{tzLabel}</span>
-        </>
+      {tz ? (
+        <TimezoneSelect
+          value={tz}
+          detected={detected ?? tz}
+          onChange={setTz}
+          locale={locale}
+          ariaLabel="Change timezone"
+        />
       ) : null}
-    </p>
+    </div>
   );
 }
 
@@ -68,8 +71,7 @@ export default function EventDateLine({
  * - If we have a fight start_time AND a viewer timezone, format the wall
  *   clock day in that zone (so a midnight-crossing card lands on the
  *   right calendar day for the viewer).
- * - Otherwise fall back to the raw event.date string, which is already
- *   the Korea-local calendar day from the database.
+ * - Otherwise fall back to the raw event.date string.
  */
 function formatDateLabel(
   eventDate: string,
@@ -81,7 +83,7 @@ function formatDateLabel(
     try {
       return new Intl.DateTimeFormat(locale, {
         year: "numeric",
-        month: "short",
+        month: "long",
         day: "numeric",
         timeZone: tz,
       }).format(new Date(startTime));
@@ -107,8 +109,4 @@ function formatTimeLabel(
   } catch {
     return "";
   }
-}
-
-function tzCity(tz: string): string {
-  return tz.split("/").pop()?.replace(/_/g, " ") ?? tz;
 }

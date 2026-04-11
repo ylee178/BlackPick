@@ -222,7 +222,9 @@
   },
   "countdown": {
     "closesIn": "예측 마감까지",
+    "eventStartsIn": "경기 시작까지",
     "locked": "예측 마감됨",
+    "lockedHint": "카운트다운이 끝나면 예측을 수정할 수 없어요",
     "daysShort": "일",
     "hoursShort": "시간",
     "minutesShort": "분",

@@ -222,7 +222,9 @@
   },
   "countdown": {
     "closesIn": "Palpites encerram em",
+    "eventStartsIn": "O evento começa em",
     "locked": "Palpites encerrados",
+    "lockedHint": "Os palpites são bloqueados quando a contagem regressiva termina",
     "daysShort": "Dias",
     "hoursShort": "Hrs",
     "minutesShort": "Min",

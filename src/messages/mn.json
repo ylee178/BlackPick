@@ -222,7 +222,9 @@
   },
   "countdown": {
     "closesIn": "Таамаглал хаагдах хүртэл",
+    "eventStartsIn": "Тэмцээн эхлэхэд",
     "locked": "Таамаглал түгжигдсэн",
+    "lockedHint": "Тооллого дуусахад таамаглалыг засах боломжгүй",
     "daysShort": "Өдөр",
     "hoursShort": "Цаг",
     "minutesShort": "Мин",

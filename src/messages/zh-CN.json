@@ -222,7 +222,9 @@
   },
   "countdown": {
     "closesIn": "预测截止倒计时",
+    "eventStartsIn": "比赛开始倒计时",
     "locked": "预测已锁定",
+    "lockedHint": "倒计时结束后预测将无法修改",
     "daysShort": "天",
     "hoursShort": "时",
     "minutesShort": "分",

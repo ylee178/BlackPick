@@ -222,7 +222,9 @@
   },
   "countdown": {
     "closesIn": "Predictions close in",
+    "eventStartsIn": "Event starts in",
     "locked": "Predictions locked",
+    "lockedHint": "Predictions lock when the countdown ends",
     "daysShort": "Days",
     "hoursShort": "Hrs",
     "minutesShort": "Min",
