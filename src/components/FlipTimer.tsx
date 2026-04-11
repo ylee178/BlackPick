@@ -3,12 +3,8 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
 import TimezoneSelect from "@/components/TimezoneSelect";
-import {
-  detectUserTimezone,
-  formatTimeInTimezone,
-  loadStoredTimezone,
-  saveStoredTimezone,
-} from "@/lib/timezone";
+import { useTimezone } from "@/lib/use-timezone";
+import { formatTimeInTimezone } from "@/lib/timezone";
 
 function getTimeLeft(target: string) {
   const diff = new Date(target).getTime() - Date.now();
@@ -40,11 +36,10 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
   const [mounted, setMounted] = useState(false);
   const [tl, setTl] = useState({ total: 1, d: 0, h: 0, m: 0, s: 0 });
 
-  // Timezone preference — null until we've hydrated from the browser, so
-  // the first server-rendered pass shows a placeholder instead of a time
-  // in whatever timezone the SSR host happens to be in (typically UTC).
-  const [detectedTz, setDetectedTz] = useState<string | null>(null);
-  const [selectedTz, setSelectedTz] = useState<string | null>(null);
+  // Timezone state is owned by the shared `useTimezone` hook so the timer
+  // and any other surface (e.g. EventDateLine subtext) stay in sync when
+  // the user changes their preference here.
+  const { tz: selectedTz, detected: detectedTz, setTz: handleTimezoneChange } = useTimezone();
 
   useEffect(() => {
     setMounted(true);
@@ -52,18 +47,6 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
     const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
     return () => clearInterval(i);
   }, [targetTime]);
-
-  useEffect(() => {
-    const detected = detectUserTimezone();
-    setDetectedTz(detected);
-    const stored = loadStoredTimezone();
-    setSelectedTz(stored ?? detected);
-  }, []);
-
-  const handleTimezoneChange = (tz: string) => {
-    setSelectedTz(tz);
-    saveStoredTimezone(tz);
-  };
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -96,9 +79,9 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
           <DigitCard value={mounted ? pad(tl.s) : "--"} label={t("countdown.secondsShort")} />
         </div>
 
-        {/* Absolute time label + timezone dropdown, stacked vertically so a
-            long localized date string and the 180px select never compete
-            for horizontal space inside a narrow timer card. Only renders
+        {/* Absolute time + timezone picker, stacked vertically so a long
+            localized date string and the dropdown never compete for
+            horizontal space inside a narrow timer card. Only renders
             after hydration so we never flash a misleading initial time. */}
         <div
           className="mt-3 flex flex-col items-center gap-1.5"

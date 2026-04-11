@@ -5,6 +5,7 @@ import { getSeriesLabel } from "@/lib/constants";
 import { countryCodeToFlag } from "@/lib/flags";
 import { getLocalizedEventName } from "@/lib/localized-name";
 import FightCard from "@/components/FightCard";
+import EventDateLine from "@/components/EventDateLine";
 import FlipTimer from "@/components/FlipTimer";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
@@ -231,16 +232,17 @@ export default async function HomePage() {
                     {t(`status.${featured.status}`)}
                   </RetroLabel>
                   <RetroLabel size="sm" tone="neutral">{getSeriesLabel(featured.series_type, t)}</RetroLabel>
-                  <span className="text-xs text-[var(--bp-muted)]">{featured.date}</span>
                 </div>
 
                 <h1 className="mt-4 text-2xl font-extrabold leading-[1.1] tracking-[-0.03em] text-[var(--bp-ink)] sm:text-3xl lg:text-4xl">
                   {getLocalizedEventName(featured, locale, featured.name)}
                 </h1>
 
-                <p className="mt-2 max-w-lg text-sm text-[var(--bp-muted)]">
-                  {t("home.heroDescription")}
-                </p>
+                <EventDateLine
+                  eventDate={featured.date}
+                  startTime={earliestStart}
+                  className="mt-2"
+                />
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                   <span className="text-[var(--bp-muted)]"><span className="font-semibold text-[var(--bp-ink)]">{fights.length}</span> {t("event.totalFights")}</span>

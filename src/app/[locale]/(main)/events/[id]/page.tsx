@@ -1,3 +1,4 @@
+import EventDateLine from "@/components/EventDateLine";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import FlipTimer from "@/components/FlipTimer";
@@ -235,7 +236,11 @@ export default async function EventPage({
               <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-white sm:text-2xl">
                 {localizedEventName}
               </h1>
-              <p className="mt-1 text-sm text-[rgba(255,255,255,0.7)]">{event.date}</p>
+              <EventDateLine
+                eventDate={event.date}
+                startTime={earliestStart}
+                className="mt-1.5 text-[rgba(255,255,255,0.7)]"
+              />
 
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                 <span><span className="font-semibold text-white">{fightEntries.length}</span> <span className="text-[rgba(255,255,255,0.5)]">{t("event.totalFights")}</span></span>
@@ -281,7 +286,11 @@ export default async function EventPage({
           <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] sm:text-2xl">
             {localizedEventName}
           </h1>
-          <p className="mt-1 text-sm text-[var(--bp-muted)]">{event.date}</p>
+          <EventDateLine
+            eventDate={event.date}
+            startTime={earliestStart}
+            className="mt-1.5"
+          />
 
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span><span className="font-semibold text-[var(--bp-ink)]">{fightEntries.length}</span> <span className="text-[var(--bp-muted)]">{t("event.totalFights")}</span></span>
