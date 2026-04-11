@@ -75,7 +75,8 @@
     "bulk": "Prever todas as lutas",
     "predictAll": "Prever tudo",
     "correct": "Você acertou!",
-    "wrong": "Mais sorte na próxima"
+    "wrong": "Mais sorte na próxima",
+    "allPredictedToast": "Todos os palpites foram salvos. Boa sorte."
   },
   "profile": {
     "fightRecord": "Cartel de lutas",

@@ -75,7 +75,8 @@
     "bulk": "전체 경기 예측",
     "predictAll": "전체 예측",
     "correct": "맞췄습니다!",
-    "wrong": "아쉽네요, 못 맞췄습니다"
+    "wrong": "아쉽네요, 못 맞췄습니다",
+    "allPredictedToast": "모든 픽 저장 완료. 행운을 빕니다."
   },
   "profile": {
     "fightRecord": "전적",

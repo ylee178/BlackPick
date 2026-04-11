@@ -75,7 +75,8 @@
     "bulk": "全試合予想",
     "predictAll": "全て予想",
     "correct": "的中しました！",
-    "wrong": "残念、外れました"
+    "wrong": "残念、外れました",
+    "allPredictedToast": "すべてのピックを保存しました。健闘を祈ります。"
   },
   "profile": {
     "fightRecord": "戦績",
