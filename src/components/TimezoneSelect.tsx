@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { Globe } from "lucide-react";
-import { retroFieldClassName } from "@/components/ui/retro";
+import { ChevronDown, Globe } from "lucide-react";
 import {
   buildPreferredTimezoneList,
   getAllTimezones,
-  getTimezoneDisplayName,
+  getTimezoneAbbreviation,
 } from "@/lib/timezone";
 
 type TimezoneSelectProps = {
@@ -19,9 +18,17 @@ type TimezoneSelectProps = {
 };
 
 /**
- * Timezone dropdown. Pins the detected zone at the top, then the venue
- * (Asia/Seoul), then the rest of the full IANA list so users from any
- * region can find their zone without being limited to a curated shortlist.
+ * Compact timezone dropdown for the FlipTimer label row.
+ *
+ * Native `<select>` controls auto-size to the longest option text, so we
+ * keep option labels short by showing the runtime-provided abbreviation
+ * (KST, AEST, GMT+9 …) followed by the city. The control itself is
+ * clamped with an explicit width so a long IANA id like
+ * "America/Argentina/ComodRivadavia" cannot stretch the parent layout.
+ *
+ * We deliberately do not use `retroFieldClassName` here: that helper bakes
+ * in `width: 100%` and a 44px min-height that would dominate the small
+ * inline timer label and blow the timer card out of its column.
  */
 export default function TimezoneSelect({
   value,
@@ -38,14 +45,28 @@ export default function TimezoneSelect({
 
   const allZones = useMemo(() => {
     const seen = new Set(preferred);
-    const rest = getAllTimezones().filter((tz) => !seen.has(tz));
-    return rest;
+    return getAllTimezones().filter((tz) => !seen.has(tz));
   }, [preferred]);
 
+  const renderOption = (tz: string) => {
+    const abbr = getTimezoneAbbreviation(tz, locale);
+    const isDetected = tz === detected;
+    // Strip the IANA prefix and underscores so the dropdown reads like
+    // "KST · Seoul" / "AEST · Sydney" instead of dumping the raw id.
+    const city = tz.split("/").pop()?.replace(/_/g, " ") ?? tz;
+    const label = abbr ? `${abbr} · ${city}` : city;
+    return (
+      <option key={tz} value={tz}>
+        {isDetected ? "• " : ""}
+        {label}
+      </option>
+    );
+  };
+
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative inline-block w-[180px] ${className ?? ""}`}>
       <Globe
-        className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--bp-muted)]"
+        className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--bp-muted)]"
         strokeWidth={1.8}
         aria-hidden
       />
@@ -53,28 +74,22 @@ export default function TimezoneSelect({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-label={ariaLabel}
-        className={retroFieldClassName(
-          "appearance-none pl-7 pr-2 text-xs uppercase tracking-[0.08em]",
-        )}
+        className="h-7 w-full appearance-none truncate rounded-[10px] border border-[var(--bp-line)] bg-black pl-7 pr-7 text-[11px] text-[var(--bp-ink)] focus:border-[var(--bp-accent)] focus:outline-none"
       >
-        <optgroup label="———">
-          {preferred.map((tz) => (
-            <option key={`pref-${tz}`} value={tz}>
-              {tz === detected ? "⚲ " : ""}
-              {getTimezoneDisplayName(tz, locale)} ({tz})
-            </option>
-          ))}
+        <optgroup label="Suggested">
+          {preferred.map(renderOption)}
         </optgroup>
         {allZones.length > 0 ? (
-          <optgroup label="———">
-            {allZones.map((tz) => (
-              <option key={`all-${tz}`} value={tz}>
-                {getTimezoneDisplayName(tz, locale)} ({tz})
-              </option>
-            ))}
+          <optgroup label="All timezones">
+            {allZones.map(renderOption)}
           </optgroup>
         ) : null}
       </select>
+      <ChevronDown
+        className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--bp-muted)]"
+        strokeWidth={1.8}
+        aria-hidden
+      />
     </div>
   );
 }

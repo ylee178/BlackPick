@@ -96,16 +96,17 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
           <DigitCard value={mounted ? pad(tl.s) : "--"} label={t("countdown.secondsShort")} />
         </div>
 
-        {/* Absolute time label + timezone dropdown. Only renders after the
-            component has hydrated so users never see a misleading initial
-            time in the wrong timezone. */}
+        {/* Absolute time label + timezone dropdown, stacked vertically so a
+            long localized date string and the 180px select never compete
+            for horizontal space inside a narrow timer card. Only renders
+            after hydration so we never flash a misleading initial time. */}
         <div
-          className="mt-3 flex flex-wrap items-center justify-center gap-2"
+          className="mt-3 flex flex-col items-center gap-1.5"
           suppressHydrationWarning
         >
           {mounted && selectedTz ? (
             <>
-              <span className="text-[11px] uppercase text-[var(--bp-muted)]">
+              <span className="text-[11px] uppercase tracking-[0.06em] text-[var(--bp-muted)]">
                 {localTime}
               </span>
               <TimezoneSelect
