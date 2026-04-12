@@ -3,6 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import {
   buildRingNameSuggestions,
+  escapeIlikePattern,
   getRingNameValidationError,
   normalizeRingName,
 } from "@/lib/ring-name";
@@ -21,10 +22,16 @@ async function findRingNameConflict(
 ) {
   const normalizedTarget = normalizeRingName(ringName).toLowerCase();
 
+  // Escape `_`/`%`/`\` so the ILIKE compares the literal string. Ring
+  // names allow `_` (see RING_NAME_PATTERN) which is also a single-char
+  // ILIKE wildcard — without the escape, "a_b" would silently collide
+  // with "acb" and we'd reject a perfectly valid name. The post-fetch
+  // JS comparison already filtered to exact-lowercase matches, but the
+  // unfiltered DB query would return false positives that wasted reads.
   const { data, error } = await admin
     .from("users")
     .select("id, ring_name")
-    .ilike("ring_name", ringName);
+    .ilike("ring_name", escapeIlikePattern(ringName));
 
   if (error) {
     throw error;

@@ -11,6 +11,7 @@ import type { AppLocale } from "@/lib/localized-name";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import { isValidEventShortId, buildSharePath, buildShareUrl } from "@/lib/share-url";
 import { getSiteUrl } from "@/lib/env";
+import { escapeIlikePattern } from "@/lib/ring-name";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import {
   retroButtonClassName,
@@ -98,16 +99,20 @@ const loadSharePageData = cache(async function loadSharePageData(
 
   const supabase = createSupabaseAdmin();
 
-  // Username lookup — case-insensitive exact match on ring_name. `.ilike`
-  // with no wildcards behaves like `lower(col) = lower(input)`. If two
-  // rows differ only in case we treat the link as ambiguous and 404, rather
-  // than silently pick one.
+  // Username lookup — case-insensitive exact match on ring_name. We use
+  // `.ilike` because PostgREST cannot express `lower(col) = lower(input)`
+  // without an RPC, and the new `users_ring_name_lower_unique` index
+  // makes case-collisions impossible at the DB layer. Crucially we
+  // escape `_`/`%`/`\` first because `_` is a valid ring-name character
+  // *and* an `ILIKE` single-char wildcard — without the escape, a link
+  // like `/p/a_b/...` would silently match "acb" / "a1b" / etc.
+  const escapedUsername = escapeIlikePattern(decodedUsername);
   let profile: { id: string; ring_name: string; score: number | null; wins: number | null; losses: number | null } | null;
   try {
     const { data, error } = await supabase
       .from("users")
       .select("id, ring_name, score, wins, losses")
-      .ilike("ring_name", decodedUsername)
+      .ilike("ring_name", escapedUsername)
       .maybeSingle();
     if (error) return null;
     profile = data;
