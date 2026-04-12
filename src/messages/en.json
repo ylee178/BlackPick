@@ -193,6 +193,8 @@
     "sortWinsDesc": "Most wins",
     "sortLossesDesc": "Most losses",
     "sortNameAsc": "Name (A-Z)",
+    "sortWinRateDesc": "Best win rate",
+    "sortWeightClassAsc": "Weight class",
     "noResults": "No fighters match this filter."
   },
   "series": {

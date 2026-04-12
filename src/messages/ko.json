@@ -193,6 +193,8 @@
     "sortWinsDesc": "승 많은 순",
     "sortLossesDesc": "패 많은 순",
     "sortNameAsc": "이름 (A-Z)",
+    "sortWinRateDesc": "승률 높은 순",
+    "sortWeightClassAsc": "체급순",
     "noResults": "조건에 맞는 선수가 없습니다."
   },
   "series": {

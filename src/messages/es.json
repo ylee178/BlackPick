@@ -193,6 +193,8 @@
     "sortWinsDesc": "Más victorias",
     "sortLossesDesc": "Más derrotas",
     "sortNameAsc": "Nombre",
+    "sortWinRateDesc": "Mejor porcentaje de victorias",
+    "sortWeightClassAsc": "Categoría de peso",
     "noResults": "No hay peleadores que coincidan con este filtro."
   },
   "series": {

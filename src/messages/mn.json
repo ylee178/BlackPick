@@ -193,6 +193,8 @@
     "sortWinsDesc": "Олон ялалттай",
     "sortLossesDesc": "Олон ялагдалтай",
     "sortNameAsc": "Нэрээр",
+    "sortWinRateDesc": "Хамгийн өндөр ялалтын хувь",
+    "sortWeightClassAsc": "Жингийн ангилал",
     "noResults": "Энэ шүүлтүүрт тохирох тамирчин алга."
   },
   "series": {
