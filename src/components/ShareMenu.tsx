@@ -44,6 +44,25 @@ type Props = {
   text: string;
   /** Optional className to pass through to the trigger button. */
   className?: string;
+  /**
+   * Override the trigger button label. Defaults to the i18n
+   * `share.trigger` key ("Share"). Used by `EventShareCta` to show
+   * state-driven dynamic copy like "5/5 locked in — share your card".
+   */
+  triggerLabel?: string;
+  /**
+   * Override the trigger button visual variant. Defaults to
+   * `secondary`. `primary` gives the stronger gold-on-black CTA used
+   * by the event-page hero share button.
+   */
+  triggerVariant?: "primary" | "secondary" | "soft";
+  /**
+   * Override the trigger size. Defaults to `sm`. `md` gives the
+   * larger CTA-sized button.
+   */
+  triggerSize?: "sm" | "md" | "lg";
+  /** Hide the leading Share2 icon (e.g. in tight mobile layouts). */
+  hideIcon?: boolean;
 };
 
 type Channel = {
@@ -121,7 +140,16 @@ const CHANNELS: Channel[] = [
   },
 ];
 
-export default function ShareMenu({ url, title, text, className }: Props) {
+export default function ShareMenu({
+  url,
+  title,
+  text,
+  className,
+  triggerLabel,
+  triggerVariant = "secondary",
+  triggerSize = "sm",
+  hideIcon = false,
+}: Props) {
   const { t } = useI18n();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -232,13 +260,13 @@ export default function ShareMenu({ url, title, text, className }: Props) {
         type="button"
         onClick={() => void handleTriggerClick()}
         className={cn(
-          retroButtonClassName({ variant: "secondary", size: "sm" }),
+          retroButtonClassName({ variant: triggerVariant, size: triggerSize }),
           className,
         )}
-        aria-label={t("share.trigger")}
+        aria-label={triggerLabel ?? t("share.trigger")}
       >
-        <Share2 className="h-4 w-4" strokeWidth={2} />
-        {t("share.trigger")}
+        {!hideIcon ? <Share2 className="h-4 w-4" strokeWidth={2} /> : null}
+        {triggerLabel ?? t("share.trigger")}
       </button>
 
       {open

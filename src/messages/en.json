@@ -349,7 +349,14 @@
     "channelFacebook": "Facebook",
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "Email",
-    "channelSms": "SMS"
+    "channelSms": "SMS",
+    "ctaDefault": "Share your card",
+    "ctaAllLocked": "{n}/{total} locked in — share your card",
+    "ctaCompleteRecord": "{wins}-{losses} this card — share",
+    "ctaCompleteStreak": "🔥 {streak} in a row — share",
+    "ctaDisabledNoRingName": "Set a ring name to share",
+    "ctaDisabledNoPicks": "Save a pick to unlock sharing",
+    "goToProfile": "Go to profile"
   },
   "common": {
     "loading": "Loading...",

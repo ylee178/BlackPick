@@ -349,7 +349,14 @@
     "channelFacebook": "Facebook",
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "E-mail",
-    "channelSms": "SMS"
+    "channelSms": "SMS",
+    "ctaDefault": "Compartilhar meu card",
+    "ctaAllLocked": "{n}/{total} prontos — compartilhe seu card",
+    "ctaCompleteRecord": "{wins}-{losses} neste card — compartilhe",
+    "ctaCompleteStreak": "🔥 {streak} seguidos — compartilhe",
+    "ctaDisabledNoRingName": "Escolha um nome de ringue para compartilhar",
+    "ctaDisabledNoPicks": "Salve um palpite para liberar",
+    "goToProfile": "Ir para o perfil"
   },
   "common": {
     "loading": "Carregando...",

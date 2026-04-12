@@ -26,7 +26,7 @@ _Last updated: 2026-04-12 (after PR #15 merge, Phase 0 complete, Phase 1 fix/pre
 
 **Phase 1 — UX bugs + onboarding + streak** (started 2026-04-12 after PR #14 / Phase 0 merge).
 
-**Active branch**: `fix/prediction-lock-state` (review gate passed CLEAN on round 3 — ready for PR).
+**Active branch**: `fix/share-cta-visibility` (review gate passed CLEAN on round 3 — ready for PR). Branch 1 `fix/prediction-lock-state` shipped in PR #17.
 
 **Review gate**: Codex CLI is rate-limited through **2026-04-17** on Sean's account. `scripts/codex-review.sh` auto-falls-back to `scripts/gpt-review.sh` (OpenAI `/v1/responses`) transparently. Profiles:
 - `blackpick_lite` = `gpt-5.4-mini` + medium
@@ -43,6 +43,8 @@ Profile table + escalation rules + failure modes in `Docs/codex-review.md`. Cumu
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
+| #17 | `fix/prediction-lock-state` | `93b2d9e` (squashed) | **Phase 1 branch 1 ✅** | `LockTransitionWatcher` client component (subscribes to `useClockTick`, calls `router.refresh()` when an upcoming fight's `start_time` crosses `now`, rate-limited to 1/10s with prop-driven reset). Event page FlipTimer condition widened to `!== "completed"` so the locked card stays mounted through upcoming → live. `FightCard` static mode: `isUserPick` / `myPickLabel` props + "Your Pick" accent chip + gold border for the viewer's saved pick in live state. Server-side lock guard verified at `api/predictions/route.ts:60-73`. Tooling: `blackpick_max` upgraded to `gpt-5.4-pro` + `high`, curl `--max-time` 300→600s, Quality-Maximizing Path meta-rule added to CLAUDE.md, `public/email/previews/` ignored. 3 review rounds, 5 findings fixed, final CLEAN. |
+| #16 | `chore/tasks-manifest-session-structure` | `...` | Planning | SETS_Stock session-continuity pattern lifted into BlackPick: mandatory session-start protocol in CLAUDE.md, two-level model (durable roadmap vs in-session TaskList subset), Current focus section, Recently shipped ledger, Phase completion records with commit SHAs, per-branch actionable sub-tasks. Every PR now updates TASKS.md in the same commit that ships its code. |
 | #15 | `chore/gpt-api-review-fallback` | `ac5b6e4` (squashed) | Tooling | `scripts/gpt-review.sh` + `codex-review.sh` auto-fallback wiring. 5 rounds of self-review hardened 19 issues (argv hygiene, nonce sentinels, prompt-injection defense, timeouts, env isolation, mutex selectors, etc). Untracks `tsconfig.tsbuildinfo` and adds `*.tsbuildinfo` to `.gitignore`. |
 | #14 | `dev-ui/panel-v2-switches` | `304920e` | **Phase 0 ✅** | DevPanel v2: switch-based UI (gold active), Event State / User State / Content State / Actions sections, new server actions (`set-event-status`, `get-user-state`, `set-ring-name`, `clear-my-predictions`), `Reset "all predicted" toast lock` action, `Show 404` action. Dev-only env guards on both client and server. |
 | #13 | `chore/plan-reconcile` | `9952dd3` | Planning | Full plan reconcile after GPT plan review: 7-phase manifest (Phase 0–7), wiki entry `2026-04-12-plan-review-and-reconcile.md` with decision log, scope-down of automation to Phase 7, `analytics_anomaly` enum slot reservation, onboarding + streak UX added to Phase 1, admin surface consolidation added to Phase 2, MVP timer changed to admin-trigger-primary + 8h lazy fallback. |
@@ -68,34 +70,38 @@ Profile table + escalation rules + failure modes in `Docs/codex-review.md`. Cumu
 
 _Goal: fix every visible bug on the shipped feature set, add the missing first-time user flows, surface streak data. Heaviest phase._
 
-### Branch 1: `fix/prediction-lock-state` ← **in-progress**
+### Branch 1: `fix/prediction-lock-state` ✅ shipped in PR #17 (commit `93b2d9e`)
 
-Scope: 4 bugs around the "fight locks at start_time" transition.
+### Branch 2: `fix/share-cta-visibility` ← **in-progress**
 
-**Current-focus actionable sub-tasks** (restore to TaskList tool at session start via `TaskCreate`):
+Scope: move the share CTA into the hero, add state-driven dynamic copy, gate on auth, handle disabled states with helpful hints.
+
+**Current-focus actionable sub-tasks**:
 
 | # | Subtask | Status |
 |---|---|---|
-| 1-1 | New client component `src/components/LockTransitionWatcher.tsx` that subscribes to `useClockTick` and calls `router.refresh()` once when any upcoming-fight `start_time` has been crossed. Dedups via ref. | ✅ done |
-| 1-2 | Mount `LockTransitionWatcher` on the event page with `lockTimestamps = upcomingEntries.map(...)`. Triggers server re-render so `hasStarted` flips on the fight list. | ✅ done |
-| 1-3 | Event page hero: relax the FlipTimer condition from `event.status === "upcoming"` to `event.status !== "completed"` in BOTH branches (poster hero + no-poster branch) so FlipTimer stays mounted through the upcoming → live transition. FlipTimer's internal locked-state handler already renders the "Predictions locked" card when `targetTime` has passed. `StickyEventHeader`'s `countdownTargetTime` prop widened to match. | ✅ done |
-| 1-4 | `FightCard` static mode: new `isUserPick` + `myPickLabel` props on `FighterSideStatic`. When a non-winner/non-loser fighter is the viewer's saved pick, render a "YOUR PICK" accent chip top-left + subtle gold-accent border. Reuses the existing `prediction.yourPick` i18n key (all 7 locales already have it). | ✅ done |
-| 1-5 | Server-side lock guard already present at `src/app/api/predictions/route.ts:60-73` (rejects `fight.status != 'upcoming'` AND `startTime <= now`). **Verified, no change.** | ✅ verified |
-| 1-6 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 · `npm run build` clean | ✅ done |
-| 1-7 | `scripts/codex-review.sh review` — Round 1 found 3 issues (P2 firedForRef stuck-stale, P2 implicit-binary branch, P3 public/email previews). Fixed all. Round 2 found 2 new issues (P1 `new Date(null) === 0` → infinite refresh loop, P2 "locked" fallback regression on missing data). Fixed both. Round 3: **CLEAN**. | ✅ done |
-| 1-8 | Update TASKS.md: mark branch 1 done, move to Recently shipped, start branch 2 | in-progress |
+| 2-1 | New `EventShareCta` client component with state machine: `disabled_no_ring_name` / `disabled_no_picks` / `all_locked_in` / `record_badge` / `streak_badge` / `default_has_picks`. First-match-wins ordering. Post-result variants take priority over pre-lock when `winsThisCard + lossesThisCard > 0`. | ✅ done |
+| 2-2 | `ShareMenu` gets optional `triggerLabel` / `triggerVariant` / `triggerSize` / `hideIcon` props (backward-compatible) so `EventShareCta` can pass custom CTA copy while reusing the share dialog logic. | ✅ done |
+| 2-3 | New i18n keys across 7 locales: `ctaDefault`, `ctaAllLocked`, `ctaCompleteRecord`, `ctaCompleteStreak`, `ctaDisabledNoRingName`, `ctaDisabledNoPicks`, `goToProfile`. Mechanical translations for now — Phase 5 comprehensive tone review will polish. | ✅ done |
+| 2-4 | Event page: remove old standalone share CTA block. Mount `EventShareCta` inside both hero branches (poster + no-poster). Gate entire mount on `user` truthy — anon viewers don't see any CTA (pre-diff behavior preserved). | ✅ done |
+| 2-5 | Compute `winsThisCard` / `lossesThisCard` from `pickedEntries` on the event page via `prediction.is_winner_correct === true/false`. `userCurrentStreak` plumbed as `null` placeholder — Branch 8 wires it. | ✅ done |
+| 2-6 | Domain fix (round 2 P2): `upcomingPickedCount` + `upcomingTotal` replace `pickedCount` + `predictableTotal` so the `all_locked_in` variant counts only upcoming picks, avoiding the impossible "3/2 locked in" state when completed-fight picks exceed upcoming-fight total. Separate `hasAnyPicks` boolean gates the disabled state. | ✅ done |
+| 2-7 | `shareUrl` prop changed to `string \| null`. Event page only calls `buildSharePath` when `userRingName` is truthy. `EventShareCta` falls through to `null` render in enabled states if `shareUrl` is missing (defense in depth). | ✅ done |
+| 2-8 | Mobile sticky bottom bar — **deferred** to a follow-up branch (see Branch 2-extra below). Layout-level change conflicts with existing `z-50` mobile nav at `bottom-0`. Clean stacking needs layout changes out of scope for this bugfix. | deferred |
+| 2-9 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 · `npm run check:i18n` 346 keys × 7 locales match | ✅ done |
+| 2-10 | `scripts/codex-review.sh review` — Round 1: 2 findings (P2 domain mismatch, P3 anon regression). Round 2: 3 findings (P1 malformed shareUrl, P2 mobile sticky overlap, P3 "ring name" English leak in es/pt-BR/mn). Round 3: **CLEAN**. Cumulative cost ~$0.32 for branch 2. | ✅ done |
 
-### Branch 2: `fix/share-cta-visibility` (blackpick review)
-- [ ] Move ShareMenu CTA into the hero card, not between hero and fight list. Explicit label ("Share your picks").
-- [ ] **State-driven trigger copy** (GPT review — dynamic, not static label):
-  - Default (has picks, card not complete): `Share your card`
-  - All picks saved on an upcoming event: `{n}/{n} locked in — share your card`
-  - Post-result with positive record: `{wins}-{losses} this card — share your streak`
-  - Post-result with streak ≥ 3: `🔥 {streak} in a row — share`
-- [ ] Disabled state with hint when condition not met:
-  - No ring name: "Set a ring name first →" linking to profile
-  - No picks: "Save a pick to unlock sharing"
-- [ ] Mobile: sticky bottom-bar button when scrolled past the hero.
+### Branch 2-extra (deferred): mobile sticky share CTA
+
+Scope: re-introduce the mobile-only sticky bottom bar variant of `EventShareCta`. Deferred because stacking cleanly above the existing fixed mobile nav at `bottom-0 z-50` requires layout work that didn't belong in a bugfix branch. Approach:
+- Position CTA at `bottom-[nav-height + env(safe-area-inset-bottom)]`
+- Bump the event page root `pb-24` to `pb-36` (or conditional on `hasAnyPicks`) to reserve space
+- Or use `IntersectionObserver` to only render the sticky bar when the inline hero CTA has scrolled off screen
+
+### Branch 3: `fix/ui-polish-batch` (lite review — simple CSS/copy)
+- [ ] FightCardPicker: remove golden glow ring on selected state. Replace with 2px gold border + `Check` icon overlay.
+- [ ] Search fighter input placeholder: bump opacity from default muted to `rgba(255,255,255,0.5)`.
+- [ ] Mobile fight card: name + flag must not truncate. Use `flex-wrap` or stacked layout below 380px.
 
 ### Branch 3: `fix/ui-polish-batch` (lite review — simple CSS/copy)
 - [ ] FightCardPicker: remove golden glow ring on selected state. Replace with 2px gold border + `Check` icon overlay.
