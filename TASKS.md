@@ -26,7 +26,7 @@ _Last updated: 2026-04-12 (after PR #15 merge, Phase 0 complete, Phase 1 fix/pre
 
 **Phase 1 — UX bugs + onboarding + streak** (started 2026-04-12 after PR #14 / Phase 0 merge).
 
-**Active branch**: `fix/share-cta-visibility` (review gate passed CLEAN on round 3 — ready for PR). Branch 1 `fix/prediction-lock-state` shipped in PR #17.
+**Active branch**: `fix/ui-polish-batch` (lite review CLEAN round 1 — ready for PR). Branches 1 & 2 shipped in PRs #17 / #18.
 
 **Review gate**: Codex CLI is rate-limited through **2026-04-17** on Sean's account. `scripts/codex-review.sh` auto-falls-back to `scripts/gpt-review.sh` (OpenAI `/v1/responses`) transparently. Profiles:
 - `blackpick_lite` = `gpt-5.4-mini` + medium
@@ -43,6 +43,7 @@ Profile table + escalation rules + failure modes in `Docs/codex-review.md`. Cumu
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
+| #18 | `fix/share-cta-visibility` | `5ee064d` (squashed) | **Phase 1 branch 2 ✅** | New `EventShareCta` client component with 6-variant state machine (disabled_no_ring_name / disabled_no_picks / streak_badge / record_badge / all_locked_in / default_has_picks). ShareMenu extended with optional triggerLabel/triggerVariant/triggerSize/hideIcon props. Event page mounts CTA inside both hero branches, gated on `user` truthy (anon viewers see no CTA). 7 new i18n keys across all 7 locales. shareUrl null-safe. Mobile sticky bottom bar deferred to Branch 2-extra (layout conflict with existing z-50 mobile nav). 3 review rounds, 5 findings fixed, final CLEAN. Cost ~$0.32. |
 | #17 | `fix/prediction-lock-state` | `93b2d9e` (squashed) | **Phase 1 branch 1 ✅** | `LockTransitionWatcher` client component (subscribes to `useClockTick`, calls `router.refresh()` when an upcoming fight's `start_time` crosses `now`, rate-limited to 1/10s with prop-driven reset). Event page FlipTimer condition widened to `!== "completed"` so the locked card stays mounted through upcoming → live. `FightCard` static mode: `isUserPick` / `myPickLabel` props + "Your Pick" accent chip + gold border for the viewer's saved pick in live state. Server-side lock guard verified at `api/predictions/route.ts:60-73`. Tooling: `blackpick_max` upgraded to `gpt-5.4-pro` + `high`, curl `--max-time` 300→600s, Quality-Maximizing Path meta-rule added to CLAUDE.md, `public/email/previews/` ignored. 3 review rounds, 5 findings fixed, final CLEAN. |
 | #16 | `chore/tasks-manifest-session-structure` | `...` | Planning | SETS_Stock session-continuity pattern lifted into BlackPick: mandatory session-start protocol in CLAUDE.md, two-level model (durable roadmap vs in-session TaskList subset), Current focus section, Recently shipped ledger, Phase completion records with commit SHAs, per-branch actionable sub-tasks. Every PR now updates TASKS.md in the same commit that ships its code. |
 | #15 | `chore/gpt-api-review-fallback` | `ac5b6e4` (squashed) | Tooling | `scripts/gpt-review.sh` + `codex-review.sh` auto-fallback wiring. 5 rounds of self-review hardened 19 issues (argv hygiene, nonce sentinels, prompt-injection defense, timeouts, env isolation, mutex selectors, etc). Untracks `tsconfig.tsbuildinfo` and adds `*.tsbuildinfo` to `.gitignore`. |
@@ -72,7 +73,7 @@ _Goal: fix every visible bug on the shipped feature set, add the missing first-t
 
 ### Branch 1: `fix/prediction-lock-state` ✅ shipped in PR #17 (commit `93b2d9e`)
 
-### Branch 2: `fix/share-cta-visibility` ← **in-progress**
+### Branch 2: `fix/share-cta-visibility` ✅ shipped in PR #18 (commit `5ee064d`)
 
 Scope: move the share CTA into the hero, add state-driven dynamic copy, gate on auth, handle disabled states with helpful hints.
 
@@ -98,15 +99,15 @@ Scope: re-introduce the mobile-only sticky bottom bar variant of `EventShareCta`
 - Bump the event page root `pb-24` to `pb-36` (or conditional on `hasAnyPicks`) to reserve space
 - Or use `IntersectionObserver` to only render the sticky bar when the inline hero CTA has scrolled off screen
 
-### Branch 3: `fix/ui-polish-batch` (lite review — simple CSS/copy)
-- [ ] FightCardPicker: remove golden glow ring on selected state. Replace with 2px gold border + `Check` icon overlay.
-- [ ] Search fighter input placeholder: bump opacity from default muted to `rgba(255,255,255,0.5)`.
-- [ ] Mobile fight card: name + flag must not truncate. Use `flex-wrap` or stacked layout below 380px.
+### Branch 3: `fix/ui-polish-batch` ← **in-progress** (lite review — simple CSS/copy)
 
-### Branch 3: `fix/ui-polish-batch` (lite review — simple CSS/copy)
-- [ ] FightCardPicker: remove golden glow ring on selected state. Replace with 2px gold border + `Check` icon overlay.
-- [ ] Search fighter input placeholder: bump opacity from default muted to `rgba(255,255,255,0.5)`.
-- [ ] Mobile fight card: name + flag must not truncate. Use `flex-wrap` or stacked layout below 380px.
+| # | Subtask | Status |
+|---|---|---|
+| 3-1 | FightCardPicker: remove `avatar-glow` (golden radial-pulse halo) on picked fighter. Replace with solid 2px `var(--bp-accent)` border on the avatar. Card-level `fighter-card-selected` background + accent-colored name text still signal the selected state cleanly. Aligns with DESIGN.md "no glassmorphism, no radiating decorative layers". | ✅ done |
+| 3-2 | `.retro-field::placeholder` bumped from `rgba(255,255,255,0.2)` to `rgba(255,255,255,0.5)` in `globals.css`. Global — affects every retro input, not just fighter search. 0.2 was below WCAG placeholder-contrast guidance. | ✅ done |
+| 3-3 | Mobile fight card name+flag truncation: both FightCardPicker and FightCard FighterSideStatic wrap the name/flag line in `min-w-0 w-full text-center` + `break-words` so long Hangul/Cyrillic/accented names wrap instead of truncating below 380px. Flag stays inline so it flows with the last word. | ✅ done |
+| 3-4 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 | ✅ done |
+| 3-5 | `scripts/codex-review.sh review lite` — **CLEAN round 1**. Cost $0.003 (lite profile was the right call). | ✅ done |
 
 ### Branch 4: `feature/fighter-page-sort` (blackpick review)
 - [ ] Add sort dropdown: Name (A-Z) / Win rate / Weight class.

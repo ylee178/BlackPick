@@ -383,8 +383,16 @@ export default function FightCardPicker({
           </div>
 
           <div className={cn(
-            "flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16",
-            isPicked && "avatar-glow",
+            "flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 bg-[#2a2a2a] sm:h-16 sm:w-16",
+            // Selected state: solid 2px gold border instead of the
+            // animated radial halo. Picked fighters still read as
+            // "picked" via the card-level `fighter-card-selected`
+            // background + accent-colored name text; the halo was a
+            // design overage per DESIGN.md "no glassmorphism, no
+            // radiating decorative layers".
+            isPicked
+              ? "border-[var(--bp-accent)]"
+              : "border-[var(--bp-line)]",
           )}>
             {avatarUrl ? (
               <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
@@ -393,8 +401,13 @@ export default function FightCardPicker({
             )}
           </div>
 
-          <div>
-            <p className={cn("text-sm font-bold", isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]")}>
+          <div className="min-w-0 w-full text-center">
+            {/* `break-words` + explicit wrapping so long Hangul /
+                Cyrillic / accented names don't truncate on narrow
+                mobile widths. The flag sits inline so it wraps
+                alongside the last word rather than floating off
+                alone on a new line. */}
+            <p className={cn("text-sm font-bold break-words", isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]")}>
               {displayName} {countryCodeToFlag(fighter.nationality)}
             </p>
             {subLabel ? (
