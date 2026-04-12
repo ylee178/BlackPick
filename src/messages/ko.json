@@ -349,7 +349,14 @@
     "channelFacebook": "페이스북",
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "이메일",
-    "channelSms": "문자"
+    "channelSms": "문자",
+    "ctaDefault": "내 픽 공유하기",
+    "ctaAllLocked": "{n}/{total} 완료 — 내 픽 공유하기",
+    "ctaCompleteRecord": "{wins}승 {losses}패 — 이번 카드 공유",
+    "ctaCompleteStreak": "🔥 {streak}연승 — 공유하기",
+    "ctaDisabledNoRingName": "공유하려면 링네임을 설정하세요",
+    "ctaDisabledNoPicks": "픽을 저장하면 공유할 수 있습니다",
+    "goToProfile": "프로필로 이동"
   },
   "common": {
     "loading": "로딩 중...",

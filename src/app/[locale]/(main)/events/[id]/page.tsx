@@ -1,6 +1,6 @@
 import AllPredictedToast from "@/components/AllPredictedToast";
 import EventDateLine from "@/components/EventDateLine";
-import ShareMenu from "@/components/ShareMenu";
+import EventShareCta from "@/components/EventShareCta";
 import { buildSharePath } from "@/lib/share-url";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
@@ -179,6 +179,22 @@ export default async function EventPage({
   const predictableTotal = upcomingEntries.length;
   const predictedCount = upcomingEntries.filter((entry) => entry.prediction).length;
 
+  // Share-CTA inputs — per-event W-L derived from completed fights
+  // where the user's pick resolved one way or the other. `is_winner_correct`
+  // is boolean | null on the predictions table; we only count entries
+  // where it's explicitly true/false (null = not yet scored).
+  const winsThisCard = pickedEntries.filter(
+    (entry) => entry.prediction?.is_winner_correct === true,
+  ).length;
+  const lossesThisCard = pickedEntries.filter(
+    (entry) => entry.prediction?.is_winner_correct === false,
+  ).length;
+  // Streak wiring lands in Branch 8 (feature/streak-ux). Leaving this
+  // null for now means the `streak_badge` variant of EventShareCta
+  // can't fire yet; the CTA falls back to `record_badge` or the
+  // pre-result variants.
+  const userCurrentStreak: number | null = null;
+
   // LockTransitionWatcher feed: timestamps where fights transition from
   // pickable to locked. When `useClockTick` crosses any of these, the
   // watcher fires `router.refresh()` so the server-rendered fight card
@@ -331,6 +347,27 @@ export default async function EventPage({
                   </a>
                 ) : null}
               </div>
+
+              {/* Share CTA lives INSIDE the hero card so the action
+                  stays next to the event context. State-driven copy:
+                  no ring name / no picks → disabled hint button;
+                  picks saved → "Share your card" / "N/N locked in";
+                  post-result → W-L record. Mobile sticky bottom bar
+                  is rendered from inside this component. */}
+              {user ? (
+                <EventShareCta
+                  ringName={userRingName}
+                  eventName={localizedEventName}
+                  hasAnyPicks={pickedEntries.length > 0}
+                  upcomingPickedCount={predictedCount}
+                  upcomingTotal={predictableTotal}
+                  winsThisCard={winsThisCard}
+                  lossesThisCard={lossesThisCard}
+                  userCurrentStreak={userCurrentStreak}
+                  profileHref="/profile"
+                  shareUrl={userRingName ? buildSharePath(userRingName, event.id) : null}
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -383,21 +420,25 @@ export default async function EventPage({
               </a>
             ) : null}
           </div>
+
+          {/* Same Share CTA as the poster branch above. Anonymous
+              viewers (!user) don't see the CTA at all. */}
+          {user ? (
+            <EventShareCta
+              ringName={userRingName}
+              eventName={localizedEventName}
+              hasAnyPicks={pickedEntries.length > 0}
+              upcomingPickedCount={predictedCount}
+              upcomingTotal={predictableTotal}
+              winsThisCard={winsThisCard}
+              lossesThisCard={lossesThisCard}
+              userCurrentStreak={userCurrentStreak}
+              profileHref="/profile"
+              shareUrl={userRingName ? buildSharePath(userRingName, event.id) : null}
+            />
+          ) : null}
         </section>
       )}
-
-      {/* Share CTA — visible only when the authed viewer has at least one
-          saved pick on this card, and only if they have a ring name (the
-          URL segment). Uses the same ShareMenu as the public share page. */}
-      {userRingName && pickedEntries.length > 0 ? (
-        <div className="flex justify-end">
-          <ShareMenu
-            url={buildSharePath(userRingName, event.id)}
-            title={`${userRingName} · ${localizedEventName}`}
-            text={t("share.shareText", { username: userRingName, event: localizedEventName })}
-          />
-        </div>
-      ) : null}
 
       {/* Fight Sections */}
       <div className="flex flex-col gap-6">

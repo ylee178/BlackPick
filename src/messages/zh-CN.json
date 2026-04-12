@@ -349,7 +349,14 @@
     "channelFacebook": "Facebook",
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "邮件",
-    "channelSms": "短信"
+    "channelSms": "短信",
+    "ctaDefault": "分享我的预测",
+    "ctaAllLocked": "{n}/{total} 已锁定 — 分享我的预测",
+    "ctaCompleteRecord": "{wins}胜 {losses}负 — 分享这张卡",
+    "ctaCompleteStreak": "🔥 {streak}连胜 — 分享",
+    "ctaDisabledNoRingName": "设置拳名后即可分享",
+    "ctaDisabledNoPicks": "保存一个预测即可分享",
+    "goToProfile": "前往个人资料"
   },
   "common": {
     "loading": "加载中...",

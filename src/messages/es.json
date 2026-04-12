@@ -349,7 +349,14 @@
     "channelFacebook": "Facebook",
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "Correo",
-    "channelSms": "SMS"
+    "channelSms": "SMS",
+    "ctaDefault": "Compartir mi cartelera",
+    "ctaAllLocked": "{n}/{total} listos — comparte tu cartelera",
+    "ctaCompleteRecord": "{wins}-{losses} en esta cartelera — comparte",
+    "ctaCompleteStreak": "🔥 {streak} seguidos — comparte",
+    "ctaDisabledNoRingName": "Elige un nombre de púgil para compartir",
+    "ctaDisabledNoPicks": "Guarda un pronóstico para desbloquear",
+    "goToProfile": "Ir al perfil"
   },
   "common": {
     "loading": "Cargando...",

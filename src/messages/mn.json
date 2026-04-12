@@ -349,7 +349,14 @@
     "channelFacebook": "Facebook",
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "И-мэйл",
-    "channelSms": "SMS"
+    "channelSms": "SMS",
+    "ctaDefault": "Миний таамгаа хуваалцах",
+    "ctaAllLocked": "{n}/{total} хадгаллаа — таамгаа хуваалц",
+    "ctaCompleteRecord": "{wins}-{losses} энэ картанд — хуваалц",
+    "ctaCompleteStreak": "🔥 {streak} дараалсан — хуваалц",
+    "ctaDisabledNoRingName": "Хуваалцахын тулд бөхийн нэрээ тохируул",
+    "ctaDisabledNoPicks": "Таамаг хадгалсны дараа хуваалцах боломжтой",
+    "goToProfile": "Профайл руу очих"
   },
   "common": {
     "loading": "Ачаалж байна...",
