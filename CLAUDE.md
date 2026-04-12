@@ -43,10 +43,35 @@ Pattern lifted from `SETS_Stock/CLAUDE.md` Core Principle #7 (Sean 2026-04-12). 
 
 # Review gate
 
-Every code PR goes through `scripts/codex-review.sh`, which
-**auto-falls-back** to `scripts/gpt-review.sh` (OpenAI `/v1/responses`)
-when Codex CLI is blocked. Do NOT call the OpenAI API from anywhere
-else. Docs-only PRs (TASKS.md, wiki, Docs/) are explicitly exempt from
-the gate — self-review OK. Full profile table, escalation rules, and
-failure modes live in [`Docs/codex-review.md`](Docs/codex-review.md).
-Read that file before your first review of the session.
+**Primary review path**: the user-level `second-opinion-reviewer`
+subagent. Invoke via natural language:
+
+> Use the second-opinion-reviewer subagent to review <artifact>
+
+Model: Sonnet 4.6 default, Opus 4.6 escalation on low-confidence
+BLOCK. Usage guide:
+[`/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`](/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md).
+
+The subagent gives fresh-context, tool-grounded, non-rubberstamping
+review of specs, plans, and implementations. It replaces the
+external GPT API / Codex CLI review path that became too expensive
+to run routinely under the Max subscription (cumulative spend hit
+~$8.93 during the Branch 4 review loop on 2026-04-12).
+
+**Honest caveat**: this subagent is a SUPPLEMENT to cross-family
+external review (GPT / Codex / Gemini), not a full replacement. For
+high-stakes calls — auth, RLS, migrations touching money/score,
+share-page enumeration — still reach for external review when the
+cost is justified and the external path is available. The agent's
+mandatory `## What this review cannot catch` output section is an
+honest reminder of its shared-training-weights blind spot.
+
+**Historical fallback only** (deprioritized for cost):
+`scripts/codex-review.sh` auto-falls-back to `scripts/gpt-review.sh`
+(OpenAI `/v1/responses`). Both scripts stay in-repo for break-glass
+use but are no longer the default. Full profile table and failure
+modes in [`Docs/codex-review.md`](Docs/codex-review.md). Do NOT call
+the OpenAI API from anywhere else.
+
+Docs-only PRs (TASKS.md, wiki, Docs/) remain exempt from the review
+gate — self-review OK.

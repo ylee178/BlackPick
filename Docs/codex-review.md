@@ -1,3 +1,35 @@
+# Review gate — HISTORICAL FALLBACK (deprioritized 2026-04-13)
+
+> **Status**: deprioritized as of 2026-04-13. Primary review path is
+> now the user-level `second-opinion-reviewer` subagent. Invoke via
+> natural language:
+>
+> > Use the second-opinion-reviewer subagent to review <artifact>
+>
+> Model: Sonnet 4.6 default, Opus 4.6 escalation on low-confidence
+> BLOCK. Usage guide:
+> `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`.
+>
+> **Why this path was deprioritized**: Codex CLI + `gpt-review.sh`
+> became too expensive to run routinely under the Max subscription.
+> Cumulative OpenAI spend hit ~$8.93 during the Branch 4 review loop
+> on 2026-04-12 before Sean flagged the cost.
+>
+> **When to still reach for this path**: the subagent is a
+> SUPPLEMENT to cross-family external review, not a full
+> replacement. For high-stakes calls where a different model
+> family's opinion is worth the spend — auth, RLS, money/score
+> migrations, share-page enumeration risk — use this file's
+> escalation table. The scripts (`scripts/codex-review.sh`,
+> `scripts/gpt-review.sh`) are kept in-repo for break-glass use but
+> are no longer the default.
+>
+> The rest of this file is the original profile table, escalation
+> rules, and failure modes. Treat it as reference material for the
+> historical fallback path.
+
+---
+
 # Code review gate
 
 **Codex CLI is the primary reviewer** for this project. When Codex CLI

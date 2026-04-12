@@ -151,7 +151,7 @@ Drift: none (`npm run check:schema-drift` clean).
 
 ## Review gate
 
-**Codex CLI is the only second-opinion reviewer for this project** (replaces direct OpenAI API calls as of this session). Use `scripts/codex-review.sh`. Profile selection rules and escalation table live in `Docs/codex-review.md`. CLAUDE.md just imports it.
+**Primary review path (as of 2026-04-13)**: the user-level `second-opinion-reviewer` subagent. Invoke via natural language: "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. Supplements — does NOT replace — cross-family external review; reach for external (GPT / Codex / Gemini) when stakes justify the cost. Historical fallback (deprioritized for cost after ~$8.93 cumulative spend on 2026-04-12): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. CLAUDE.md imports this section.
 
 | Profile          | Model           | Effort | Use for                                                                              |
 |------------------|-----------------|--------|--------------------------------------------------------------------------------------|
