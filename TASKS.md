@@ -6,7 +6,7 @@
 >
 > **Two-level model** — this file carries the **full durable roadmap** (all phases 0–7). The in-session `TaskList` tool only carries **actionable-this-session** items (the sub-tasks of the current branch). Loading the full roadmap into the tool drowns current work.
 
-_Last updated: 2026-04-12 (after PR #20 merge, Phase 0 complete, Phase 1 branches 1–3 shipped, branch 4 parked awaiting quality-max exit)_
+_Last updated: 2026-04-12 (after PR #22 — Phase 1 branches 1–4 + pick-label hotfix shipped, 4/9 branches done)_
 
 ---
 
@@ -26,11 +26,9 @@ _Last updated: 2026-04-12 (after PR #20 merge, Phase 0 complete, Phase 1 branche
 
 **Phase 1 — UX bugs + onboarding + streak**.
 
-**Active branch**: Next up is `fix/prediction-pick-label-consistency` (Sean flagged 2026-04-12 mid-session). Branch 4 shipped via PR #21 — Exit B URL-state architecture after 11 gpt-review rounds, ship decision collaborative with GPT.
+**Active branch**: Next up is Branch 5 (`db/title-fight-flag` + `feature/title-fight-badge`). Branch 4 shipped via PR #21 (Exit B architecture), pick-label hotfix shipped via PR #22.
 
-**Next-up bug detail**: PR #17 introduced `isUserPick`/`myPickLabel` props on FightCard static mode. Sean reports the post-lock label differs from the voting-state label, should reuse the existing green-check neutral label and be positioned in the top-right corner. Investigate where the voting-state label lives, align the two, restore top-right position. Lite profile review.
-
-**Branches already shipped this session**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4).
+**Branches already shipped this session**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4), #22 (hotfix).
 
 **Review gate**: Codex CLI is rate-limited through **2026-04-17**. `scripts/codex-review.sh` auto-falls back to `scripts/gpt-review.sh`. Profiles: `blackpick_lite` (gpt-5.4-mini + medium), `blackpick` default (gpt-5.4 + high), `blackpick_max` (gpt-5.4-pro + high). Cumulative OpenAI spend hit **~$8.93** mid-session (quota cap triggered, Sean recharged). Branch 4 session cost: **~$0.50** (3 default rounds $0.42 + 8 lite rounds $0.08). **Sean's cost rule**: use lite profile first for single-file/CSS/copy/isolated-component; default only for multi-concern architectural questions (hooks, cross-file, concurrency); max only for auth/RLS/migrations/money. Never iterate more than 3 rounds without self-reviewing harder between attempts.
 
@@ -44,6 +42,7 @@ _Last updated: 2026-04-12 (after PR #20 merge, Phase 0 complete, Phase 1 branche
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
+| #22 | `fix/prediction-pick-label-consistency` | `f8f9016` (squashed) | **Phase 1 hotfix ✅** | Sean flagged mid-session: the FightCard post-lock "Your Pick" chip from PR #17 differed from the FightCardPicker voting-state chip (gold `tone="accent"` vs neutral green-check, and top-left vs top-right). Two fixes: (1) FightCard now uses `tone="neutral"` + green check icon (`text-[#4ade80]`) + `right-2 top-2` position — matches the picker exactly so upcoming → locked transition looks seamless. (2) FightCardPicker's hardcoded English `"My Pick"` replaced with `t("prediction.yourPick")`, closing a hardcoded-English leak bug. Scope-kept: card border differences (`var(--bp-accent)/40` vs `rgba(229,169,68,0.3)`) left for a later retro-tokens pass. gpt-review.sh lite CLEAN round 1, cost $0.0007. |
 | #21 | `feature/fighter-page-sort` | `08582ef` | **Phase 1 branch 4 ✅** | Adds `winrate_desc` (3-decided-fight minimum gate) + `weightclass_asc` (canonical weight ladder) sort options and country filter to `/fighters`, with URL state for shareability + localStorage persist. New `src/lib/fighter-grid-state.ts` pure helpers (parseStateFromParams with explicit status metadata, isEqualState, serializeStateToQuery, buildFightersHref, readPersistedState, writePersistedState) + 39 unit tests. Architecture: URL as committed source of truth, `useTransition`-wrapped navigation, `optimisticState` anchored to `searchParamsString` (auto-invalidates on URL moves — no render-time setState, no ref-read-in-render), `latestIntentRef` synchronous merge buffer resynced via `useLayoutEffect`, `pendingPersistRef` match-on-settle persistence (clears on supersede), `canonicalizedTargetQueryRef` deterministic shared-link handling, effect order persist → canonicalize → restore. Unrelated query params (utm, feature flags) preserved via baseSearch in buildFightersHref. Duplicated params (`?sort=a&sort=b`) detected via `getAll` + canonicalized. 7 new i18n keys × 7 locales. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT. 125/125 tests. Known trade-off: brief flash of defaults on first mount before localStorage restore commits (~50ms) — fix requires SSR cookie read / useSyncExternalStore, out of scope. Cost ~$0.50 (3 default + 8 lite per Sean's cost rule). |
 | #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` (squashed) | Chore | Moves 7 pre-2026-04-13 session wiki files out of the repo to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`, `.gitignore` blocks `Wiki_Sean/` entirely, CLAUDE.md session-start protocol updated to read from the external path. New memory entry `feedback_wiki_log_location` documents the rule. Docs-only, exempt from review gate. |
 | #19 | `fix/ui-polish-batch` | `d5d03b2` (squashed) | **Phase 1 branch 3 ✅** | Drops `avatar-glow` golden halo on picked fighter (solid 2px gold border replaces it, matches DESIGN.md "no radiating decorative layers"). `.retro-field::placeholder` opacity 0.2 → 0.5 for WCAG contrast. FightCardPicker + FightCard name+flag line wraps (`min-w-0 w-full text-center break-words`) so long Hangul/Cyrillic/accented names wrap instead of truncating on narrow mobile. Lite profile CLEAN round 1, cost $0.003. |
@@ -117,20 +116,9 @@ Scope: re-introduce the mobile-only sticky bottom bar variant of `EventShareCta`
 
 Shipped via **Exit B** (URL-as-state kept) after a full architectural rewrite. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT (round 11's remaining concern was defensive complexity for a scenario that doesn't occur with Next.js router dedup semantics). 125/125 tests, cost ~$0.50 session total.
 
-### Branch 4-extra: `fix/prediction-pick-label-consistency` ← **next up (Sean flagged mid-session 2026-04-12)**
+### Branch 4-extra: `fix/prediction-pick-label-consistency` ✅ shipped in PR #22 (commit `f8f9016`)
 
-PR #17 introduced `isUserPick` / `myPickLabel` props on `FightCard` static mode — the "Your Pick" accent chip + gold border for the viewer's saved pick in live state. Sean reports two issues:
-
-1. **Label inconsistency**: the post-lock label (whatever PR #17 shipped) differs from the existing voting-state label that already uses a green-check neutral chip. The two states should use the SAME label component/style so the transition is seamless.
-2. **Position regression**: the label should be in the **top-right corner** of the fighter card. Current position (check where PR #17 placed it) needs to move.
-
-**Investigate**:
-- `src/components/FightCard.tsx` static mode — where PR #17 rendered the `isUserPick` indicator
-- `src/components/FightCardPicker.tsx` voting mode — where the existing green-check neutral label lives
-- Align: post-lock state reuses the voting-state label component (or at least the same green-check visual + neutral styling)
-- Restore top-right absolute positioning
-
-**Review**: lite profile (single-component visual + label alignment). Self-review hard first, lite review round.
+FightCard post-lock chip aligned with FightCardPicker voting-state chip (same neutral tone + green check icon + top-right position). Picker's hardcoded English "My Pick" replaced with `t("prediction.yourPick")`. Lite profile CLEAN round 1.
 
 ### Branch 5: `db/title-fight-flag` + `feature/title-fight-badge` (max review for migration)
 - [ ] Migration: `fights.is_title_fight boolean not null default false` (separate from `is_cup_match`).
