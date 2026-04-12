@@ -161,8 +161,10 @@ function FighterSideStatic({
           <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
         )}
       </div>
-      <div>
-        <p className="text-sm font-bold text-[var(--bp-ink)]">{displayName} {countryCodeToFlag(fighter.nationality)}</p>
+      <div className="min-w-0 w-full text-center">
+        {/* `break-words` + min-w-0 so long names wrap instead of
+            truncating on narrow mobile fight cards. */}
+        <p className="text-sm font-bold break-words text-[var(--bp-ink)]">{displayName} {countryCodeToFlag(fighter.nationality)}</p>
         {subLabel ? (
           <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
         ) : null}

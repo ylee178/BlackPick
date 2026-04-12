@@ -411,7 +411,11 @@ button:disabled {
 }
 
 .retro-field::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  /* Bumped from 0.2 → 0.5 for readability. 0.2 was below WCAG
+     placeholder contrast guidance and read as "empty field" on the
+     dark theme, especially on the fighter search input where the
+     placeholder does the heavy lifting before the user types. */
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .retro-field:focus {
