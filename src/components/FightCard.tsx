@@ -6,7 +6,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
-import { MessageCircle, PartyPopper, Frown } from "lucide-react";
+import { Check, MessageCircle, PartyPopper, Frown } from "lucide-react";
 import {
   getLocalizedFighterName,
   getLocalizedFighterSubLabel,
@@ -145,13 +145,24 @@ function FighterSideStatic({
           <RetroLabel size="sm" tone="success">{winLabel}</RetroLabel>
         </span>
       )}
-      {/* "MY PICK" chip renders for the viewer's saved pick in live state
-          (winner not yet known) so the pick stays visible across the
-          upcoming → locked transition. Once the winner is decided, the
-          existing win/correct/wrong UI takes over and this chip yields. */}
+      {/* "MY PICK" chip renders for the viewer's saved pick in live
+          state (winner not yet known) so the pick stays visible
+          across the upcoming → locked transition. Once the winner
+          is decided, the existing win/correct/wrong UI takes over
+          and this chip yields. Visual contract matches the voting-
+          state chip in FightCardPicker exactly — same top-right
+          position, same `tone="neutral"` + green check icon — so
+          the transition from "voting" to "locked" looks seamless
+          to the user. */}
       {isUserPick && !isWinner && !isLoser && (
-        <span className="absolute left-2 top-2">
-          <RetroLabel size="sm" tone="accent">{myPickLabel}</RetroLabel>
+        <span className="absolute right-2 top-2">
+          <RetroLabel
+            size="sm"
+            tone="neutral"
+            icon={<Check className="h-3.5 w-3.5 text-[#4ade80]" strokeWidth={2} />}
+          >
+            {myPickLabel}
+          </RetroLabel>
         </span>
       )}
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
