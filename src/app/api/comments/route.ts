@@ -37,18 +37,20 @@ export async function GET(req: NextRequest) {
   const commentIds = comments.map((c) => c.id);
 
   // Fetch like counts + current user's likes
-  let likeCounts: Record<string, number> = {};
-  let myLikes: Set<string> = new Set();
+  const likeCounts: Record<string, number> = {};
+  const myLikes: Set<string> = new Set();
 
   if (commentIds.length > 0) {
-    const { data: likes } = await supabase
+    const { data: likes, error: likesError } = await supabase
       .from("comment_likes")
       .select("comment_id, user_id")
       .in("comment_id", commentIds);
 
-    for (const like of likes ?? []) {
-      likeCounts[like.comment_id] = (likeCounts[like.comment_id] ?? 0) + 1;
-      if (user && like.user_id === user.id) myLikes.add(like.comment_id);
+    if (!likesError) {
+      for (const like of likes ?? []) {
+        likeCounts[like.comment_id] = (likeCounts[like.comment_id] ?? 0) + 1;
+        if (user && like.user_id === user.id) myLikes.add(like.comment_id);
+      }
     }
   }
 

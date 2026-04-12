@@ -1,13 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Heart, Send } from "lucide-react";
 import {
+  buildReplyMaps,
+  getPreviewComments,
+  sortTopLevelComments,
+  type DiscussionSortMode,
+} from "@/lib/discussion";
+import {
   retroButtonClassName,
   retroFieldClassName,
 } from "@/components/ui/retro";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { MentionInput, type MentionUser } from "@/components/MentionInput";
 
 type Comment = {
@@ -176,10 +184,16 @@ function InlineReplyForm({
         <button
           type="submit"
           disabled={submitting || !body.trim()}
+          aria-busy={submitting}
           className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}
         >
-          <Send className="h-3.5 w-3.5" strokeWidth={2} />
-          {submitting ? "..." : t("discussion.post")}
+          <LoadingButtonContent
+            loading={submitting}
+            icon={<Send className="h-3.5 w-3.5" strokeWidth={2} />}
+            spinnerClassName="h-3.5 w-3.5"
+          >
+            {t("discussion.post")}
+          </LoadingButtonContent>
         </button>
       </div>
     </form>
@@ -195,6 +209,7 @@ function CommentRow({
   onDelete,
   onLike,
   onReply,
+  compactActions = false,
   t,
 }: {
   comment: Comment;
@@ -203,6 +218,7 @@ function CommentRow({
   onDelete: (id: string) => void;
   onLike: (commentId: string) => void;
   onReply: (comment: Comment) => void;
+  compactActions?: boolean;
   t: (key: string) => string;
 }) {
   const initial = comment.users?.ring_name?.charAt(0)?.toUpperCase() ?? "?";
@@ -250,7 +266,7 @@ function CommentRow({
             ) : null}
           </button>
 
-          {currentUserId ? (
+          {currentUserId && !compactActions ? (
             <button
               type="button"
               onClick={() => onReply(comment)}
@@ -260,7 +276,7 @@ function CommentRow({
             </button>
           ) : null}
 
-          {currentUserId === comment.user_id ? (
+          {currentUserId === comment.user_id && !compactActions ? (
             <button
               type="button"
               onClick={() => onDelete(comment.id)}
@@ -377,6 +393,39 @@ function CommentThread({
   );
 }
 
+function SortToggle({
+  value,
+  onChange,
+  t,
+}: {
+  value: DiscussionSortMode;
+  onChange: (value: DiscussionSortMode) => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-[var(--bp-line)] bg-[var(--bp-card)] p-1">
+      {(["top", "new"] as const).map((option) => {
+        const active = value === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+              active
+                ? "bg-[var(--bp-accent)] text-black"
+                : "text-[var(--bp-muted)] hover:text-[var(--bp-ink)]",
+            )}
+          >
+            {option === "top" ? t("discussion.sortTop") : t("discussion.sortNew")}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── Comment skeleton ── */
 
 function CommentSkeleton({ isReply = false }: { isReply?: boolean }) {
@@ -416,17 +465,22 @@ export default function FightComments({
   fightLabel,
   currentUserId,
   currentUserInitial,
+  mode = "full",
+  viewAllHref,
 }: {
   fightId: string;
   fightLabel: string;
   currentUserId: string | null;
   currentUserInitial?: string;
+  mode?: "full" | "preview";
+  viewAllHref?: string;
 }) {
   const { t } = useI18n();
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyMention, setReplyMention] = useState("");
+  const [sortMode, setSortMode] = useState<DiscussionSortMode>("top");
   const [loading, setLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -546,29 +600,9 @@ export default function FightComments({
     setReplyMention(mention ?? "");
   }
 
-  const topLevel = comments.filter((c) => !c.parent_id);
-  const directRepliesMap = new Map<string, Comment[]>();
-  for (const c of comments) {
-    if (c.parent_id) {
-      const arr = directRepliesMap.get(c.parent_id) ?? [];
-      arr.push(c);
-      directRepliesMap.set(c.parent_id, arr);
-    }
-  }
-
-  const flatRepliesMap = new Map<string, Comment[]>();
-  function collectReplies(rootId: string, parentId: string) {
-    const children = directRepliesMap.get(parentId) ?? [];
-    for (const child of children) {
-      const arr = flatRepliesMap.get(rootId) ?? [];
-      arr.push(child);
-      flatRepliesMap.set(rootId, arr);
-      collectReplies(rootId, child.id);
-    }
-  }
-  for (const tl of topLevel) {
-    collectReplies(tl.id, tl.id);
-  }
+  const { topLevel, flatRepliesMap } = buildReplyMaps(comments);
+  const sortedTopLevel = sortTopLevelComments(topLevel, flatRepliesMap, sortMode);
+  const previewComments = getPreviewComments(topLevel, flatRepliesMap, 3);
 
   const mentionUsers: MentionUser[] = [];
   const seenIds = new Set<string>();
@@ -579,17 +613,59 @@ export default function FightComments({
     }
   }
 
+  if (mode === "preview" && !loading && previewComments.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       {/* Header */}
-      <p className="text-sm font-semibold text-[var(--bp-ink)]">
-        {fightLabel}
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-[var(--bp-ink)]">{fightLabel}</p>
+          {mode === "preview" ? (
+            <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{t("discussion.previewTitle")}</p>
+          ) : null}
+        </div>
+        {mode === "full" ? <SortToggle value={sortMode} onChange={setSortMode} t={t} /> : null}
+      </div>
 
       {/* Comments list */}
       <div className="mt-3" aria-live="polite">
         {loading ? (
           <CommentSkeletonGroup />
+        ) : mode === "preview" ? (
+          <div className={cn("space-y-4 transition-opacity duration-300", showContent ? "opacity-100" : "opacity-0")}>
+            {previewComments.map((comment) => (
+              <div key={comment.id} className="rounded-[14px] border border-[var(--bp-line)] bg-[var(--bp-card)] p-3">
+                <CommentRow
+                  comment={comment}
+                  isReply={false}
+                  currentUserId={currentUserId}
+                  onDelete={handleDelete}
+                  onLike={handleLike}
+                  onReply={() => {}}
+                  compactActions
+                  t={t}
+                />
+                {(flatRepliesMap.get(comment.id)?.length ?? 0) > 0 ? (
+                  <p className="mt-2 pl-10 text-xs font-semibold text-[var(--bp-muted)]">
+                    {t("discussion.viewReplies").replace(
+                      "{count}",
+                      String(flatRepliesMap.get(comment.id)?.length ?? 0),
+                    )}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+            {viewAllHref ? (
+              <div className="flex justify-end">
+                <Link href={viewAllHref} className="text-xs font-semibold text-[var(--bp-accent)] hover:opacity-80">
+                  {t("discussion.viewAll")}
+                </Link>
+              </div>
+            ) : null}
+          </div>
         ) : topLevel.length === 0 ? (
           <p className="py-6 text-center text-xs text-[var(--bp-muted)]">{t("discussion.noComments")}</p>
         ) : (
@@ -599,7 +675,7 @@ export default function FightComments({
               showContent ? "opacity-100" : "opacity-0",
             )}
           >
-            {topLevel.map((comment) => (
+            {sortedTopLevel.map((comment) => (
               <CommentThread
                 key={comment.id}
                 comment={comment}
@@ -619,7 +695,7 @@ export default function FightComments({
       </div>
 
       {/* Input */}
-      {currentUserId ? (
+      {mode === "full" && currentUserId ? (
         <form onSubmit={handleSubmit} className="mt-4 border-t border-[var(--bp-line)] pt-3">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bp-accent-dim)] text-xs font-bold text-[var(--bp-accent)]">
@@ -636,20 +712,26 @@ export default function FightComments({
             <button
               type="submit"
               disabled={submitting || !body.trim()}
+              aria-busy={submitting}
               className={retroButtonClassName({ variant: "primary", size: "sm", className: "gap-1.5 shrink-0" })}
             >
-              <Send className="h-3.5 w-3.5" strokeWidth={2} />
-              {submitting ? "..." : t("discussion.post")}
+              <LoadingButtonContent
+                loading={submitting}
+                icon={<Send className="h-3.5 w-3.5" strokeWidth={2} />}
+                spinnerClassName="h-3.5 w-3.5"
+              >
+                {t("discussion.post")}
+              </LoadingButtonContent>
             </button>
           </div>
         </form>
-      ) : (
+      ) : mode === "full" ? (
         <div className="mt-4 border-t border-[var(--bp-line)] pt-3">
           <p className="text-center text-xs text-[var(--bp-muted)]">
             {t("discussion.loginRequired")}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

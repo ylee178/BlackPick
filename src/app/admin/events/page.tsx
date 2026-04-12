@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import LoadingButtonContent from '@/components/ui/LoadingButtonContent'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { getSeriesLabel } from '@/lib/constants'
 import type { Database } from '@/types/database'
@@ -176,9 +177,12 @@ export default function AdminEventsPage() {
             <button
               type="submit"
               disabled={submitting}
+              aria-busy={submitting}
               className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? 'Creating...' : 'Create Event'}
+              <LoadingButtonContent loading={submitting} loadingLabel="Creating...">
+                Create Event
+              </LoadingButtonContent>
             </button>
           </div>
         </form>

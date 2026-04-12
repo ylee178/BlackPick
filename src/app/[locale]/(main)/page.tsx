@@ -3,19 +3,20 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getSeriesLabel } from "@/lib/constants";
 import { countryCodeToFlag } from "@/lib/flags";
-import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
+import { getLocalizedEventName } from "@/lib/localized-name";
 import FightCard from "@/components/FightCard";
+import EventDateLine from "@/components/EventDateLine";
 import FlipTimer from "@/components/FlipTimer";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
+import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventDataFull, type BcFightData } from "@/lib/bc-predictions";
+import { fetchBcTicketInfo } from "@/lib/bc-ticket";
+import { getEarliestFightStart, sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import {
-  RetroEmptyState,
   RetroLabel,
-  RetroStatusBadge,
   retroButtonClassName,
-  retroChipClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
 import { RankingRowCompact } from "@/components/ui/ranking";
@@ -29,6 +30,7 @@ type EventRow = {
   date: string;
   status: "upcoming" | "live" | "completed";
   series_type: "black_cup" | "numbering" | "rise" | "other";
+  source_event_id: string | null;
 };
 
 type FighterRow = Database["public"]["Tables"]["fighters"]["Row"];
@@ -61,19 +63,19 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
 
   // Stage 1: Fetch events, top users, and series types in parallel
-  const [{ data: events }, { data: topUsers }, { data: seriesData }] = await Promise.all([
-    supabase.from("events").select("id, name, date, status, series_type").order("date", { ascending: true }),
+  const [{ data: events }, { data: topUsers }, { data: seriesData }, ticketInfo] = await Promise.all([
+    supabase.from("events").select("id, name, date, status, series_type, source_event_id").order("date", { ascending: true }),
     supabase.from("users").select("id, ring_name, score, wins, losses, current_streak, best_streak").order("score", { ascending: false }).limit(10),
     supabase.from("events").select("series_type").order("series_type"),
+    fetchBcTicketInfo(),
   ]);
 
   const typedEvents = (events ?? []) as EventRow[];
   const activeEvents = typedEvents.filter((e) => e.status === "live" || e.status === "upcoming");
   const completedEvents = typedEvents.filter((e) => e.status === "completed").reverse();
   const featured = activeEvents[0] ?? completedEvents[0] ?? null;
-  const isFeaturedCompleted = featured?.status === "completed";
   const allTimeUsers = (topUsers ?? []) as RankingUser[];
-  let seriesTypes = [...new Set((seriesData ?? []).map((e: { series_type: string }) => e.series_type))];
+  const seriesTypes = [...new Set((seriesData ?? []).map((e: { series_type: string }) => e.series_type))];
 
   const p4pUsers = [...allTimeUsers]
     .filter((u) => ((u.wins ?? 0) + (u.losses ?? 0)) >= 5)
@@ -91,9 +93,9 @@ export default async function HomePage() {
 
   let fights: FightWithFighters[] = [];
   let predictionMap = new Map<string, PredictionRow>();
-  let statsMap = new Map<string, { fighter_a_percentage: number; fighter_b_percentage: number; total_predictions: number }>();
+  const statsMap = new Map<string, { fighter_a_percentage: number; fighter_b_percentage: number; total_predictions: number }>();
   let earliestStart: string | null = null;
-  let initialLeagueUsers: { id: string; ring_name: string | null; score: number | null }[] = [];
+  const initialLeagueUsers: { id: string; ring_name: string | null; score: number | null }[] = [];
   let bcFightData: BcFightData[] = [];
   let posterUrl: string | null = null;
 
@@ -109,11 +111,17 @@ export default async function HomePage() {
         `)
         .eq("event_id", featured.id)
         .order("start_time", { ascending: false }),
-      fetchBcEventDataFull(featured.name).catch(() => ({ fights: [] as BcFightData[], posterUrl: null })),
+      fetchBcEventDataFull(featured.name, featured.source_event_id).catch(() => ({
+        fights: [] as BcFightData[],
+        posterUrl: null,
+        sourceEventId: null,
+      })),
     ]);
 
-    fights = (fightData ?? []) as FightWithFighters[];
-    earliestStart = fights[0]?.start_time ?? null;
+    const officialCard =
+      bcFull.sourceEventId ? await fetchBcOfficialEventCard(bcFull.sourceEventId).catch(() => []) : [];
+    fights = sortFightsByOfficialCardOrder((fightData ?? []) as FightWithFighters[], officialCard);
+    earliestStart = getEarliestFightStart(fights);
     bcFightData = bcFull.fights.slice(0, fights.length);
     posterUrl = bcFull.posterUrl;
 
@@ -143,12 +151,11 @@ export default async function HomePage() {
   }
 
   const eventStatus = featured?.status as "upcoming" | "live" | "completed" | undefined;
-  const nowTimestamp = Date.now();
+  const nowTimestamp = new Date().getTime();
   const pickedCount = fights.filter((f) => predictionMap.has(f.id)).length;
 
   // Black Cup completed: compute country scores from cup matches
   const isBlackCup = featured?.series_type === "black_cup";
-  let blackCupWinnerFlag: string | null = null;
   let cupScores: { flagA: string; flagB: string; nameA: string; nameB: string; winsA: number; winsB: number } | null = null;
 
   const countryNames: Record<string, string> = {
@@ -176,9 +183,6 @@ export default async function HomePage() {
         winsA: sorted[0][1],
         winsB: sorted[1][1],
       };
-      blackCupWinnerFlag = cupScores.flagA;
-    } else if (sorted.length === 1) {
-      blackCupWinnerFlag = countryCodeToFlag(sorted[0][0]);
     }
   }
 
@@ -228,16 +232,17 @@ export default async function HomePage() {
                     {t(`status.${featured.status}`)}
                   </RetroLabel>
                   <RetroLabel size="sm" tone="neutral">{getSeriesLabel(featured.series_type, t)}</RetroLabel>
-                  <span className="text-xs text-[var(--bp-muted)]">{featured.date}</span>
                 </div>
 
                 <h1 className="mt-4 text-2xl font-extrabold leading-[1.1] tracking-[-0.03em] text-[var(--bp-ink)] sm:text-3xl lg:text-4xl">
                   {getLocalizedEventName(featured, locale, featured.name)}
                 </h1>
 
-                <p className="mt-2 max-w-lg text-sm text-[var(--bp-muted)]">
-                  {t("home.heroDescription")}
-                </p>
+                <EventDateLine
+                  eventDate={featured.date}
+                  startTime={earliestStart}
+                  className="mt-2"
+                />
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                   <span className="text-[var(--bp-muted)]"><span className="font-semibold text-[var(--bp-ink)]">{fights.length}</span> {t("event.totalFights")}</span>
@@ -251,10 +256,32 @@ export default async function HomePage() {
 
                 {eventStatus === "upcoming" ? (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <a href="https://ticket.black-combat.com" target="_blank" rel="noopener noreferrer" className={retroButtonClassName({ variant: "primary", size: "sm" })}>
-                      <Ticket className="h-4 w-4" strokeWidth={1.5} />
-                      {t("home.buyTickets")}
-                    </a>
+                    {ticketInfo.soldOut ? (
+                      <button
+                        type="button"
+                        disabled
+                        className={retroButtonClassName({
+                          variant: "secondary",
+                          size: "sm",
+                          className: "cursor-not-allowed opacity-60",
+                        })}
+                        title={ticketInfo.title ?? undefined}
+                      >
+                        <Ticket className="h-4 w-4" strokeWidth={1.5} />
+                        {t("home.soldOut")}
+                      </button>
+                    ) : ticketInfo.url ? (
+                      <a
+                        href={ticketInfo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={retroButtonClassName({ variant: "primary", size: "sm" })}
+                        title={ticketInfo.title ?? undefined}
+                      >
+                        <Ticket className="h-4 w-4" strokeWidth={1.5} />
+                        {t("home.buyTickets")}
+                      </a>
+                    ) : null}
                     <a href="https://www.youtube.com/@blackcombat" target="_blank" rel="noopener noreferrer" className={retroButtonClassName({ variant: "secondary", size: "sm" })}>
                       <Play className="h-4 w-4" strokeWidth={1.5} />
                       {t("home.watchLive")}
@@ -262,13 +289,6 @@ export default async function HomePage() {
                   </div>
                 ) : null}
 
-                {!authUser ? (
-                  <div className="mt-4">
-                    <Link href="/signup" className={retroButtonClassName({ variant: "ghost", size: "sm" })}>
-                      {t("nav.signup")}
-                    </Link>
-                  </div>
-                ) : null}
               </div>
 
               {/* Right: Timer or Cup Scoreboard */}
@@ -354,6 +374,7 @@ export default async function HomePage() {
                     bcFighterADivision={bc?.fighterA_division ?? null}
                     bcFighterBDivision={bc?.fighterB_division ?? null}
                     seriesLabel={featured?.series_type === "black_cup" ? getSeriesLabel(featured.series_type, t) : null}
+                    isAuthenticated={!!authUser}
                   />
                 );
               })}
@@ -458,22 +479,6 @@ export default async function HomePage() {
               )}
             </div>
           </section>
-
-          {/* Sign Up CTA */}
-          {!authUser ? (
-            <section className="rounded-[16px] border border-[rgba(229,169,68,0.15)] bg-[var(--bp-card)] p-4">
-              <p className="text-sm font-semibold text-[var(--bp-ink)]">{t("auth.createAccount")}</p>
-              <p className="mt-1 text-xs text-[var(--bp-muted)]">{t("auth.signupDescription")}</p>
-              <div className="mt-3 flex gap-2">
-                <Link href="/signup" className={retroButtonClassName({ variant: "primary", size: "sm" })}>
-                  {t("nav.signup")}
-                </Link>
-                <Link href="/login" className={retroButtonClassName({ variant: "ghost", size: "sm" })}>
-                  {t("nav.login")}
-                </Link>
-              </div>
-            </section>
-          ) : null}
 
           {/* Card 4: League Rankings (bottom) */}
           <LeagueRankingCard

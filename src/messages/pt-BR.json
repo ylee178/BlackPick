@@ -22,6 +22,7 @@
     "fightCard": "Card de Lutas",
     "vs": "VS",
     "crowdPrediction": "Público",
+    "officialPrediction": "Pesquisa Oficial dos Fãs",
     "makeYourPick": "Faça seu palpite",
     "predictionLocked": "Palpites bloqueados",
     "result": "Resultado",
@@ -72,7 +73,10 @@
     "editUntilStart": "Você pode editar seu palpite até o início da luta.",
     "points": "pts",
     "bulk": "Prever todas as lutas",
-    "predictAll": "Prever tudo"
+    "predictAll": "Prever tudo",
+    "correct": "Você acertou!",
+    "wrong": "Mais sorte na próxima",
+    "allPredictedToast": "Todos os palpites foram salvos. Boa sorte."
   },
   "profile": {
     "fightRecord": "Cartel de lutas",
@@ -111,6 +115,7 @@
     "login": "Entrar",
     "signup": "Cadastrar-se",
     "googleLogin": "Continuar com Google",
+    "facebookLogin": "Continuar com Facebook",
     "or": "ou",
     "signupEyebrow": "Entre no Black Pick",
     "createAccount": "Criar conta",
@@ -119,10 +124,11 @@
     "loginTitle": "Entrar",
     "loginDescription": "Volte para a arena e acompanhe seus palpites.",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "Mínimo de 6 caracteres",
-    "creatingAccount": "Criando conta...",
-    "signingIn": "Entrando...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "Mínimo de 6 caracteres",
+  "creatingAccount": "Criando conta...",
+  "signupCheckEmail": "Verifique seu e-mail para confirmar sua conta. Se esse endereço puder se cadastrar, um link de confirmação chegará em breve.",
+  "signingIn": "Entrando...",
     "redirecting": "Redirecionando...",
     "alreadyHaveAccount": "Já tem uma conta?",
     "noAccount": "Ainda não tem conta?",
@@ -131,7 +137,9 @@
     "userExists": "Esse e-mail já está cadastrado. Faça login.",
     "invalidEmail": "Digite um endereço de e-mail válido.",
     "passwordTooShort": "A senha precisa ter pelo menos 6 caracteres.",
+    "providerUnavailable": "Esse login social ainda não está disponível. Use o login por email por enquanto.",
     "authUnexpected": "Não foi possível concluir a autenticação agora.",
+    "oauthCallbackFailed": "Não conseguimos concluir esse login social. Tente novamente.",
     "logout": "Sair",
     "forgotPassword": "Esqueceu sua senha?",
     "resetPassword": "Redefinir Senha",
@@ -144,7 +152,17 @@
     "updatePassword": "Atualizar senha",
     "updating": "Atualizando...",
     "passwordUpdated": "Senha atualizada! Redirecionando para login.",
-    "passwordUpdateFailed": "Falha ao atualizar a senha."
+    "passwordUpdateFailed": "Falha ao atualizar a senha.",
+    "passwordResetLoginPrompt": "Senha alterada. Entre com sua nova senha.",
+    "dashboardGateTitle": "Entre para abrir seu dashboard.",
+    "dashboardGateDescription": "Acompanhe sua tendência de pontos, sequência, badges e categorias mais fortes em um só lugar.",
+    "myRecordGateTitle": "Entre para ver seu histórico.",
+    "myRecordGateDescription": "Revise todos os seus palpites, placares por evento e resultados em uma única tela.",
+    "eventRecordGateTitle": "Entre para ver este relatório do evento.",
+    "eventRecordGateDescription": "Veja como você pontuou neste card, luta por luta.",
+    "pickGateTitle": "Cadastre-se para travar seu palpite.",
+    "pickGateDescription": "Leva 10 segundos. Salvamos sua previsão assim que você entrar.",
+    "pickGateEmailSignup": "Cadastrar com e-mail"
   },
   "account": {
     "editProfile": "Editar Perfil",
@@ -168,7 +186,14 @@
     "record": "Cartel",
     "nationality": "Nacionalidade",
     "weightClass": "Categoria de peso",
-    "recentFights": "Lutas Recentes"
+    "recentFights": "Lutas Recentes",
+    "filterCountry": "Filtrar por país",
+    "allCountries": "Todos os países",
+    "sortBy": "Ordenar",
+    "sortWinsDesc": "Mais vitórias",
+    "sortLossesDesc": "Mais derrotas",
+    "sortNameAsc": "Nome",
+    "noResults": "Nenhum lutador corresponde a este filtro."
   },
   "series": {
     "blackCup": "Black Cup",
@@ -191,6 +216,7 @@
     "heroTitle": "Não é palpite. É leitura de luta.",
     "heroDescription": "Preveja as lutas do Black Combat, construa seu cartel e prove que você é o verdadeiro entendedor de luta.",
     "buyTickets": "Comprar Ingressos",
+    "soldOut": "Esgotado",
     "watchLive": "Assistir ao Vivo"
   },
   "rankingPage": {
@@ -200,11 +226,14 @@
   },
   "countdown": {
     "closesIn": "Palpites encerram em",
+    "eventStartsIn": "O evento começa em",
     "locked": "Palpites encerrados",
+    "lockedHint": "Os palpites encerram quando o tempo acabar",
     "daysShort": "Dias",
     "hoursShort": "Hrs",
     "minutesShort": "Min",
-    "secondsShort": "Seg"
+    "secondsShort": "Seg",
+    "selectTimezone": "Alterar fuso horário"
   },
   "mvp": {
     "oneVotePerEvent": "Um voto por evento.",
@@ -287,7 +316,11 @@
     "translate": "Traduzir",
     "original": "Original",
     "viewReplies": "Ver {count} respostas",
-    "hideReplies": "Ocultar respostas"
+    "hideReplies": "Ocultar respostas",
+    "sortTop": "Principais",
+    "sortNew": "Recentes",
+    "previewTitle": "Principais comentarios",
+    "viewAll": "Ver toda a discussão"
   },
   "notification": {
     "title": "Notificacoes",
@@ -297,6 +330,26 @@
     "resultReady": "Resultados disponiveis",
     "mvpVoteOpen": "Votacao MVP aberta",
     "rankingChanged": "Seu ranking mudou"
+  },
+  "share": {
+    "trigger": "Compartilhar",
+    "dialogTitle": "Compartilhe seus palpites",
+    "eyebrow": "Palpite do Black Pick",
+    "subtitle": "Palpites travados no Black Pick",
+    "noFights": "Ainda não há lutas neste card.",
+    "noPick": "Nenhum palpite salvo para esta luta.",
+    "methodNotSet": "Método não definido",
+    "ctaMakeYourPicks": "Faça seus próprios palpites",
+    "ctaSubtitle": "Entre e defina suas previsões para este card.",
+    "shareText": "Veja os palpites de {username} para {event}",
+    "copyLink": "Copiar link",
+    "copied": "Link copiado",
+    "copyFailed": "Não foi possível copiar — mantenha pressionado para copiar manualmente.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "E-mail",
+    "channelSms": "SMS"
   },
   "common": {
     "loading": "Carregando...",
@@ -326,6 +379,7 @@
     "joinMembership": "Assine para replays completos",
     "platform": "Plataforma",
     "fighters": "Lutadores",
-    "latestResults": "Últimos resultados"
+    "latestResults": "Últimos resultados",
+    "close": "Fechar"
   }
 }

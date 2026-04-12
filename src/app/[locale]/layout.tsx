@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/locales";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { Analytics } from "@vercel/analytics/next";
+import AnalyticsProvider from "@/components/AnalyticsProvider";
 import DevPanel from "@/components/DevPanel";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
@@ -42,6 +44,8 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>
+        <AnalyticsProvider />
+        <Analytics />
         <DevPanel />
       </body>
     </html>

@@ -1,5 +1,6 @@
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
+import { Link } from "@/i18n/navigation";
 import { getLocalizedFighterName, getLocalizedFighterSubLabel } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
@@ -59,7 +60,6 @@ export default async function FighterDetailPage({ params }: PageProps) {
   const ringName = fighter.ring_name || displayName;
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
-  const detailImageUrl = `/api/fighter-avatar/ref/${fighter.id}`;
   const flag = countryCodeToFlag(fighter.nationality);
   const weightClass = fighter.weight_class ? translateWeightClass(fighter.weight_class, locale) : null;
   const { wins, losses, draws } = parseRecord(fighter.record);
@@ -123,8 +123,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
           {/* Image — left, bottom-anchored, original proportions */}
           <div className="relative w-[200px] sm:w-[280px] md:w-[320px]">
             <FighterAvatar
-              src={detailImageUrl}
-              fallbackSrc={avatarUrl}
+              src={avatarUrl}
               alt={displayName}
               className="absolute bottom-0 left-0 h-full w-full object-contain object-bottom"
             />
@@ -148,7 +147,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span className="text-xl">{flag}</span>
               {weightClass && (
-                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-medium text-[var(--bp-muted)]">
+                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
                   {weightClass}
                 </span>
               )}
@@ -203,8 +202,8 @@ export default async function FighterDetailPage({ params }: PageProps) {
                       ? "bg-[#4ade80]/10 text-[#4ade80]"
                       : "bg-[#f87171]/10 text-[#f87171]";
 
-                return (
-                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                const rowInner = (
+                  <>
                     {/* Result badge */}
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${resultColor}`}>
                       {resultLabel}
@@ -225,7 +224,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
                     {/* Opponent info */}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-[var(--bp-ink)]">
+                      <p className="truncate text-sm font-medium text-[var(--bp-ink)] transition-colors group-hover:text-[var(--bp-accent)]">
                         {f.opponentName} {f.opponentFlag}
                       </p>
                       {f.method && (
@@ -240,6 +239,27 @@ export default async function FighterDetailPage({ params }: PageProps) {
                       <p className="truncate text-xs text-[var(--bp-muted)]">{f.eventName}</p>
                       <p className="text-[11px] text-[var(--bp-muted)] opacity-50">{f.eventDate}</p>
                     </div>
+                  </>
+                );
+
+                // Link the whole row to the opponent's detail page when we
+                // have an opponent id. Fallback to a plain div if the
+                // opponent record is missing (e.g. deleted fighter). Uses
+                // the `group` pattern so only the opponent name turns
+                // accent-gold on hover — we intentionally avoid any
+                // background / border change on the row because that
+                // would fight the parent retro panel's outline.
+                return f.opponentId ? (
+                  <Link
+                    key={f.id}
+                    href={`/fighters/${f.opponentId}`}
+                    className="group flex cursor-pointer items-center gap-3 px-4 py-3"
+                  >
+                    {rowInner}
+                  </Link>
+                ) : (
+                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                    {rowInner}
                   </div>
                 );
               })}

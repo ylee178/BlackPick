@@ -2,18 +2,16 @@ import { Link } from "@/i18n/navigation";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName } from "@/lib/localized-name";
+import SignInCard from "@/components/auth/SignInCard";
 import {
-  RetroEmptyState,
   RetroLabel,
-  RetroStatusBadge,
-  retroButtonClassName,
   retroSegmentClassName,
 } from "@/components/ui/retro";
 import nextDynamic from "next/dynamic";
 const ScoreTrendChart = nextDynamic(
   () => import("@/components/ScoreTrendChart").then((m) => m.ScoreTrendChart),
 );
-import { ScoreValue, RankBadge, WLRecord } from "@/components/ui/ranking";
+import { ScoreValue, WLRecord } from "@/components/ui/ranking";
 import { Flame, TrendingUp, TrendingDown } from "lucide-react";
 import { getWeightClassOrder } from "@/lib/weight-class";
 import { getUserBadges } from "@/lib/badge-service";
@@ -23,6 +21,79 @@ export const dynamic = "force-dynamic";
 
 const dCard =
   "rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[#0a0a0a] p-5 sm:p-6";
+
+function DeltaIndicator({ value }: { value: number | null }) {
+  if (value == null) return null;
+  const isPositive = value >= 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${
+        isPositive ? "text-[var(--bp-success)]" : "text-[var(--bp-danger)]"
+      }`}
+    >
+      {isPositive ? (
+        <TrendingUp className="h-3 w-3" />
+      ) : (
+        <TrendingDown className="h-3 w-3" />
+      )}
+      {value > 0 ? "+" : ""}
+      {value}
+    </span>
+  );
+}
+
+function DonutRing({
+  label,
+  correct,
+  total,
+}: {
+  label: string;
+  correct: number;
+  total: number;
+}) {
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const mR = 36;
+  const mC = 2 * Math.PI * mR;
+  const mOffset = mC - (pct / 100) * mC;
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative flex h-24 w-24 items-center justify-center">
+        <svg className="-rotate-90" viewBox="0 0 86 86" width="96" height="96">
+          <circle
+            cx="43"
+            cy="43"
+            r={mR}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="5"
+          />
+          <circle
+            cx="43"
+            cy="43"
+            r={mR}
+            fill="none"
+            stroke="var(--bp-accent)"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={mC}
+            strokeDashoffset={mOffset}
+            opacity={total > 0 ? 0.85 : 0.15}
+          />
+        </svg>
+        <p className="absolute text-xl font-extrabold tabular-nums text-[var(--bp-ink)]">
+          {pct}
+          <span className="pct-unit text-[10px] font-semibold text-[var(--bp-muted)]">%</span>
+        </p>
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-bold uppercase text-[var(--bp-ink)]">{label}</p>
+        <p className="mt-0.5 text-xs tabular-nums text-[var(--bp-muted)]">
+          {correct}/{total}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 /* ──────────────── Time range helpers ──────────────── */
 
@@ -88,14 +159,14 @@ export default async function MyRecordDashboardPage({
 
   if (!authUser) {
     return (
-      <RetroEmptyState
-        title={t("profile.signInToView")}
-        action={
-          <Link href="/login" className={retroButtonClassName({ variant: "primary" })}>
-            {t("nav.login")}
-          </Link>
-        }
-      />
+      <div className="mx-auto max-w-md">
+        <SignInCard
+          eyebrow={t("myRecord.dashboard")}
+          title={t("auth.dashboardGateTitle")}
+          description={t("auth.dashboardGateDescription")}
+          redirectTo="/dashboard"
+        />
+      </div>
     );
   }
 
@@ -211,11 +282,9 @@ export default async function MyRecordDashboardPage({
   const periodScore = filteredPreds.reduce((s, p) => s + (p.score ?? 0), 0);
 
   const prevWins = prevPreds.filter((p) => p.is_winner_correct === true).length;
-  const prevLosses = prevPreds.filter((p) => p.is_winner_correct === false).length;
   const prevScore = prevPreds.reduce((s, p) => s + (p.score ?? 0), 0);
 
   const winDelta = prev ? periodWins - prevWins : null;
-  const lossDelta = prev ? periodLosses - prevLosses : null;
 
   const displayWins = range === "all" ? wins : periodWins;
   const displayLosses = range === "all" ? losses : periodLosses;
@@ -233,12 +302,11 @@ export default async function MyRecordDashboardPage({
   const circleOffset = circleC - (winRate / 100) * circleC;
 
   /* ── Score trend chart points ── */
-  let cumulative = 0;
   const trendPoints = filteredPreds
     .filter((p) => p.is_winner_correct !== null)
-    .map((p) => {
+    .reduce<Array<{ date: string; score: number; cumulative: number; isWin: boolean; detail?: string }>>((points, p) => {
       const pts = p.score ?? 0;
-      cumulative += pts;
+      const cumulative = (points.at(-1)?.cumulative ?? 0) + pts;
       const date = p.created_at.slice(0, 10);
       const isWin = p.is_winner_correct === true;
 
@@ -247,14 +315,15 @@ export default async function MyRecordDashboardPage({
       if (p.is_method_correct) details.push(p.method ?? "Method");
       if (p.is_round_correct) details.push(`R${p.round}`);
 
-      return {
+      points.push({
         date,
         score: pts,
         cumulative,
         isWin,
         detail: details.length > 0 ? details.join(" + ") : undefined,
-      };
-    });
+      });
+      return points;
+    }, []);
 
   const prevRangeLabel = prev ? t("myRecord.vsPrevious").replace("{range}", t(RANGE_LABEL_KEYS[range])) : undefined;
 
@@ -336,80 +405,6 @@ export default async function MyRecordDashboardPage({
   const events = [...eventMap.values()].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-
-  /* ── Delta indicator helper ── */
-  function DeltaIndicator({ value }: { value: number | null }) {
-    if (value == null) return null;
-    const isPositive = value >= 0;
-    return (
-      <span
-        className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${
-          isPositive ? "text-[var(--bp-success)]" : "text-[var(--bp-danger)]"
-        }`}
-      >
-        {isPositive ? (
-          <TrendingUp className="h-3 w-3" />
-        ) : (
-          <TrendingDown className="h-3 w-3" />
-        )}
-        {value > 0 ? "+" : ""}
-        {value}
-      </span>
-    );
-  }
-
-  /* ── Donut ring component ── */
-  function DonutRing({
-    label,
-    correct,
-    total,
-  }: {
-    label: string;
-    correct: number;
-    total: number;
-  }) {
-    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-    const mR = 36;
-    const mC = 2 * Math.PI * mR;
-    const mOffset = mC - (pct / 100) * mC;
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <div className="relative flex h-24 w-24 items-center justify-center">
-          <svg className="-rotate-90" viewBox="0 0 86 86" width="96" height="96">
-            <circle
-              cx="43"
-              cy="43"
-              r={mR}
-              fill="none"
-              stroke="rgba(255,255,255,0.06)"
-              strokeWidth="5"
-            />
-            <circle
-              cx="43"
-              cy="43"
-              r={mR}
-              fill="none"
-              stroke="var(--bp-accent)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeDasharray={mC}
-              strokeDashoffset={mOffset}
-              opacity={total > 0 ? 0.85 : 0.15}
-            />
-          </svg>
-          <p className="absolute text-xl font-extrabold tabular-nums text-[var(--bp-ink)]">
-            {pct}<span className="pct-unit text-[10px] font-semibold text-[var(--bp-muted)]">%</span>
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-sm font-bold uppercase text-[var(--bp-ink)]">{label}</p>
-          <p className="mt-0.5 text-xs tabular-nums text-[var(--bp-muted)]">
-            {correct}/{total}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   /* ════════════════════════════════════════ RENDER ════════════════════════════════════════ */
 

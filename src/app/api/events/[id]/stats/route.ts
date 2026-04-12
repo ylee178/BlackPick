@@ -60,18 +60,22 @@ export async function GET(
       (prediction) => prediction.winner_id === fight.fighter_b_id
     ).length;
 
+    const fightWithJoins = fight as typeof fight & {
+      fighter_a?: { name?: string | null } | null;
+      fighter_b?: { name?: string | null } | null;
+    };
     return {
       fight_id: fight.id,
       total_predictions: total,
       fighter_a: {
         id: fight.fighter_a_id,
-        name: (fight as any).fighter_a?.name ?? "Fighter A",
+        name: fightWithJoins.fighter_a?.name ?? "Fighter A",
         percentage: total > 0 ? Math.round((fighterACount / total) * 100) : 0,
         count: fighterACount,
       },
       fighter_b: {
         id: fight.fighter_b_id,
-        name: (fight as any).fighter_b?.name ?? "Fighter B",
+        name: fightWithJoins.fighter_b?.name ?? "Fighter B",
         percentage: total > 0 ? Math.round((fighterBCount / total) * 100) : 0,
         count: fighterBCount,
       },

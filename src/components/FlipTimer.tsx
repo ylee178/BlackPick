@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Info } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
+import { useClockTick } from "@/lib/use-sync-store";
 
-function getTimeLeft(target: string) {
-  const diff = new Date(target).getTime() - Date.now();
+type TimeLeft = { total: number; d: number; h: number; m: number; s: number };
+
+const EMPTY_TIME_LEFT: TimeLeft = { total: 1, d: 0, h: 0, m: 0, s: 0 };
+
+function getTimeLeft(target: string, nowMs: number): TimeLeft {
+  const diff = new Date(target).getTime() - nowMs;
   if (diff <= 0) return { total: 0, d: 0, h: 0, m: 0, s: 0 };
   return {
     total: diff,
@@ -28,49 +33,64 @@ export function DigitCard({ value, label }: { value: string; label?: string }) {
   );
 }
 
+/**
+ * Pure countdown timer. The absolute date/time and the timezone picker
+ * now live in the EventDateLine subtext under the event title, so this
+ * component is intentionally just the LCD-style countdown digits.
+ */
 export default function FlipTimer({ targetTime }: { targetTime: string }) {
   const { t } = useI18n();
-  const [mounted, setMounted] = useState(false);
-  const [tl, setTl] = useState({ total: 1, d: 0, h: 0, m: 0, s: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-    setTl(getTimeLeft(targetTime));
-    const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
-    return () => clearInterval(i);
-  }, [targetTime]);
+  // Shared 1Hz external store — returns 0 before hydration, then live
+  // Date.now() values. See `src/lib/use-sync-store.ts` for the rationale.
+  const now = useClockTick();
+  const mounted = now !== 0;
+  const tl = mounted ? getTimeLeft(targetTime, now) : EMPTY_TIME_LEFT;
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
   if (tl.total <= 0 && mounted) {
     return (
       <div className="rounded-[12px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-4 py-4 text-center">
-        <p className="text-sm font-semibold text-[var(--bp-muted)]">{t("countdown.locked")}</p>
+        <p className="text-sm font-semibold text-[var(--bp-muted)]">
+          {t("countdown.locked")}
+        </p>
       </div>
     );
   }
-
-  const localTime = mounted
-    ? new Date(targetTime).toLocaleString([], { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true })
-    : "";
 
   return (
     <div>
       <div className="rounded-[12px] bg-[#060606] px-6 py-6">
         <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.12em] text-[var(--bp-muted)]">
-          {t("countdown.closesIn")}
+          {t("countdown.eventStartsIn")}
         </p>
-        <div className="flex items-start justify-center gap-1.5 sm:gap-2" suppressHydrationWarning>
-          <DigitCard value={mounted ? pad(tl.d) : "--"} label={t("countdown.daysShort")} />
+        <div
+          className="flex items-start justify-center gap-1.5 sm:gap-2"
+          suppressHydrationWarning
+        >
+          <DigitCard
+            value={mounted ? pad(tl.d) : "--"}
+            label={t("countdown.daysShort")}
+          />
           <span className="lcd-colon">:</span>
-          <DigitCard value={mounted ? pad(tl.h) : "--"} label={t("countdown.hoursShort")} />
+          <DigitCard
+            value={mounted ? pad(tl.h) : "--"}
+            label={t("countdown.hoursShort")}
+          />
           <span className="lcd-colon">:</span>
-          <DigitCard value={mounted ? pad(tl.m) : "--"} label={t("countdown.minutesShort")} />
+          <DigitCard
+            value={mounted ? pad(tl.m) : "--"}
+            label={t("countdown.minutesShort")}
+          />
           <span className="lcd-colon">:</span>
-          <DigitCard value={mounted ? pad(tl.s) : "--"} label={t("countdown.secondsShort")} />
+          <DigitCard
+            value={mounted ? pad(tl.s) : "--"}
+            label={t("countdown.secondsShort")}
+          />
         </div>
-        <p className="mt-3 text-center text-[11px] uppercase text-[var(--bp-muted)]" suppressHydrationWarning>
-          {localTime}
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[var(--bp-muted)]">
+          <Info className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+          <span>{t("countdown.lockedHint")}</span>
         </p>
       </div>
     </div>

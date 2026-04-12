@@ -5,6 +5,7 @@ import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import FighterAvatar from "@/components/FighterAvatar";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { cn } from "@/lib/utils";
 import {
   RetroStatusBadge,
@@ -142,9 +143,12 @@ export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) 
               type="button"
               onClick={handleVote}
               disabled={loading}
+              aria-busy={loading}
               className={retroButtonClassName({ variant: "primary", size: "sm" })}
             >
-              {loading ? t("mvp.submitting") : t("mvp.vote")}
+              <LoadingButtonContent loading={loading} loadingLabel={t("mvp.submitting")}>
+                {t("mvp.vote")}
+              </LoadingButtonContent>
             </button>
           </div>
         </>

@@ -5,12 +5,11 @@ import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-
 import { countryCodeToFlag } from "@/lib/flags";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import FighterAvatar from "@/components/FighterAvatar";
+import SignInCard from "@/components/auth/SignInCard";
 import { Check, X } from "lucide-react";
 import {
   RetroEmptyState,
   RetroLabel,
-  RetroStatusBadge,
-  retroButtonClassName,
 } from "@/components/ui/retro";
 
 export const dynamic = "force-dynamic";
@@ -27,10 +26,14 @@ export default async function MyRecordEventPage({ params }: { params: Params }) 
 
   if (!authUser) {
     return (
-      <RetroEmptyState
-        title={t("profile.signInToView")}
-        action={<Link href="/login" className={retroButtonClassName({ variant: "primary" })}>{t("nav.login")}</Link>}
-      />
+      <div className="mx-auto max-w-md">
+        <SignInCard
+          eyebrow={t("nav.myRecord")}
+          title={t("auth.eventRecordGateTitle")}
+          description={t("auth.eventRecordGateDescription")}
+          redirectTo={`/my-record/${eventId}`}
+        />
+      </div>
     );
   }
 
@@ -218,7 +221,6 @@ export default async function MyRecordEventPage({ params }: { params: Params }) 
                   if (prediction.is_winner_correct) {
                     details.push({ text: "승자 맞춤", ok: true });
                   } else {
-                    const pickedLabel = prediction.winner_id === fight.fighter_a?.id ? fighterALabel : fighterBLabel;
                     details.push({ text: "승자 틀림", ok: false });
                   }
                 }

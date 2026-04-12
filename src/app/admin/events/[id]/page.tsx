@@ -1,10 +1,10 @@
 import { requireAdminPage } from '@/lib/admin-auth'
+import PendingSubmitButton from '@/components/ui/PendingSubmitButton'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import type { Database } from '@/types/database'
 
 type Params = Promise<{ id: string }>
 type EventStatus = Database['public']['Tables']['events']['Row']['status']
-type FightInsert = Database['public']['Tables']['fights']['Insert']
 type Fighter = Database['public']['Tables']['fighters']['Row']
 
 async function EventStatusForm({
@@ -48,12 +48,12 @@ async function EventStatusForm({
           ))}
         </select>
       </div>
-      <button
-        type="submit"
-        className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300"
+      <PendingSubmitButton
+        className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+        loadingLabel="Updating..."
       >
         Update Status
-      </button>
+      </PendingSubmitButton>
     </form>
   )
 }
@@ -77,19 +77,18 @@ async function AddFightForm({
       return
     }
 
-    const payload: FightInsert = {
-      event_id: eventId,
-      fighter_a_id,
-      fighter_b_id,
-      start_time: new Date(start_time).toISOString(),
-      status: 'upcoming',
-      result_processed_at: null,
-    }
-
+    // Send the raw datetime-local string — the server owns conversion and
+    // interprets it as Korea Standard Time (the venue is in Seoul). Doing
+    // the conversion client-side would anchor the value to whatever timezone
+    // the admin happens to be browsing from.
     const res = await fetch(`/api/admin/events/${eventId}/fights`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        fighter_a_id,
+        fighter_b_id,
+        start_time,
+      }),
     })
 
     if (!res.ok) {
@@ -136,22 +135,28 @@ async function AddFightForm({
       </div>
 
       <div className="md:col-span-2">
-        <label className="mb-2 block text-sm text-gray-300">Start Time</label>
+        <label className="mb-2 block text-sm text-gray-300">
+          Start Time (KST — 한국 표준시, Asia/Seoul)
+        </label>
         <input
           type="datetime-local"
           name="start_time"
           required
           className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
         />
+        <p className="mt-2 text-xs text-gray-500">
+          Enter the fight start time in Korea Standard Time. The server stores it as UTC
+          and the app converts to each viewer&apos;s timezone at render time.
+        </p>
       </div>
 
       <div className="md:col-span-2">
-        <button
-          type="submit"
-          className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300"
+        <PendingSubmitButton
+          className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          loadingLabel="Adding..."
         >
           Add Fight
-        </button>
+        </PendingSubmitButton>
       </div>
     </form>
   )

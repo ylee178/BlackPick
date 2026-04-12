@@ -75,7 +75,8 @@
     "bulk": "Predict all fights",
     "predictAll": "Predict All",
     "correct": "You got it right!",
-    "wrong": "Better luck next time"
+    "wrong": "Better luck next time",
+    "allPredictedToast": "All picks locked in. Good luck out there."
   },
   "profile": {
     "fightRecord": "Fight Record",
@@ -86,7 +87,7 @@
     "perfectCard": "Perfect",
     "ranking": "Ranking",
     "recentPredictions": "Recent Predictions",
-    "signInToView": "Sign in to view",
+    "signInToView": "Log in to view",
     "myAccount": "My Account"
   },
   "ranking": {
@@ -114,18 +115,20 @@
     "login": "Log in",
     "signup": "Sign up",
     "googleLogin": "Continue with Google",
+    "facebookLogin": "Continue with Facebook",
     "or": "or",
     "signupEyebrow": "Join Black Pick",
-    "createAccount": "Create Account",
+    "createAccount": "Sign up",
     "signupDescription": "Create your account first. Your ring name comes next on the home screen.",
     "loginEyebrow": "Welcome Back",
-    "loginTitle": "Sign In",
+    "loginTitle": "Log in",
     "loginDescription": "Step back into the arena and track your picks.",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "Minimum 6 characters",
-    "creatingAccount": "Creating Account...",
-    "signingIn": "Signing In...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "Minimum 6 characters",
+  "creatingAccount": "Signing up...",
+  "signupCheckEmail": "Check your email to confirm your account. If that address can sign up, a confirmation link will arrive shortly.",
+  "signingIn": "Logging in...",
     "redirecting": "Redirecting...",
     "alreadyHaveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
@@ -134,7 +137,9 @@
     "userExists": "That email is already registered. Please log in instead.",
     "invalidEmail": "Please enter a valid email address.",
     "passwordTooShort": "Password must be at least 6 characters.",
+    "providerUnavailable": "That social login isn't available yet. Please try email login for now.",
     "authUnexpected": "We couldn't complete authentication right now.",
+    "oauthCallbackFailed": "We couldn't complete that social login. Please try again.",
     "logout": "Log out",
     "forgotPassword": "Forgot your password?",
     "resetPassword": "Reset Password",
@@ -147,7 +152,17 @@
     "updatePassword": "Update Password",
     "updating": "Updating...",
     "passwordUpdated": "Password updated! Redirecting to login.",
-    "passwordUpdateFailed": "Failed to update password."
+    "passwordUpdateFailed": "Failed to update password.",
+    "passwordResetLoginPrompt": "Password changed. Please log in with your new password.",
+    "dashboardGateTitle": "Log in to open your dashboard.",
+    "dashboardGateDescription": "Track your score trend, streaks, badges, and strongest weight classes in one place.",
+    "myRecordGateTitle": "Log in to open your record.",
+    "myRecordGateDescription": "Review every pick, event scorecard, and prediction result from one home base.",
+    "eventRecordGateTitle": "Log in to open this event report.",
+    "eventRecordGateDescription": "See how you scored on this card, fight by fight.",
+    "pickGateTitle": "Sign up to lock in your pick.",
+    "pickGateDescription": "Takes 10 seconds. We'll save your prediction the moment you're in.",
+    "pickGateEmailSignup": "Sign up with email"
   },
   "account": {
     "editProfile": "Edit Profile",
@@ -171,7 +186,14 @@
     "record": "Record",
     "nationality": "Nationality",
     "weightClass": "Weight Class",
-    "recentFights": "Recent Fights"
+    "recentFights": "Recent Fights",
+    "filterCountry": "Filter by country",
+    "allCountries": "All countries",
+    "sortBy": "Sort fighters",
+    "sortWinsDesc": "Most wins",
+    "sortLossesDesc": "Most losses",
+    "sortNameAsc": "Name (A-Z)",
+    "noResults": "No fighters match this filter."
   },
   "series": {
     "blackCup": "Black Cup",
@@ -194,6 +216,7 @@
     "heroTitle": "It's not guessing. It's reading the fight.",
     "heroDescription": "Predict Black Combat fights, build your record, and prove you're the real fight expert.",
     "buyTickets": "Buy Tickets",
+    "soldOut": "Sold Out",
     "watchLive": "Watch Live"
   },
   "rankingPage": {
@@ -203,11 +226,14 @@
   },
   "countdown": {
     "closesIn": "Predictions close in",
+    "eventStartsIn": "Event starts in",
     "locked": "Predictions locked",
+    "lockedHint": "Predictions lock when time's up",
     "daysShort": "Days",
     "hoursShort": "Hrs",
     "minutesShort": "Min",
-    "secondsShort": "Sec"
+    "secondsShort": "Sec",
+    "selectTimezone": "Change timezone"
   },
   "mvp": {
     "oneVotePerEvent": "One vote per event.",
@@ -238,7 +264,7 @@
     "tooLong": "Your ring name must stay within 20 characters.",
     "invalidCharacters": "Use only letters, numbers, spaces, hyphens, or underscores.",
     "taken": "That ring name is already taken.",
-    "notAuthenticated": "Please sign in again to finish onboarding.",
+    "notAuthenticated": "Please log in again to finish onboarding.",
     "unexpected": "We couldn't save your ring name right now."
   },
   "results": {
@@ -290,7 +316,11 @@
     "translate": "Translate",
     "original": "Original",
     "viewReplies": "View {count} replies",
-    "hideReplies": "Hide replies"
+    "hideReplies": "Hide replies",
+    "sortTop": "Top",
+    "sortNew": "New",
+    "previewTitle": "Top comments",
+    "viewAll": "View full discussion"
   },
   "notification": {
     "title": "Notifications",
@@ -300,6 +330,26 @@
     "resultReady": "Results are in",
     "mvpVoteOpen": "MVP voting is open",
     "rankingChanged": "Your ranking changed"
+  },
+  "share": {
+    "trigger": "Share",
+    "dialogTitle": "Share your picks",
+    "eyebrow": "A Black Pick prediction",
+    "subtitle": "Locked in on Black Pick",
+    "noFights": "No fights on this card yet.",
+    "noPick": "No pick saved for this fight.",
+    "methodNotSet": "Method not set",
+    "ctaMakeYourPicks": "Make your own picks",
+    "ctaSubtitle": "Tap through to set your predictions for this card.",
+    "shareText": "Check out {username}'s picks for {event}",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Couldn't copy — long-press to copy manually.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "Email",
+    "channelSms": "SMS"
   },
   "common": {
     "loading": "Loading...",
@@ -329,6 +379,7 @@
     "joinMembership": "Join membership for full fight replays",
     "platform": "Platform",
     "fighters": "Fighters",
-    "latestResults": "Latest results"
+    "latestResults": "Latest results",
+    "close": "Close"
   }
 }

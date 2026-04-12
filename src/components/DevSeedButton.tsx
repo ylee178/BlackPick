@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { retroButtonClassName } from "@/components/ui/retro";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 
 export function DevSeedButton({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(false);
@@ -36,9 +37,12 @@ export function DevSeedButton({ userId }: { userId: string }) {
     <button
       onClick={handleSeed}
       disabled={loading}
+      aria-busy={loading}
       className={retroButtonClassName({ variant: "ghost", size: "sm" })}
     >
-      {loading ? "Seeding..." : result ?? "DEV: Fill My Data"}
+      <LoadingButtonContent loading={loading} loadingLabel="Seeding...">
+        {result ?? "DEV: Fill My Data"}
+      </LoadingButtonContent>
     </button>
   );
 }

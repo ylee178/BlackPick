@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy } from "lucide-react";
+import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy, Shield } from "lucide-react";
 import {
   retroButtonClassName,
   retroPanelClassName,
@@ -16,9 +16,16 @@ type Props = {
   score: number;
   wins: number;
   losses: number;
+  isAdmin?: boolean;
 };
 
-export default function AccountDropdown({ ringName, score, wins, losses }: Props) {
+export default function AccountDropdown({
+  ringName,
+  score,
+  wins,
+  losses,
+  isAdmin = false,
+}: Props) {
   const { t } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -125,6 +132,19 @@ export default function AccountDropdown({ ringName, score, wins, losses }: Props
                 {t("account.notificationSettings")}
               </Link>
             </div>
+
+            {isAdmin ? (
+              <div className="border-t border-[var(--bp-line)] py-1">
+                <Link
+                  href="/fighters/manage"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition-colors duration-150 hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
+                >
+                  <Shield className="h-4 w-4" strokeWidth={1.8} />
+                  {t("nav.admin")}
+                </Link>
+              </div>
+            ) : null}
 
             {/* Reset record */}
             <div className="border-t border-[var(--bp-line)] py-1">

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirm your Black Pick account</title>
+    <!--[if mso]>
+    <style type="text/css">
+      body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
+    </style>
+    <![endif]-->
+  </head>
+  <body style="margin:0; padding:0; background:#0a0a0a; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#ffffff; -webkit-font-smoothing:antialiased;">
+    <!-- Preheader (hidden preview text) -->
+    <div style="display:none !important; visibility:hidden; opacity:0; mso-hide:all; max-height:0; max-width:0; overflow:hidden; font-size:1px; line-height:1px; color:#0a0a0a;">
+      Welcome to Black Pick. Confirm your email to start predicting the next champions.
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0a0a0a;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+
+          <!-- ============ Main Container ============ -->
+          <table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0" style="width:100%; max-width:580px; background:#000000; border:1px solid #1a1a1a; border-radius:20px; overflow:hidden;">
+
+            <!-- ============ Header ============ -->
+            <tr>
+              <td align="center" style="padding:36px 24px 22px; background:#000000;">
+                <img
+                  src="{{ .SiteURL }}/email/bp-logo-email.png"
+                  alt="BLACK PICK"
+                  width="160"
+                  style="display:block; width:160px; max-width:160px; height:auto; border:0; outline:none; text-decoration:none;"
+                />
+                <div style="margin-top:10px; font-size:11px; font-weight:600; letter-spacing:0.32em; color:#6b7280; text-transform:uppercase;">
+                  Who Is The Pick?
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px;">
+                <div style="height:1px; background:#141414; line-height:1px; font-size:0;">&nbsp;</div>
+              </td>
+            </tr>
+
+            <!-- ============ Body ============ -->
+            <tr>
+              <td align="center" style="padding:52px 32px 44px;">
+
+                <!-- Icon circle -->
+                <img
+                  src="{{ .SiteURL }}/email/icon-shield"
+                  alt=""
+                  width="80"
+                  height="80"
+                  style="display:block; width:80px; height:80px; border:0; outline:none; text-decoration:none; border-radius:9999px;"
+                />
+
+                <!-- Title -->
+                <h1 style="margin:30px 0 0; padding:0; font-size:32px; line-height:1.15; font-weight:800; color:#ffffff; letter-spacing:-0.02em;">
+                  Confirm your account
+                </h1>
+
+                <!-- Description -->
+                <p style="margin:18px auto 0; padding:0; font-size:15px; line-height:1.7; color:#9ca3af; max-width:440px;">
+                  Welcome to Black Pick. Please confirm your email address to start predicting the next champions.
+                </p>
+
+                <!-- CTA Button -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:38px auto 0;">
+                  <tr>
+                    <td
+                      align="center"
+                      bgcolor="#ffba3c"
+                      style="border-radius:9999px; box-shadow:0 0 0 8px rgba(255,186,60,0.08), 0 14px 36px rgba(255,186,60,0.32);"
+                    >
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        style="display:inline-block; padding:16px 42px; font-size:15px; font-weight:800; color:#0a0a0a; text-decoration:none; letter-spacing:0.01em; border-radius:9999px;"
+                      >
+                        Verify Email Address
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Copy Link Panel -->
+                <table role="presentation" width="460" cellspacing="0" cellpadding="0" border="0" style="width:100%; max-width:460px; margin-top:34px;">
+                  <tr>
+                    <td style="background:#0f0f10; border:1px solid #1e1e21; border-radius:12px; padding:18px 20px;">
+                      <div style="font-size:10px; font-weight:700; letter-spacing:0.2em; color:#4b5563; text-align:center; text-transform:uppercase;">
+                        Or Copy This Link
+                      </div>
+                      <div style="margin-top:10px; font-family:'SF Mono',Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace; font-size:12px; line-height:1.6; word-break:break-all; color:#9ca3af; text-align:center;">
+                        {{ .ConfirmationURL }}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+
+            <!-- ============ Footer ============ -->
+            <tr>
+              <td align="center" style="padding:32px 24px 40px; background:#050505; border-top:1px solid #141414;">
+                <div style="font-size:12px; font-weight:800; letter-spacing:0.2em; color:#6b7280; text-transform:uppercase;">
+                  Black Pick
+                </div>
+                <div style="margin-top:12px; font-size:12px; line-height:1.7; color:#9aa0ab;">
+                  You received this email because you signed up at
+                  <a href="{{ .SiteURL }}" style="color:#c2c7d0; text-decoration:none; font-weight:600;">blackpick.io</a>.
+                </div>
+                <div style="margin-top:10px; font-size:11px; line-height:1.65; color:#9aa0ab;">
+                  To ensure delivery, add
+                  <span style="color:#c2c7d0; font-weight:600;">noreply@blackpick.io</span>
+                  to your address book.
+                </div>
+                <div style="margin-top:16px; font-size:11px; line-height:1.65; color:#6b7280;">
+                  If you didn't create an account, you can safely ignore this email.
+                </div>
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -1,9 +1,12 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
+import { logEvent } from "@/lib/analytics";
 import { useI18n } from "@/lib/i18n-provider";
 import { useToast } from "@/components/Toast";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { getLocalizedFighterName, getLocalizedFighterSubLabel } from "@/lib/localized-name";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import FighterAvatar from "@/components/FighterAvatar";
@@ -12,6 +15,12 @@ import { cn } from "@/lib/utils";
 import { translateWeightClass } from "@/lib/weight-class";
 import { Check, Pencil } from "lucide-react";
 import { RetroLabel } from "@/components/ui/retro";
+import SignupGateModal from "@/components/SignupGateModal";
+import {
+  loadPendingPick,
+  savePendingPick,
+  clearPendingPick,
+} from "@/lib/pending-pick";
 
 type FighterData = {
   id: string;
@@ -47,6 +56,12 @@ type Props = {
     method?: string | null;
     round?: number | null;
   } | null;
+  /**
+   * Whether the current viewer has a Supabase session. Anonymous viewers are
+   * routed through the signup gate on the first fighter click instead of
+   * touching local pick state.
+   */
+  isAuthenticated: boolean;
 };
 
 const methods = ["KO/TKO", "Submission", "Decision"] as const;
@@ -56,45 +71,210 @@ function CheckIcon({ className }: { className?: string }) {
   return <Check className={cn("h-3 w-3", className)} strokeWidth={2} />;
 }
 
-function RadioDot({ checked }: { checked: boolean }) {
-  if (checked) {
-    return (
-      <span className="flex h-[18px] w-[18px] min-h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-[var(--bp-accent)]">
-        <CheckIcon className="h-2.5 w-2.5 text-[var(--bp-bg)]" />
-      </span>
-    );
-  }
-  return (
-    <span className="block h-[18px] w-[18px] min-h-[18px] min-w-[18px] shrink-0 rounded-full border-2 border-[rgba(255,255,255,0.25)]" />
-  );
-}
-
 export default function FightCardPicker({
   fightId,
   fighterA,
   fighterB,
   fighterAId,
   fighterBId,
-  crowdStats,
   bcPrediction,
   bcFighterADivision,
   bcFighterBDivision,
   initialPrediction,
+  isAuthenticated,
 }: Props) {
   const router = useRouter();
   const { t, locale } = useI18n();
+  const initialMethod = initialPrediction?.method ?? "";
+  const initialRound = initialPrediction?.round ? String(initialPrediction.round) : "";
   const [winnerId, setWinnerId] = useState(initialPrediction?.winner_id ?? "");
-  const [method, setMethod] = useState(initialPrediction?.method ?? "");
-  const [round, setRound] = useState(initialPrediction?.round ? String(initialPrediction.round) : "");
+  const [method, setMethod] = useState(initialMethod);
+  const [round, setRound] = useState(initialRound);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(!initialPrediction);
-  const hasSaved = !!initialPrediction;
+  const [flowStartTime] = useState(() => Date.now());
+  // Latest committed (DB-saved) state. Used as the revert target for Cancel
+  // and to drive the "saved" badge after the user starts drafting an opponent.
+  const [savedSnapshot, setSavedSnapshot] = useState<
+    { winnerId: string; method: string; round: string } | null
+  >(() =>
+    initialPrediction
+      ? {
+          winnerId: initialPrediction.winner_id,
+          method: initialMethod,
+          round: initialRound,
+        }
+      : null,
+  );
+  // Per-fighter draft memory. Switching to the opponent after a save shows
+  // whatever method/round the user had previously sketched out for that
+  // fighter (so they don't lose work when toggling back and forth).
+  const [draftByFighter, setDraftByFighter] = useState<
+    Record<string, { method: string; round: string }>
+  >(() =>
+    initialPrediction
+      ? {
+          [initialPrediction.winner_id]: {
+            method: initialMethod,
+            round: initialRound,
+          },
+        }
+      : {},
+  );
+  const hasSaved = savedSnapshot !== null;
+  const canSave = !!winnerId && !!method && !!round;
   const { toast } = useToast();
 
+  // Signup-gate modal visibility. Only opens when an anonymous user clicks
+  // a fighter — the first and simplest wall we put up before touching state.
+  const [signupGateOpen, setSignupGateOpen] = useState(false);
+
+  // Re-edit entries of an existing prediction are tracked by the Edit
+  // button click handler below. This effect only handles the fresh-flow
+  // case (user arrives at a fight card without a saved prediction).
+  const hadInitialPrediction = !!initialPrediction;
+  useEffect(() => {
+    if (hadInitialPrediction) return;
+    logEvent("prediction_flow_entered", { entry_method: "mount" }, { fightId });
+    // `fightId` is a stable string prop; `hadInitialPrediction` captures the
+    // initial value so this effect fires exactly once per fight card mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore a pending pick after the user returns from OAuth / signup.
+  // When an anonymous user clicks a fighter, selectWinner stashes the intent
+  // to localStorage and opens the signup gate. The OAuth redirect is a
+  // full-page navigation, so after auth the page re-mounts; we check for a
+  // matching stash and reapply the selection exactly once.
+  //
+  // Guards:
+  //  - Skip when there's already a saved prediction (initialPrediction)
+  //    or any selection on screen — a stale stash should never override a
+  //    real committed pick from the DB.
+  //  - Depend on [isAuthenticated, fightId] so the effect re-runs if auth
+  //    state resolves late (instead of silently losing the pending pick).
+  //  - loadPendingPick() returns null after consumption, so subsequent
+  //    runs with the same deps are no-ops — idempotent by design.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    // Don't ambush an existing prediction with a stale stash. If the user
+    // has anything committed or drafted, trust that and drop the stash.
+    if (initialPrediction || winnerId) {
+      clearPendingPick();
+      return;
+    }
+    const pending = loadPendingPick();
+    if (!pending || pending.fightId !== fightId) return;
+    clearPendingPick();
+    setWinnerId(pending.fighterId);
+    setDraftByFighter((prev) => ({
+      ...prev,
+      [pending.fighterId]: prev[pending.fighterId] ?? { method: "", round: "" },
+    }));
+    setIsEditing(true);
+    logEvent(
+      "prediction_winner_selected",
+      {
+        selected_fighter_id: pending.fighterId,
+        fighter_position: pending.side,
+        restored_after_signup: true,
+      },
+      { fightId },
+    );
+    // initialPrediction/winnerId intentionally excluded from deps — they
+    // are guards read at effect-run time, not triggers for re-run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, fightId]);
+
   function handleCancel() {
-    setWinnerId(initialPrediction?.winner_id ?? "");
-    setMethod(initialPrediction?.method ?? "");
-    setRound(initialPrediction?.round ? String(initialPrediction.round) : "");
+    if (savedSnapshot) {
+      setWinnerId(savedSnapshot.winnerId);
+      setMethod(savedSnapshot.method);
+      setRound(savedSnapshot.round);
+    } else {
+      setWinnerId("");
+      setMethod("");
+      setRound("");
+    }
+  }
+
+  // Analytics-aware setters. These wrap the raw state setters and fire the
+  // matching analytics event only on explicit user interaction (not on
+  // reset/cancel). The spec treats these as the funnel steps.
+  function selectWinner(fighterId: string, side: "a" | "b") {
+    // Signup gate: anonymous users must sign up before we touch any state.
+    // Stash the intent so we can restore it after they return from OAuth,
+    // then open the modal and bail out. No winner change, no draft memory
+    // mutation, nothing — just park and prompt.
+    if (!isAuthenticated) {
+      savePendingPick({ fightId, fighterId, side });
+      logEvent(
+        "signup_gate_shown",
+        { fighter_position: side },
+        { fightId },
+      );
+      setSignupGateOpen(true);
+      return;
+    }
+    // Clicking the already-picked fighter while idle re-opens the editor;
+    // while editing it's a no-op (the picker is already visible).
+    if (fighterId === winnerId) {
+      if (!isEditing) setIsEditing(true);
+      return;
+    }
+    // Build the parked map locally so the read for the incoming fighter is
+    // consistent with the write for the outgoing fighter (no setState
+    // callback / closure interleaving to reason about).
+    const parked: Record<string, { method: string; round: string }> = winnerId
+      ? { ...draftByFighter, [winnerId]: { method, round } }
+      : draftByFighter;
+    const incoming = parked[fighterId] ?? { method: "", round: "" };
+    setDraftByFighter(parked);
+    setWinnerId(fighterId);
+    setMethod(incoming.method);
+    setRound(incoming.round);
+    // Always enter edit mode on a switch so the method/round picker shows
+    // on the newly-selected card.
+    setIsEditing(true);
+    logEvent(
+      "prediction_winner_selected",
+      { selected_fighter_id: fighterId, fighter_position: side },
+      { fightId },
+    );
+  }
+
+  function selectMethod(value: string) {
+    setMethod(value);
+    if (winnerId) {
+      setDraftByFighter((prev) => ({
+        ...prev,
+        [winnerId]: { method: value, round },
+      }));
+    }
+    if (value) {
+      logEvent(
+        "prediction_method_selected",
+        { method: value },
+        { fightId },
+      );
+    }
+  }
+
+  function selectRound(value: string) {
+    setRound(value);
+    if (winnerId) {
+      setDraftByFighter((prev) => ({
+        ...prev,
+        [winnerId]: { method, round: value },
+      }));
+    }
+    if (value) {
+      logEvent(
+        "prediction_round_selected",
+        { round: Number(value) },
+        { fightId },
+      );
+    }
   }
 
   async function handleSubmit() {
@@ -112,11 +292,35 @@ export default function FightCardPicker({
         }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        const nextPath = getSafeAuthNext(`${window.location.pathname}${window.location.search}`);
+        window.location.assign(buildLocalizedAuthPath("login", locale, nextPath));
+        return;
+      }
       if (!res.ok) {
         toast(data.error || t("prediction.failedToSave"), "error");
         return;
       }
       toast(t("prediction.savedMessage"), "success");
+      logEvent(
+        "prediction_submitted",
+        {
+          winner_id: winnerId,
+          method: method || null,
+          round: round ? Number(round) : null,
+          has_method: !!method,
+          has_round: !!round,
+          time_to_submit_seconds: Math.round((Date.now() - flowStartTime) / 1000),
+        },
+        { fightId },
+      );
+      // Commit the new snapshot — this becomes the revert target for any
+      // subsequent Cancel and the source of "saved" UI affordances.
+      setSavedSnapshot({ winnerId, method, round });
+      setDraftByFighter((prev) => ({
+        ...prev,
+        [winnerId]: { method, round },
+      }));
       setIsEditing(false);
       startTransition(() => { router.refresh(); });
     } catch {
@@ -149,24 +353,19 @@ export default function FightCardPicker({
         aria-label={`${displayName} ${isPicked ? "selected" : ""}`}
         tabIndex={0}
         onClick={() => {
-          if (!isEditing) return;
-          setWinnerId(fighterId);
+          selectWinner(fighterId, side === "left" ? "a" : "b");
         }}
         onKeyDown={(e) => {
-          if (!isEditing) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setWinnerId(fighterId);
+            selectWinner(fighterId, side === "left" ? "a" : "b");
           }
         }}
         className={cn(
-          "flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150",
+          "flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150 cursor-pointer",
           isPicked
             ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-card-inset)] fighter-card-selected"
-            : "border-[var(--bp-line)] bg-[var(--bp-card-inset)]",
-          isEditing && "cursor-pointer",
-          isEditing && !isPicked && "hover:border-[var(--bp-line-strong)] hover:bg-[var(--bp-card-hover)]",
-          !isEditing && !isPicked && "opacity-50",
+            : "border-[var(--bp-line)] bg-[var(--bp-card-inset)] hover:border-[var(--bp-line-strong)] hover:bg-[var(--bp-card-hover)]",
         )}
       >
         <div className={cn(
@@ -207,7 +406,9 @@ export default function FightCardPicker({
               return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
             })()}</p>
             {divRank ? (
-              <p className="mt-0.5 text-xs font-semibold text-[var(--bp-accent)]">#{divRank} {divWeight}</p>
+              <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
+                #{divRank} {divWeight}
+              </p>
             ) : null}
           </div>
 
@@ -220,13 +421,13 @@ export default function FightCardPicker({
             </div>
           ) : null}
 
-          {!isPicked && isEditing ? (
+          {!isPicked ? (
             <button
               type="button"
               className="mt-2 w-full cursor-pointer rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-2 py-1.5 text-xs font-semibold text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)] hover:text-[var(--bp-ink)]"
               onClick={(e) => {
                 e.stopPropagation();
-                setWinnerId(fighterId);
+                selectWinner(fighterId, side === "left" ? "a" : "b");
               }}
             >
               {t("prediction.selectWinner")}
@@ -249,7 +450,7 @@ export default function FightCardPicker({
                     type="button"
                     aria-pressed={active}
                     disabled={!isEditing}
-                    onClick={(e) => { e.stopPropagation(); setMethod(active ? "" : m); }}
+                    onClick={(e) => { e.stopPropagation(); selectMethod(active ? "" : m); }}
                     className={cn(
                       "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition-colors duration-150",
                       active
@@ -278,7 +479,7 @@ export default function FightCardPicker({
                     type="button"
                     aria-pressed={active}
                     disabled={!isEditing}
-                    onClick={(e) => { e.stopPropagation(); setRound(active ? "" : String(r)); }}
+                    onClick={(e) => { e.stopPropagation(); selectRound(active ? "" : String(r)); }}
                     className={cn(
                       "flex items-center justify-center gap-1 rounded-[8px] border px-1 py-2 text-xs font-medium transition-colors duration-150",
                       active
@@ -342,17 +543,30 @@ export default function FightCardPicker({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); void handleSubmit(); }}
-                  disabled={loading}
-                  className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#2563eb] py-2 text-xs font-bold text-white transition hover:bg-[#1d4ed8] disabled:opacity-50"
+                  disabled={loading || !canSave}
+                  aria-busy={loading}
+                  className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#2563eb] py-2 text-xs font-bold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading && <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-                  {t("prediction.savePick")}
+                  <LoadingButtonContent
+                    loading={loading}
+                    spinnerClassName="h-3 w-3"
+                  >
+                    {t("prediction.savePick")}
+                  </LoadingButtonContent>
                 </button>
               </div>
             ) : (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                  logEvent(
+                    "prediction_flow_entered",
+                    { entry_method: "edit_button" },
+                    { fightId },
+                  );
+                }}
                 className="mt-3 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-3 py-2 text-xs font-semibold text-[var(--bp-ink)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)]"
               >
                 <Pencil className="h-3 w-3" strokeWidth={1.8} />
@@ -367,12 +581,24 @@ export default function FightCardPicker({
   }
 
   return (
-    <div role="radiogroup" aria-label={t("prediction.selectWinner")} className="flex flex-col items-stretch gap-2 sm:flex-row sm:gap-3">
-      <FighterCard fighter={fighterA} fighterId={fighterAId} side="left" />
-      <div className="flex items-center justify-center px-1 py-1 sm:py-0">
-        <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
+    <>
+      <div role="radiogroup" aria-label={t("prediction.selectWinner")} className="flex flex-col items-stretch gap-2 sm:flex-row sm:gap-3">
+        <FighterCard fighter={fighterA} fighterId={fighterAId} side="left" />
+        <div className="flex items-center justify-center px-1 py-1 sm:py-0">
+          <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
+        </div>
+        <FighterCard fighter={fighterB} fighterId={fighterBId} side="right" />
       </div>
-      <FighterCard fighter={fighterB} fighterId={fighterBId} side="right" />
-    </div>
+      <SignupGateModal
+        open={signupGateOpen}
+        onClose={() => {
+          // User dismissed the gate without signing up — drop the stash
+          // so a future mount (same tab, within TTL) doesn't silently
+          // ambush them with the old selection.
+          clearPendingPick();
+          setSignupGateOpen(false);
+        }}
+      />
+    </>
   );
 }

@@ -1,0 +1,47 @@
+name: Supabase usage check
+
+on:
+  schedule:
+    # 매주 월요일 00:00 UTC (한국 시간 월요일 오전 9시)
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check Supabase usage
+        id: usage
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # Capture output + exit code without failing the step immediately
+          set +e
+          node scripts/check-usage.mjs > /tmp/usage-report.txt 2>&1
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          cat /tmp/usage-report.txt
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/usage-report.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: Open issue on yellow/red
+        if: steps.usage.outputs.exit_code == '1' || steps.usage.outputs.exit_code == '2'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('/tmp/usage-report.txt', 'utf8');
+            const level = '${{ steps.usage.outputs.exit_code }}' === '2' ? '🔴 RED' : '🟡 YELLOW';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `${level}: Supabase Free tier usage warning`,
+              body: `Weekly usage check flagged at least one metric.\n\n\`\`\`\n${report}\n\`\`\`\n\nThe check thresholds are 70% (yellow) and 90% (red) of Free tier limits.`,
+              labels: ['usage-alert'],
+            });

@@ -1,27 +1,13 @@
 import { NextResponse } from "next/server";
-import type { User } from "@supabase/supabase-js";
-import { findAuthUserByEmail } from "@/lib/auth-user-search";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
+import { createSupabaseServer } from "@/lib/supabase-server";
+import { createRateLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const signupLimiter = createRateLimiter({ limit: 5, windowSeconds: 60 });
 
-async function findExistingAuthUserByEmail(email: string) {
-  const admin = createSupabaseAdmin();
-  return findAuthUserByEmail(email, async ({ page, perPage }) => {
-    const { data, error } = await admin.auth.admin.listUsers({
-      page,
-      perPage,
-    });
-
-    if (error) {
-      throw error;
-    }
-    return data;
-  });
-}
-
-function isConfirmedUser(user: User) {
-  return Boolean(user.confirmed_at || user.email_confirmed_at);
+function getSignupRateLimitKey(request: Request, email: string) {
+  return `${getClientIp(request)}:${email}`;
 }
 
 export async function POST(request: Request) {
@@ -44,45 +30,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: "password_too_short" }, { status: 400 });
   }
 
+  const { allowed, resetInSeconds } = signupLimiter.check(
+    getSignupRateLimitKey(request, email),
+  );
+  if (!allowed) {
+    return rateLimitResponse(resetInSeconds);
+  }
+
   try {
-    const admin = createSupabaseAdmin();
-    const existingUser = await findExistingAuthUserByEmail(email);
-
-    if (existingUser) {
-      if (isConfirmedUser(existingUser)) {
-        return NextResponse.json({ code: "user_exists" }, { status: 409 });
-      }
-
-      const { error: updateError } = await admin.auth.admin.updateUserById(existingUser.id, {
-        password,
-        email_confirm: true,
-      });
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      return NextResponse.json({ mode: "confirmed_existing" });
-    }
-
-    const { data, error } = await admin.auth.admin.createUser({
+    const supabase = await createSupabaseServer();
+    const origin = new URL(request.url).origin;
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true,
+      options: {
+        emailRedirectTo: buildAuthRedirectUrl("/api/auth/callback?next=/", {
+          fallbackOrigin: origin,
+          localize: false,
+        }),
+      },
     });
 
     if (error) {
-      if (error.message.toLowerCase().includes("already")) {
-        return NextResponse.json({ code: "user_exists" }, { status: 409 });
+      const message = error.message.toLowerCase();
+
+      // Avoid leaking whether the address already belongs to an existing account.
+      if (message.includes("already")) {
+        return NextResponse.json({ mode: "check_email" });
       }
 
-      throw error;
+      console.error("Failed to create signup", error);
+      return NextResponse.json({ code: "unexpected_error" }, { status: 500 });
     }
 
-    return NextResponse.json({ mode: "created", userId: data.user?.id ?? null });
+    return NextResponse.json({
+      mode: data.session ? "signed_in" : "check_email",
+    });
   } catch (error) {
-    console.error("Failed to create auth user", error);
-
+    console.error("Failed to complete signup", error);
     return NextResponse.json({ code: "unexpected_error" }, { status: 500 });
   }
 }

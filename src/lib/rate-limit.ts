@@ -11,6 +11,24 @@
 
 import { NextResponse } from "next/server";
 
+/**
+ * Extract the caller's IP address from request headers. Checks the common
+ * proxy/CDN headers in priority order: Vercel/nginx `x-forwarded-for` →
+ * Cloudflare `cf-connecting-ip` → nginx `x-real-ip`. Falls back to "unknown"
+ * so rate-limit keys never become empty strings.
+ *
+ * Shared across API routes that rate-limit by IP. Do not reimplement this
+ * locally — a weaker subset will silently degrade rate-limiting on whichever
+ * CDN it misses.
+ */
+export function getClientIp(request: Request): string {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const firstForwardedIp = forwardedFor?.split(",")[0]?.trim();
+  const edgeIp = request.headers.get("cf-connecting-ip")?.trim();
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  return firstForwardedIp || edgeIp || realIp || "unknown";
+}
+
 /** Standard 429 response with Retry-After header */
 export function rateLimitResponse(resetInSeconds: number) {
   return NextResponse.json(

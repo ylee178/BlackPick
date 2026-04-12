@@ -75,7 +75,8 @@
     "bulk": "Бүх тулааныг таамаглах",
     "predictAll": "Бүгдийг таамаглах",
     "correct": "Зөв таамагласан!",
-    "wrong": "Харамсалтай, буруу таамагласан"
+    "wrong": "Харамсалтай, буруу таамагласан",
+    "allPredictedToast": "Бүх таамаг хадгалагдлаа. Амжилт хүсье."
   },
   "profile": {
     "fightRecord": "Тулааны амжилт",
@@ -114,6 +115,7 @@
     "login": "Нэвтрэх",
     "signup": "Бүртгүүлэх",
     "googleLogin": "Google-ээр үргэлжлүүлэх",
+    "facebookLogin": "Facebook-ээр үргэлжлүүлэх",
     "or": "эсвэл",
     "signupEyebrow": "Black Pick-д нэгдээрэй",
     "createAccount": "Бүртгэл үүсгэх",
@@ -122,10 +124,11 @@
     "loginTitle": "Нэвтрэх",
     "loginDescription": "Дахин аренад орж, сонголтуудаа хянаарай.",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "Хамгийн багадаа 6 тэмдэгт",
-    "creatingAccount": "Бүртгэл үүсгэж байна...",
-    "signingIn": "Нэвтэрч байна...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "Хамгийн багадаа 6 тэмдэгт",
+  "creatingAccount": "Бүртгэл үүсгэж байна...",
+  "signupCheckEmail": "Бүртгэлээ баталгаажуулахын тулд имэйлээ шалгана уу. Хэрэв энэ хаягаар бүртгүүлэх боломжтой бол баталгаажуулах холбоос удахгүй очно.",
+  "signingIn": "Нэвтэрч байна...",
     "redirecting": "Шилжүүлж байна...",
     "alreadyHaveAccount": "Бүртгэлтэй юу?",
     "noAccount": "Бүртгэл байхгүй юу?",
@@ -134,7 +137,9 @@
     "userExists": "Энэ имэйл аль хэдийн бүртгэгдсэн байна. Оронд нь нэвтэрнэ үү.",
     "invalidEmail": "Хүчинтэй имэйл хаяг оруулна уу.",
     "passwordTooShort": "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой.",
+    "providerUnavailable": "Энэ сошиал нэвтрэлт одоогоор бэлэн биш байна. Түр хугацаанд имэйлээр нэвтэрнэ үү.",
     "authUnexpected": "Одоогоор баталгаажуулалтыг дуусгаж чадсангүй.",
+    "oauthCallbackFailed": "Сошиал нэвтрэлтийг дуусгаж чадсангүй. Дахин оролдоно уу.",
     "logout": "Гарах",
     "forgotPassword": "Нууц үгээ мартсан уу?",
     "resetPassword": "Нууц үг сэргээх",
@@ -147,7 +152,17 @@
     "updatePassword": "Нууц үг шинэчлэх",
     "updating": "Шинэчилж байна...",
     "passwordUpdated": "Нууц үг шинэчлэгдлээ! Нэвтрэх хуудас руу шилжүүлж байна.",
-    "passwordUpdateFailed": "Нууц үгийг шинэчилж чадсангүй."
+    "passwordUpdateFailed": "Нууц үгийг шинэчилж чадсангүй.",
+    "passwordResetLoginPrompt": "Нууц үг шинэчлэгдлээ. Шинэ нууц үгээрээ нэвтэрнэ үү.",
+    "dashboardGateTitle": "Нэвтэрч өөрийн dashboard-оо нээгээрэй.",
+    "dashboardGateDescription": "Онооны чиг хандлага, цуврал, badge, хамгийн хүчтэй жингийн ангиллаа нэг дороос хараарай.",
+    "myRecordGateTitle": "Нэвтэрч өөрийн амжилтын түүхээ үзээрэй.",
+    "myRecordGateDescription": "Бүх таамаг, эвентийн дүн, зөв таасан үр дүнгээ нэг газраас шалгаарай.",
+    "eventRecordGateTitle": "Нэвтэрч энэ эвентийн тайланг үзээрэй.",
+    "eventRecordGateDescription": "Энэ карт дээр тулаан тус бүрээр хэдэн оноо авснаа хараарай.",
+    "pickGateTitle": "Сонголтоо түгжихийн тулд бүртгүүлнэ үү.",
+    "pickGateDescription": "10 секундэд дуусна. Бүртгэл үүсгэмэгц таамгийг чинь хадгална.",
+    "pickGateEmailSignup": "И-мэйлээр бүртгүүлэх"
   },
   "account": {
     "editProfile": "Профайл засах",
@@ -171,7 +186,14 @@
     "record": "Амжилт",
     "nationality": "Иргэншил",
     "weightClass": "Жингийн ангилал",
-    "recentFights": "Сүүлийн тулаанууд"
+    "recentFights": "Сүүлийн тулаанууд",
+    "filterCountry": "Улсаар шүүх",
+    "allCountries": "Бүх улс",
+    "sortBy": "Эрэмбэлэх",
+    "sortWinsDesc": "Олон ялалттай",
+    "sortLossesDesc": "Олон ялагдалтай",
+    "sortNameAsc": "Нэрээр",
+    "noResults": "Энэ шүүлтүүрт тохирох тамирчин алга."
   },
   "series": {
     "blackCup": "Black Cup",
@@ -194,6 +216,7 @@
     "heroTitle": "Энэ бол таавар биш. Энэ бол тулааныг унших чадвар.",
     "heroDescription": "Black Combat-ийн тулаануудыг таамаглаж, амжилтаа бүрдүүлж, жинхэнэ тулааны шинжээч гэдгээ батлаарай.",
     "buyTickets": "Тасалбар авах",
+    "soldOut": "Зарагдсан",
     "watchLive": "Шууд үзэх"
   },
   "rankingPage": {
@@ -203,11 +226,14 @@
   },
   "countdown": {
     "closesIn": "Таамаглал хаагдах хүртэл",
+    "eventStartsIn": "Тэмцээн эхлэхэд",
     "locked": "Таамаглал түгжигдсэн",
+    "lockedHint": "Цаг дуусахад таамаглал хаагдана",
     "daysShort": "Өдөр",
     "hoursShort": "Цаг",
     "minutesShort": "Мин",
-    "secondsShort": "Сек"
+    "secondsShort": "Сек",
+    "selectTimezone": "Цагийн бүсийг солих"
   },
   "mvp": {
     "oneVotePerEvent": "Нэг тэмцээнд нэг санал.",
@@ -290,7 +316,11 @@
     "translate": "Орчуулах",
     "original": "Эх",
     "viewReplies": "{count} хариуг харах",
-    "hideReplies": "Хариунуудыг нуух"
+    "hideReplies": "Хариунуудыг нуух",
+    "sortTop": "Шилдэг",
+    "sortNew": "Шинэ",
+    "previewTitle": "Онцлох сэтгэгдлүүд",
+    "viewAll": "Бүх хэлэлцүүлгийг үзэх"
   },
   "notification": {
     "title": "Мэдэгдлүүд",
@@ -300,6 +330,26 @@
     "resultReady": "Үр дүн гарлаа",
     "mvpVoteOpen": "MVP санал хураалт нээлттэй байна",
     "rankingChanged": "Таны чансаа өөрчлөгдлөө"
+  },
+  "share": {
+    "trigger": "Хуваалцах",
+    "dialogTitle": "Таамгаа хуваалцах",
+    "eyebrow": "Black Pick-ийн таамаг",
+    "subtitle": "Black Pick дээр таамаг хадгалагдсан",
+    "noFights": "Энэ карт дээр одоогоор тулаан байхгүй.",
+    "noPick": "Энэ тулаанд хадгалсан таамаг алга.",
+    "methodNotSet": "Арга сонгогдоогүй",
+    "ctaMakeYourPicks": "Өөрийн таамгаа оруул",
+    "ctaSubtitle": "Энэ картын таамгаа өөрөө тохируулна уу.",
+    "shareText": "{username}-ийн {event}-ийн таамгийг үзээрэй",
+    "copyLink": "Холбоос хуулах",
+    "copied": "Холбоос хуулагдлаа",
+    "copyFailed": "Хуулж чадсангүй — гараар удаан дараад хуулна уу.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "И-мэйл",
+    "channelSms": "SMS"
   },
   "common": {
     "loading": "Ачаалж байна...",
@@ -329,6 +379,7 @@
     "joinMembership": "Бүтэн тулааны давталтыг үзэхийн тулд гишүүнчлэлд нэгдээрэй",
     "platform": "Платформ",
     "fighters": "Тулаанчид",
-    "latestResults": "Сүүлийн үр дүн"
+    "latestResults": "Сүүлийн үр дүн",
+    "close": "Хаах"
   }
 }

@@ -3,6 +3,22 @@ export const RING_NAME_MAX_LENGTH = 20;
 
 const RING_NAME_PATTERN = /^[\p{L}\p{N} _-]+$/u;
 
+/**
+ * Escape `%`, `_`, and `\` so a string can be passed to a Postgres
+ * `ILIKE` pattern as a literal. Ring names allow `_` as a valid
+ * character (see `RING_NAME_PATTERN`), and `_` is also a single-char
+ * wildcard in `ILIKE` — without this escape, the share-page lookup
+ * `ilike("ring_name", "a_b")` would silently match "acb", "a1b", etc.
+ *
+ * Used by callers that need exact case-insensitive equality but are
+ * stuck on PostgREST's `.ilike()` because it cannot express
+ * `lower(col) = lower(?)` without an RPC. The Postgres LIKE escape
+ * character is `\` by default, which PostgREST forwards as-is.
+ */
+export function escapeIlikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (m) => `\\${m}`);
+}
+
 export type RingNameValidationError =
   | "too_short"
   | "too_long"

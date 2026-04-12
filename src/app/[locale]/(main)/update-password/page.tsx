@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/retro";
 
 export default function UpdatePasswordPage() {
-  const router = useRouter();
   const supabase = createBrowserSupabaseClient();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,22 +34,31 @@ export default function UpdatePasswordPage() {
       password,
     });
 
-    setLoading(false);
-
     if (updateError) {
+      setLoading(false);
       setError(t("auth.passwordUpdateFailed"));
       return;
     }
 
+    // Terminate the recovery session so the user has to re-authenticate
+    // with their new password. This makes the redirect-to-login flow
+    // meaningful instead of silently landing on /login while still logged
+    // in from the PKCE recovery exchange.
+    await supabase.auth.signOut();
+
+    setLoading(false);
     setSuccess(true);
     setTimeout(() => {
-      router.push("/login");
-    }, 2000);
+      // Full navigation (not client-side push) so the login page picks
+      // up the cleared auth cookies and the ?reset=success flag drives
+      // the success banner on the login page.
+      window.location.assign(`/${locale}/login?reset=success`);
+    }, 1800);
   };
 
   return (
-    <div className="mx-auto max-w-md">
-      <section className={retroPanelClassName({ className: "p-5 sm:p-6" })}>
+    <div className="flex w-full flex-1 items-center justify-center">
+      <section className={retroPanelClassName({ className: "w-full max-w-md p-5 sm:p-6" })}>
         <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("auth.resetPassword")}</h1>
 
         {success ? (
@@ -83,9 +91,12 @@ export default function UpdatePasswordPage() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className={retroButtonClassName({ variant: "primary", size: "lg", block: true })}
             >
-              {loading ? t("auth.updating") : t("auth.updatePassword")}
+              <LoadingButtonContent loading={loading} loadingLabel={t("auth.updating")}>
+                {t("auth.updatePassword")}
+              </LoadingButtonContent>
             </button>
           </form>
         )}

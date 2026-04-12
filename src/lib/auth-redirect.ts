@@ -4,6 +4,7 @@ type BuildAuthRedirectUrlOptions = {
   fallbackOrigin?: string | null;
   locale?: Locale | null;
   localize?: boolean;
+  preferFallbackOrigin?: boolean;
 };
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
@@ -51,24 +52,48 @@ function withLocale(path: string, locale?: Locale | null) {
 }
 
 export function getAuthOrigin(fallbackOrigin?: string | null) {
+  const configuredOrigin = getConfiguredSiteOrigin();
   const normalizedFallback = normalizeOrigin(fallbackOrigin);
+
+  // In production, always prefer the canonical configured origin to avoid
+  // host-header confusion, multi-domain misconfig, or an attacker-controlled
+  // Host header shaping OAuth redirect URLs. Only fall back to runtime origin
+  // if no canonical origin is configured at all.
+  if (process.env.NODE_ENV === "production") {
+    if (configuredOrigin) return configuredOrigin;
+    if (normalizedFallback) return normalizedFallback;
+    return "http://localhost:3000";
+  }
+
+  // In dev/preview, prefer the runtime origin so localhost and per-preview
+  // deployments work without needing per-environment SITE_URL overrides.
+  // Only fall through to configured origin if there's no runtime origin.
   if (normalizedFallback && !isLocalOrigin(normalizedFallback)) {
     return normalizedFallback;
   }
+  if (configuredOrigin) return configuredOrigin;
+  return normalizedFallback ?? "http://localhost:3000";
+}
 
-  const configuredOrigin = getConfiguredSiteOrigin();
-  if (configuredOrigin) {
-    return configuredOrigin;
+function getAuthOriginWithPreference(options?: BuildAuthRedirectUrlOptions) {
+  const normalizedFallback = normalizeOrigin(options?.fallbackOrigin);
+
+  // Browser-initiated auth flows on dev/staging domains should be allowed to
+  // round-trip through the exact origin the user is currently on. This avoids
+  // preview/dev OAuth flows unexpectedly bouncing back to the canonical prod
+  // origin just because NODE_ENV is "production" in deployed builds.
+  if (options?.preferFallbackOrigin && normalizedFallback && !isLocalOrigin(normalizedFallback)) {
+    return normalizedFallback;
   }
 
-  return normalizedFallback ?? "http://localhost:3000";
+  return getAuthOrigin(options?.fallbackOrigin);
 }
 
 export function buildAuthRedirectUrl(
   path: string,
   options?: BuildAuthRedirectUrlOptions,
 ) {
-  const origin = getAuthOrigin(options?.fallbackOrigin);
+  const origin = getAuthOriginWithPreference(options);
   const normalizedPath = normalizePath(path);
   const finalPath =
     options?.localize === false

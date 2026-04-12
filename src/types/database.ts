@@ -12,7 +12,6 @@ export type Database = {
       users: {
         Row: {
           id: string
-          email: string
           ring_name: string
           wins: number
           losses: number
@@ -26,7 +25,6 @@ export type Database = {
         }
         Insert: {
           id: string
-          email: string
           ring_name: string
           wins?: number
           losses?: number
@@ -40,7 +38,6 @@ export type Database = {
         }
         Update: {
           id?: string
-          email?: string
           ring_name?: string
           wins?: number
           losses?: number
@@ -76,6 +73,39 @@ export type Database = {
             referencedColumns: ['id']
           }
         ]
+      }
+      user_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          session_id: string
+          event_type: string
+          fight_id: string | null
+          event_id: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          session_id: string
+          event_type: string
+          fight_id?: string | null
+          event_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          session_id?: string
+          event_type?: string
+          fight_id?: string | null
+          event_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
       }
       fighters: {
         Row: {

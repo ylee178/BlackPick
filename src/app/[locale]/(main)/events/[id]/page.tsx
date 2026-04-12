@@ -1,11 +1,17 @@
+import AllPredictedToast from "@/components/AllPredictedToast";
+import EventDateLine from "@/components/EventDateLine";
+import ShareMenu from "@/components/ShareMenu";
+import { buildSharePath } from "@/lib/share-url";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import FlipTimer from "@/components/FlipTimer";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { RetroStatusBadge, retroChipClassName, retroPanelClassName } from "@/components/ui/retro";
+import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventDataFull } from "@/lib/bc-predictions";
 import { getSeriesLabel } from "@/lib/constants";
+import { getEarliestFightStart, sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
@@ -55,14 +61,16 @@ export default async function EventPage({
   const { t, locale } = await getTranslations();
 
   let userInitial = "?";
+  let userRingName: string | null = null;
   if (user) {
     const { data: dbUser } = await supabase.from("users").select("ring_name").eq("id", user.id).single();
-    userInitial = dbUser?.ring_name?.charAt(0) || "?";
+    userRingName = dbUser?.ring_name ?? null;
+    userInitial = userRingName?.charAt(0) || "?";
   }
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, date, status, mvp_video_url, series_type")
+    .select("id, name, date, status, mvp_video_url, series_type, source_event_id")
     .eq("id", id)
     .single();
 
@@ -86,9 +94,13 @@ export default async function EventPage({
     .eq("event_id", id)
     .order("start_time", { ascending: false });
 
-  const typedFights = (fights ?? []) as FightWithFighters[];
+  const rawFights = (fights ?? []) as FightWithFighters[];
+  const bcResult = await fetchBcEventDataFull(event.name, event.source_event_id);
+  const officialCard =
+    bcResult.sourceEventId ? await fetchBcOfficialEventCard(bcResult.sourceEventId).catch(() => []) : [];
+  const typedFights = sortFightsByOfficialCardOrder(rawFights, officialCard);
   const fightIds = typedFights.map((fight) => fight.id);
-  const earliestStart = typedFights[0]?.start_time ?? null;
+  const earliestStart = getEarliestFightStart(typedFights);
 
   const [{ data: predictions }, { data: statsData }] = await Promise.all([
     user && fightIds.length > 0
@@ -121,8 +133,6 @@ export default async function EventPage({
     eventFighterMap.set(fight.fighter_b.id, fight.fighter_b);
   }
 
-  // Fetch BC official site predictions + weight classes + poster
-  const bcResult = await fetchBcEventDataFull(event.name);
   const bcRawData = bcResult.fights;
   // Both BC site and our DB now order main event first (DESC by start_time).
   // Direct index alignment — trim BC data to match DB fight count.
@@ -162,6 +172,12 @@ export default async function EventPage({
   const completedEntries = fightEntries.filter((entry) => entry.displayState === "completed");
   const pickedEntries = fightEntries.filter((entry) => entry.prediction);
 
+  // "All predicted" toast inputs: only upcoming (pickable) fights count
+  // toward the total, so cancelled / no-contest / already-started fights
+  // are naturally excluded from both the numerator and the denominator.
+  const predictableTotal = upcomingEntries.length;
+  const predictedCount = upcomingEntries.filter((entry) => entry.prediction).length;
+
   function renderFightSection(sectionId: string, label: string, items: FightEntry[]) {
     if (items.length === 0) return null;
 
@@ -188,6 +204,7 @@ export default async function EventPage({
               bcFighterADivision={entry.bcFighterADivision}
               bcFighterBDivision={entry.bcFighterBDivision}
               seriesLabel={event?.series_type === "black_cup" ? getSeriesLabel(event.series_type, t) : null}
+              isAuthenticated={!!user}
             />
           ))}
         </div>
@@ -200,6 +217,17 @@ export default async function EventPage({
 
   return (
     <div className="relative flex flex-col gap-10 pb-24 md:pb-0">
+      <AllPredictedToast
+        // Key the component by (user, event) so any identity change
+        // remounts it and resets the "already fired this mount" ref —
+        // protects against a stale fire lock leaking across navigations
+        // or auth state changes within the same client tree.
+        key={`${user?.id ?? "anon"}:${id}`}
+        userId={user?.id ?? null}
+        eventId={id}
+        predictableTotal={predictableTotal}
+        predictedCount={predictedCount}
+      />
       <StickyEventHeader
         eventName={localizedEventName}
         eventStatus={eventStatus}
@@ -231,7 +259,11 @@ export default async function EventPage({
               <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-white sm:text-2xl">
                 {localizedEventName}
               </h1>
-              <p className="mt-1 text-sm text-[rgba(255,255,255,0.7)]">{event.date}</p>
+              <EventDateLine
+                eventDate={event.date}
+                startTime={earliestStart}
+                className="mt-1.5 text-[rgba(255,255,255,0.7)]"
+              />
 
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                 <span><span className="font-semibold text-white">{fightEntries.length}</span> <span className="text-[rgba(255,255,255,0.5)]">{t("event.totalFights")}</span></span>
@@ -277,7 +309,11 @@ export default async function EventPage({
           <h1 className="mt-3 text-xl font-bold tracking-[-0.02em] text-[var(--bp-ink)] sm:text-2xl">
             {localizedEventName}
           </h1>
-          <p className="mt-1 text-sm text-[var(--bp-muted)]">{event.date}</p>
+          <EventDateLine
+            eventDate={event.date}
+            startTime={earliestStart}
+            className="mt-1.5"
+          />
 
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span><span className="font-semibold text-[var(--bp-ink)]">{fightEntries.length}</span> <span className="text-[var(--bp-muted)]">{t("event.totalFights")}</span></span>
@@ -311,6 +347,19 @@ export default async function EventPage({
         </section>
       )}
 
+      {/* Share CTA — visible only when the authed viewer has at least one
+          saved pick on this card, and only if they have a ring name (the
+          URL segment). Uses the same ShareMenu as the public share page. */}
+      {userRingName && pickedEntries.length > 0 ? (
+        <div className="flex justify-end">
+          <ShareMenu
+            url={buildSharePath(userRingName, event.id)}
+            title={`${userRingName} · ${localizedEventName}`}
+            text={t("share.shareText", { username: userRingName, event: localizedEventName })}
+          />
+        </div>
+      ) : null}
+
       {/* Fight Sections */}
       <div className="flex flex-col gap-6">
         {renderFightSection("live", t("status.live"), liveEntries)}
@@ -330,6 +379,8 @@ export default async function EventPage({
               fightLabel={`${aName} vs ${bName}`}
               currentUserId={user?.id ?? null}
               currentUserInitial={userInitial}
+              mode="preview"
+              viewAllHref={`/events/${event.id}/fights/${entry.fight.id}`}
             />
           );
         })}

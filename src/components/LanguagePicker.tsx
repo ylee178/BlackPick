@@ -6,23 +6,43 @@ import { locales, localeDisplayNames, localeFlags, type Locale } from "@/i18n/lo
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown } from "lucide-react";
 import { retroPanelClassName } from "@/components/ui/retro";
+import { useIsMounted } from "@/lib/use-sync-store";
+
+const HINT_STORAGE_KEY = "bp_lang_seen";
 
 export default function LanguagePicker() {
   const { locale, setLocale } = useI18n();
   const [open, setOpen] = useState(false);
+  const mounted = useIsMounted();
   const [showHint, setShowHint] = useState(false);
+  const [hintChecked, setHintChecked] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // First visit pulse hint
-  useEffect(() => {
-    const key = "bp_lang_seen";
-    if (!localStorage.getItem(key)) {
+  // First visit pulse hint — read the flag during the first client render
+  // via the "adjusting state during render" pattern instead of a
+  // setState-in-effect, which would trip `react-hooks/set-state-in-effect`.
+  // Render is kept side-effect free: we only flip in-memory state here.
+  // The actual `localStorage.setItem` is committed in the effect below
+  // so Strict Mode's double-render doesn't write twice.
+  if (mounted && !hintChecked) {
+    setHintChecked(true);
+    if (typeof window !== "undefined" && !localStorage.getItem(HINT_STORAGE_KEY)) {
       setShowHint(true);
-      localStorage.setItem(key, "1");
-      const timer = setTimeout(() => setShowHint(false), 2000);
-      return () => clearTimeout(timer);
     }
-  }, []);
+  }
+
+  // Persist the seen flag + clear the pulse after 2s. The localStorage
+  // write lives in this effect (not in render) so it runs once per real
+  // mount, not twice under Strict Mode. setState happens in the
+  // setTimeout callback (async), so the lint rule leaves it alone.
+  useEffect(() => {
+    if (!showHint) return;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HINT_STORAGE_KEY, "1");
+    }
+    const timer = setTimeout(() => setShowHint(false), 2000);
+    return () => clearTimeout(timer);
+  }, [showHint]);
 
   // Click outside to close
   useEffect(() => {

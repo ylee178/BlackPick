@@ -1,12 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useI18n } from "@/lib/i18n-provider";
+import { useClockTick } from "@/lib/use-sync-store";
 
 type Props = { targetTime: string };
 
-function getTimeLeft(target: string) {
-  const diff = new Date(target).getTime() - Date.now();
+type TimeLeft = {
+  total: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+const EMPTY_TIME_LEFT: TimeLeft = {
+  total: 1,
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+};
+
+function getTimeLeft(target: string, nowMs: number): TimeLeft {
+  const diff = new Date(target).getTime() - nowMs;
   if (diff <= 0) return { total: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     total: diff,
@@ -26,16 +43,10 @@ function formatTime(tl: { days: number; hours: number; minutes: number; seconds:
 
 export default function CountdownTimer({ targetTime }: Props) {
   const { t } = useI18n();
-  const [mounted, setMounted] = useState(false);
-  const [tl, setTl] = useState({ total: 1, days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-    setTl(getTimeLeft(targetTime));
-    const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
-    return () => clearInterval(i);
-  }, [targetTime]);
-
+  // Shared 1Hz store — 0 on SSR, live Date.now() after hydration.
+  const now = useClockTick();
+  const mounted = now !== 0;
+  const tl = mounted ? getTimeLeft(targetTime, now) : EMPTY_TIME_LEFT;
   const text = useMemo(() => formatTime(tl), [tl]);
 
   if (tl.total <= 0 && mounted) {

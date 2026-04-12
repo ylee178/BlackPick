@@ -23,7 +23,6 @@ type SearchParams = Promise<{
   page?: string;
   series?: string;
   event?: string;
-  devEmpty?: string;
 }>;
 
 type RankingUser = {
@@ -71,13 +70,11 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
   const supabase = await createSupabaseServer();
 
   const validTabs = ["running", "p4p", "weight", "series", "event", "streak", "hof"] as const;
-  const tab = validTabs.includes(params.tab as any) ? (params.tab as string) : "running";
+  type RankingTab = (typeof validTabs)[number];
+  const tab = validTabs.includes(params.tab as RankingTab) ? (params.tab as string) : "running";
   const page = Math.max(1, Number(params.page || "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  const isDev = process.env.NODE_ENV === "development";
-  const devEmpty = isDev && params.devEmpty === "1";
-  const devSuffix = devEmpty ? "&devEmpty=1" : "";
 
   const tabs = [
     { key: "running", label: t("ranking.running") },
@@ -146,7 +143,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     const hofUserIds = (data ?? []).map((u: { id: string }) => u.id);
 
     // Get tier breakdown per user
-    let tierCounts = new Map<string, { oracle: number; sniper: number; sharp_call: number }>();
+    const tierCounts = new Map<string, { oracle: number; sniper: number; sharp_call: number }>();
     if (hofUserIds.length > 0) {
       const { data: entries } = await supabase
         .from("hall_of_fame_entries")
@@ -237,7 +234,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         .limit(PAGE_SIZE);
 
       const userIds = [...new Set((data ?? []).map((r: { user_id: string }) => r.user_id))];
-      let userMap = new Map<string, RankingUser>();
+      const userMap = new Map<string, RankingUser>();
       if (userIds.length > 0) {
         const { data: userData } = await supabase
           .from("users")
@@ -248,7 +245,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
         }
       }
 
-      weightClassUsers = (data ?? []).map((r: any) => ({
+      type WeightClassRow = {
+        user_id: string;
+        weight_class: string;
+        wins: number;
+        losses: number;
+        score: number;
+      };
+      weightClassUsers = ((data ?? []) as WeightClassRow[]).map((r) => ({
         ...r,
         user: userMap.get(r.user_id),
       }));
@@ -287,17 +291,6 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
     }
   }
 
-  // In dev empty preview mode, force all data arrays empty
-  if (devEmpty) {
-    users = [];
-    p4pUsers = [];
-    streakUsers = [];
-    hofUsers = [];
-    seriesData = [];
-    weightClassUsers = [];
-    eventRankData = [];
-  }
-
   // Batch badge query for visible users
   const allUserIds = [
     ...users.map((u) => u.id),
@@ -314,22 +307,6 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
       <div>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[var(--bp-ink)]">{t("rankingPage.title")}</h1>
-          {isDev ? (
-            <Link
-              href={devEmpty
-                ? `/ranking?tab=${tab}${params.series ? `&series=${params.series}` : ""}${params.event ? `&event=${params.event}` : ""}`
-                : `/ranking?tab=${tab}${params.series ? `&series=${params.series}` : ""}${params.event ? `&event=${params.event}` : ""}&devEmpty=1`
-              }
-              className={cn(
-                "cursor-pointer rounded-[8px] px-2.5 py-1 text-[11px] font-semibold transition",
-                devEmpty
-                  ? "bg-[#991b1b] text-white"
-                  : "bg-[#333] text-[var(--bp-muted)] hover:text-white"
-              )}
-            >
-              {devEmpty ? "Empty Preview" : "Preview Empty"}
-            </Link>
-          ) : null}
         </div>
         <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("rankingPage.description")}</p>
 
@@ -337,7 +314,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
           {tabs.map((item) => (
             <Link
               key={item.key}
-              href={`/ranking?tab=${item.key}${devSuffix}`}
+              href={`/ranking?tab=${item.key}`}
               className={retroSegmentClassName({ active: tab === item.key })}
             >
               {item.label}
@@ -374,8 +351,11 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               {weightClassList.map((wc) => (
                 <Link
                   key={wc}
-                  href={`/ranking?tab=weight&series=${encodeURIComponent(wc)}${devSuffix}`}
-                  className={retroSegmentClassName({ active: selectedWeight === wc })}
+                  href={`/ranking?tab=weight&series=${encodeURIComponent(wc)}`}
+                  className={retroSegmentClassName({
+                    active: selectedWeight === wc,
+                    className: "uppercase tracking-[0.04em]",
+                  })}
                 >
                   {translateWeightClass(wc, locale)}
                 </Link>
@@ -419,14 +399,14 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
 
               <div className="flex items-center justify-between pt-2">
                 <Link
-                  href={page > 1 ? `/ranking?tab=running&page=${page - 1}${devSuffix}` : "#"}
+                  href={page > 1 ? `/ranking?tab=running&page=${page - 1}` : "#"}
                   className={cn(retroSegmentClassName({ active: false }), page <= 1 && "pointer-events-none opacity-40")}
                 >
                   ←
                 </Link>
                 <span className="text-sm text-[var(--bp-muted)]">{page}</span>
                 <Link
-                  href={hasNextPage ? `/ranking?tab=running&page=${page + 1}${devSuffix}` : "#"}
+                  href={hasNextPage ? `/ranking?tab=running&page=${page + 1}` : "#"}
                   className={cn(retroSegmentClassName({ active: false }), !hasNextPage && "pointer-events-none opacity-40")}
                 >
                   →
@@ -442,7 +422,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               {seriesTypes.map((seriesType) => (
                 <Link
                   key={seriesType}
-                  href={`/ranking?tab=series&series=${seriesType}${devSuffix}`}
+                  href={`/ranking?tab=series&series=${seriesType}`}
                   className={retroSegmentClassName({ active: selectedSeries === seriesType })}
                 >
                   {getSeriesLabel(seriesType, t)}
@@ -475,7 +455,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
               {eventList.map((event) => (
                 <Link
                   key={event.id}
-                  href={`/ranking?tab=event&event=${event.id}${devSuffix}`}
+                  href={`/ranking?tab=event&event=${event.id}`}
                   className={retroSegmentClassName({ active: selectedEvent === event.id, className: "max-w-full" })}
                 >
                   <span className="truncate">

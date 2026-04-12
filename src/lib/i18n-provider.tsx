@@ -19,6 +19,19 @@ function getNestedValue(messages: Record<string, unknown>, key: string): string 
 }
 
 /**
+ * Tiny `{var}`-style interpolator. Deliberately simple — no format
+ * specifiers, no plural rules, no HTML. If a key is missing from the
+ * `vars` map the placeholder is left as-is so missing data is visible.
+ */
+function interpolate(template: string, vars?: Record<string, string | number>): string {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+    const value = vars[key];
+    return value === undefined || value === null ? match : String(value);
+  });
+}
+
+/**
  * Adapter: wraps next-intl hooks to match the legacy useI18n() API.
  * This lets existing components keep using `const { t, locale, setLocale } = useI18n()`
  * without changing every import.
@@ -29,8 +42,9 @@ export function useI18n() {
   const router = useRouter();
   const pathname = usePathname();
 
-  function t(key: string): string {
-    return getNestedValue(messages as Record<string, unknown>, key);
+  function t(key: string, vars?: Record<string, string | number>): string {
+    const template = getNestedValue(messages as Record<string, unknown>, key);
+    return interpolate(template, vars);
   }
 
   function setLocale(newLocale: Locale) {

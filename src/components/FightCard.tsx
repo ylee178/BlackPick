@@ -75,6 +75,11 @@ type FightCardProps = {
   bcFighterADivision?: { weightClass: string; rank: number | null } | null;
   bcFighterBDivision?: { weightClass: string; rank: number | null } | null;
   hideDiscussion?: boolean;
+  /**
+   * Forwarded to FightCardPicker. Anonymous viewers hit a signup gate on
+   * the first fighter click; authed viewers get the normal pick flow.
+   */
+  isAuthenticated: boolean;
 };
 
 /** Static (non-interactive) fighter card for completed/live states */
@@ -148,7 +153,7 @@ function FighterSideStatic({
           })()}
         </p>
         {bcDivision?.rank ? (
-          <p className="mt-0.5 text-xs font-semibold text-[var(--bp-accent)]">
+          <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
             #{bcDivision.rank} {translateWeightClass(bcDivision.weightClass, locale)}
           </p>
         ) : null}
@@ -209,6 +214,7 @@ export default async function FightCard({
   bcFighterBDivision,
   seriesLabel,
   hideDiscussion,
+  isAuthenticated,
 }: FightCardProps) {
   const { t, locale } = await getTranslations();
   const isCancelled = fight.status === "cancelled";
@@ -238,7 +244,9 @@ export default async function FightCard({
           <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel>
         ) : null}
         {isVoided && (
-          <RetroLabel size="md" tone="danger">{isCancelled ? "CAN" : "NC"}</RetroLabel>
+          <RetroLabel size="md" tone="danger">
+            {isCancelled ? t("status.cancelled") : t("status.no_contest")}
+          </RetroLabel>
         )}
       </div>
 
@@ -256,6 +264,7 @@ export default async function FightCard({
             bcFighterADivision={bcFighterADivision ?? null}
             bcFighterBDivision={bcFighterBDivision ?? null}
             initialPrediction={prediction}
+            isAuthenticated={isAuthenticated}
           />
           {!hideDiscussion && (
             <Link

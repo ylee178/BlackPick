@@ -75,7 +75,8 @@
     "bulk": "Predecir todas las peleas",
     "predictAll": "Predecir todo",
     "correct": "¡Acertaste!",
-    "wrong": "No acertaste esta vez"
+    "wrong": "No acertaste esta vez",
+    "allPredictedToast": "Todos tus pronósticos quedaron guardados. Suerte."
   },
   "profile": {
     "fightRecord": "Historial de peleas",
@@ -114,6 +115,7 @@
     "login": "Iniciar sesión",
     "signup": "Registrarse",
     "googleLogin": "Continuar con Google",
+    "facebookLogin": "Continuar con Facebook",
     "or": "o",
     "signupEyebrow": "Únete a Black Pick",
     "createAccount": "Crear cuenta",
@@ -122,10 +124,11 @@
     "loginTitle": "Iniciar sesión",
     "loginDescription": "Vuelve a la arena y sigue tus predicciones.",
     "emailPlaceholder": "tu@ejemplo.com",
-    "passwordPlaceholder": "••••••••",
-    "passwordHint": "Mínimo 6 caracteres",
-    "creatingAccount": "Creando cuenta...",
-    "signingIn": "Iniciando sesión...",
+  "passwordPlaceholder": "••••••••",
+  "passwordHint": "Mínimo 6 caracteres",
+  "creatingAccount": "Creando cuenta...",
+  "signupCheckEmail": "Revisa tu correo para confirmar tu cuenta. Si esa dirección puede registrarse, recibirás un enlace de confirmación en breve.",
+  "signingIn": "Iniciando sesión...",
     "redirecting": "Redirigiendo...",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
     "noAccount": "¿No tienes una cuenta?",
@@ -134,7 +137,9 @@
     "userExists": "Ese correo ya está registrado. Por favor, inicia sesión.",
     "invalidEmail": "Por favor, introduce una dirección de correo válida.",
     "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+    "providerUnavailable": "Ese inicio de sesión social todavía no está disponible. Por ahora usa el acceso con correo.",
     "authUnexpected": "No pudimos completar la autenticación en este momento.",
+    "oauthCallbackFailed": "No pudimos completar ese inicio de sesión social. Inténtalo de nuevo.",
     "logout": "Cerrar sesión",
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "resetPassword": "Restablecer contraseña",
@@ -147,7 +152,17 @@
     "updatePassword": "Actualizar contraseña",
     "updating": "Actualizando...",
     "passwordUpdated": "¡Contraseña actualizada! Redirigiendo al inicio de sesión.",
-    "passwordUpdateFailed": "No se pudo actualizar la contraseña."
+    "passwordUpdateFailed": "No se pudo actualizar la contraseña.",
+    "passwordResetLoginPrompt": "Contraseña cambiada. Inicia sesión con tu nueva contraseña.",
+    "dashboardGateTitle": "Inicia sesión para abrir tu panel.",
+    "dashboardGateDescription": "Sigue tu tendencia de puntos, rachas, insignias y tus categorías más fuertes en un solo lugar.",
+    "myRecordGateTitle": "Inicia sesión para ver tu historial.",
+    "myRecordGateDescription": "Revisa todas tus predicciones, resultados por evento y aciertos desde un solo lugar.",
+    "eventRecordGateTitle": "Inicia sesión para ver este reporte del evento.",
+    "eventRecordGateDescription": "Mira cómo puntuaste en esta cartelera, pelea por pelea.",
+    "pickGateTitle": "Regístrate para asegurar tu pronóstico.",
+    "pickGateDescription": "Son 10 segundos. Guardaremos tu predicción en cuanto estés dentro.",
+    "pickGateEmailSignup": "Registrarse con correo"
   },
   "account": {
     "editProfile": "Editar perfil",
@@ -171,7 +186,14 @@
     "record": "Historial",
     "nationality": "Nacionalidad",
     "weightClass": "Categoría de peso",
-    "recentFights": "Peleas recientes"
+    "recentFights": "Peleas recientes",
+    "filterCountry": "Filtrar por país",
+    "allCountries": "Todos los países",
+    "sortBy": "Ordenar",
+    "sortWinsDesc": "Más victorias",
+    "sortLossesDesc": "Más derrotas",
+    "sortNameAsc": "Nombre",
+    "noResults": "No hay peleadores que coincidan con este filtro."
   },
   "series": {
     "blackCup": "Black Cup",
@@ -194,6 +216,7 @@
     "heroTitle": "No es adivinar. Es leer la pelea.",
     "heroDescription": "Predice las peleas de Black Combat, construye tu historial y demuestra que eres el verdadero experto en peleas.",
     "buyTickets": "Comprar entradas",
+    "soldOut": "Agotado",
     "watchLive": "Ver en vivo"
   },
   "rankingPage": {
@@ -203,11 +226,14 @@
   },
   "countdown": {
     "closesIn": "Las predicciones cierran en",
+    "eventStartsIn": "El evento comienza en",
     "locked": "Predicciones bloqueadas",
+    "lockedHint": "Las predicciones cierran al acabar el tiempo",
     "daysShort": "Días",
     "hoursShort": "Hrs",
     "minutesShort": "Min",
-    "secondsShort": "Seg"
+    "secondsShort": "Seg",
+    "selectTimezone": "Cambiar zona horaria"
   },
   "mvp": {
     "oneVotePerEvent": "Un voto por evento.",
@@ -290,7 +316,11 @@
     "translate": "Traducir",
     "original": "Original",
     "viewReplies": "Ver {count} respuestas",
-    "hideReplies": "Ocultar respuestas"
+    "hideReplies": "Ocultar respuestas",
+    "sortTop": "Destacados",
+    "sortNew": "Recientes",
+    "previewTitle": "Comentarios destacados",
+    "viewAll": "Ver toda la discusión"
   },
   "notification": {
     "title": "Notificaciones",
@@ -300,6 +330,26 @@
     "resultReady": "Los resultados ya están disponibles",
     "mvpVoteOpen": "La votación de MVP está abierta",
     "rankingChanged": "Tu clasificación cambió"
+  },
+  "share": {
+    "trigger": "Compartir",
+    "dialogTitle": "Comparte tus pronósticos",
+    "eyebrow": "Pronóstico de Black Pick",
+    "subtitle": "Pronóstico confirmado en Black Pick",
+    "noFights": "Aún no hay peleas en este cartel.",
+    "noPick": "No hay pronóstico guardado para esta pelea.",
+    "methodNotSet": "Método no definido",
+    "ctaMakeYourPicks": "Haz tus propios pronósticos",
+    "ctaSubtitle": "Entra y define tus predicciones para este cartel.",
+    "shareText": "Mira los pronósticos de {username} para {event}",
+    "copyLink": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "copyFailed": "No se pudo copiar — mantén presionado para copiar manualmente.",
+    "channelTwitter": "X",
+    "channelFacebook": "Facebook",
+    "channelWhatsApp": "WhatsApp",
+    "channelEmail": "Correo",
+    "channelSms": "SMS"
   },
   "common": {
     "loading": "Cargando...",
@@ -329,6 +379,7 @@
     "joinMembership": "Únete a la membresía para ver repeticiones completas de las peleas",
     "platform": "Plataforma",
     "fighters": "Peleadores",
-    "latestResults": "Últimos resultados"
+    "latestResults": "Últimos resultados",
+    "close": "Cerrar"
   }
 }

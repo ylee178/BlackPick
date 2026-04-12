@@ -6,7 +6,7 @@ import {
   retroButtonClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
-import { ChevronDown, User, Bell, RotateCw, Trash2, LogOut } from "lucide-react";
+import { ChevronDown, User, Bell, RotateCw, Trash2, LogOut, Shield } from "lucide-react";
 
 const meta: Meta = {
   title: "Components/AccountDropdown",
@@ -35,7 +35,19 @@ function MockTriggerButton({ ringName }: { ringName: string }) {
   );
 }
 
-function MockDropdownPanel({ ringName, wins, losses, score }: { ringName: string; wins: number; losses: number; score: number }) {
+function MockDropdownPanel({
+  ringName,
+  wins,
+  losses,
+  score,
+  isAdmin = false,
+}: {
+  ringName: string;
+  wins: number;
+  losses: number;
+  score: number;
+  isAdmin?: boolean;
+}) {
   const menuItem = "flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition-colors duration-150 hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]";
   const dangerItem = "flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-danger)] transition-colors duration-150 hover:bg-[rgba(239,68,68,0.08)]";
 
@@ -55,6 +67,13 @@ function MockDropdownPanel({ ringName, wins, losses, score }: { ringName: string
           <Bell className="h-4 w-4" strokeWidth={1.8} /> Notification Settings
         </button>
       </div>
+      {isAdmin ? (
+        <div className="border-t border-[var(--bp-line)] py-1">
+          <button type="button" className={menuItem}>
+            <Shield className="h-4 w-4" strokeWidth={1.8} /> Admin
+          </button>
+        </div>
+      ) : null}
       <div className="border-t border-[var(--bp-line)] py-1">
         <button type="button" className={menuItem}>
           <RotateCw className="h-4 w-4" strokeWidth={1.8} /> Reset Record
@@ -101,6 +120,18 @@ export const LongName = () => (
       <MockTriggerButton ringName="TheUndisputedChampion" />
       <div className="absolute right-0 top-[calc(100%+6px)] z-50">
         <MockDropdownPanel ringName="TheUndisputedChampion" wins={100} losses={0} score={9999} />
+      </div>
+    </div>
+  </div>
+);
+
+export const AdminOpen = () => (
+  <div className="flex flex-col items-end gap-4">
+    <p className="text-xs text-white/50">Dropdown expanded (admin)</p>
+    <div className="relative">
+      <MockTriggerButton ringName="SteelFist" />
+      <div className="absolute right-0 top-[calc(100%+6px)] z-50">
+        <MockDropdownPanel ringName="SteelFist" wins={42} losses={8} score={2450} isAdmin />
       </div>
     </div>
   </div>

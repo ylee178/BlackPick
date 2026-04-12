@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
   const comments = data ?? [];
   const commentIds = comments.map((c) => c.id);
 
-  let likeCounts: Record<string, number> = {};
-  let myLikes: Set<string> = new Set();
+  const likeCounts: Record<string, number> = {};
+  const myLikes: Set<string> = new Set();
 
   if (commentIds.length > 0) {
     const { data: likes } = await supabase

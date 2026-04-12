@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
@@ -29,6 +30,7 @@ export default function ResetPasswordPage() {
       redirectTo: buildAuthRedirectUrl("/update-password", {
         locale,
         fallbackOrigin: window.location.origin,
+        preferFallbackOrigin: true,
       }),
     });
 
@@ -43,8 +45,8 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md">
-      <section className={retroPanelClassName({ className: "p-5 sm:p-6" })}>
+    <div className="flex w-full flex-1 items-center justify-center">
+      <section className={retroPanelClassName({ className: "w-full max-w-md p-5 sm:p-6" })}>
         <h1 className="text-xl font-bold text-[var(--bp-ink)]">{t("auth.resetPassword")}</h1>
         <p className="mt-1 text-sm text-[var(--bp-muted)]">{t("auth.resetPasswordDescription")}</p>
 
@@ -77,9 +79,12 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
               className={retroButtonClassName({ variant: "primary", size: "lg", block: true })}
             >
-              {loading ? t("auth.sending") : t("auth.sendResetLink")}
+              <LoadingButtonContent loading={loading} loadingLabel={t("auth.sending")}>
+                {t("auth.sendResetLink")}
+              </LoadingButtonContent>
             </button>
           </form>
         )}

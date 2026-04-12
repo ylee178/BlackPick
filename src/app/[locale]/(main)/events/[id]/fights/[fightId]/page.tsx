@@ -1,7 +1,9 @@
 import { Link } from "@/i18n/navigation";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
+import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventData } from "@/lib/bc-predictions";
+import { sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
 import { getTranslations } from "@/lib/i18n-server";
 import { getLocalizedEventName, getLocalizedFighterName } from "@/lib/localized-name";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
@@ -35,7 +37,7 @@ export default async function FightDetailPage({
   // Fetch event
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, date, status, series_type")
+    .select("id, name, date, status, series_type, source_event_id")
     .eq("id", eventId)
     .single();
 
@@ -58,7 +60,10 @@ export default async function FightDetailPage({
     .eq("event_id", eventId)
     .order("start_time", { ascending: false });
 
-  const typedFights = (allFights ?? []) as FightWithFighters[];
+  const bcRaw = await fetchBcEventData(event.name, event.source_event_id);
+  const officialCard =
+    event.source_event_id ? await fetchBcOfficialEventCard(event.source_event_id).catch(() => []) : [];
+  const typedFights = sortFightsByOfficialCardOrder((allFights ?? []) as FightWithFighters[], officialCard);
   const fightIndex = typedFights.findIndex((f) => f.id === fightId);
   const fight = typedFights[fightIndex];
 
@@ -87,12 +92,16 @@ export default async function FightDetailPage({
     total_predictions: total,
   };
 
-  // Fetch BC data
-  const bcRaw = await fetchBcEventData(event.name);
   const bcFightData = bcRaw.slice(0, typedFights.length);
   const bc = bcFightData[fightIndex] ?? null;
 
   const eventStatus = event.status as "upcoming" | "live" | "completed";
+  // Date.now() is intentionally impure here — this server component runs once
+  // per request and we need the request-time clock to compare against the
+  // fight start time. The React Compiler "impure during render" check is
+  // suppressed for this single line because there is no pure substitute for
+  // "current time at request" in a server-rendered timestamp comparison.
+  // eslint-disable-next-line react-hooks/purity
   const nowTimestamp = Date.now();
   const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
   const localizedEventName = getLocalizedEventName(event, locale, event.name);
@@ -125,6 +134,7 @@ export default async function FightDetailPage({
         bcFighterADivision={bc?.fighterA_division ?? null}
         bcFighterBDivision={bc?.fighterB_division ?? null}
         hideDiscussion
+        isAuthenticated={!!user}
       />
 
 

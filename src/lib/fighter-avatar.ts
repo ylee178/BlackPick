@@ -12,7 +12,9 @@ type FighterAvatarFields = {
 
 export function getFighterAvatarUrl(fighter: FighterAvatarFields | null | undefined): string {
   if (!fighter) return DEFAULT_AVATAR;
-  if (fighter.image_url) return fighter.image_url;
+  // BlackPick only exposes pixel art avatars. image_url may contain a
+  // crawled real reference photo and must never be served to users — it
+  // exists only as a source for pixel generation and admin tooling.
   if (fighter.pixel_avatar_url) return fighter.pixel_avatar_url;
 
   if (fighter.id) {

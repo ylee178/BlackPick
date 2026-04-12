@@ -244,6 +244,169 @@ const SEED_EVENTS = [
   },
 ];
 
+async function supportsCommentLikes(admin: ReturnType<typeof getAdminClient>) {
+  const { error } = await admin.from("comment_likes").select("comment_id").limit(1);
+  return !error;
+}
+
+async function getDiscussionSeedFights(admin: ReturnType<typeof getAdminClient>) {
+  let { data: event } = await admin
+    .from("events")
+    .select("id")
+    .in("status", ["upcoming", "live"])
+    .order("date", { ascending: true })
+    .limit(1)
+    .single();
+
+  if (!event) {
+    const fallback = await admin
+      .from("events")
+      .select("id")
+      .order("date", { ascending: false })
+      .limit(1)
+      .single();
+    event = fallback.data ?? null;
+  }
+
+  if (!event) {
+    return [];
+  }
+
+  const { data: fights } = await admin
+    .from("fights")
+    .select(`
+      id,
+      fighter_a:fighters!fighter_a_id(id, name, ring_name),
+      fighter_b:fighters!fighter_b_id(id, name, ring_name)
+    `)
+    .eq("event_id", event.id)
+    .order("start_time", { ascending: true })
+    .limit(3);
+
+  return fights ?? [];
+}
+
+async function seedDiscussionPreview(
+  admin: ReturnType<typeof getAdminClient>,
+  createdUsers: { id: string; email: string }[],
+) {
+  let createdComments = 0;
+  let createdLikes = 0;
+
+  try {
+    const fights = await getDiscussionSeedFights(admin);
+
+    if (fights.length === 0 || createdUsers.length < 6) {
+      return { createdComments, createdLikes };
+    }
+
+    const getFighterName = (
+      fighter: { ring_name?: string | null; name?: string | null } | Array<{ ring_name?: string | null; name?: string | null }> | null | undefined,
+    ) => {
+      const value = Array.isArray(fighter) ? fighter[0] : fighter;
+      return value?.ring_name ?? value?.name ?? "Fighter";
+    };
+
+    const [fightOne, fightTwo, fightThree] = fights;
+    const samples = [
+      {
+        fightId: fightOne.id,
+        body: `${getFighterName(fightOne.fighter_a)} 쪽이 템포를 먼저 잡을 것 같음. 초반 압박이 변수다.`,
+        userIndex: 0,
+        parentIndex: null,
+      },
+      {
+        fightId: fightOne.id,
+        body: `난 ${getFighterName(fightOne.fighter_b)}가 후반 읽어낼 것 같아. 판정 가면 더 위험함.`,
+        userIndex: 1,
+        parentIndex: 0,
+      },
+      {
+        fightId: fightOne.id,
+        body: `If ${getFighterName(fightOne.fighter_a)} keeps it standing, this probably doesn't go the distance.`,
+        userIndex: 2,
+        parentIndex: 0,
+      },
+      {
+        fightId: fightOne.id,
+        body: "이 경기 댓글 분위기 거의 반반이네. 그래서 더 재밌다.",
+        userIndex: 3,
+        parentIndex: null,
+      },
+      {
+        fightId: fightTwo?.id ?? fightOne.id,
+        body: `${getFighterName(fightTwo?.fighter_a)} vs ${getFighterName(fightTwo?.fighter_b)}는 한 번의 그라운드 전환으로 갈릴 수 있음.`,
+        userIndex: 4,
+        parentIndex: null,
+      },
+      {
+        fightId: fightTwo?.id ?? fightOne.id,
+        body: "이건 승자보다 방법 맞추는 사람이 더 적을 듯.",
+        userIndex: 5,
+        parentIndex: 4,
+      },
+      {
+        fightId: fightThree?.id ?? fightOne.id,
+        body: `${getFighterName(fightThree?.fighter_a)} upset 가능성 꽤 있어 보이는데?`,
+        userIndex: 0,
+        parentIndex: null,
+      },
+    ];
+
+    const insertedCommentIds: string[] = [];
+
+    for (const sample of samples) {
+      const parentId =
+        sample.parentIndex === null ? null : insertedCommentIds[sample.parentIndex] ?? null;
+
+      const { data: inserted, error } = await admin
+        .from("fight_comments")
+        .insert({
+          fight_id: sample.fightId,
+          user_id: createdUsers[sample.userIndex].id,
+          parent_id: parentId,
+          body: sample.body,
+        })
+        .select("id")
+        .single();
+
+      if (error || !inserted) {
+        throw error ?? new Error("Failed to insert discussion preview comment");
+      }
+
+      insertedCommentIds.push(inserted.id);
+      createdComments++;
+    }
+
+    if (await supportsCommentLikes(admin)) {
+      const likePatterns = [
+        { commentIndex: 0, userIndexes: [1, 2, 3, 4] },
+        { commentIndex: 3, userIndexes: [0, 2, 5] },
+        { commentIndex: 4, userIndexes: [0, 1, 2] },
+        { commentIndex: 6, userIndexes: [1, 3] },
+      ];
+
+      const likes = likePatterns.flatMap((pattern) =>
+        pattern.userIndexes.map((userIndex) => ({
+          comment_id: insertedCommentIds[pattern.commentIndex],
+          user_id: createdUsers[userIndex].id,
+        }))
+      );
+
+      if (likes.length > 0) {
+        const { error } = await admin.from("comment_likes").insert(likes);
+        if (!error) {
+          createdLikes = likes.length;
+        }
+      }
+    }
+  } catch {
+    // Discussion preview seeding is optional
+  }
+
+  return { createdComments, createdLikes };
+}
+
 async function clearTestData(admin: ReturnType<typeof getAdminClient>) {
   const { data: authUsers, error: listError } = await admin.auth.admin.listUsers();
 
@@ -348,7 +511,6 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
 
     return {
       id: authUser.id,
-      email: user.email,
       ring_name: user.ring_name,
       wins: user.wins,
       losses: user.losses,
@@ -366,83 +528,16 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
     throw usersError;
   }
 
-  // ── Create seed fighters ──
-  const fighterInserts = SEED_FIGHTERS.map((f) => ({
-    name: f.name,
-    ring_name: f.ring_name,
-    name_en: f.name_en,
-    name_ko: f.name_ko,
-    record: f.record,
-    nationality: f.nationality,
-    weight_class: f.weight_class,
-  }));
-  const { data: insertedFighters, error: fighterErr } = await admin
-    .from("fighters")
-    .insert(fighterInserts)
-    .select("id, name");
-  if (fighterErr) throw fighterErr;
-  const fighterIdMap = new Map((insertedFighters ?? []).map((f: { id: string; name: string }) => [f.name, f.id]));
-  const fighterIds = SEED_FIGHTERS.map((f) => fighterIdMap.get(f.name)!);
+  const createdSeedFights = 0;
+  const createdSeedEvents = 0;
+  const createdSeedFighters = 0;
 
-  // ── Create seed events + fights ──
-  let createdSeedFights = 0;
-  const allSeedFightIds: string[] = [];
-  const seedFightMeta: Array<{ id: string; winnerId: string | null; fighterAId: string; fighterBId: string; method: string | null; round: number | null; status: string; eventIdx: number }> = [];
-
-  for (const [ei, evt] of SEED_EVENTS.entries()) {
-    const { data: insertedEvent, error: evtErr } = await admin
-      .from("events")
-      .insert({ name: evt.name, series_type: evt.series_type, date: evt.date, status: evt.status })
-      .select("id")
-      .single();
-    if (evtErr) throw evtErr;
-    const eventId = insertedEvent!.id;
-
-    for (const [fi, fight] of evt.fights.entries()) {
-      const fighterAId = fighterIds[fight.a];
-      const fighterBId = fighterIds[fight.b];
-      const winnerId = fight.winner === "a" ? fighterAId : fight.winner === "b" ? fighterBId : null;
-      const startTime = new Date(`${evt.date}T${String(18 + fi).padStart(2, "0")}:00:00Z`).toISOString();
-
-      const { data: insertedFight, error: fightErr } = await admin
-        .from("fights")
-        .insert({
-          event_id: eventId,
-          fighter_a_id: fighterAId,
-          fighter_b_id: fighterBId,
-          start_time: startTime,
-          status: fight.status,
-          winner_id: winnerId,
-          method: fight.method,
-          round: fight.round,
-        })
-        .select("id")
-        .single();
-      if (fightErr) throw fightErr;
-      allSeedFightIds.push(insertedFight!.id);
-      seedFightMeta.push({
-        id: insertedFight!.id,
-        winnerId,
-        fighterAId,
-        fighterBId,
-        method: fight.method,
-        round: fight.round,
-        status: fight.status,
-        eventIdx: ei,
-      });
-      createdSeedFights++;
-    }
-  }
-
-  // Also get existing completed fights (non-seed)
-  let completedFightsQuery = admin
+  // Use existing completed fights so dev/local preview stays aligned with the real card.
+  const completedFightsQuery = admin
     .from("fights")
     .select("id, winner_id, fighter_a_id, fighter_b_id, method, round, status, start_time")
     .eq("status", "completed")
     .not("winner_id", "is", null);
-  if (allSeedFightIds.length > 0) {
-    completedFightsQuery = completedFightsQuery.not("id", "in", `(${allSeedFightIds.join(",")})`);
-  }
   const { data: completedFights, error: fightsError } = await completedFightsQuery
     .order("start_time", { ascending: true })
     .limit(20);
@@ -527,64 +622,6 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
           is_round_correct: isRoundCorrect,
         });
       }
-    }
-  }
-
-  // ── Predictions for seed fights (completed ones only) ──
-  const completedSeedFights = seedFightMeta.filter((f) => f.status === "completed" && f.winnerId);
-  for (const [fightIndex, fight] of completedSeedFights.entries()) {
-    const loserId = fight.fighterAId === fight.winnerId ? fight.fighterBId : fight.fighterAId;
-    const fightMethod = fight.method ?? methods[fightIndex % 3];
-    const fightRound = fight.round ?? ((fightIndex % 3) + 1);
-
-    for (const [userIndex, authUser] of createdUsers.entries()) {
-      const seed = (userIndex * 7 + (fightIndex + 50) * 13) % 100;
-      const shouldPickWinner = seed < (winRateByUser[userIndex] ?? 0) * 100;
-      const pickedWinner = shouldPickWinner ? fight.winnerId! : loserId;
-      const isWinnerCorrect = pickedWinner === fight.winnerId;
-
-      let predMethod: string | null = null;
-      if (userIndex < 6) {
-        const methodSeed = (userIndex * 3 + (fightIndex + 50) * 5) % 100;
-        if (isWinnerCorrect && methodSeed < (70 - userIndex * 10)) {
-          predMethod = fightMethod;
-        } else {
-          predMethod = methods[(methods.indexOf(fightMethod) + 1 + userIndex) % 3];
-        }
-      }
-      const isMethodCorrect = predMethod ? predMethod === fightMethod : null;
-
-      let predRound: number | null = null;
-      if (predMethod && predMethod !== "Decision") {
-        const roundSeed = (userIndex * 11 + (fightIndex + 50) * 3) % 100;
-        if (isWinnerCorrect && isMethodCorrect && roundSeed < (50 - userIndex * 8)) {
-          predRound = fightRound;
-        } else {
-          predRound = ((fightRound % 4) + 1);
-        }
-      }
-      const isRoundCorrect = predRound !== null ? predRound === fightRound : null;
-
-      let score = 0;
-      if (isWinnerCorrect) {
-        score += 4;
-        if (isMethodCorrect) score += 4;
-        if (isRoundCorrect) score += predRound === 4 ? 12 : 8;
-      } else {
-        score = -2;
-      }
-
-      predictionsToInsert.push({
-        user_id: authUser.id,
-        fight_id: fight.id,
-        winner_id: pickedWinner,
-        method: predMethod,
-        round: predRound,
-        score,
-        is_winner_correct: isWinnerCorrect,
-        is_method_correct: isMethodCorrect,
-        is_round_correct: isRoundCorrect,
-      });
     }
   }
 
@@ -689,7 +726,6 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
 
   // Seed weight class stats for P4P users
   try {
-    const weightClasses = ["헤비급", "라이트헤비급", "미들급", "웰터급", "라이트급", "페더급"];
     const p4pUserStats = [
       // ChampionOne: 4 classes, high win rate
       { userIdx: 0, classes: [
@@ -763,184 +799,7 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
     // HoF seeding is optional
   }
 
-  // Seed fight comments — multi-national fan discussion
-  let createdComments = 0;
-  let createdLikes = 0;
-  try {
-    const { data: upcomingFights } = await admin
-      .from("fights")
-      .select("id")
-      .eq("event_id", "fc9df266-608d-4efa-a1b4-e9ff07a92529")
-      .order("start_time", { ascending: false })
-      .limit(3);
-
-    if (upcomingFights && upcomingFights.length > 0 && createdUsers.length >= 8) {
-      // Clean old test comments
-      await admin.from("fight_comments").delete().in("user_id", createdUsers.map(u => u.id));
-
-      const fightId = upcomingFights[0].id; // Main event or first fight
-      const fightId2 = upcomingFights[1]?.id ?? fightId;
-
-      const commentThreads = [
-        // ── Fight 1: Main event 윤다원 vs 오수환 ──
-        // Thread 1: KO prediction debate
-        /*0*/  { fight: fightId, user: 0, body: "몬스터 7연승이면 멈출 수가 없지. 이번에도 KO 갈 듯 🥊", parent: null },
-        /*1*/  { fight: fightId, user: 1, body: "맨티스 그라운드 게임 봤어? 몬스터가 테이크다운 당하면 끝이야", parent: 0 },
-        /*2*/  { fight: fightId, user: 0, body: "근데 맨티스 스탠딩에서 몬스터 파워를 버틸 수 있을까?", parent: 1 },
-        /*3*/  { fight: fightId, user: 3, body: "テイクダウンディフェンスが鍵だと思う。モンスターのTDD率は87%だよ", parent: 1 },
-        /*4*/  { fight: fightId, user: 2, body: "That TDD stat is misleading. He hasn't faced a wrestler like Mantis", parent: 3 },
-
-        // Thread 2: International analysis
-        /*5*/  { fight: fightId, user: 2, body: "Mantis is so underrated. His striking defense is elite", parent: null },
-        /*6*/  { fight: fightId, user: 4, body: "Agree. 맨티스 카운터 타이밍이 역대급이야", parent: 5 },
-        /*7*/  { fight: fightId, user: 5, body: "맨티스 응원합니다! 기술로 이겨주세요 💪", parent: 5 },
-
-        // Thread 3: Main event hype
-        /*8*/  { fight: fightId, user: 4, body: "This is THE fight of the night. Main event for a reason 🔥", parent: null },
-        /*9*/  { fight: fightId, user: 1, body: "I think it goes to decision. Both are too tough to finish", parent: 8 },
-        /*10*/ { fight: fightId, user: 6, body: "판정까지 가면 맨티스가 유리해. 포인트 파이팅 장인임", parent: 9 },
-        /*11*/ { fight: fightId, user: 7, body: "몬스터가 판정까지 갈 일이 없음 ㅋㅋ KO 아니면 서브미션", parent: 10 },
-        /*22*/ { fight: fightId, user: 0, body: "ㅋㅋㅋ 동의. 몬스터 스타일이 판정 가는 스타일이 아님", parent: 11 },
-        /*23*/ { fight: fightId, user: 2, body: "But what if Mantis takes him down early? Could grind out a decision", parent: 11 },
-        /*24*/ { fight: fightId, user: 3, body: "テイクダウンされたら判定まで行くかも", parent: 23 },
-
-        // Thread 4: Standalone comments
-        /*12*/ { fight: fightId, user: 3, body: "モンスターのKOパワーはヤバい。でもマンティスの技術が上かも", parent: null },
-        /*13*/ { fight: fightId, user: 6, body: "몬스터 팬이지만 맨티스 실력은 인정. 어떤 결과든 명승부 될 듯", parent: null },
-        /*14*/ { fight: fightId, user: 7, body: "라이트급 최고의 매치업이다 진짜. 티켓 구했다 현장 간다 🎫", parent: 13 },
-
-        // ── Fight 2: Enkhjin vs Liu ──
-        /*15*/ { fight: fightId2, user: 2, body: "Heavyweight bout! Enkhjin's power vs Liu's experience", parent: null },
-        /*16*/ { fight: fightId2, user: 3, body: "무칼리 응원! 몽골 파이터 화이팅 🇲🇳", parent: null },
-        /*17*/ { fight: fightId2, user: 0, body: "금도장군 과소평가 당하고 있음. 중국 헤비급 실력 무시 못 해", parent: 15 },
-        /*18*/ { fight: fightId2, user: 1, body: "I watched his last fight — Liu's chin is suspect though", parent: 17 },
-        /*19*/ { fight: fightId2, user: 5, body: "몽골 선수 레슬링이 미쳤음. 테이크다운 들어가면 끝", parent: 16 },
-        /*20*/ { fight: fightId2, user: 4, body: "헤비급은 한방이라 예측 어려움 ㅋㅋ", parent: null },
-        /*21*/ { fight: fightId2, user: 6, body: "Exactly. One punch can change everything at heavyweight", parent: 20 },
-      ];
-
-      const insertedComments: string[] = [];
-
-      for (const thread of commentThreads) {
-        const parentId = thread.parent !== null ? insertedComments[thread.parent] ?? null : null;
-        const { data: comment } = await admin
-          .from("fight_comments")
-          .insert({
-            fight_id: thread.fight,
-            user_id: createdUsers[thread.user].id,
-            parent_id: parentId,
-            body: thread.body,
-          })
-          .select("id")
-          .single();
-
-        insertedComments.push(comment?.id ?? "");
-        if (comment) createdComments++;
-      }
-
-      // Add likes
-      const likePatterns = [
-        { comment: 0, users: [1, 2, 3, 4, 5] },       // 5 likes
-        { comment: 1, users: [0, 3, 6] },              // 3 likes
-        { comment: 4, users: [0, 1, 5, 6] },           // 4 likes - good analysis
-        { comment: 5, users: [0, 3, 4, 6, 7] },        // 5 likes
-        { comment: 8, users: [0, 1, 2, 3, 5, 6, 7] },  // 7 likes - most popular
-        { comment: 11, users: [0, 2, 4, 5] },           // 4 likes - funny
-        { comment: 12, users: [0, 1, 5] },             // 3 likes
-        { comment: 13, users: [0, 2, 4] },             // 3 likes
-        { comment: 16, users: [0, 1, 4, 5, 6] },       // 5 likes
-        { comment: 19, users: [1, 2, 3] },             // 3 likes
-      ];
-
-      for (const pattern of likePatterns) {
-        const commentId = insertedComments[pattern.comment];
-        if (!commentId) continue;
-        for (const userIdx of pattern.users) {
-          await admin.from("comment_likes").insert({
-            comment_id: commentId,
-            user_id: createdUsers[userIdx].id,
-          });
-          createdLikes++;
-        }
-      }
-    }
-  } catch {
-    // Comments seeding is optional
-  }
-
-  // ── Comments on completed seed fights (post-fight reactions) ──
-  try {
-    const completedSeedFightIds = seedFightMeta
-      .filter((f) => f.status === "completed" && f.winnerId)
-      .map((f) => f.id);
-
-    if (completedSeedFightIds.length >= 3 && createdUsers.length >= 6) {
-      const sf0 = completedSeedFightIds[0]; // BC7 main event KO
-      const sf1 = completedSeedFightIds[1]; // BC7 submission
-      const sf2 = completedSeedFightIds[3]; // BC8 main event decision
-
-      const postFightComments = [
-        // BC7 main event - KO finish reactions
-        { fight: sf0, user: 0, body: "불독 KO 미쳤다!! 2라운드 오른쪽 훅 그대로 뻗었어 🔥", parent: null },
-        { fight: sf0, user: 1, body: "스나이퍼가 1라운드 잘 버텼는데 결국 파워 차이...", parent: 0 },
-        { fight: sf0, user: 2, body: "What a knockout! Bulldog's right hook was devastating", parent: 0 },
-        { fight: sf0, user: 3, body: "不独のパワーはやっぱり別格だった。スナイパーも良かったけど", parent: null },
-        { fight: sf0, user: 4, body: "맞출줄 알았다 KO로 ㅋㅋ 보너스 포인트 ㄱㅇㄷ", parent: null },
-        { fight: sf0, user: 5, body: "Exactly as I predicted! KO R2 💰", parent: 4 },
-
-        // BC7 submission
-        { fight: sf1, user: 2, body: "Didn't expect Tiger to get the submission! Great arm bar transition", parent: null },
-        { fight: sf1, user: 0, body: "아이언피스트 그라운드 방어가 약한 게 드러났네", parent: 6 },
-        { fight: sf1, user: 3, body: "타이거の柔術がこんなに良いとは思わなかった", parent: 6 },
-        { fight: sf1, user: 1, body: "이번 대회 서브미션 퍼포먼스상 줘야됨", parent: null },
-
-        // BC8 main event - decision
-        { fight: sf2, user: 0, body: "헤머 판정승 예상했지만 생각보다 접전이었다", parent: null },
-        { fight: sf2, user: 4, body: "사무라이 2라운드 테이크다운 3번 성공했는데도 판정 졌네", parent: 10 },
-        { fight: sf2, user: 1, body: "Hammer's striking volume made the difference. Close fight though", parent: 10 },
-        { fight: sf2, user: 5, body: "판정 논란 있을듯... 사무라이가 이겼다고 봄", parent: null },
-        { fight: sf2, user: 2, body: "I had it for Samurai too but judges love striking over grappling", parent: 13 },
-        { fight: sf2, user: 6, body: "접전이었지만 스탠딩 스트라이킹 차이로 헤머가 가져갔다", parent: null },
-      ];
-
-      const postInserted: string[] = [];
-      for (const c of postFightComments) {
-        const parentId = c.parent !== null ? postInserted[c.parent] ?? null : null;
-        const { data: comment } = await admin
-          .from("fight_comments")
-          .insert({
-            fight_id: c.fight,
-            user_id: createdUsers[c.user].id,
-            parent_id: parentId,
-            body: c.body,
-          })
-          .select("id")
-          .single();
-        postInserted.push(comment?.id ?? "");
-        if (comment) createdComments++;
-      }
-
-      // Likes on post-fight comments
-      const postLikes = [
-        { comment: 0, users: [1, 2, 3, 4, 5, 6] },
-        { comment: 2, users: [0, 3, 4] },
-        { comment: 4, users: [0, 1, 5] },
-        { comment: 6, users: [0, 1, 3, 4] },
-        { comment: 10, users: [1, 2, 4, 5] },
-        { comment: 13, users: [0, 2, 4, 6] },
-      ];
-      for (const p of postLikes) {
-        const cId = postInserted[p.comment];
-        if (!cId) continue;
-        for (const u of p.users) {
-          await admin.from("comment_likes").insert({ comment_id: cId, user_id: createdUsers[u].id });
-          createdLikes++;
-        }
-      }
-    }
-  } catch {
-    // Post-fight comments seeding is optional
-  }
+  const { createdComments, createdLikes } = await seedDiscussionPreview(admin, createdUsers);
 
   return {
     created_users: createdUsers.length,
@@ -949,9 +808,9 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
     created_hof_entries: createdHofEntries,
     created_comments: createdComments,
     created_likes: createdLikes,
-    created_seed_events: SEED_EVENTS.length,
+    created_seed_events: createdSeedEvents,
     created_seed_fights: createdSeedFights,
-    created_seed_fighters: SEED_FIGHTERS.length,
+    created_seed_fighters: createdSeedFighters,
   };
 }
 
@@ -1057,7 +916,7 @@ async function seedMyData(admin: ReturnType<typeof getAdminClient>, userId: stri
   // Seed weight class stats (assign fights round-robin to weight classes)
   const wcNames = ["라이트급", "웰터급", "미들급", "페더급", "헤비급"];
   const wcMap = new Map<string, { wins: number; losses: number; score: number }>();
-  for (const [i, _fight] of fights.entries()) {
+  for (const [i] of fights.entries()) {
     const wc = wcNames[i % wcNames.length];
     const pred = preds[i];
     const entry = wcMap.get(wc) ?? { wins: 0, losses: 0, score: 0 };

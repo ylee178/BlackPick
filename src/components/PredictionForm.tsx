@@ -2,8 +2,10 @@
 
 import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
+import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import {
@@ -54,7 +56,6 @@ export default function PredictionForm({
   fightId,
   fighterA,
   fighterB,
-  theme = "dark",
   initialPrediction,
 }: PredictionFormProps) {
   const router = useRouter();
@@ -95,6 +96,11 @@ export default function PredictionForm({
         }),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        const nextPath = getSafeAuthNext(`${window.location.pathname}${window.location.search}`);
+        window.location.assign(buildLocalizedAuthPath("login", locale, nextPath));
+        return;
+      }
       if (!res.ok) {
         setMessage(data.error || t("prediction.failedToSave"));
         setMessageTone("danger");
@@ -212,13 +218,16 @@ export default function PredictionForm({
               type="button"
               onClick={handleSubmit}
               disabled={loading}
+              aria-busy={loading}
               className={retroButtonClassName({
                 variant: "secondary",
                 size: "sm",
                 block: true,
               })}
             >
-              {loading ? "..." : t("prediction.savePick")}
+              <LoadingButtonContent loading={loading}>
+                {t("prediction.savePick")}
+              </LoadingButtonContent>
             </button>
             <button
               type="button"
