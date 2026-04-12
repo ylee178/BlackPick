@@ -42,33 +42,83 @@ if [ ! -x "$CODEX_BIN" ]; then
     fi
 fi
 
-# Detect mode: first arg "review" → diff review subcommand
-MODE="exec"
-if [ "${1:-}" = "review" ]; then
-    MODE="review"
-    shift
-fi
+# Walk all positional args once and partition into:
+#   - MODE     : "review" / "exec" (first time `review` is seen)
+#   - PROFILE  : a known alias seen anywhere in the arg list
+#   - REST     : everything else, in original order, to forward downstream
+#
+# This avoids the trap where a profile alias appears AFTER a flag —
+# e.g. `review --title foo max` — and would otherwise leak through to
+# `codex review` as a positional [PROMPT], colliding with --base
+# (P2 from 2026-04-12 codex review).
+#
+# Bare tokens that aren't a known mode keyword AND aren't a known
+# profile alias AND aren't a flag value (consumed by --base/--commit/
+# --title/-c) are rejected hard so typos never become silent prompts.
 
-# Profile selection: first remaining positional arg > env var > default.
-# A bare token that doesn't look like a flag must be a profile alias —
-# anything else is a typo and we exit hard so the wrapper never silently
-# forwards garbage to `codex review` as a positional [PROMPT] (P3 from
-# 2026-04-12 codex review).
-ARG_PROFILE="${1:-}"
-case "$ARG_PROFILE" in
-    lite)  PROFILE="blackpick_lite" ; shift ;;
-    max)   PROFILE="blackpick_max"  ; shift ;;
-    "")    PROFILE="${CODEX_PROFILE:-blackpick}" ;;
+MODE="exec"
+PROFILE_FROM_ARG=""
+REST_ARGS=()
+EXPECT_VALUE=false
+for arg in "$@"; do
+    if [ "$EXPECT_VALUE" = true ]; then
+        # Previous arg was a flag that consumes the next token as its
+        # value. Pass the value through verbatim — even if it spells a
+        # profile alias literally (e.g. `--title max`).
+        REST_ARGS+=("$arg")
+        EXPECT_VALUE=false
+        continue
+    fi
+    case "$arg" in
+        review)
+            if [ "$MODE" = "exec" ]; then
+                MODE="review"
+            else
+                REST_ARGS+=("$arg")
+            fi
+            ;;
+        lite|max|blackpick|blackpick_lite|blackpick_max)
+            if [ -n "$PROFILE_FROM_ARG" ] && [ "$PROFILE_FROM_ARG" != "$arg" ]; then
+                echo "ERROR: multiple profile aliases passed ('$PROFILE_FROM_ARG' and '$arg')." >&2
+                exit 7
+            fi
+            PROFILE_FROM_ARG="$arg"
+            ;;
+        --base|--commit|--title|-c)
+            REST_ARGS+=("$arg")
+            EXPECT_VALUE=true
+            ;;
+        --*|-*)
+            # Self-contained flag (--uncommitted, --base=foo, --enable=x)
+            REST_ARGS+=("$arg")
+            ;;
+        *)
+            # Bare positional that we can't classify. In review mode this
+            # would become a [PROMPT] and conflict with --base/--commit;
+            # in exec mode it would become a stray prompt token. Reject.
+            echo "ERROR: unexpected positional argument '$arg'." >&2
+            echo "Did you mean a profile alias (lite/max/blackpick*) or a flag (--base develop / --commit HEAD / --uncommitted)?" >&2
+            exit 7
+            ;;
+    esac
+done
+
+# Resolve profile: positional alias > CODEX_PROFILE env var > default
+case "$PROFILE_FROM_ARG" in
+    lite)             PROFILE="blackpick_lite" ;;
+    max)              PROFILE="blackpick_max" ;;
     blackpick|blackpick_lite|blackpick_max)
-           PROFILE="$ARG_PROFILE" ; shift ;;
-    -*)    PROFILE="${CODEX_PROFILE:-blackpick}" ;;
-    *)
-        echo "ERROR: unknown profile alias '$ARG_PROFILE'." >&2
-        echo "Valid: lite, max, blackpick, blackpick_lite, blackpick_max." >&2
-        echo "If you meant to pass a flag, prefix it with '--' (e.g. --base develop)." >&2
-        exit 7
-        ;;
+                      PROFILE="$PROFILE_FROM_ARG" ;;
+    "")               PROFILE="${CODEX_PROFILE:-blackpick}" ;;
 esac
+
+# Replace `$@` with the post-walk REST_ARGS so the rest of the script
+# (which still uses `"$@"` and `shift` semantics) sees a clean arg list
+# without the profile alias / mode keyword.
+set --
+if [ "${#REST_ARGS[@]}" -gt 0 ]; then
+    set -- "${REST_ARGS[@]}"
+fi
 
 # Inline the profile values so we can override on subcommands that don't
 # accept `--profile`/`-p` (notably `codex review`). Keep these in sync
