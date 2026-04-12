@@ -14,6 +14,12 @@ data/
 # Local email template preview fixtures — not for shipping, not localized
 public/email/previews/
 
+# Session logs live OUTSIDE the project repo at
+# `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Block the in-repo
+# path so a stray write never lands in a commit. Primary rule is
+# "write to the external path" — see CLAUDE.md §Session start.
+Wiki_Sean/
+
 *storybook.log
 Fighter_Images/
 storybook-static
