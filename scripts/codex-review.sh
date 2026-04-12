@@ -23,22 +23,56 @@
 #   blackpick_max   — gpt-5.4 + xhigh  (auth/RLS, supabase migrations, money math)
 #
 # Rule: don't burn `max` for shallow diffs. Match effort to task.
-# If Codex CLI fails or returns empty, this script exits loud — do NOT
-# silently fall back to the OpenAI API for reviews (per CLAUDE.md
-# review-gate principle).
+#
+# Fallback behavior: when Codex CLI fails, is missing, or returns empty
+# output, this script automatically hands off to `scripts/gpt-review.sh`
+# with the same arguments. The GPT API path is the ONLY sanctioned
+# fallback — no local models, no direct-to-API from other scripts.
+# Set `CODEX_REVIEW_NO_FALLBACK=1` to disable the fallback and force
+# codex-only mode (useful for testing codex itself, or for debugging
+# why codex specifically is failing).
 
 set -euo pipefail
+
+# Preserve the original argv so we can replay it to the fallback.
+ORIGINAL_ARGS=("$@")
+
+FALLBACK_SCRIPT="$(dirname "$0")/gpt-review.sh"
+
+# Shared fallback helper. Prints a notice to stderr and execs the GPT
+# review wrapper with the original arguments. Never returns on success.
+#
+# Optional third arg: a file path that should be piped as stdin to the
+# fallback script. Required for exec mode because `cat > PROMPT_FILE`
+# already drained the original stdin and gpt-review.sh's free-form mode
+# needs to read the prompt from stdin.
+fallback_or_exit() {
+    local reason="$1"
+    local exit_code="${2:-4}"
+    local stdin_file="${3:-}"
+
+    if [ "${CODEX_REVIEW_NO_FALLBACK:-0}" = "1" ]; then
+        echo "ERROR: codex failed ($reason) and fallback is disabled (CODEX_REVIEW_NO_FALLBACK=1)." >&2
+        exit "$exit_code"
+    fi
+    if [ ! -x "$FALLBACK_SCRIPT" ]; then
+        echo "ERROR: codex failed ($reason) and fallback script $FALLBACK_SCRIPT is missing or not executable." >&2
+        exit "$exit_code"
+    fi
+    echo "NOTICE: codex $reason — falling back to gpt-review.sh" >&2
+    if [ -n "$stdin_file" ] && [ -r "$stdin_file" ]; then
+        exec "$FALLBACK_SCRIPT" ${ORIGINAL_ARGS[@]+"${ORIGINAL_ARGS[@]}"} < "$stdin_file"
+    else
+        exec "$FALLBACK_SCRIPT" ${ORIGINAL_ARGS[@]+"${ORIGINAL_ARGS[@]}"}
+    fi
+}
 
 CODEX_BIN="${CODEX_BIN:-/Applications/Codex.app/Contents/Resources/codex}"
 if [ ! -x "$CODEX_BIN" ]; then
     if command -v codex >/dev/null 2>&1; then
         CODEX_BIN="$(command -v codex)"
     else
-        echo "ERROR: codex CLI not found (checked \$CODEX_BIN and PATH)." >&2
-        echo "Install with: npm i -g @openai/codex" >&2
-        echo "Or ask Sean to check /Applications/Codex.app." >&2
-        echo "Do NOT fall back to OPENAI_API_KEY for reviews." >&2
-        exit 2
+        fallback_or_exit "binary not found (checked \$CODEX_BIN and PATH)" 2
     fi
 fi
 
@@ -196,17 +230,15 @@ if [ "$MODE" = "review" ]; then
         -c model="$MODEL" \
         -c model_reasoning_effort="$EFFORT" \
         ${REVIEW_ARGS[@]+"${REVIEW_ARGS[@]}"} \
-        > "$REVIEW_STDOUT"; then
-        # Replay whatever did make it to stdout before the failure.
-        cat "$REVIEW_STDOUT"
-        echo "ERROR: codex review failed (model=$MODEL, effort=$EFFORT)." >&2
-        exit 4
+        > "$REVIEW_STDOUT" 2>&1; then
+        # Replay whatever did make it to stdout before the failure so
+        # the user can see the actual error before we hand off.
+        cat "$REVIEW_STDOUT" >&2
+        fallback_or_exit "review command failed (model=$MODEL)" 4
     fi
 
     if [ ! -s "$REVIEW_STDOUT" ]; then
-        echo "ERROR: codex review returned empty stdout (model=$MODEL, effort=$EFFORT)." >&2
-        echo "Do not treat this PR as having passed the review gate." >&2
-        exit 5
+        fallback_or_exit "review returned empty stdout (model=$MODEL)" 5
     fi
 
     cat "$REVIEW_STDOUT"
@@ -231,7 +263,7 @@ fi
 # arg) instead of expanding it into argv via `"$(cat …)"`. argv on
 # macOS caps at ~1 MiB (ARG_MAX = 1048576), so a long pasted spec / log
 # would otherwise blow up before codex even starts.
-"$CODEX_BIN" exec \
+if ! "$CODEX_BIN" exec \
     --profile "$PROFILE" \
     -c model="$MODEL" \
     -c model_reasoning_effort="$EFFORT" \
@@ -241,15 +273,12 @@ fi
     -o "$OUTPUT_FILE" \
     - \
     < "$PROMPT_FILE" \
-    > /dev/null 2>&1 || {
-        echo "ERROR: codex exec failed (profile=$PROFILE)." >&2
-        echo "Ask Sean to check Codex auth and profile config." >&2
-        exit 4
-    }
+    > /dev/null 2>&1; then
+    fallback_or_exit "exec command failed (profile=$PROFILE)" 4 "$PROMPT_FILE"
+fi
 
 if [ ! -s "$OUTPUT_FILE" ]; then
-    echo "ERROR: codex returned empty output (profile=$PROFILE)." >&2
-    exit 5
+    fallback_or_exit "exec returned empty output (profile=$PROFILE)" 5 "$PROMPT_FILE"
 fi
 
 cat "$OUTPUT_FILE"
