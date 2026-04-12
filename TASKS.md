@@ -6,7 +6,7 @@
 >
 > **Two-level model** — this file carries the **full durable roadmap** (all phases 0–7). The in-session `TaskList` tool only carries **actionable-this-session** items (the sub-tasks of the current branch). Loading the full roadmap into the tool drowns current work.
 
-_Last updated: 2026-04-12 (after PR #15 merge, Phase 0 complete, Phase 1 fix/prediction-lock-state in-progress)_
+_Last updated: 2026-04-12 (after PR #20 merge, Phase 0 complete, Phase 1 branches 1–3 shipped, branch 4 parked awaiting quality-max exit)_
 
 ---
 
@@ -26,13 +26,13 @@ _Last updated: 2026-04-12 (after PR #15 merge, Phase 0 complete, Phase 1 fix/pre
 
 **Phase 1 — UX bugs + onboarding + streak**.
 
-**Active branch**: `feature/fighter-page-sort` — **WIP, parked at commit `6dfbcb8`**. Pushed to origin, review loop hit round 7 and kept finding P1/P2 corner cases (see branch 4 sub-task log below). Sean paused it to handle the wiki cleanup; next session should either keep iterating on the architectural issues or revert the URL-state approach and ship something smaller. Full resume brief in §Branch 4.
+**Active branch**: `feature/fighter-page-sort` — **WIP, parked at commit `6dfbcb8`**. Pushed to origin, review loop hit round 7 and kept finding P1/P2 corner cases (see branch 4 sub-task log below). Wiki cleanup (PR #20) has landed so branch 4 is the immediate next work. **Quality-Maximizing Path review of the exit options is required before writing code** — do not default to the "Exit A" shortcut in §Branch 4 without a free-form GPT architectural consultation. Full resume brief in §Branch 4.
 
 **Branches already shipped this session**: #17 (branch 1), #18 (branch 2), #19 (branch 3).
 
 **Review gate**: Codex CLI is rate-limited through **2026-04-17**. `scripts/codex-review.sh` auto-falls back to `scripts/gpt-review.sh`. Profiles: `blackpick_lite` (gpt-5.4-mini + medium), `blackpick` default (gpt-5.4 + high), `blackpick_max` (gpt-5.4-pro + high). Cumulative GPT API cost: **~$4.80 / $9.99** (per `~/.blackpick/gpt-review-log.jsonl`).
 
-**Wiki log location**: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/` — **outside** the repo. PR #20 (this branch, `chore/move-wiki-out-of-repo`) moved the pre-2026-04-13 in-repo session logs to the external path and added a `.gitignore` block on `Wiki_Sean/`. The memory entry `feedback_wiki_log_location` documents the rule.
+**Wiki log location**: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/` — **outside** the repo. PR #20 (`chore/move-wiki-out-of-repo`, merged as `9bb0da2`) moved the pre-2026-04-13 in-repo session logs to the external path and added a `.gitignore` block on `Wiki_Sean/`. The memory entry `feedback_wiki_log_location` documents the rule.
 
 **Phase 0 done. Phase 1 in progress (3/9 branches shipped, 1 parked).** Do not start Phase 2 until every Phase 1 item lands.
 
@@ -42,7 +42,7 @@ _Last updated: 2026-04-12 (after PR #15 merge, Phase 0 complete, Phase 1 fix/pre
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
-| #20 | `chore/move-wiki-out-of-repo` | TBD | Chore | Moves 10 pre-2026-04-13 session wiki files out of the repo to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`, `.gitignore` blocks `Wiki_Sean/` entirely, CLAUDE.md session-start protocol updated to read from the external path. New memory entry `feedback_wiki_log_location` documents the rule. |
+| #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` (squashed) | Chore | Moves 7 pre-2026-04-13 session wiki files out of the repo to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`, `.gitignore` blocks `Wiki_Sean/` entirely, CLAUDE.md session-start protocol updated to read from the external path. New memory entry `feedback_wiki_log_location` documents the rule. Docs-only, exempt from review gate. |
 | #19 | `fix/ui-polish-batch` | `d5d03b2` (squashed) | **Phase 1 branch 3 ✅** | Drops `avatar-glow` golden halo on picked fighter (solid 2px gold border replaces it, matches DESIGN.md "no radiating decorative layers"). `.retro-field::placeholder` opacity 0.2 → 0.5 for WCAG contrast. FightCardPicker + FightCard name+flag line wraps (`min-w-0 w-full text-center break-words`) so long Hangul/Cyrillic/accented names wrap instead of truncating on narrow mobile. Lite profile CLEAN round 1, cost $0.003. |
 | #18 | `fix/share-cta-visibility` | `5ee064d` (squashed) | **Phase 1 branch 2 ✅** | New `EventShareCta` client component with 6-variant state machine (disabled_no_ring_name / disabled_no_picks / streak_badge / record_badge / all_locked_in / default_has_picks). ShareMenu extended with optional triggerLabel/triggerVariant/triggerSize/hideIcon props. Event page mounts CTA inside both hero branches, gated on `user` truthy (anon viewers see no CTA). 7 new i18n keys across all 7 locales. shareUrl null-safe. Mobile sticky bottom bar deferred to Branch 2-extra (layout conflict with existing z-50 mobile nav). 3 review rounds, 5 findings fixed, final CLEAN. Cost ~$0.32. |
 | #17 | `fix/prediction-lock-state` | `93b2d9e` (squashed) | **Phase 1 branch 1 ✅** | `LockTransitionWatcher` client component (subscribes to `useClockTick`, calls `router.refresh()` when an upcoming fight's `start_time` crosses `now`, rate-limited to 1/10s with prop-driven reset). Event page FlipTimer condition widened to `!== "completed"` so the locked card stays mounted through upcoming → live. `FightCard` static mode: `isUserPick` / `myPickLabel` props + "Your Pick" accent chip + gold border for the viewer's saved pick in live state. Server-side lock guard verified at `api/predictions/route.ts:60-73`. Tooling: `blackpick_max` upgraded to `gpt-5.4-pro` + `high`, curl `--max-time` 300→600s, Quality-Maximizing Path meta-rule added to CLAUDE.md, `public/email/previews/` ignored. 3 review rounds, 5 findings fixed, final CLEAN. |
