@@ -27,8 +27,11 @@ Pattern lifted from `SETS_Stock/CLAUDE.md` Core Principle #7 (Sean 2026-04-12). 
    it. TASKS.md is the source of truth.
 2. **Read `CURRENT_STATE.md`** (imported above) — production snapshot
    and branch status.
-3. **Read the latest `Wiki_Sean/BlackPick/<date>-*.md`** — last session's
-   decisions, context behind choices.
+3. **Read the latest session log at `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/<date>-*.md`**
+   — last session's decisions, context behind choices. These logs
+   live **outside** the BlackPick repo at the external Wiki_Sean
+   path; never write or read from any in-repo `Wiki_Sean/` directory.
+   See the `feedback_wiki_log_location` memory entry for the rule.
 4. **Restore the in-session TaskList tool** from TASKS.md §Current-focus
    actionable sub-tasks via `TaskCreate`. Only restore the **current
    branch's** sub-tasks, not the full roadmap.
