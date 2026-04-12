@@ -8,6 +8,9 @@ data/
 *.log
 .DS_Store
 
+# TypeScript incremental build cache — binary, per-machine, never useful in git
+*.tsbuildinfo
+
 *storybook.log
 Fighter_Images/
 storybook-static

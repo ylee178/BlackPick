@@ -1,9 +1,13 @@
-# Codex CLI review gate
+# Code review gate
 
-**Codex CLI is the only second-opinion reviewer for this project.** Direct
-OpenAI API calls (`OPENAI_API_KEY`, `https://api.openai.com/...`) are
-**forbidden** for review purposes — if Codex CLI fails, stop and ask Sean
-to investigate. Do NOT silently fall back to the OpenAI API.
+**Codex CLI is the primary reviewer** for this project. When Codex CLI
+is unavailable (rate-limited, broken, session dead, whatever) the
+**only sanctioned fallback** is `scripts/gpt-review.sh`, which calls
+the OpenAI `/v1/responses` endpoint directly with the same profile
+vocabulary. Any other direct-to-API path or silent local-model swap
+is forbidden — both must be explicitly invoked by name.
+
+See the "Fallback: gpt-review.sh" section at the bottom of this doc.
 
 ## Helper
 
@@ -58,11 +62,10 @@ worth shipping a security regression.
 
 ## Never
 
-- Never commit a feature/fix without a Codex review pass on its diff.
-- Never call the OpenAI API directly for review purposes.
+- Never commit a feature/fix without a review pass (Codex primary, gpt-review.sh fallback).
+- Never call the OpenAI API from ad-hoc scripts or new wrappers. Either `codex-review.sh` OR `gpt-review.sh` — those two and only those two.
 - Never use `blackpick_max` for one-line questions or single-file CSS edits.
-- Never bypass review for "trivial" auth/RLS/migration changes — those are
-  exactly the ones `max` exists for.
+- Never bypass review for "trivial" auth/RLS/migration changes — those are exactly the ones `max` exists for.
 
 ## Failure modes
 
@@ -75,3 +78,66 @@ worth shipping a security regression.
   extra args directly without injecting a prompt.
 - **Empty output** — wrapper exits 5. Re-run; if it persists, check
   `~/.codex/logs_2.sqlite` and ask Sean.
+
+## Fallback: `gpt-review.sh` (when Codex is blocked)
+
+Same profile vocabulary, same invocation UX, different backend. Calls
+`https://api.openai.com/v1/responses` with the BlackPick review prompt.
+Only use when Codex CLI is actually down — this is not a cost-saving
+measure, it's an availability measure.
+
+```bash
+# Diff review (defaults to develop, like codex-review.sh)
+scripts/gpt-review.sh review
+scripts/gpt-review.sh review --base main
+scripts/gpt-review.sh review --commit HEAD
+scripts/gpt-review.sh review --uncommitted
+
+# Profile selection (same meaning as codex profiles)
+scripts/gpt-review.sh review lite   # gpt-5.4-mini + medium
+scripts/gpt-review.sh review max    # gpt-5.4 + xhigh
+
+# Free-form prompt via stdin
+echo "should the share page use ISR?" | scripts/gpt-review.sh
+```
+
+### Profile → model mapping
+
+| Profile          | Model         | Reasoning effort | Use for            |
+|------------------|---------------|------------------|--------------------|
+| `blackpick_lite` | `gpt-5.4-mini`| `medium`         | CSS / copy tweaks  |
+| `blackpick`      | `gpt-5.4`     | `high`           | feature PRs        |
+| `blackpick_max`  | `gpt-5.4`     | `xhigh`          | DB / auth / money  |
+
+`gpt-5.4-pro` is not available on Sean's current account, so max tier
+uses `gpt-5.4` with the highest reasoning effort setting instead.
+
+### Cost
+
+Every run logs `{ts, profile, model, effort, input_tokens, output_tokens, cost_usd}` to `~/.blackpick/gpt-review-log.jsonl`. Check cumulative cost with:
+
+```bash
+jq -s 'map(.cost_usd) | add' ~/.blackpick/gpt-review-log.jsonl
+```
+
+Typical costs (2026 pricing, approximate):
+- `lite` — ~$0.003 per review
+- default — ~$0.03 per review
+- `max` — ~$0.05–$0.15 per review (depends on diff size)
+
+`--uncommitted` reviews exclude `tsconfig.tsbuildinfo`, `package-lock.json`, `.next/`, `node_modules/`, and `coverage/` by default — those would otherwise inflate token counts without surfacing real feedback.
+
+### Security notes
+
+- The wrapper writes the payload + `Authorization` header to `0600` temp files and passes them to curl via `--data-binary @file` and `-K config_file`. Neither the API key nor the diff body lands on argv, so `ps auxww` cannot leak either one.
+- Only `OPENAI_API_KEY` is loaded from `.env.local`, not the whole file. Other secrets in `.env.local` are not exported to child processes.
+- Note: env-var visibility via `ps eww` / `/proc/N/environ` is a separate concern — shell variables are still inherited by spawned children unless explicitly unset. On Sean's single-user macOS this is not a meaningful risk; on shared machines consider `env -i` wrapping.
+- Git diff collection uses `--no-color --no-ext-diff --no-textconv` so local git config cannot inject ANSI escapes or run custom textconv drivers that transform or swallow hunks before upload.
+- The review prompt wraps the diff in sentinel markers and explicitly tells the model that diff content is untrusted input, defending against prompt-injection attempts from untrusted PR contributors.
+
+### Failure modes
+
+- **`OPENAI_API_KEY not set`** — check `.env.local` is present in the repo root.
+- **HTTP 429 / rate limit** — wrapper exits 4 and prints the OpenAI error body. Back off and retry.
+- **Empty review text** — wrapper exits 5. Usually means the model got cut off by its reasoning budget on very long diffs. Re-run with `lite` or split the branch.
+- **`unknown argument`** — whitelist: only `--base`, `--commit`, `--uncommitted`, `--title` are accepted. Typos like `--based` hard-fail.
