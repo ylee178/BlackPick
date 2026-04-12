@@ -193,6 +193,8 @@
     "sortWinsDesc": "勝利数が多い順",
     "sortLossesDesc": "敗戦数が多い順",
     "sortNameAsc": "名前順",
+    "sortWinRateDesc": "勝率が高い順",
+    "sortWeightClassAsc": "階級順",
     "noResults": "条件に一致する選手がいません。"
   },
   "series": {

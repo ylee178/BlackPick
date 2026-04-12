@@ -193,6 +193,8 @@
     "sortWinsDesc": "按胜场从高到低",
     "sortLossesDesc": "按负场从高到低",
     "sortNameAsc": "按名称",
+    "sortWinRateDesc": "按胜率排序",
+    "sortWeightClassAsc": "按级别排序",
     "noResults": "没有符合筛选条件的选手。"
   },
   "series": {

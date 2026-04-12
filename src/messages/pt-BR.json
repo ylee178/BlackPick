@@ -193,6 +193,8 @@
     "sortWinsDesc": "Mais vitórias",
     "sortLossesDesc": "Mais derrotas",
     "sortNameAsc": "Nome",
+    "sortWinRateDesc": "Melhor aproveitamento",
+    "sortWeightClassAsc": "Categoria de peso",
     "noResults": "Nenhum lutador corresponde a este filtro."
   },
   "series": {

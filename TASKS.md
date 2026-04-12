@@ -26,15 +26,17 @@ _Last updated: 2026-04-12 (after PR #20 merge, Phase 0 complete, Phase 1 branche
 
 **Phase 1 — UX bugs + onboarding + streak**.
 
-**Active branch**: `feature/fighter-page-sort` — **WIP, parked at commit `6dfbcb8`**. Pushed to origin, review loop hit round 7 and kept finding P1/P2 corner cases (see branch 4 sub-task log below). Wiki cleanup (PR #20) has landed so branch 4 is the immediate next work. **Quality-Maximizing Path review of the exit options is required before writing code** — do not default to the "Exit A" shortcut in §Branch 4 without a free-form GPT architectural consultation. Full resume brief in §Branch 4.
+**Active branch**: Next up is `fix/prediction-pick-label-consistency` (Sean flagged 2026-04-12 mid-session). Branch 4 shipped via PR #21 — Exit B URL-state architecture after 11 gpt-review rounds, ship decision collaborative with GPT.
 
-**Branches already shipped this session**: #17 (branch 1), #18 (branch 2), #19 (branch 3).
+**Next-up bug detail**: PR #17 introduced `isUserPick`/`myPickLabel` props on FightCard static mode. Sean reports the post-lock label differs from the voting-state label, should reuse the existing green-check neutral label and be positioned in the top-right corner. Investigate where the voting-state label lives, align the two, restore top-right position. Lite profile review.
 
-**Review gate**: Codex CLI is rate-limited through **2026-04-17**. `scripts/codex-review.sh` auto-falls back to `scripts/gpt-review.sh`. Profiles: `blackpick_lite` (gpt-5.4-mini + medium), `blackpick` default (gpt-5.4 + high), `blackpick_max` (gpt-5.4-pro + high). Cumulative GPT API cost: **~$4.80 / $9.99** (per `~/.blackpick/gpt-review-log.jsonl`).
+**Branches already shipped this session**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4).
+
+**Review gate**: Codex CLI is rate-limited through **2026-04-17**. `scripts/codex-review.sh` auto-falls back to `scripts/gpt-review.sh`. Profiles: `blackpick_lite` (gpt-5.4-mini + medium), `blackpick` default (gpt-5.4 + high), `blackpick_max` (gpt-5.4-pro + high). Cumulative OpenAI spend hit **~$8.93** mid-session (quota cap triggered, Sean recharged). Branch 4 session cost: **~$0.50** (3 default rounds $0.42 + 8 lite rounds $0.08). **Sean's cost rule**: use lite profile first for single-file/CSS/copy/isolated-component; default only for multi-concern architectural questions (hooks, cross-file, concurrency); max only for auth/RLS/migrations/money. Never iterate more than 3 rounds without self-reviewing harder between attempts.
 
 **Wiki log location**: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/` — **outside** the repo. PR #20 (`chore/move-wiki-out-of-repo`, merged as `9bb0da2`) moved the pre-2026-04-13 in-repo session logs to the external path and added a `.gitignore` block on `Wiki_Sean/`. The memory entry `feedback_wiki_log_location` documents the rule.
 
-**Phase 0 done. Phase 1 in progress (3/9 branches shipped, 1 parked).** Do not start Phase 2 until every Phase 1 item lands.
+**Phase 0 done. Phase 1 in progress (4/9 branches shipped).** Do not start Phase 2 until every Phase 1 item lands.
 
 ---
 
@@ -42,6 +44,7 @@ _Last updated: 2026-04-12 (after PR #20 merge, Phase 0 complete, Phase 1 branche
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
+| #21 | `feature/fighter-page-sort` | `08582ef` | **Phase 1 branch 4 ✅** | Adds `winrate_desc` (3-decided-fight minimum gate) + `weightclass_asc` (canonical weight ladder) sort options and country filter to `/fighters`, with URL state for shareability + localStorage persist. New `src/lib/fighter-grid-state.ts` pure helpers (parseStateFromParams with explicit status metadata, isEqualState, serializeStateToQuery, buildFightersHref, readPersistedState, writePersistedState) + 39 unit tests. Architecture: URL as committed source of truth, `useTransition`-wrapped navigation, `optimisticState` anchored to `searchParamsString` (auto-invalidates on URL moves — no render-time setState, no ref-read-in-render), `latestIntentRef` synchronous merge buffer resynced via `useLayoutEffect`, `pendingPersistRef` match-on-settle persistence (clears on supersede), `canonicalizedTargetQueryRef` deterministic shared-link handling, effect order persist → canonicalize → restore. Unrelated query params (utm, feature flags) preserved via baseSearch in buildFightersHref. Duplicated params (`?sort=a&sort=b`) detected via `getAll` + canonicalized. 7 new i18n keys × 7 locales. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT. 125/125 tests. Known trade-off: brief flash of defaults on first mount before localStorage restore commits (~50ms) — fix requires SSR cookie read / useSyncExternalStore, out of scope. Cost ~$0.50 (3 default + 8 lite per Sean's cost rule). |
 | #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` (squashed) | Chore | Moves 7 pre-2026-04-13 session wiki files out of the repo to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`, `.gitignore` blocks `Wiki_Sean/` entirely, CLAUDE.md session-start protocol updated to read from the external path. New memory entry `feedback_wiki_log_location` documents the rule. Docs-only, exempt from review gate. |
 | #19 | `fix/ui-polish-batch` | `d5d03b2` (squashed) | **Phase 1 branch 3 ✅** | Drops `avatar-glow` golden halo on picked fighter (solid 2px gold border replaces it, matches DESIGN.md "no radiating decorative layers"). `.retro-field::placeholder` opacity 0.2 → 0.5 for WCAG contrast. FightCardPicker + FightCard name+flag line wraps (`min-w-0 w-full text-center break-words`) so long Hangul/Cyrillic/accented names wrap instead of truncating on narrow mobile. Lite profile CLEAN round 1, cost $0.003. |
 | #18 | `fix/share-cta-visibility` | `5ee064d` (squashed) | **Phase 1 branch 2 ✅** | New `EventShareCta` client component with 6-variant state machine (disabled_no_ring_name / disabled_no_picks / streak_badge / record_badge / all_locked_in / default_has_picks). ShareMenu extended with optional triggerLabel/triggerVariant/triggerSize/hideIcon props. Event page mounts CTA inside both hero branches, gated on `user` truthy (anon viewers see no CTA). 7 new i18n keys across all 7 locales. shareUrl null-safe. Mobile sticky bottom bar deferred to Branch 2-extra (layout conflict with existing z-50 mobile nav). 3 review rounds, 5 findings fixed, final CLEAN. Cost ~$0.32. |
@@ -110,35 +113,24 @@ Scope: re-introduce the mobile-only sticky bottom bar variant of `EventShareCta`
 | 3-4 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 | ✅ done |
 | 3-5 | `scripts/codex-review.sh review lite` — **CLEAN round 1**. Cost $0.003 (lite profile was the right call). | ✅ done |
 
-### Branch 4: `feature/fighter-page-sort` ← **PARKED (WIP, commit `6dfbcb8` on origin)**
+### Branch 4: `feature/fighter-page-sort` ✅ shipped in PR #21 (commit `08582ef`)
 
-**Resume brief for next session** — this branch fell into a 7-round review loop with fresh P1/P2 findings each round. Pick one of the two exits below; don't keep iterating on the current architecture.
+Shipped via **Exit B** (URL-as-state kept) after a full architectural rewrite. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT (round 11's remaining concern was defensive complexity for a scenario that doesn't occur with Next.js router dedup semantics). 125/125 tests, cost ~$0.50 session total.
 
-**What's done** (in the WIP commit):
-- Two new sort options: `winrate_desc` + `weightclass_asc`
-- 7 new i18n keys across all 7 locales (`fighter.sortWinRateDesc`, `fighter.sortWeightClassAsc`)
-- URL params: `?sort=...` and `?wc=...` as the source of truth, derived via `searchParams`
-- `pendingSearchRef` synchronous write buffer (render-time sync, not effect-based)
-- localStorage restore on mount + canonicalization of invalid `sort` / `wc` params
-- `router.push` for user-driven changes (history entries), `router.replace` for mount-time corrections
-- Raw win rate sort with a 3-decided-fight minimum gate (matches "승률순" label honestly)
+### Branch 4-extra: `fix/prediction-pick-label-consistency` ← **next up (Sean flagged mid-session 2026-04-12)**
 
-**Open P1/P2 findings from round 7** (gpt-review.sh, `blackpick` profile):
-1. **P2 — `hadUrlStateOnMountRef` treats empty `?wc=` as valid URL state** → gate should validate before deciding to skip first-pass persist. Edge case but real: a bad share link with `?wc=` can erase saved prefs and leaves the dead param sticky (canonicalization doesn't fire because `parseStateFromParams` collapses empty string to `"all"`).
-2. **P3 — async-router optimistic UI lag** → `setSortBy` / `setCountryFilter` call `router.push`, grid re-renders from `useSearchParams()` which doesn't update until the navigation commits. On slow transitions the `<select>` updates visually but the grid lags. Reviewer suggested `useTransition` + optimistic derived values or reading displayed values from `pendingSearchRef` too.
+PR #17 introduced `isUserPick` / `myPickLabel` props on `FightCard` static mode — the "Your Pick" accent chip + gold border for the viewer's saved pick in live state. Sean reports two issues:
 
-**Two exits** (pick one, don't loop further):
+1. **Label inconsistency**: the post-lock label (whatever PR #17 shipped) differs from the existing voting-state label that already uses a green-check neutral chip. The two states should use the SAME label component/style so the transition is seamless.
+2. **Position regression**: the label should be in the **top-right corner** of the fighter card. Current position (check where PR #17 placed it) needs to move.
 
-**Exit A — revert to local state, drop URL params**
-Go back to the pre-diff architecture: `useState` for `sortBy` / `countryFilter`, no URL sync, localStorage persist only. This gives up URL-shareability (`?sort=winrate_desc&wc=US` links), but ships a clean, correct result in 15 minutes and removes the entire race/stale/canonicalize/optimistic complexity. Sean's original ask was "승률순 + weight class sort" — not "share via URL". Quality-maximizing path says honest small fix > ambitious broken fix.
+**Investigate**:
+- `src/components/FightCard.tsx` static mode — where PR #17 rendered the `isUserPick` indicator
+- `src/components/FightCardPicker.tsx` voting mode — where the existing green-check neutral label lives
+- Align: post-lock state reuses the voting-state label component (or at least the same green-check visual + neutral styling)
+- Restore top-right absolute positioning
 
-**Exit B — commit to URL-as-state, fix the remaining 2 findings**
-- For P2: validate raw params in `parseStateFromParams` — treat `?wc=` (empty string) as invalid, same as unknown code. Use the validated result for `hadUrlStateOnMountRef` AND for canonicalization.
-- For P3: wrap the router calls in `useTransition`, expose `isPending`, show a subtle opacity dip on the grid while `isPending` is true. Or derive `optimisticSortBy` / `optimisticCountryFilter` from `pendingSearchRef` using `useSyncExternalStore` style so the select + grid read from the write buffer during the async gap.
-
-**Recommendation**: Exit A. The URL-state rabbit hole was me over-engineering the original "ordered dropdown" task. Sean asked for sort + filter, not a shareable-state URL system. The local-state approach ships the actual user value in one commit, and URL sync can come back as a targeted `feature/fighter-page-sort-url-state` follow-up if it turns out to matter.
-
-**Review cost so far for branch 4**: ~$0.63 across 6 rounds. Re-running after the exit choice should add $0.03-0.10.
+**Review**: lite profile (single-component visual + label alignment). Self-review hard first, lite review round.
 
 ### Branch 5: `db/title-fight-flag` + `feature/title-fight-badge` (max review for migration)
 - [ ] Migration: `fights.is_title_fight boolean not null default false` (separate from `is_cup_match`).
