@@ -141,7 +141,14 @@ if [ "$EXPECT_VALUE" = true ]; then
     exit 7
 fi
 
-# Resolve profile → model + reasoning effort
+# Resolve profile → model + reasoning effort.
+#
+# Profile mapping is deliberately aligned with SETS_Stock / SETS_Crypto
+# so the quality bar matches across Sean's projects. The max profile
+# uses `gpt-5.4-pro` (not the base `gpt-5.4`) per the quality-maximizing
+# path rule in CLAUDE.md — DB migrations / auth / money math are the
+# exact cases where "a bit cheaper" is never sufficient justification
+# for using a weaker reviewer.
 case "${PROFILE_FROM_ARG:-${GPT_REVIEW_PROFILE:-}}" in
     lite|blackpick_lite)
         PROFILE="blackpick_lite"
@@ -150,8 +157,8 @@ case "${PROFILE_FROM_ARG:-${GPT_REVIEW_PROFILE:-}}" in
         ;;
     max|blackpick_max)
         PROFILE="blackpick_max"
-        MODEL="gpt-5.4"
-        EFFORT="xhigh"
+        MODEL="gpt-5.4-pro"
+        EFFORT="high"
         ;;
     ""|blackpick)
         PROFILE="blackpick"
@@ -462,14 +469,16 @@ chmod 600 "$RESPONSE_FILE"
 #        Authorization header or diff body we worked hard to keep off
 #        argv.
 #   --connect-timeout 10   fail fast on stalled DNS / TLS / TCP.
-#   --max-time 300         cap the entire request at 5 minutes —
-#                          xhigh reasoning occasionally takes ~90s, so
-#                          300s is comfortably above the worst case
+#   --max-time 600         cap the entire request at 10 minutes.
+#                          Observed: default profile on a ~5 KB diff
+#                          with multi-file context can legitimately
+#                          take 4-5 minutes to stream out of xhigh
+#                          reasoning or pro. 600s gives headroom
 #                          without hanging indefinitely.
 set +e
 HTTP_STATUS=$(curl -q -sS -K "$CURL_CONFIG" \
     --connect-timeout 10 \
-    --max-time 300 \
+    --max-time 600 \
     -o "$RESPONSE_FILE" \
     -w '%{http_code}' \
     -X POST https://api.openai.com/v1/responses \
@@ -517,6 +526,10 @@ OUTPUT_TOKENS=$(printf '%s' "$USAGE_JSON" | jq -r '.output_tokens // 0')
 
 # Approximate pricing (2026 — update if OpenAI changes rates).
 case "$MODEL" in
+    gpt-5.4-pro)
+        IN_RATE="10.00"
+        OUT_RATE="40.00"
+        ;;
     gpt-5.4)
         IN_RATE="1.25"
         OUT_RATE="10.00"

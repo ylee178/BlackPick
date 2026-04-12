@@ -99,6 +99,8 @@ function FighterSideStatic({
   predictionScore,
   correctLabel,
   wrongLabel,
+  isUserPick,
+  myPickLabel,
 }: {
   fighter: FighterData;
   locale: AppLocale;
@@ -115,6 +117,15 @@ function FighterSideStatic({
   predictionScore?: number | null;
   correctLabel: string;
   wrongLabel: string;
+  /**
+   * True when the viewer's saved prediction points at this fighter.
+   * Drives a "MY PICK" chip that stays visible through the live state
+   * so the viewer can remember who they picked before the result is
+   * in — addresses the bug where the user's pick disappeared the
+   * moment the fight transitioned out of upcoming.
+   */
+  isUserPick: boolean;
+  myPickLabel: string;
 }) {
   const displayName = getLocalizedFighterName(fighter, locale, fighter.name);
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
@@ -125,12 +136,22 @@ function FighterSideStatic({
         "relative flex flex-1 flex-col items-center justify-center gap-2 rounded-[12px] border p-3 text-center",
         isWinner && "border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.06)]",
         isLoser && "border-[var(--bp-line)] bg-[var(--bp-card-inset)] opacity-50",
-        !isWinner && !isLoser && "border-[var(--bp-line)] bg-[var(--bp-card-inset)]",
+        !isWinner && !isLoser && isUserPick && "border-[var(--bp-accent)]/40 bg-[var(--bp-card-inset)]",
+        !isWinner && !isLoser && !isUserPick && "border-[var(--bp-line)] bg-[var(--bp-card-inset)]",
       )}
     >
       {isWinner && (
         <span className="absolute right-2 top-2">
           <RetroLabel size="sm" tone="success">{winLabel}</RetroLabel>
+        </span>
+      )}
+      {/* "MY PICK" chip renders for the viewer's saved pick in live state
+          (winner not yet known) so the pick stays visible across the
+          upcoming → locked transition. Once the winner is decided, the
+          existing win/correct/wrong UI takes over and this chip yields. */}
+      {isUserPick && !isWinner && !isLoser && (
+        <span className="absolute left-2 top-2">
+          <RetroLabel size="sm" tone="accent">{myPickLabel}</RetroLabel>
         </span>
       )}
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
@@ -296,6 +317,8 @@ export default async function FightCard({
               predictionScore={prediction?.score}
               correctLabel={t("prediction.correct")}
               wrongLabel={t("prediction.wrong")}
+              isUserPick={prediction?.winner_id === fight.fighter_a_id}
+              myPickLabel={t("prediction.yourPick")}
             />
             <div className="flex items-center justify-center px-1 py-1 sm:py-0">
               <span className="text-base font-black text-[var(--bp-accent)] sm:text-lg">{t("event.vs")}</span>
@@ -316,6 +339,8 @@ export default async function FightCard({
               predictionScore={prediction?.score}
               correctLabel={t("prediction.correct")}
               wrongLabel={t("prediction.wrong")}
+              isUserPick={prediction?.winner_id === fight.fighter_b_id}
+              myPickLabel={t("prediction.yourPick")}
             />
           </div>
 

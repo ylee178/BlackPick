@@ -2,6 +2,24 @@
 @DESIGN.md
 @CURRENT_STATE.md
 
+# Core decision rule — Quality-maximizing path (meta-rule above everything else)
+
+Every decision branch, pick the **path that makes the design the strongest**. "Ship fast" / "small enough to skip" / "can patch later" / "probably fine" / "that's just a P3" are **never sufficient justification** on their own. BlackPick is Sean's real product — users, not just latency, pay for a bad call.
+
+Concrete application:
+- Breadth-first scan vs depth-first dig → **depth**.
+- Mutation vs read-only evidence gathering → **read-only first**.
+- Internal confidence vs external review → **external review**.
+- Simple-but-partial vs complete-but-tedious → **complete-but-tedious**.
+- Cheap model vs correct model for the task → **correct model** (see §Review gate profile escalation).
+- 1 issue flagged vs 4 issues flagged → **fix all 4**, never stop at the loud one.
+- Shortcut that works vs canonical approach → **canonical approach**.
+- "The cheap profile was enough last time" → re-evaluate the current task, not the last one.
+
+This rule sits **above** everything else in this file — it tells you *how* to choose between priorities when they tie, not what to prioritize in the abstract. If a shortcut is tempting, the answer is almost always no.
+
+Pattern lifted from `SETS_Stock/CLAUDE.md` Core Principle #7 (Sean 2026-04-12). Same operator, same standard across all of Sean's projects.
+
 # Session start (MANDATORY — run before any task work, including post-`/clear`)
 
 1. **Read [`TASKS.md`](TASKS.md) end-to-end.** This is the durable task

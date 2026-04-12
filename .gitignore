@@ -11,6 +11,9 @@ data/
 # TypeScript incremental build cache — binary, per-machine, never useful in git
 *.tsbuildinfo
 
+# Local email template preview fixtures — not for shipping, not localized
+public/email/previews/
+
 *storybook.log
 Fighter_Images/
 storybook-static
