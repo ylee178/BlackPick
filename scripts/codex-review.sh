@@ -227,6 +227,10 @@ if [ ! -s "$PROMPT_FILE" ]; then
     exit 3
 fi
 
+# Pipe the prompt to codex on stdin (with `-` as the positional prompt
+# arg) instead of expanding it into argv via `"$(cat …)"`. argv on
+# macOS caps at ~1 MiB (ARG_MAX = 1048576), so a long pasted spec / log
+# would otherwise blow up before codex even starts.
 "$CODEX_BIN" exec \
     --profile "$PROFILE" \
     -c model="$MODEL" \
@@ -235,8 +239,8 @@ fi
     --sandbox read-only \
     --color never \
     -o "$OUTPUT_FILE" \
-    "$(cat "$PROMPT_FILE")" \
-    < /dev/null \
+    - \
+    < "$PROMPT_FILE" \
     > /dev/null 2>&1 || {
         echo "ERROR: codex exec failed (profile=$PROFILE)." >&2
         echo "Ask Sean to check Codex auth and profile config." >&2
