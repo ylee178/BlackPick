@@ -1,19 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
 import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
-
-type Notification = {
-  id: string;
-  type: string;
-  title: string;
-  body: string;
-  reference_id: string | null;
-  is_read: boolean;
-  created_at: string;
-};
+import {
+  markAllNotificationsRead,
+  useNotificationsStore,
+} from "@/lib/use-notifications";
 
 function BellIcon({ className }: { className?: string }) {
   return <Bell className={cn("h-5 w-5", className)} strokeWidth={2} />;
@@ -40,28 +34,8 @@ const typeIcons: Record<string, string> = {
 export default function NotificationBell() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { notifications, unreadCount } = useNotificationsStore();
   const panelRef = useRef<HTMLDivElement>(null);
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notifications?limit=20");
-      const data = await res.json();
-      if (res.ok) {
-        setNotifications(data.notifications ?? []);
-        setUnreadCount(data.unread_count ?? 0);
-      }
-    } catch {
-      // silently fail
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60_000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -81,20 +55,6 @@ export default function NotificationBell() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [open]);
-
-  async function markAllRead() {
-    try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ all: true }),
-      });
-      setUnreadCount(0);
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    } catch {
-      // silently fail
-    }
-  }
 
   return (
     <div className="relative" ref={panelRef}>
@@ -121,7 +81,9 @@ export default function NotificationBell() {
             {unreadCount > 0 ? (
               <button
                 type="button"
-                onClick={markAllRead}
+                onClick={() => {
+                  void markAllNotificationsRead();
+                }}
                 className="text-xs text-[var(--bp-accent)] hover:underline"
               >
                 {t("notification.markAllRead")}

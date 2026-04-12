@@ -17,6 +17,7 @@ import {
   getAllTimezones,
   getTimezoneAbbreviation,
 } from "@/lib/timezone";
+import { useIsMounted } from "@/lib/use-sync-store";
 
 type TimezoneSelectProps = {
   value: string;
@@ -74,16 +75,15 @@ export default function TimezoneSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
-  const [mounted, setMounted] = useState(false);
+  // `createPortal` requires `document`, so we gate on a client mount flag
+  // provided by a zero-cost useSyncExternalStore helper. This replaces the
+  // old `useEffect(() => setMounted(true), [])` pattern and keeps the
+  // `react-hooks/set-state-in-effect` rule clean.
+  const mounted = useIsMounted();
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-
-  // `createPortal` requires `document` so we gate on a client mount flag.
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const preferredEntries = useMemo(
     () =>

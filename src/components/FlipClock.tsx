@@ -1,24 +1,64 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
+import { useClockTick } from "@/lib/use-sync-store";
 
 /* ── Single flip card ── */
+type FlipState = {
+  current: string;
+  prev: string;
+  flipping: boolean;
+  // Stored in state (not a ref) so the "adjusting state during render"
+  // pattern stays compliant with `react-hooks/refs`, which forbids reading
+  // or writing `ref.current` during render. See
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders.
+  lastValue: string;
+  // Monotonic counter incremented on every value change. Used as an
+  // effect dep so the 600ms reset timer is restarted whenever a new
+  // value arrives mid-flip — without this, two value changes within
+  // 600ms would share a single timeout and the second flap would clear
+  // its `flipping` flag too early.
+  flipId: number;
+};
+
 function FlipCard({ value, label }: { value: string; label: string }) {
-  const [current, setCurrent] = useState(value);
-  const [prev, setPrev] = useState(value);
-  const [flipping, setFlipping] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [state, setState] = useState<FlipState>(() => ({
+    current: value,
+    prev: value,
+    flipping: false,
+    lastValue: value,
+    flipId: 0,
+  }));
+
+  // Canonical "derive state from props" pattern: when the incoming value
+  // diverges from the snapshot we last processed, schedule a state update
+  // during render. React throws away this render output and re-runs the
+  // component with the updated snapshot — no `useEffect` / setState hop,
+  // and therefore no `react-hooks/set-state-in-effect` violation.
+  if (state.lastValue !== value) {
+    setState((prev) => ({
+      current: value,
+      prev: prev.current,
+      flipping: true,
+      lastValue: value,
+      flipId: prev.flipId + 1,
+    }));
+  }
+
+  const { current, prev, flipping, flipId } = state;
 
   useEffect(() => {
-    if (value !== current) {
-      setPrev(current);
-      setCurrent(value);
-      setFlipping(true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => setFlipping(false), 600);
-    }
-  }, [value, current]);
+    if (!flipping) return;
+    // Async setState via setTimeout — runs on the event loop *after* the
+    // effect commits, so it doesn't trip `set-state-in-effect`. The
+    // `flipId` dep ensures we restart the timer for every new value,
+    // even if `flipping` was already true.
+    const id = setTimeout(() => {
+      setState((s) => (s.flipId === flipId ? { ...s, flipping: false } : s));
+    }, 600);
+    return () => clearTimeout(id);
+  }, [flipping, flipId]);
 
   return (
     <div className="flex flex-col items-center gap-1.5">
@@ -52,8 +92,24 @@ function FlipCard({ value, label }: { value: string; label: string }) {
 }
 
 /* ── Flip Clock Countdown ── */
-function getTimeLeft(target: string) {
-  const diff = new Date(target).getTime() - Date.now();
+type TimeLeft = {
+  total: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+const EMPTY_TIME_LEFT: TimeLeft = {
+  total: 1,
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+};
+
+function getTimeLeft(target: string, nowMs: number): TimeLeft {
+  const diff = new Date(target).getTime() - nowMs;
   if (diff <= 0) return { total: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     total: diff,
@@ -66,15 +122,13 @@ function getTimeLeft(target: string) {
 
 export default function FlipClock({ targetTime }: { targetTime: string }) {
   const { t } = useI18n();
-  const [mounted, setMounted] = useState(false);
-  const [tl, setTl] = useState({ total: 1, days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-    setTl(getTimeLeft(targetTime));
-    const i = setInterval(() => setTl(getTimeLeft(targetTime)), 1000);
-    return () => clearInterval(i);
-  }, [targetTime]);
+  // `useClockTick` returns 0 during SSR / first client paint and then a live
+  // `Date.now()` value via a shared 1Hz store. The `now === 0` sentinel
+  // doubles as our "not yet hydrated" flag, replacing the old
+  // `useState(mounted)` + `useEffect(() => setMounted(true), [])` pair.
+  const now = useClockTick();
+  const mounted = now !== 0;
+  const tl = mounted ? getTimeLeft(targetTime, now) : EMPTY_TIME_LEFT;
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
