@@ -36,16 +36,22 @@ type Props = {
 export default function SignupGateModal({ open, onClose }: Props) {
   const { t } = useI18n();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Focus management + Escape key. We save the element that had focus when
-  // the modal opened, move focus onto the close button (which is both the
-  // safest initial landing target and an obvious way out), and restore
-  // focus back to the originating element when the modal closes. This is
-  // the 80/20 of a full focus trap — keyboard users get a predictable
-  // entry/exit without pulling in a trapping library.
+  // Focus management + Escape + Tab focus trap. Mirrors ShareMenu's
+  // implementation so screen-reader / keyboard users get the same
+  // behavior across modal-style dialogs in the app:
+  //  - On open: capture the previously focused element, move focus to
+  //    the close button (safest initial landing target).
+  //  - Escape closes.
+  //  - Tab / Shift+Tab cycle focus through the dialog's focusable
+  //    descendants. The focusable set is recomputed per keystroke
+  //    because `SocialAuthButtons` and the auth-error message can
+  //    appear/disappear while the modal is open.
+  //  - On unmount: restore focus to the previously focused element.
   useEffect(() => {
     if (!open) return;
     previouslyFocusedRef.current =
@@ -53,12 +59,42 @@ export default function SignupGateModal({ open, onClose }: Props) {
     // Move focus after the portal has mounted.
     closeButtonRef.current?.focus();
 
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+    function getFocusable(): HTMLElement[] {
+      const root = dialogRef.current;
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("aria-hidden"));
     }
-    document.addEventListener("keydown", handleEsc);
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (active === first || !dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last || !dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleEsc);
+      document.removeEventListener("keydown", handleKeyDown);
       previouslyFocusedRef.current?.focus?.();
     };
   }, [open, onClose]);
@@ -85,6 +121,7 @@ export default function SignupGateModal({ open, onClose }: Props) {
       aria-labelledby="signup-gate-title"
     >
       <div
+        ref={dialogRef}
         className={retroPanelClassName({
           className: "w-full max-w-sm p-6",
         })}
