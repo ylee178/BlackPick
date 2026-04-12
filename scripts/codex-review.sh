@@ -84,7 +84,9 @@ for arg in "$@"; do
             fi
             PROFILE_FROM_ARG="$arg"
             ;;
-        --base|--commit|--title|-c)
+        --base|--commit|--title|--enable|--disable|--config|-c)
+            # All `codex review` flags that consume a separate value
+            # token. Keep this list aligned with `codex review --help`.
             REST_ARGS+=("$arg")
             EXPECT_VALUE=true
             ;;
