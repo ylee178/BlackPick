@@ -1000,6 +1000,135 @@ async function completeFights(admin: ReturnType<typeof getAdminClient>) {
   return { completed_fights: completedFights, completed_events: 1, event_name: latestEvent.name };
 }
 
+// ── DevPanel v2 actions ────────────────────────────────────────────────
+//
+// These are the finer-grained actions backing the switch-based DevPanel
+// rewrite. Everything below targets the latest (featured) event because
+// that's the surface Sean actually tests against. The existing
+// completeFights / resetFights helpers stay for backwards compat with
+// older DevPanel callers.
+
+async function setEventStatus(
+  admin: ReturnType<typeof getAdminClient>,
+  status: "upcoming" | "live" | "completed",
+) {
+  const { data: latestEvent } = await admin
+    .from("events")
+    .select("id, name")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latestEvent) {
+    return { ok: false, reason: "no event" };
+  }
+
+  // Mapping:
+  //   upcoming  → delegate to resetFights so fights + predictions are
+  //               cleaned back to a pre-event state. This is destructive
+  //               (clears winner/method/round/scores) but it's dev-only.
+  //   completed → delegate to completeFights so random winners + scoring
+  //               fills in. Also destructive.
+  //   live      → keep the fights untouched (status stays 'upcoming' per
+  //               the CHECK constraint on fights.status) but flip the
+  //               event itself to 'live'. The fight-level live state is
+  //               derived from start_time vs now() in the UI, so this is
+  //               enough to simulate the "event in progress" surface.
+  if (status === "upcoming") {
+    const result = await resetFights(admin);
+    return { ok: true, status, ...result };
+  }
+  if (status === "completed") {
+    const result = await completeFights(admin);
+    return { ok: true, status, ...result };
+  }
+  // live
+  await admin
+    .from("events")
+    .update({ status: "live" })
+    .eq("id", latestEvent.id);
+  return { ok: true, status, event_name: latestEvent.name };
+}
+
+async function getUserState(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+) {
+  const { data: latestEvent } = await admin
+    .from("events")
+    .select("id, name, status, date")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  const { data: userRow } = await admin
+    .from("users")
+    .select("id, ring_name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const { count: predictionsCount } = await admin
+    .from("predictions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  let predictedOnLatest = 0;
+  let predictableOnLatest = 0;
+  if (latestEvent) {
+    const { data: fights } = await admin
+      .from("fights")
+      .select("id, status")
+      .eq("event_id", latestEvent.id);
+    const upcomingFightIds = (fights ?? [])
+      .filter((f) => f.status === "upcoming")
+      .map((f) => f.id);
+    predictableOnLatest = upcomingFightIds.length;
+    if (upcomingFightIds.length > 0) {
+      const { count } = await admin
+        .from("predictions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .in("fight_id", upcomingFightIds);
+      predictedOnLatest = count ?? 0;
+    }
+  }
+
+  return {
+    has_ring_name: !!userRow?.ring_name,
+    ring_name: userRow?.ring_name ?? null,
+    has_predictions: (predictionsCount ?? 0) > 0,
+    prediction_count: predictionsCount ?? 0,
+    predicted_on_latest: predictedOnLatest,
+    predictable_on_latest: predictableOnLatest,
+    latest_event_id: latestEvent?.id ?? null,
+    latest_event_name: latestEvent?.name ?? null,
+    latest_event_status: latestEvent?.status ?? null,
+  };
+}
+
+async function setRingName(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+  ringName: string | null,
+) {
+  const { error } = await admin
+    .from("users")
+    .update({ ring_name: ringName })
+    .eq("id", userId);
+  return { ok: !error, error: error?.message };
+}
+
+async function clearMyPredictions(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+) {
+  const { error, count } = await admin
+    .from("predictions")
+    .delete({ count: "exact" })
+    .eq("user_id", userId);
+  return { ok: !error, cleared: count ?? 0, error: error?.message };
+}
+
 async function resetFights(admin: ReturnType<typeof getAdminClient>) {
   // Reset the latest event (featured on homepage) back to upcoming
   const { data: latestEvent } = await admin
@@ -1091,6 +1220,45 @@ export async function POST(request: Request) {
       }
       const result = await seedMyData(admin, userId);
       return NextResponse.json({ ok: true, action, ...result });
+    }
+
+    // ── DevPanel v2 actions ────────────────────────────────────────────
+
+    if (action === "set-event-status") {
+      const next = body?.status;
+      if (next !== "upcoming" && next !== "live" && next !== "completed") {
+        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+      }
+      const result = await setEventStatus(admin, next);
+      return NextResponse.json({ action, ...result });
+    }
+
+    if (action === "get-user-state") {
+      const userId = body?.userId;
+      if (!userId) {
+        return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+      }
+      const state = await getUserState(admin, userId);
+      return NextResponse.json({ ok: true, action, ...state });
+    }
+
+    if (action === "set-ring-name") {
+      const userId = body?.userId;
+      const ringName = body?.ringName ?? null;
+      if (!userId) {
+        return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+      }
+      const result = await setRingName(admin, userId, ringName);
+      return NextResponse.json({ action, ...result });
+    }
+
+    if (action === "clear-my-predictions") {
+      const userId = body?.userId;
+      if (!userId) {
+        return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+      }
+      const result = await clearMyPredictions(admin, userId);
+      return NextResponse.json({ action, ...result });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
