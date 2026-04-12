@@ -5,6 +5,7 @@ import { buildSharePath } from "@/lib/share-url";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import FlipTimer from "@/components/FlipTimer";
+import LockTransitionWatcher from "@/components/LockTransitionWatcher";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { RetroStatusBadge, retroChipClassName, retroPanelClassName } from "@/components/ui/retro";
@@ -178,6 +179,25 @@ export default async function EventPage({
   const predictableTotal = upcomingEntries.length;
   const predictedCount = upcomingEntries.filter((entry) => entry.prediction).length;
 
+  // LockTransitionWatcher feed: timestamps where fights transition from
+  // pickable to locked. When `useClockTick` crosses any of these, the
+  // watcher fires `router.refresh()` so the server-rendered fight card
+  // states (`hasStarted`, `displayState`) flip to the correct values
+  // without waiting for a manual page reload. We only include upcoming
+  // entries because live/completed are already past their transition.
+  //
+  // `Number.isFinite` (not `!isNaN`) and an explicit null check — a
+  // missing `start_time` makes `new Date(null).getTime()` return `0`,
+  // which passes `!isNaN(0)` as true and would feed `0` into the
+  // watcher, causing a permanent 10s refresh loop on any malformed
+  // row. Flagged by the 2026-04-12 gpt-review.sh review.
+  const lockTimestamps = upcomingEntries.flatMap((entry) => {
+    const raw = entry.fight.start_time;
+    if (!raw) return [];
+    const ts = Date.parse(raw);
+    return Number.isFinite(ts) ? [ts] : [];
+  });
+
   function renderFightSection(sectionId: string, label: string, items: FightEntry[]) {
     if (items.length === 0) return null;
 
@@ -228,10 +248,15 @@ export default async function EventPage({
         predictableTotal={predictableTotal}
         predictedCount={predictedCount}
       />
+      <LockTransitionWatcher lockTimestamps={lockTimestamps} />
       <StickyEventHeader
         eventName={localizedEventName}
         eventStatus={eventStatus}
-        countdownTargetTime={eventStatus === "upcoming" ? earliestStart : null}
+        // Pass the earliest start time through upcoming AND live so
+        // StickyEventHeader's own FlipTimer (if any) matches the hero
+        // FlipTimer — both show countdown pre-lock and "locked" card
+        // post-lock. Completed events hide the slot entirely.
+        countdownTargetTime={eventStatus !== "completed" ? earliestStart : null}
         watchElementId="event-page-header"
       />
 
@@ -271,7 +296,19 @@ export default async function EventPage({
                 <span><span className="font-semibold text-white">{pickedEntries.length}</span> <span className="text-[rgba(255,255,255,0.5)]">{t("prediction.yourPick")}</span></span>
               </div>
 
-              {event.status === "upcoming" && earliestStart ? (
+              {/* Lock indicator: FlipTimer stays mounted through the
+                  upcoming → live transition (condition widened from
+                  `event.status === "upcoming"` to `!== "completed"`)
+                  because FlipTimer's internal `countdown.locked` card
+                  already covers the post-`targetTime` state.
+                  LockTransitionWatcher above pokes the server to
+                  re-render with fresh `hasStarted` so the fight list
+                  flips to static mode at the same moment.
+                  When `earliestStart` is missing entirely, we render
+                  null instead of a fake "locked" card — missing data
+                  is not the same as locked, and the previous pass
+                  regressed this by showing locked for bad rows. */}
+              {event.status !== "completed" && earliestStart ? (
                 <div className="mt-4">
                   <FlipTimer targetTime={earliestStart} />
                 </div>
@@ -321,7 +358,9 @@ export default async function EventPage({
             <span><span className="font-semibold text-[var(--bp-ink)]">{pickedEntries.length}</span> <span className="text-[var(--bp-muted)]">{t("prediction.yourPick")}</span></span>
           </div>
 
-          {event.status === "upcoming" && earliestStart ? (
+          {/* Same lock-indicator rule as the poster branch above —
+              see that comment for rationale. */}
+          {event.status !== "completed" && earliestStart ? (
             <div className="mt-4">
               <FlipTimer targetTime={earliestStart} />
             </div>

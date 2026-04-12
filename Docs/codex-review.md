@@ -103,14 +103,13 @@ echo "should the share page use ISR?" | scripts/gpt-review.sh
 
 ### Profile → model mapping
 
-| Profile          | Model         | Reasoning effort | Use for            |
-|------------------|---------------|------------------|--------------------|
-| `blackpick_lite` | `gpt-5.4-mini`| `medium`         | CSS / copy tweaks  |
-| `blackpick`      | `gpt-5.4`     | `high`           | feature PRs        |
-| `blackpick_max`  | `gpt-5.4`     | `xhigh`          | DB / auth / money  |
+| Profile          | Model          | Reasoning effort | Use for                                    |
+|------------------|----------------|------------------|--------------------------------------------|
+| `blackpick_lite` | `gpt-5.4-mini` | `medium`         | CSS / copy / placeholder / i18n key cleanup |
+| `blackpick`      | `gpt-5.4`      | `high`           | feature PRs, hook refactors, client UI     |
+| `blackpick_max`  | `gpt-5.4-pro`  | `high`           | DB migrations / auth / RLS / money / Sentry hooks |
 
-`gpt-5.4-pro` is not available on Sean's current account, so max tier
-uses `gpt-5.4` with the highest reasoning effort setting instead.
+`gpt-5.4-pro` is the dedicated "deep reasoning" model on Sean's account — the same model SETS_Stock uses for its `sets_stock_max` profile. It's ~8× more expensive than `gpt-5.4` at the margin, but Quality-Maximizing Path (CLAUDE.md §Core decision rule) says that's exactly the trade-off we want for high-stakes reviews: a DB migration that corrupts data costs far more than $0.50 of review compute.
 
 ### Cost
 
@@ -123,7 +122,9 @@ jq -s 'map(.cost_usd) | add' ~/.blackpick/gpt-review-log.jsonl
 Typical costs (2026 pricing, approximate):
 - `lite` — ~$0.003 per review
 - default — ~$0.03 per review
-- `max` — ~$0.05–$0.15 per review (depends on diff size)
+- `max` — ~$0.50–$2.00 per review (gpt-5.4-pro; diff-size dependent)
+
+`max` is ~10× more expensive than default because pro is ~8× the base rate plus deeper reasoning. Use it only when the escalation table below applies. For everything else, default is the right call — BUT never downgrade max to default "to save money" when the task actually warrants pro. See CLAUDE.md §Core decision rule.
 
 `--uncommitted` reviews exclude `tsconfig.tsbuildinfo`, `package-lock.json`, `.next/`, `node_modules/`, and `coverage/` by default — those would otherwise inflate token counts without surfacing real feedback.
 

@@ -26,9 +26,14 @@ _Last updated: 2026-04-12 (after PR #15 merge, Phase 0 complete, Phase 1 fix/pre
 
 **Phase 1 — UX bugs + onboarding + streak** (started 2026-04-12 after PR #14 / Phase 0 merge).
 
-**Active branch**: `fix/prediction-lock-state` (in-progress, uncommitted client component drafted, server-side lock already verified in place).
+**Active branch**: `fix/prediction-lock-state` (review gate passed CLEAN on round 3 — ready for PR).
 
-**Review gate**: Codex CLI is rate-limited through **2026-04-17** on Sean's account. `scripts/codex-review.sh` auto-falls-back to `scripts/gpt-review.sh` (OpenAI `/v1/responses`) transparently. Profile table + cost in `Docs/codex-review.md`. Cumulative GPT API cost so far: **$2.16 / $9.99** (per `~/.blackpick/gpt-review-log.jsonl`).
+**Review gate**: Codex CLI is rate-limited through **2026-04-17** on Sean's account. `scripts/codex-review.sh` auto-falls-back to `scripts/gpt-review.sh` (OpenAI `/v1/responses`) transparently. Profiles:
+- `blackpick_lite` = `gpt-5.4-mini` + medium
+- `blackpick` (default) = `gpt-5.4` + high
+- `blackpick_max` = `gpt-5.4-pro` + high (upgraded 2026-04-12 after Sean pointed out SETS_Stock uses pro — same account)
+
+Profile table + escalation rules + failure modes in `Docs/codex-review.md`. Cumulative GPT API cost: **$3.01 / $9.99** (per `~/.blackpick/gpt-review-log.jsonl`).
 
 **Phase 0 done, Phase 2 gated on Phase 1 completion.** Do not start Phase 2 branches until every Phase 1 item is merged.
 
@@ -71,14 +76,14 @@ Scope: 4 bugs around the "fight locks at start_time" transition.
 
 | # | Subtask | Status |
 |---|---|---|
-| 1-1 | New client component `src/components/LockTransitionWatcher.tsx` that subscribes to `useClockTick` and calls `router.refresh()` once when any upcoming-fight `start_time` has been crossed. Dedups via ref. Draft exists untracked. | in-progress |
-| 1-2 | Mount `LockTransitionWatcher` on the event page with `lockTimestamps = upcomingEntries.map(e => Date.parse(e.fight.start_time))`. Triggers server re-render so `hasStarted` flips. | pending |
-| 1-3 | Event page hero: replace the `event.status === "upcoming" && earliestStart ? <FlipTimer /> : null` conditional with a 3-branch ternary — FlipTimer when upcoming + in future, "Prediction Locked" card when locked, null when completed. | pending |
-| 1-4 | `FightCard` static mode: pass `userPickedFighterId` to `FighterSideStatic` and render a "MY PICK" chip on the user's saved fighter when live (no winner known yet). | pending |
-| 1-5 | Server-side lock guard already present at `src/app/api/predictions/route.ts:60-73` (rejects `status != 'upcoming'` AND `startTime <= now`). **Verified, no change.** Add one-line comment linking to this file in the manifest as evidence the check exists. | verified |
-| 1-6 | `npx eslint` + `npx tsc --noEmit` + `npm run test:fast` + `npm run build` clean | pending |
-| 1-7 | `scripts/codex-review.sh review` (auto-falls-back to GPT API) — fix any findings → re-review until clean | pending |
-| 1-8 | Update TASKS.md: mark branch 1 done, move to Recently shipped, start branch 2 | pending |
+| 1-1 | New client component `src/components/LockTransitionWatcher.tsx` that subscribes to `useClockTick` and calls `router.refresh()` once when any upcoming-fight `start_time` has been crossed. Dedups via ref. | ✅ done |
+| 1-2 | Mount `LockTransitionWatcher` on the event page with `lockTimestamps = upcomingEntries.map(...)`. Triggers server re-render so `hasStarted` flips on the fight list. | ✅ done |
+| 1-3 | Event page hero: relax the FlipTimer condition from `event.status === "upcoming"` to `event.status !== "completed"` in BOTH branches (poster hero + no-poster branch) so FlipTimer stays mounted through the upcoming → live transition. FlipTimer's internal locked-state handler already renders the "Predictions locked" card when `targetTime` has passed. `StickyEventHeader`'s `countdownTargetTime` prop widened to match. | ✅ done |
+| 1-4 | `FightCard` static mode: new `isUserPick` + `myPickLabel` props on `FighterSideStatic`. When a non-winner/non-loser fighter is the viewer's saved pick, render a "YOUR PICK" accent chip top-left + subtle gold-accent border. Reuses the existing `prediction.yourPick` i18n key (all 7 locales already have it). | ✅ done |
+| 1-5 | Server-side lock guard already present at `src/app/api/predictions/route.ts:60-73` (rejects `fight.status != 'upcoming'` AND `startTime <= now`). **Verified, no change.** | ✅ verified |
+| 1-6 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 · `npm run build` clean | ✅ done |
+| 1-7 | `scripts/codex-review.sh review` — Round 1 found 3 issues (P2 firedForRef stuck-stale, P2 implicit-binary branch, P3 public/email previews). Fixed all. Round 2 found 2 new issues (P1 `new Date(null) === 0` → infinite refresh loop, P2 "locked" fallback regression on missing data). Fixed both. Round 3: **CLEAN**. | ✅ done |
+| 1-8 | Update TASKS.md: mark branch 1 done, move to Recently shipped, start branch 2 | in-progress |
 
 ### Branch 2: `fix/share-cta-visibility` (blackpick review)
 - [ ] Move ShareMenu CTA into the hero card, not between hero and fight list. Explicit label ("Share your picks").
