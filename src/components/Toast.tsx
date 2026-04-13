@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback, createContext, useContext, type ReactNode } from "react";
-import { Check, X, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, Flame } from "lucide-react";
 
-type ToastType = "success" | "error" | "info";
+type ToastType = "success" | "error" | "info" | "streak";
 
 type ToastItem = {
   id: number;
@@ -62,8 +62,22 @@ function ToastItem({ item, onDone }: { item: ToastItem; onDone: () => void }) {
     return () => clearTimeout(timer);
   }, [onDone]);
 
-  const Icon = item.type === "success" ? Check : item.type === "error" ? AlertCircle : AlertCircle;
-  const iconColor = item.type === "success" ? "text-[#4ade80]" : item.type === "error" ? "text-[#f87171]" : "text-[var(--bp-accent)]";
+  const Icon =
+    item.type === "success"
+      ? Check
+      : item.type === "error"
+        ? AlertCircle
+        : item.type === "streak"
+          ? Flame
+          : AlertCircle;
+  const iconColor =
+    item.type === "success"
+      ? "text-[#4ade80]"
+      : item.type === "error"
+        ? "text-[#f87171]"
+        : item.type === "streak"
+          ? "text-[var(--bp-accent)]"
+          : "text-[var(--bp-accent)]";
 
   return (
     <div

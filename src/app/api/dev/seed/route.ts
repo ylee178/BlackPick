@@ -1181,7 +1181,7 @@ async function getUserState(
 
   const { data: userRow } = await admin
     .from("users")
-    .select("id, ring_name")
+    .select("id, ring_name, current_streak, best_streak")
     .eq("id", userId)
     .maybeSingle();
 
@@ -1218,10 +1218,34 @@ async function getUserState(
     prediction_count: predictionsCount ?? 0,
     predicted_on_latest: predictedOnLatest,
     predictable_on_latest: predictableOnLatest,
+    current_streak: userRow?.current_streak ?? 0,
+    best_streak: userRow?.best_streak ?? 0,
     latest_event_id: latestEvent?.id ?? null,
     latest_event_name: latestEvent?.name ?? null,
     latest_event_status: latestEvent?.status ?? null,
   };
+}
+
+async function setStreak(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+  current: number,
+  best: number,
+) {
+  if (!Number.isFinite(current) || !Number.isFinite(best)) {
+    return { ok: false, error: "invalid numbers" };
+  }
+  if (current < 0 || best < 0) {
+    return { ok: false, error: "streaks cannot be negative" };
+  }
+  if (current > best) {
+    return { ok: false, error: "current cannot exceed best" };
+  }
+  const { error } = await admin
+    .from("users")
+    .update({ current_streak: Math.floor(current), best_streak: Math.floor(best) })
+    .eq("id", userId);
+  return { ok: !error, error: error?.message };
 }
 
 async function setRingName(
@@ -1367,6 +1391,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Missing userId" }, { status: 400 });
       }
       const result = await setRingName(admin, userId, ringName);
+      return NextResponse.json({ action, ...result });
+    }
+
+    if (action === "set-streak") {
+      const userId = body?.userId;
+      const current = Number(body?.current);
+      const best = Number(body?.best);
+      if (!userId) {
+        return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+      }
+      const result = await setStreak(admin, userId, current, best);
+      if (!result.ok) {
+        return NextResponse.json({ action, ...result }, { status: 400 });
+      }
       return NextResponse.json({ action, ...result });
     }
 

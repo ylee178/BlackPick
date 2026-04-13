@@ -40,6 +40,8 @@ type UserState = {
   prediction_count: number;
   predicted_on_latest: number;
   predictable_on_latest: number;
+  current_streak: number;
+  best_streak: number;
   latest_event_id: string | null;
   latest_event_name: string | null;
   latest_event_status: string | null;
@@ -52,6 +54,8 @@ const DEFAULT_STATE: UserState = {
   prediction_count: 0,
   predicted_on_latest: 0,
   predictable_on_latest: 0,
+  current_streak: 0,
+  best_streak: 0,
   latest_event_id: null,
   latest_event_name: null,
   latest_event_status: null,
@@ -76,6 +80,10 @@ export default function DevPanel() {
   const [message, setMessage] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [state, setState] = useState<UserState>(DEFAULT_STATE);
+  const [streakDraft, setStreakDraft] = useState<{ current: string; best: string }>({
+    current: "0",
+    best: "0",
+  });
 
   const refreshState = useCallback(async (uid: string | null) => {
     if (!uid) {
@@ -84,7 +92,12 @@ export default function DevPanel() {
     }
     try {
       const data = await callSeed("get-user-state", { userId: uid });
-      setState(data as UserState);
+      const next = data as UserState;
+      setState(next);
+      setStreakDraft({
+        current: String(next.current_streak ?? 0),
+        best: String(next.best_streak ?? 0),
+      });
     } catch {
       // swallow — dev panel should never block the page
     }
@@ -180,6 +193,27 @@ export default function DevPanel() {
     }
   };
 
+  const streakCurrentNum = Number.parseInt(streakDraft.current, 10);
+  const streakBestNum = Number.parseInt(streakDraft.best, 10);
+  const streakDraftValid =
+    Number.isFinite(streakCurrentNum) &&
+    Number.isFinite(streakBestNum) &&
+    streakCurrentNum >= 0 &&
+    streakBestNum >= 0 &&
+    streakCurrentNum <= streakBestNum;
+
+  const handleSetStreak = async () => {
+    if (!userId || !streakDraftValid) return;
+    await run(
+      "streak:set",
+      "set-streak",
+      { userId, current: streakCurrentNum, best: streakBestNum },
+      {
+        message: () => `streak → ${streakCurrentNum}/${streakBestNum}`,
+      },
+    );
+  };
+
   // ── Content State ──────────────────────────────────────────────────
   const handleShow404 = () => {
     router.push(`/en/__dev_not_found_${Date.now()}`);
@@ -221,6 +255,27 @@ export default function DevPanel() {
         }
       }
       setMessage(`onboarding cleared (${cleared})`);
+    } catch {
+      setMessage("localStorage unavailable");
+    }
+  };
+
+  // Wipes BOTH `bp.streakPR.*` (dismissal locks) AND `bp.streakBest.*`
+  // (last-observed baseline). Must clear both — otherwise the baseline
+  // survives and the toast won't fire until an actual new record.
+  const handleResetStreakPrLock = () => {
+    try {
+      let cleared = 0;
+      const prefixes = ["bp.streakPR.", "bp.streakBest."];
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const key = window.localStorage.key(i);
+        if (!key) continue;
+        if (prefixes.some((p) => key.startsWith(p))) {
+          window.localStorage.removeItem(key);
+          cleared++;
+        }
+      }
+      setMessage(`streak PR lock cleared (${cleared})`);
     } catch {
       setMessage("localStorage unavailable");
     }
@@ -347,6 +402,54 @@ export default function DevPanel() {
               disabled={loading !== null || !userId}
               onChange={handlePredictionsToggle}
             />
+            <div className="pt-1.5">
+              <p className="mb-1 text-xs font-medium text-[var(--bp-ink)]">
+                Streak
+                <span className="ml-1.5 text-[10px] text-[var(--bp-muted)]">
+                  server: {state.current_streak}/{state.best_streak}
+                </span>
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={streakDraft.current}
+                  onChange={(e) =>
+                    setStreakDraft((prev) => ({ ...prev, current: e.target.value }))
+                  }
+                  disabled={loading !== null || !userId}
+                  className="w-14 rounded border border-[var(--bp-line)] bg-[#0a0a0a] px-1.5 py-0.5 text-xs text-[var(--bp-ink)] disabled:opacity-40"
+                  aria-label="Current streak"
+                />
+                <span className="text-[10px] text-[var(--bp-muted)]">/</span>
+                <input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={streakDraft.best}
+                  onChange={(e) =>
+                    setStreakDraft((prev) => ({ ...prev, best: e.target.value }))
+                  }
+                  disabled={loading !== null || !userId}
+                  className="w-14 rounded border border-[var(--bp-line)] bg-[#0a0a0a] px-1.5 py-0.5 text-xs text-[var(--bp-ink)] disabled:opacity-40"
+                  aria-label="Best streak"
+                />
+                <button
+                  type="button"
+                  onClick={handleSetStreak}
+                  disabled={loading !== null || !userId || !streakDraftValid}
+                  className="ml-auto cursor-pointer rounded border border-[var(--bp-line)] px-2 py-0.5 text-[11px] font-medium text-[var(--bp-ink)] transition hover:border-[var(--bp-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Set
+                </button>
+              </div>
+              {!streakDraftValid && (streakDraft.current !== "" || streakDraft.best !== "") ? (
+                <p className="mt-1 text-[10px] text-[var(--bp-danger)]">
+                  current must be ≤ best
+                </p>
+              ) : null}
+            </div>
           </Section>
 
           {/* Content State */}
@@ -380,6 +483,11 @@ export default function DevPanel() {
             <ActionRow
               label="Reset onboarding dismissals"
               onClick={handleResetOnboardingDismissals}
+              disabled={loading !== null}
+            />
+            <ActionRow
+              label="Reset streak PR toast lock"
+              onClick={handleResetStreakPrLock}
               disabled={loading !== null}
             />
           </Section>

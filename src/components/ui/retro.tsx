@@ -182,18 +182,23 @@ export function RetroStatTile({
   label,
   value,
   meta,
+  icon,
   tone = "default",
   className,
 }: {
   label: string;
   value: string | number;
   meta?: string;
+  icon?: ReactNode;
   tone?: RetroPanelTone;
   className?: string;
 }) {
   return (
     <div className={retroPanelClassName({ tone, className: cn("h-full p-3.5", className) })}>
-      <p className="text-xs font-medium text-[var(--bp-muted)]">{label}</p>
+      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--bp-muted)]">
+        {icon}
+        {label}
+      </p>
       <p className="mt-2 text-2xl font-bold tracking-[-0.02em] text-[var(--bp-ink)]">
         {value}
       </p>
