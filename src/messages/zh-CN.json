@@ -47,7 +47,9 @@
     "status": "状态",
     "totalFights": "比赛数",
     "picked": "已预测",
-    "allEvents": "全部赛事"
+    "allEvents": "全部赛事",
+    "titleFight": "冠军战",
+    "mainCard": "主赛"
   },
   "prediction": {
     "selectWinner": "选择胜者",
@@ -124,11 +126,11 @@
     "loginTitle": "登录",
     "loginDescription": "重返擂台，追踪你的预测。",
     "emailPlaceholder": "you@example.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "至少 6 个字符",
-  "creatingAccount": "正在创建账户...",
-  "signupCheckEmail": "请检查你的邮箱以确认账户。如果该地址可以注册，确认链接很快就会发送到你的邮箱。",
-  "signingIn": "正在登录...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "至少 6 个字符",
+    "creatingAccount": "正在创建账户...",
+    "signupCheckEmail": "请检查你的邮箱以确认账户。如果该地址可以注册，确认链接很快就会发送到你的邮箱。",
+    "signingIn": "正在登录...",
     "redirecting": "正在跳转...",
     "alreadyHaveAccount": "已经有账户了？",
     "noAccount": "还没有账户？",

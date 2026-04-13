@@ -6,7 +6,7 @@
 >
 > **Two-level model** — this file carries the **full durable roadmap** (all phases 0–7). The in-session `TaskList` tool only carries **actionable-this-session** items (the sub-tasks of the current branch). Loading the full roadmap into the tool drowns current work.
 
-_Last updated: 2026-04-13 (end-of-session — PR #23 Branch 5 Part 1 shipped, Phase 1 now 5/9; next up Part 2 `feature/title-fight-badge`)_
+_Last updated: 2026-04-13 (mid-session — Branch 5 Part 2 implementation complete, re-review APPROVE_WITH_CHANGES 0.87, all [minor] findings addressed, ready to push + PR)_
 
 ---
 
@@ -161,12 +161,20 @@ FightCard post-lock chip aligned with FightCardPicker voting-state chip (same ne
 
 Migration adds two admin-managed boolean flags (`is_title_fight`, `is_main_card`) to `public.fights`, both `BOOLEAN NOT NULL DEFAULT false`. See Recently shipped row for the full 3-round review trail + lesson. DEV migrated; **PROD still pending Sean's Management API run**.
 
-### Branch 5 Part 2: `feature/title-fight-badge` (pending Part 1 merge)
-- [ ] Champion badge on fight history cards + gold border when `is_title_fight`.
-- [ ] Main-card visual treatment when `is_main_card` (Sean's 2026-04-13 addition).
-- [ ] DevPanel action: "Mark fight as title fight" (crawler can't infer).
-- [ ] DevPanel action: "Mark fight as main card" (crawler can't infer).
-- [ ] Audit dead `is_title_fight?: boolean` prop at `src/components/FightCard.tsx:50` — either wire it up to pass the DB-row boolean through, or replace with direct `fights` row read.
+### Branch 5 Part 2: `feature/title-fight-badge` ← **in PR (awaiting merge)**
+
+| # | Subtask | Status |
+|---|---|---|
+| 2-1 | Wire up dead `is_title_fight?: boolean` prop in `FightCard.tsx:50` + add `is_main_card?: boolean` sibling. Render new RetroLabel chips in the header row: `TITLE FIGHT` (accent tone + Crown icon) and `MAIN CARD` (neutral tone, suppressed when `isMainEvent` is already true). | ✅ done |
+| 2-2 | Add `is_title_fight, is_main_card` to Supabase select in 3 FightCard call sites: home (`page.tsx`), event detail (`events/[id]/page.tsx`), single-fight detail (`fights/[fightId]/page.tsx`). | ✅ done |
+| 2-3 | Fighter career page (`fighters/[id]/page.tsx`): add flags to select + fightHistory mapper + Crown icon inline with opponent name + `bg-[var(--bp-accent-dim)]` row tint on title-fight rows. `is_main_card` intentionally NOT rendered here — scope decision to keep main-card distinction on live event context only. | ✅ done |
+| 2-4 | DevPanel v2: new "Content Flags" section with "Preview title + main card" and "Clear title + main card" action rows. Preview marks fight[0] (earliest start_time + id tiebreak) as both flags + first half of remaining as main_card; clear resets everything. Dev-only (`NODE_ENV` + 403 server guard already in place). | ✅ done |
+| 2-5 | Server actions `set-content-flags-preview` + `clear-content-flags` in `api/dev/seed/route.ts`. Full Supabase error destructuring on every mutation. Deterministic ordering via secondary `.order("id")` tiebreak. Known limit documented: 3 sequential updates not transactional via supabase-js, mid-sequence failure self-heals on next preview click. | ✅ done |
+| 2-6 | 2 new i18n keys (`event.titleFight`, `event.mainCard`) × 7 locales. `check:i18n` 350/350 × 7 aligned. | ✅ done |
+| 2-7 | Storybook `MockFightCard` updated with `isTitleFight` + `isMainCard` props + 3 new stories (`TitleFightMainEvent`, `MainCardTitleFight`, `MainCardOnly`) so visual regression on the chips isn't a gap. | ✅ done |
+| 2-8 | Local quality gates: `npx tsc --noEmit` clean · `npm run test:fast` 125/125 · `check:i18n` 350/350 × 7 · `npx eslint` 0 errors (2 pre-existing unrelated warnings in `fights/[fightId]/page.tsx`). | ✅ done |
+| 2-9 | Subagent review: round 1 APPROVE_WITH_CHANGES 0.87 — 1 [major] on `remove_background/` unstaged deletion (avoided by specific-file staging), 4 [minor] findings all addressed inline (redundant `truncate`, Supabase error checks, deterministic tiebreak, Storybook gap). MAIN EVENT hardcoded-English [tracking note] deferred to Branch 6 (`fix/hardcoded-korean-leaks`). | ✅ done |
+| 2-10 | Open PR against develop, CI green, squash-merge. | 🟡 pending |
 
 ### Branch 6: `fix/hardcoded-korean-leaks` (blackpick review)
 - [ ] `grep -rn "[ㄱ-ㅎ가-힣]" src/components src/app --include="*.tsx" --include="*.ts"` — every match not in a comment or a `ko.json` key is a leak.

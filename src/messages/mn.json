@@ -47,7 +47,9 @@
     "status": "Төлөв",
     "totalFights": "Тулаанууд",
     "picked": "Сонгосон",
-    "allEvents": "Бүх тэмцээн"
+    "allEvents": "Бүх тэмцээн",
+    "titleFight": "ЦОЛНЫ ТУЛААН",
+    "mainCard": "ҮНДСЭН КАРД"
   },
   "prediction": {
     "selectWinner": "Ялагчийг сонго",
@@ -124,11 +126,11 @@
     "loginTitle": "Нэвтрэх",
     "loginDescription": "Дахин аренад орж, сонголтуудаа хянаарай.",
     "emailPlaceholder": "you@example.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "Хамгийн багадаа 6 тэмдэгт",
-  "creatingAccount": "Бүртгэл үүсгэж байна...",
-  "signupCheckEmail": "Бүртгэлээ баталгаажуулахын тулд имэйлээ шалгана уу. Хэрэв энэ хаягаар бүртгүүлэх боломжтой бол баталгаажуулах холбоос удахгүй очно.",
-  "signingIn": "Нэвтэрч байна...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "Хамгийн багадаа 6 тэмдэгт",
+    "creatingAccount": "Бүртгэл үүсгэж байна...",
+    "signupCheckEmail": "Бүртгэлээ баталгаажуулахын тулд имэйлээ шалгана уу. Хэрэв энэ хаягаар бүртгүүлэх боломжтой бол баталгаажуулах холбоос удахгүй очно.",
+    "signingIn": "Нэвтэрч байна...",
     "redirecting": "Шилжүүлж байна...",
     "alreadyHaveAccount": "Бүртгэлтэй юу?",
     "noAccount": "Бүртгэл байхгүй юу?",

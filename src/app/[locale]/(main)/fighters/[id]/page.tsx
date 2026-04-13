@@ -9,7 +9,7 @@ import { RetroEmptyState, retroPanelClassName } from "@/components/ui/retro";
 import FighterComments from "@/components/FighterComments";
 import FighterAvatar from "@/components/FighterAvatar";
 import { parseRecord } from "@/lib/parse-record";
-import { Flame } from "lucide-react";
+import { Crown, Flame } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export default async function FighterDetailPage({ params }: PageProps) {
   const { data: fights } = await supabase
     .from("fights")
     .select(`
-      id, status, winner_id, method, round, start_time,
+      id, status, winner_id, method, round, start_time, is_title_fight, is_main_card,
       fighter_a:fighters!fighter_a_id(id, name, ring_name, name_en, name_ko, nationality),
       fighter_b:fighters!fighter_b_id(id, name, ring_name, name_en, name_ko, nationality),
       event:events!event_id(id, name, date)
@@ -89,6 +89,8 @@ export default async function FighterDetailPage({ params }: PageProps) {
       round: f.round,
       eventName: event?.name ?? "",
       eventDate: event?.date ?? "",
+      isTitleFight: Boolean((f as { is_title_fight?: boolean }).is_title_fight),
+      isMainCard: Boolean((f as { is_main_card?: boolean }).is_main_card),
     };
   });
 
@@ -224,8 +226,15 @@ export default async function FighterDetailPage({ params }: PageProps) {
 
                     {/* Opponent info */}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-[var(--bp-ink)] transition-colors group-hover:text-[var(--bp-accent)]">
-                        {f.opponentName} {f.opponentFlag}
+                      <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--bp-ink)] transition-colors group-hover:text-[var(--bp-accent)]">
+                        {f.isTitleFight ? (
+                          <Crown
+                            className="h-3.5 w-3.5 shrink-0 text-[var(--bp-accent)]"
+                            strokeWidth={2}
+                            aria-label={t("event.titleFight")}
+                          />
+                        ) : null}
+                        <span className="truncate">{f.opponentName} {f.opponentFlag}</span>
                       </p>
                       {f.method && (
                         <p className="text-xs text-[var(--bp-muted)]">
@@ -249,16 +258,23 @@ export default async function FighterDetailPage({ params }: PageProps) {
                 // accent-gold on hover — we intentionally avoid any
                 // background / border change on the row because that
                 // would fight the parent retro panel's outline.
+                //
+                // Title-fight rows get a subtle gold background tint so
+                // championship bouts visually stand out in the career
+                // retrospective. Uses the same `--bp-accent-dim` token
+                // the retro accent chip already uses, so the tint stays
+                // inside the design-system palette.
+                const rowBgClass = f.isTitleFight ? "bg-[var(--bp-accent-dim)]" : "";
                 return f.opponentId ? (
                   <Link
                     key={f.id}
                     href={`/fighters/${f.opponentId}`}
-                    className="group flex cursor-pointer items-center gap-3 px-4 py-3"
+                    className={`group flex cursor-pointer items-center gap-3 px-4 py-3 ${rowBgClass}`}
                   >
                     {rowInner}
                   </Link>
                 ) : (
-                  <div key={f.id} className="flex items-center gap-3 px-4 py-3">
+                  <div key={f.id} className={`flex items-center gap-3 px-4 py-3 ${rowBgClass}`}>
                     {rowInner}
                   </div>
                 );

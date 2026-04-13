@@ -6,7 +6,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
-import { Check, MessageCircle, PartyPopper, Frown } from "lucide-react";
+import { Check, Crown, MessageCircle, PartyPopper, Frown } from "lucide-react";
 import {
   getLocalizedFighterName,
   getLocalizedFighterSubLabel,
@@ -48,6 +48,7 @@ type FightCardProps = {
     method?: string | null;
     round?: number | null;
     is_title_fight?: boolean;
+    is_main_card?: boolean;
     fighter_a: FighterData;
     fighter_b: FighterData;
   };
@@ -276,6 +277,21 @@ export default async function FightCard({
         {seriesLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{seriesLabel}</span> : null}
         {isMainEvent ? (
           <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel>
+        ) : null}
+        {/* is_main_card is a secondary flag that distinguishes main-card
+            fights from undercard prelims. Hidden when isMainEvent is
+            already true to avoid double-chipping the headline fight. */}
+        {fight.is_main_card && !isMainEvent ? (
+          <RetroLabel size="md" tone="neutral">{t("event.mainCard")}</RetroLabel>
+        ) : null}
+        {fight.is_title_fight ? (
+          <RetroLabel
+            size="md"
+            tone="accent"
+            icon={<Crown className="h-3.5 w-3.5" strokeWidth={2} />}
+          >
+            {t("event.titleFight")}
+          </RetroLabel>
         ) : null}
         {isVoided && (
           <RetroLabel size="md" tone="danger">

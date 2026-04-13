@@ -47,7 +47,9 @@
     "status": "상태",
     "totalFights": "경기",
     "picked": "예측완료",
-    "allEvents": "전체 이벤트"
+    "allEvents": "전체 이벤트",
+    "titleFight": "타이틀전",
+    "mainCard": "메인 카드"
   },
   "prediction": {
     "selectWinner": "승자 선택",
@@ -124,11 +126,11 @@
     "loginTitle": "로그인",
     "loginDescription": "다시 경기장으로 들어와 당신의 예측을 이어가세요.",
     "emailPlaceholder": "you@example.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "최소 6자",
-  "creatingAccount": "계정 만드는 중...",
-  "signupCheckEmail": "이메일을 확인해 주세요. 해당 주소로 가입이 가능하면 곧 확인 링크가 도착해요.",
-  "signingIn": "로그인 중...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "최소 6자",
+    "creatingAccount": "계정 만드는 중...",
+    "signupCheckEmail": "이메일을 확인해 주세요. 해당 주소로 가입이 가능하면 곧 확인 링크가 도착해요.",
+    "signingIn": "로그인 중...",
     "redirecting": "이동 중...",
     "alreadyHaveAccount": "이미 계정이 있나요?",
     "noAccount": "아직 계정이 없나요?",

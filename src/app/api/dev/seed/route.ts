@@ -1050,6 +1050,124 @@ async function setEventStatus(
   return { ok: true, status, event_name: latestEvent.name };
 }
 
+/**
+ * Preview the title_fight + main_card visual treatments on the latest
+ * event. Flips the first fight (earliest start_time) to
+ * is_title_fight=true + is_main_card=true, marks the first half of the
+ * remaining fights as is_main_card=true, and leaves the second half as
+ * undercard. Returns how many rows got each flag so the DevPanel can
+ * surface a useful count in the status message.
+ *
+ * Dev-only preview helper — the crawler can never infer either flag
+ * from source markup, so in production an admin flips them manually.
+ */
+async function setContentFlagsPreview(
+  admin: ReturnType<typeof getAdminClient>,
+) {
+  const { data: latestEvent } = await admin
+    .from("events")
+    .select("id, name")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latestEvent) {
+    return { ok: false, reason: "no event" };
+  }
+
+  // Secondary sort on `id` so dev seed data with identical start_times
+  // still produces a deterministic "headline fight" assignment across
+  // repeated preview runs.
+  const { data: fights, error: fetchErr } = await admin
+    .from("fights")
+    .select("id")
+    .eq("event_id", latestEvent.id)
+    .order("start_time", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (fetchErr) {
+    return { ok: false, reason: `fetch fights: ${fetchErr.message}` };
+  }
+
+  const fightIds = (fights ?? []).map((f) => f.id);
+  if (fightIds.length === 0) {
+    return { ok: true, event_name: latestEvent.name, title_fights: 0, main_card: 0 };
+  }
+
+  // Reset every flag on the event first so repeated clicks produce a
+  // clean preview state instead of compounding prior runs. Known limit:
+  // the 3 sequential updates below are NOT transactional via supabase-js
+  // — a failure mid-sequence leaves the event in a partial state and
+  // the next preview click self-heals via this reset. Acceptable for
+  // dev-only tooling; not safe for production admin flows.
+  const { error: resetErr } = await admin
+    .from("fights")
+    .update({ is_title_fight: false, is_main_card: false })
+    .eq("event_id", latestEvent.id);
+  if (resetErr) {
+    return { ok: false, reason: `reset flags: ${resetErr.message}` };
+  }
+
+  const headlineId = fightIds[0];
+  const remaining = fightIds.slice(1);
+  const mainCardSlice = remaining.slice(0, Math.ceil(remaining.length / 2));
+  const mainCardIds = [headlineId, ...mainCardSlice];
+
+  const { error: headlineErr } = await admin
+    .from("fights")
+    .update({ is_title_fight: true, is_main_card: true })
+    .eq("id", headlineId);
+  if (headlineErr) {
+    return { ok: false, reason: `set headline: ${headlineErr.message}` };
+  }
+
+  if (mainCardSlice.length > 0) {
+    const { error: mainErr } = await admin
+      .from("fights")
+      .update({ is_main_card: true })
+      .in("id", mainCardSlice);
+    if (mainErr) {
+      return { ok: false, reason: `set main card: ${mainErr.message}` };
+    }
+  }
+
+  return {
+    ok: true,
+    event_name: latestEvent.name,
+    title_fights: 1,
+    main_card: mainCardIds.length,
+  };
+}
+
+async function clearContentFlags(admin: ReturnType<typeof getAdminClient>) {
+  const { data: latestEvent } = await admin
+    .from("events")
+    .select("id, name")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latestEvent) {
+    return { ok: false, reason: "no event" };
+  }
+
+  const { data: updated, error } = await admin
+    .from("fights")
+    .update({ is_title_fight: false, is_main_card: false })
+    .eq("event_id", latestEvent.id)
+    .select("id");
+
+  if (error) {
+    return { ok: false, reason: `clear flags: ${error.message}` };
+  }
+
+  return {
+    ok: true,
+    event_name: latestEvent.name,
+    fights: updated?.length ?? 0,
+  };
+}
+
 async function getUserState(
   admin: ReturnType<typeof getAdminClient>,
   userId: string,
@@ -1258,6 +1376,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Missing userId" }, { status: 400 });
       }
       const result = await clearMyPredictions(admin, userId);
+      return NextResponse.json({ action, ...result });
+    }
+
+    if (action === "set-content-flags-preview") {
+      const result = await setContentFlagsPreview(admin);
+      return NextResponse.json({ action, ...result });
+    }
+
+    if (action === "clear-content-flags") {
+      const result = await clearContentFlags(admin);
       return NextResponse.json({ action, ...result });
     }
 

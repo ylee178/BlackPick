@@ -47,7 +47,9 @@
     "status": "ステータス",
     "totalFights": "試合",
     "picked": "予想済み",
-    "allEvents": "全イベント"
+    "allEvents": "全イベント",
+    "titleFight": "タイトル戦",
+    "mainCard": "メインカード"
   },
   "prediction": {
     "selectWinner": "勝者を選択",
@@ -124,11 +126,11 @@
     "loginTitle": "ログイン",
     "loginDescription": "アリーナに戻って、あなたの予想を追いましょう。",
     "emailPlaceholder": "you@example.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "6文字以上",
-  "creatingAccount": "アカウント作成中...",
-  "signupCheckEmail": "メールを確認してアカウントを認証してください。そのアドレスで登録できる場合、確認リンクがまもなく届きます。",
-  "signingIn": "ログイン中...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "6文字以上",
+    "creatingAccount": "アカウント作成中...",
+    "signupCheckEmail": "メールを確認してアカウントを認証してください。そのアドレスで登録できる場合、確認リンクがまもなく届きます。",
+    "signingIn": "ログイン中...",
     "redirecting": "移動中...",
     "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
     "noAccount": "アカウントをお持ちではありませんか？",

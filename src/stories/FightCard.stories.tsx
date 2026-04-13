@@ -5,7 +5,7 @@ import {
   retroPanelClassName,
   retroChipClassName,
 } from "@/components/ui/retro";
-import { Check, MessageCircle, ChevronRight } from "lucide-react";
+import { Check, Crown, MessageCircle, ChevronRight } from "lucide-react";
 
 const meta: Meta = {
   title: "Components/FightCard",
@@ -94,6 +94,8 @@ function MockFightCard({
   statusTone,
   statusLabel,
   isMainEvent,
+  isTitleFight,
+  isMainCard,
   weightClass,
   seriesLabel,
   winnerId,
@@ -109,6 +111,8 @@ function MockFightCard({
   statusTone: "info" | "danger" | "success" | "neutral";
   statusLabel: string;
   isMainEvent?: boolean;
+  isTitleFight?: boolean;
+  isMainCard?: boolean;
   weightClass?: string;
   seriesLabel?: string;
   winnerId?: "a" | "b" | null;
@@ -130,6 +134,16 @@ function MockFightCard({
           {weightClass ? <span className={retroChipClassName({ tone: "neutral" })}>{weightClass}</span> : null}
           {seriesLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{seriesLabel}</span> : null}
           {isMainEvent ? <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel> : null}
+          {isMainCard && !isMainEvent ? <RetroLabel size="md" tone="neutral">MAIN CARD</RetroLabel> : null}
+          {isTitleFight ? (
+            <RetroLabel
+              size="md"
+              tone="accent"
+              icon={<Crown className="h-3.5 w-3.5" strokeWidth={2} />}
+            >
+              TITLE FIGHT
+            </RetroLabel>
+          ) : null}
           <RetroStatusBadge tone={statusTone}>{statusLabel}</RetroStatusBadge>
         </div>
       </div>
@@ -292,5 +306,46 @@ export const Cancelled = () => (
     statusLabel="Cancelled"
     weightClass="Featherweight"
     resultText="Fight cancelled"
+  />
+);
+
+/* ── Title Fight (main event) ── */
+export const TitleFightMainEvent = () => (
+  <MockFightCard
+    index={1}
+    status="upcoming"
+    statusTone="info"
+    statusLabel="Upcoming"
+    weightClass="Lightweight"
+    isMainEvent
+    isTitleFight
+    showPicker
+  />
+);
+
+/* ── Main Card (not main event) + Title Fight ── */
+export const MainCardTitleFight = () => (
+  <MockFightCard
+    index={3}
+    status="upcoming"
+    statusTone="info"
+    statusLabel="Upcoming"
+    weightClass="Welterweight"
+    isMainCard
+    isTitleFight
+    showPicker
+  />
+);
+
+/* ── Main Card only ── */
+export const MainCardOnly = () => (
+  <MockFightCard
+    index={4}
+    status="upcoming"
+    statusTone="info"
+    statusLabel="Upcoming"
+    weightClass="Featherweight"
+    isMainCard
+    showPicker
   />
 );
