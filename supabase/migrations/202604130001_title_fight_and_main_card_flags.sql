@@ -44,10 +44,19 @@
 --     so this UPDATE is a no-op.
 --   Step 4 promotes the column to NOT NULL.
 --
--- The explicit BEGIN/COMMIT makes atomicity independent of how the
--- migration is invoked (Supabase CLI, REST `database/query`
--- endpoint, psql, or pgAdmin). Each step is idempotent, so a
--- re-run on a converged database is a no-op.
+-- The explicit BEGIN/COMMIT gives Postgres-level atomicity for the
+-- four ADD/SET/UPDATE/SET-NOT-NULL steps per column: either every
+-- step lands and the columns converge, or the transaction aborts
+-- and nothing persists. Each individual step is also idempotent, so
+-- a re-run on a converged database is a no-op.
+--
+-- IMPORTANT: do NOT add statements after `COMMIT;`. Statements after
+-- COMMIT execute outside this file's transaction boundary. Depending
+-- on how this file is invoked (autocommit psql, REST query endpoint,
+-- CLI wrappers — behavior varies by tool), post-COMMIT statements
+-- either run in autocommit or in whatever transaction the caller
+-- started. Either way they lose the convergence atomicity this file
+-- is designed to provide. Add new steps BEFORE the COMMIT.
 
 BEGIN;
 
@@ -86,5 +95,69 @@ ALTER TABLE public.fights
 
 COMMENT ON COLUMN public.fights.is_main_card IS
   'True if this fight is featured on the event''s main card (televised/headline section) as opposed to the undercard. Lets Black Cup events distinguish slotted-in main-card fights (is_cup_match=false AND is_main_card=true) from undercard prelims (is_cup_match=false AND is_main_card=false). Manually flagged by admin — crawler cannot classify fights into main card vs undercard from source markup. Independent of is_cup_match and is_title_fight.';
+
+-- Post-convergence assertion: both columns MUST exist, be NOT NULL,
+-- carry the `false` default, and have zero NULL rows. Defense in
+-- depth against wrong-Postgres-type starting states that the per-
+-- column step sequence above is designed to absorb — if any step
+-- silently no-oped on an unexpected pre-state, this block surfaces
+-- it and aborts the transaction. Pattern matches the assertion in
+-- 202604120001_ring_name_case_insensitive_unique.sql. Kept inside
+-- the transaction (before COMMIT) so a failure rolls back atomically.
+--
+-- Note: the zero-NULL-rows check is redundant in the normal path
+-- because Step 4 (SET NOT NULL) would have aborted the transaction
+-- if any NULLs remained. It is kept as an extra guard for the case
+-- where a future edit accidentally removes Step 4 from one of the
+-- per-column blocks — the count-null check would then surface the
+-- missing NOT NULL promotion instead of letting the migration silently
+-- leave a nullable column.
+DO $$
+DECLARE
+  col_rec RECORD;
+  null_rows BIGINT;
+  col_name TEXT;
+BEGIN
+  FOREACH col_name IN ARRAY ARRAY['is_title_fight', 'is_main_card'] LOOP
+    SELECT is_nullable, column_default, data_type
+      INTO col_rec
+      FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'fights'
+       AND column_name = col_name;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Post-migration assertion failed: public.fights.% does not exist', col_name;
+    END IF;
+
+    IF col_rec.data_type <> 'boolean' THEN
+      RAISE EXCEPTION 'Post-migration assertion failed: public.fights.% has data_type=% (expected boolean)',
+        col_name, col_rec.data_type;
+    END IF;
+
+    IF col_rec.is_nullable <> 'NO' THEN
+      RAISE EXCEPTION 'Post-migration assertion failed: public.fights.% is_nullable=% (expected NO)',
+        col_name, col_rec.is_nullable;
+    END IF;
+
+    -- information_schema returns the default expression as printed by
+    -- pg_get_expr (e.g. `false` for a boolean literal). Match loosely
+    -- via case-insensitive ILIKE '%false%' to absorb any future PG
+    -- normalization such as `false::boolean`, a parenthesized form,
+    -- or non-standard builds that capitalize the literal.
+    IF col_rec.column_default IS NULL OR col_rec.column_default NOT ILIKE '%false%' THEN
+      RAISE EXCEPTION 'Post-migration assertion failed: public.fights.% column_default=% (expected something containing ''false'')',
+        col_name, COALESCE(col_rec.column_default, '<null>');
+    END IF;
+
+    EXECUTE format('SELECT COUNT(*) FROM public.fights WHERE %I IS NULL', col_name)
+      INTO null_rows;
+
+    IF null_rows > 0 THEN
+      RAISE EXCEPTION 'Post-migration assertion failed: public.fights.% has % NULL rows after backfill',
+        col_name, null_rows;
+    END IF;
+  END LOOP;
+END $$;
 
 COMMIT;
