@@ -3,11 +3,17 @@
 ## Branch
 `develop` (Phase 1 is 8/9 branches shipped after PR #27 Branch 7 `feature/onboarding-first-time-flow`; remaining Phase 1: Branch 8 `feature/streak-ux` + Branch 9 `fix/verify-all-predicted-toast`)
 
-## Latest Commits (develop tip, newest first)
+## Latest Commits
+**`develop` tip** (newest first):
+- `69a53b6` chore(docs): session wrap 2026-04-13 — PR #27 Branch 7 shipped, Phase 1 → 8/9
 - `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **this session**
 - `af5cfec` chore: 2026-04-13 autonomous follow-ups — PROD migration + Facebook OAuth docs + smoke checks
 - `84a274d` chore(docs): session wrap 2026-04-13 — PR #26 Branch 6 shipped, Phase 1 → 7/9
 - `b24057a` fix(i18n): hardcoded Korean leak sweep + English caps-lock chip labels (#26)
+
+**`main` tip** (PROD):
+- `20ffbd6` chore(email): ship bp-logo-email.png to PROD for Supabase template verification — **this session**, single static PNG cherry-pick to unblock Sean's test-email verification without waiting for Phase 1 release bundle
+- `5b51afc` Merge pull request #12 from ylee178/develop (prediction flow UX + share layer + hooks migration + a11y) — previous PROD baseline
 - `976618c` chore(docs): session wrap 2026-04-13 — PR #25 Supabase email templates shipped
 - `992fb9e` feat(email): supabase auth templates — confirm signup + reset password (#25)
 - `5db7657` chore(docs): session wrap 2026-04-13 — PR #24 Branch 5 Part 2 shipped
@@ -27,9 +33,10 @@
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24 + #26 + #27) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 8/9 are also in.
+- **Latest production deploy**: `20ffbd6` on main (2026-04-13, this session) — single-file cherry-pick of `public/email/bp-logo-email.png` from develop. Prior baseline was PR #12 merge (`5b51afc`) which bundled PRs #3–#11. Phase 1 work (PRs #17–#24 + #26 + #27) + Phase 3 partial (PR #25 templates + icon routes) are on `develop` but **not yet released to prod as a bundle**. Next full prod release will bundle all Phase 1 branches + this session's email templates once Branches 8/9 are also in. The logo-PNG-only cherry-pick is a surgical hotfix to unblock Sean's email-template verification path — it does NOT count as the Phase 1 release.
 - **PROD migration `202604130001` — APPLIED 2026-04-13** (end of session via `supabase db query --linked --file`). Both `is_title_fight` and `is_main_card` columns now exist on PROD `public.fights` (384 rows × 0 NULLs, BOOLEAN NOT NULL DEFAULT false). `check:schema-drift` clean on both DEV and PROD (14 cols each). The PR #24 title-fight / main-card chips now render on PROD fights.
-- **Pending Supabase email template paste-in (PR #25 follow-up)** — **still manual, Sean-only**: after the next preview deploy lands, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` to confirm all 200 (smoke-prod.mjs now has automated checks for these on PROD deploys), then Supabase Dashboard → Authentication → URL Configuration → Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` and `reset-password.html` into the respective slots, test-email from dashboard. Until this step is done, Supabase sends the default plain-text auth emails — the branded HTML isn't live. Step-by-step checklist in `Wiki_Sean/BlackPick/2026-04-13-manual-handoff-checklist.md`.
+- **PROD email assets — ALL LIVE as of 2026-04-13** (this session, commit `20ffbd6`): `https://blackpick.io/email/bp-logo-email.png` → 200, `/email/icon-shield` → 200, `/email/icon-key` → 200. The icon routes were already on main from an earlier release; the logo PNG was cherry-picked standalone because PR #25 (which added it on develop) is awaiting the Phase 1 release bundle.
+- **Supabase email templates — SAVED in dashboard but NOT YET verified via test email**: Sean saved the branded HTML for `confirm_signup` + `reset_password` into the Supabase dashboard during this session. Dashboard Preview tab shows broken images because Supabase Preview does NOT substitute `{{ .SiteURL }}` template variables (expected, not a bug). **Next step — Sean runs Send Test Email** from the Supabase dashboard now that all PROD assets are live. Validates the end-to-end rendering in Gmail / iOS Mail / Outlook before the Phase 1 release. Once a test email renders cleanly, the PR #25 follow-up is fully closed.
 
 ---
 
