@@ -49,7 +49,9 @@
     "picked": "已预测",
     "allEvents": "全部赛事",
     "titleFight": "冠军战",
-    "mainCard": "主赛"
+    "mainCard": "主赛",
+    "mainEvent": "主赛事",
+    "liveBadge": "进行中"
   },
   "prediction": {
     "selectWinner": "选择胜者",
@@ -108,7 +110,8 @@
     "third": "#3",
     "unknown": "未知",
     "weightClass": "体重级别",
-    "selectWeightClass": "选择体重级别"
+    "selectWeightClass": "选择体重级别",
+    "best": "最佳"
   },
   "auth": {
     "email": "邮箱",
@@ -305,7 +308,12 @@
     "methodCorrect": "方式正确",
     "methodWrong": "方式错误",
     "roundCorrect": "回合正确",
-    "roundWrong": "回合错误"
+    "roundWrong": "回合错误",
+    "eventsSelected": "{count}个赛事",
+    "blackCupWin": "冠军",
+    "statWin": "胜",
+    "statLoss": "负",
+    "statPts": "得分"
   },
   "discussion": {
     "title": "讨论",

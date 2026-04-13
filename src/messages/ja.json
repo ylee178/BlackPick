@@ -49,7 +49,9 @@
     "picked": "予想済み",
     "allEvents": "全イベント",
     "titleFight": "タイトル戦",
-    "mainCard": "メインカード"
+    "mainCard": "メインカード",
+    "mainEvent": "メインイベント",
+    "liveBadge": "ライブ"
   },
   "prediction": {
     "selectWinner": "勝者を選択",
@@ -108,7 +110,8 @@
     "third": "#3",
     "unknown": "不明",
     "weightClass": "階級別",
-    "selectWeightClass": "階級を選択してください"
+    "selectWeightClass": "階級を選択してください",
+    "best": "最高"
   },
   "auth": {
     "email": "メールアドレス",
@@ -305,7 +308,12 @@
     "methodCorrect": "方法的中",
     "methodWrong": "方法不正解",
     "roundCorrect": "ラウンド的中",
-    "roundWrong": "ラウンド不正解"
+    "roundWrong": "ラウンド不正解",
+    "eventsSelected": "{count}件の大会",
+    "blackCupWin": "優勝",
+    "statWin": "勝",
+    "statLoss": "敗",
+    "statPts": "ポイント"
   },
   "discussion": {
     "title": "ディスカッション",

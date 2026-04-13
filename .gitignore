@@ -14,6 +14,16 @@ data/
 # Local email template preview fixtures — not for shipping, not localized
 public/email/previews/
 
+# File-based dialogue review transcripts live at
+# BlackPick/reviews/BlackPick/<date>_<topic>_dialog/round_<N>_{prompt,review}.md
+# per the convention in Docs/review-tier-rubric.md § File-based dialogue
+# pattern. The inner BlackPick/ subfolder is a project-isolation visual
+# guard per the generic usage doc at ~/Desktop/Wiki_Sean/Tech/
+# second_opinion_reviewer_usage.md. Raw transcripts stay local; session-
+# log summaries continue to live at the external Wiki_Sean path per the
+# feedback_wiki_log_location memory entry.
+reviews/
+
 # Session logs live OUTSIDE the project repo at
 # `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Block the in-repo
 # path so a stray write never lands in a commit. Primary rule is

@@ -49,7 +49,9 @@
     "picked": "Palpitado",
     "allEvents": "Todos os eventos",
     "titleFight": "LUTA PELO TÍTULO",
-    "mainCard": "CARD PRINCIPAL"
+    "mainCard": "CARD PRINCIPAL",
+    "mainEvent": "EVENTO PRINCIPAL",
+    "liveBadge": "AO VIVO"
   },
   "prediction": {
     "selectWinner": "Escolha o vencedor",
@@ -108,7 +110,8 @@
     "third": "#3",
     "unknown": "Desconhecido",
     "weightClass": "Categoria",
-    "selectWeightClass": "Selecione uma categoria"
+    "selectWeightClass": "Selecione uma categoria",
+    "best": "melhor"
   },
   "auth": {
     "email": "E-mail",
@@ -305,7 +308,12 @@
     "methodCorrect": "Metodo correto",
     "methodWrong": "Metodo errado",
     "roundCorrect": "Round correto",
-    "roundWrong": "Round errado"
+    "roundWrong": "Round errado",
+    "eventsSelected": "{count} eventos",
+    "blackCupWin": "CAMPEÃO",
+    "statWin": "V",
+    "statLoss": "D",
+    "statPts": "PTS"
   },
   "discussion": {
     "title": "Discussao",

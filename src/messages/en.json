@@ -49,7 +49,9 @@
     "picked": "Picked",
     "allEvents": "All Events",
     "titleFight": "TITLE FIGHT",
-    "mainCard": "MAIN CARD"
+    "mainCard": "MAIN CARD",
+    "mainEvent": "MAIN EVENT",
+    "liveBadge": "LIVE"
   },
   "prediction": {
     "selectWinner": "Pick winner",
@@ -108,7 +110,8 @@
     "third": "#3",
     "unknown": "Unknown",
     "weightClass": "Weight Class",
-    "selectWeightClass": "Select a weight class"
+    "selectWeightClass": "Select a weight class",
+    "best": "best"
   },
   "auth": {
     "email": "Email",
@@ -305,7 +308,12 @@
     "methodCorrect": "Method correct",
     "methodWrong": "Method wrong",
     "roundCorrect": "Round correct",
-    "roundWrong": "Round wrong"
+    "roundWrong": "Round wrong",
+    "eventsSelected": "{count} events",
+    "blackCupWin": "WIN",
+    "statWin": "WIN",
+    "statLoss": "LOSS",
+    "statPts": "PTS"
   },
   "discussion": {
     "title": "Discussion",

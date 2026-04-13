@@ -150,17 +150,17 @@ export default async function MyRecordEventPage({ params }: { params: Params }) 
             <div className="mt-5 grid grid-cols-4 gap-4 border-t border-[rgba(255,255,255,0.06)] pt-4">
               <div className="text-center">
                 <p className="text-xl font-extrabold tabular-nums text-[var(--bp-success)]">{eventWins}</p>
-                <p className="mt-0.5 text-xs text-[var(--bp-muted)]">WIN</p>
+                <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{t("myRecord.statWin")}</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-extrabold tabular-nums text-[var(--bp-danger)]">{eventLosses}</p>
-                <p className="mt-0.5 text-xs text-[var(--bp-muted)]">LOSS</p>
+                <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{t("myRecord.statLoss")}</p>
               </div>
               <div className="text-center">
                 <p className={`text-xl font-extrabold tabular-nums ${eventScore >= 0 ? "text-[var(--bp-accent)]" : "text-[var(--bp-danger)]"}`}>
                   {eventScore > 0 ? "+" : ""}{eventScore}
                 </p>
-                <p className="mt-0.5 text-xs text-[var(--bp-muted)]">PTS</p>
+                <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{t("myRecord.statPts")}</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-extrabold tabular-nums text-[var(--bp-ink)]">{myPreds.length}</p>
@@ -219,20 +219,20 @@ export default async function MyRecordEventPage({ params }: { params: Params }) 
                 const details: { text: string; ok: boolean }[] = [];
                 if (prediction.is_winner_correct !== null) {
                   if (prediction.is_winner_correct) {
-                    details.push({ text: "승자 맞춤", ok: true });
+                    details.push({ text: t("myRecord.winnerCorrect"), ok: true });
                   } else {
-                    details.push({ text: "승자 틀림", ok: false });
+                    details.push({ text: t("myRecord.winnerWrong"), ok: false });
                   }
                 }
                 if (prediction.is_method_correct === true) {
-                  details.push({ text: "방법 맞춤", ok: true });
+                  details.push({ text: t("myRecord.methodCorrect"), ok: true });
                 } else if (prediction.is_method_correct === false) {
-                  details.push({ text: "방법 틀림", ok: false });
+                  details.push({ text: t("myRecord.methodWrong"), ok: false });
                 }
                 if (prediction.is_round_correct === true) {
-                  details.push({ text: "라운드 맞춤", ok: true });
+                  details.push({ text: t("myRecord.roundCorrect"), ok: true });
                 } else if (prediction.is_round_correct === false) {
-                  details.push({ text: "라운드 틀림", ok: false });
+                  details.push({ text: t("myRecord.roundWrong"), ok: false });
                 }
 
                 return (
