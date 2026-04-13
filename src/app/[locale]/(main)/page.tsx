@@ -300,7 +300,7 @@ export default async function HomePage() {
                 <div className="shrink-0 rounded-[12px] bg-[#060606] px-6 py-5">
                   <p className="mb-3 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--bp-muted)]">
                     <Trophy className="h-3.5 w-3.5 text-[var(--bp-accent)]" strokeWidth={2} />
-                    Score
+                    {t("ranking.score")}
                   </p>
                   <div className="flex items-center gap-4">
                     {/* Winner */}
@@ -466,9 +466,9 @@ export default async function HomePage() {
                         <span className="flex items-center gap-1">
                           {best}W
                           {isOngoing ? (
-                            <RetroLabel size="sm" tone="success">LIVE</RetroLabel>
+                            <RetroLabel size="sm" tone="success">{t("event.liveBadge")}</RetroLabel>
                           ) : (
-                            <span className="text-xs text-[var(--bp-muted)]">best</span>
+                            <span className="text-xs text-[var(--bp-muted)]">{t("ranking.best")}</span>
                           )}
                         </span>
                       }

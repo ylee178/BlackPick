@@ -276,7 +276,7 @@ export default async function FightCard({
         {weightLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{weightLabel}</span> : null}
         {seriesLabel ? <span className={retroChipClassName({ tone: "neutral" })}>{seriesLabel}</span> : null}
         {isMainEvent ? (
-          <RetroLabel size="md" tone="accent">MAIN EVENT</RetroLabel>
+          <RetroLabel size="md" tone="accent">{t("event.mainEvent")}</RetroLabel>
         ) : null}
         {/* is_main_card is a secondary flag that distinguishes main-card
             fights from undercard prelims. Hidden when isMainEvent is

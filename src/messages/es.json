@@ -49,7 +49,9 @@
     "picked": "Elegidas",
     "allEvents": "Todos los eventos",
     "titleFight": "PELEA TITULAR",
-    "mainCard": "CARTA PRINCIPAL"
+    "mainCard": "CARTA PRINCIPAL",
+    "mainEvent": "EVENTO PRINCIPAL",
+    "liveBadge": "EN VIVO"
   },
   "prediction": {
     "selectWinner": "Elige al ganador",
@@ -108,7 +110,8 @@
     "third": "#3",
     "unknown": "Desconocido",
     "weightClass": "Categoría de peso",
-    "selectWeightClass": "Selecciona una categoría de peso"
+    "selectWeightClass": "Selecciona una categoría de peso",
+    "best": "mejor"
   },
   "auth": {
     "email": "Correo electrónico",
@@ -305,7 +308,12 @@
     "methodCorrect": "Método correcto",
     "methodWrong": "Método incorrecto",
     "roundCorrect": "Asalto correcto",
-    "roundWrong": "Asalto incorrecto"
+    "roundWrong": "Asalto incorrecto",
+    "eventsSelected": "{count} eventos",
+    "blackCupWin": "CAMPEÓN",
+    "statWin": "GANÓ",
+    "statLoss": "PERDIÓ",
+    "statPts": "PTS"
   },
   "discussion": {
     "title": "Discusión",

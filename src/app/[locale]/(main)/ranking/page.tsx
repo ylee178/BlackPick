@@ -338,7 +338,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
                   score={user.p4p_score}
                   unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} badges={badgeMap[user.id]} />}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("profile.perfectCard") }} badges={badgeMap[user.id]} />}
                 />
               ))}
             </div>
@@ -393,7 +393,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
                   score={user.score ?? 0}
                   unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} badges={badgeMap[user.id]} />}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("profile.perfectCard") }} badges={badgeMap[user.id]} />}
                 />
               ))}
 
@@ -441,7 +441,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                     record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
                     score={row.score ?? row.user.score ?? 0}
                     unknownLabel={t("ranking.unknown")}
-                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} />}
+                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("profile.perfectCard") }} />}
                   />
                 ) : null))}
               </div>
@@ -476,7 +476,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                     record={`${row.user.wins ?? 0}W-${row.user.losses ?? 0}L`}
                     score={row.score ?? row.user.score ?? 0}
                     unknownLabel={t("ranking.unknown")}
-                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} />}
+                    extra={<UserExtra user={row.user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("profile.perfectCard") }} />}
                   />
                 ) : null))}
               </div>
@@ -497,7 +497,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   record={`${user.wins ?? 0}W-${user.losses ?? 0}L`}
                   score={`${user.current_streak ?? 0}W`}
                   unknownLabel={t("ranking.unknown")}
-                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("ranking.perfectCard") }} />}
+                  extra={<UserExtra user={user} labels={{ streak: t("ranking.streak"), hallOfFame: t("ranking.hallOfFame"), perfectCard: t("profile.perfectCard") }} />}
                 />
               ))}
             </div>
@@ -519,6 +519,13 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
                   unknownLabel={t("ranking.unknown")}
                   extra={
                     <div className="hidden items-center gap-4 md:flex">
+                      {/* Hall of Fame tier names — "Oracle" / "Sniper" /
+                          "Sharp Call" are intentional brand-fixed English
+                          proper nouns, not translated strings. They match
+                          the database `hall_of_fame_entries.tier` enum
+                          values and stay English across all 7 locales per
+                          product decision documented in 2026-04-13 session
+                          log. Do not wrap in t(). */}
                       {user.oracle > 0 && (
                         <div className="text-center">
                           <p className="text-xs text-[var(--bp-accent)]">Oracle</p>

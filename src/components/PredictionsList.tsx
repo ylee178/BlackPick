@@ -63,9 +63,9 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
   };
 
   const statusLabels: Record<StatusFilter, string> = {
-    all: t("myRecord.rangeAll") || "전체",
-    correct: t("event.win") || "맞춤",
-    wrong: t("event.loss") || "틀림",
+    all: t("myRecord.rangeAll"),
+    correct: t("event.win"),
+    wrong: t("event.loss"),
   };
 
   // Unique events for filter
@@ -126,8 +126,8 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
   }, [filtered]);
 
   const eventFilterLabel = selectedEvents.size === 0
-    ? (t("myRecord.rangeAll") || "전체")
-    : `${selectedEvents.size}개 대회`;
+    ? t("myRecord.rangeAll")
+    : t("myRecord.eventsSelected", { count: selectedEvents.size });
 
   return (
     <div>
@@ -176,7 +176,7 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
                 selectedEvents.size === 0 ? "font-semibold text-[var(--bp-accent)]" : "text-[var(--bp-muted)]"
               }`}
             >
-              {t("myRecord.rangeAll") || "전체"}
+              {t("myRecord.rangeAll")}
             </button>
             <div className="max-h-48 overflow-y-auto">
               {allEvents.map(([id, name]) => (
@@ -237,9 +237,9 @@ export default function PredictionsList({ items, perfectEventIds: perfectEventId
                 >
                   <span className="truncate">{group.eventName}</span>
                   {blackCupWinners[group.eventId] && (
-                    <RetroLabel size="xs" tone="neutral">{blackCupWinners[group.eventId]} WIN</RetroLabel>
+                    <RetroLabel size="xs" tone="neutral">{blackCupWinners[group.eventId]} {t("myRecord.blackCupWin")}</RetroLabel>
                   )}
-                  {!isUpcoming && perfectEventIds.has(group.eventId) && <RetroLabel size="xs" tone="accent">Perfect Prediction</RetroLabel>}
+                  {!isUpcoming && perfectEventIds.has(group.eventId) && <RetroLabel size="xs" tone="accent">{t("profile.perfectCard")}</RetroLabel>}
                   {isUpcoming && <RetroLabel size="xs" tone="info">{t("status.upcoming")}</RetroLabel>}
                   <span className="shrink-0 text-xs font-normal text-[var(--bp-muted)]">{group.eventDate}</span>
                 </Link>

@@ -49,7 +49,9 @@
     "picked": "Сонгосон",
     "allEvents": "Бүх тэмцээн",
     "titleFight": "ЦОЛНЫ ТУЛААН",
-    "mainCard": "ҮНДСЭН КАРД"
+    "mainCard": "ҮНДСЭН КАРД",
+    "mainEvent": "ГОЛ ТУЛААН",
+    "liveBadge": "ШУУД"
   },
   "prediction": {
     "selectWinner": "Ялагчийг сонго",
@@ -108,7 +110,8 @@
     "third": "#3",
     "unknown": "Тодорхойгүй",
     "weightClass": "Жингийн ангилал",
-    "selectWeightClass": "Жингийн ангилал сонгох"
+    "selectWeightClass": "Жингийн ангилал сонгох",
+    "best": "ДЭЭД"
   },
   "auth": {
     "email": "Имэйл",
@@ -305,7 +308,12 @@
     "methodCorrect": "Арга зөв",
     "methodWrong": "Арга буруу",
     "roundCorrect": "Үе зөв",
-    "roundWrong": "Үе буруу"
+    "roundWrong": "Үе буруу",
+    "eventsSelected": "{count} тэмцээн",
+    "blackCupWin": "АВАРГА",
+    "statWin": "ХОЖЛОО",
+    "statLoss": "ХОЖИГДОЛ",
+    "statPts": "ОНОО"
   },
   "discussion": {
     "title": "Хэлэлцүүлэг",
