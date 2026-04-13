@@ -10,9 +10,21 @@ import {
   retroFieldClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
+import {
+  useOnboardingDismissal,
+  ONBOARDING_KEYS,
+  ONBOARDING_TTL_30_DAYS,
+} from "@/lib/onboarding-dismissal";
 
 type RingNameOnboardingProps = {
   email: string | null;
+  /**
+   * Pass a user id to opt the modal into the dismissible first-time
+   * onboarding flow: users can tap "Skip for now", which writes a
+   * localStorage record keyed to the user and suppresses the modal for
+   * 30 days. Omit to keep the legacy forced-modal behavior.
+   */
+  userId?: string | null;
 };
 
 function getErrorMessage(code: string, t: (key: string) => string) {
@@ -32,7 +44,7 @@ function getErrorMessage(code: string, t: (key: string) => string) {
   }
 }
 
-export default function RingNameOnboarding({ email }: RingNameOnboardingProps) {
+export default function RingNameOnboarding({ email, userId }: RingNameOnboardingProps) {
   const router = useRouter();
   const { t } = useI18n();
 
@@ -41,15 +53,27 @@ export default function RingNameOnboarding({ email }: RingNameOnboardingProps) {
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
+  const dismissible = userId !== undefined;
+  const dismissalKey = dismissible && userId ? ONBOARDING_KEYS.ringNamePrompt(userId) : null;
+  const { status, dismiss } = useOnboardingDismissal(
+    dismissible ? dismissalKey : null,
+    ONBOARDING_TTL_30_DAYS,
+  );
+
+  const visible = dismissible ? status === "show" : true;
+
   useEffect(() => {
+    if (!visible) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, []);
+  }, [visible]);
 
   const helperText = useMemo(() => t("onboarding.helper"), [t]);
+
+  if (!visible) return null;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -158,6 +182,17 @@ export default function RingNameOnboarding({ email }: RingNameOnboardingProps) {
               {t("onboarding.submit")}
             </LoadingButtonContent>
           </button>
+
+          {dismissible ? (
+            <button
+              type="button"
+              onClick={dismiss}
+              disabled={submitting}
+              className={retroButtonClassName({ variant: "ghost", size: "sm", block: true })}
+            >
+              {t("onboarding.skipForNow")}
+            </button>
+          ) : null}
         </form>
       </div>
     </div>

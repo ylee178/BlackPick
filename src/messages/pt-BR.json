@@ -272,7 +272,14 @@
     "invalidCharacters": "Use apenas letras, números, espaços, hífens ou underscores.",
     "taken": "Esse nome de ringue já está em uso.",
     "notAuthenticated": "Entre novamente para concluir o onboarding.",
-    "unexpected": "Nao foi possivel salvar seu nome de ringue agora."
+    "unexpected": "Nao foi possivel salvar seu nome de ringue agora.",
+    "skipForNow": "Agora não",
+    "dismiss": "Fechar",
+    "anonCtaTitle": "Pronto pra mandar seu primeiro palpite?",
+    "anonCtaDescription": "Cadastre-se pra salvar seus palpites e subir no ranking.",
+    "anonCtaButton": "Palpite na sua primeira luta",
+    "firstPickHintTitle": "Seu primeiro palpite",
+    "firstPickHintDescription": "Toque num lutador pra cravar o vencedor e garantir seu primeiro ponto."
   },
   "results": {
     "totalEvents": "eventos concluidos"

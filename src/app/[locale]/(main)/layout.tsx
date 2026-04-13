@@ -5,7 +5,6 @@ import NotificationBell from "@/components/NotificationBell";
 import LanguagePicker from "@/components/LanguagePicker";
 import AccountDropdown from "@/components/AccountDropdown";
 import { getTranslations } from "@/lib/i18n-server";
-import RingNameOnboarding from "@/components/RingNameOnboarding";
 import { ToastProvider } from "@/components/Toast";
 import { isAdminUser } from "@/lib/admin-auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
@@ -28,8 +27,6 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         .maybeSingle()
     : { data: null };
   const isAdmin = authUser ? await isAdminUser(authUser) : false;
-
-  const needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim());
 
   return (
       <ToastProvider>
@@ -112,10 +109,6 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             </div>
           </div>
         </footer>
-
-        {needsRingNameOnboarding ? (
-          <RingNameOnboarding email={authUser?.email ?? null} />
-        ) : null}
 
         {/* Mobile Tab Bar */}
         <nav aria-label="Mobile navigation" className="bottom-safe fixed inset-x-0 bottom-0 z-50 border-t border-[var(--bp-line)] bg-[var(--bp-bg)] md:hidden">

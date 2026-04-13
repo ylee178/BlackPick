@@ -272,7 +272,14 @@
     "invalidCharacters": "文字、数字、スペース、ハイフン、アンダースコアのみ使用できます。",
     "taken": "そのリングネームはすでに使われています。",
     "notAuthenticated": "オンボーディングを完了するには、もう一度ログインしてください。",
-    "unexpected": "現在リングネームを保存できませんでした。"
+    "unexpected": "現在リングネームを保存できませんでした。",
+    "skipForNow": "あとで設定する",
+    "dismiss": "閉じる",
+    "anonCtaTitle": "最初の予想、準備はいいですか？",
+    "anonCtaDescription": "サインアップして予想を保存し、ランキングを駆け上がろう。",
+    "anonCtaButton": "最初の試合を予想する",
+    "firstPickHintTitle": "最初の予想",
+    "firstPickHintDescription": "選手カードをタップして勝者を選び、最初のポイントを獲得しよう。"
   },
   "results": {
     "totalEvents": "完了したイベント"
