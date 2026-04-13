@@ -32,7 +32,7 @@ _Last updated: 2026-04-13 (end-of-session — PR #26 shipped Branch 6 `fix/hardc
 
 1. **Start on develop**: `git checkout develop && git pull`. Verify `b24057a fix(i18n): hardcoded Korean leak sweep...` is the tip or close to it.
 
-2. **PROD migration still pending**: apply `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` to PROD via Management API if Sean hasn't already. Same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently. After: `check:schema-drift` clean on both DEV and PROD.
+2. ~~**PROD migration still pending**~~ **DONE 2026-04-13** — `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` applied to PROD via `supabase db query --linked --file` at session end. 384 rows × 0 NULLs confirmed on both new columns. `check:schema-drift` clean on both DEV and PROD (14 cols each).
 
 3. **Supabase email templates manual deploy (PR #25 follow-up)**: after the next preview deploy, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` and verifies all three return 200. Then Supabase Dashboard → Authentication → URL Configuration → confirm Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` into **Confirm signup** slot and `reset-password.html` into **Reset password** slot. Use "Send test email" for at least one real-inbox render check. README has the full checklist.
 

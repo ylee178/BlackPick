@@ -142,6 +142,42 @@ check("/apple-icon  serves a real PNG", async () => {
   );
 });
 
+// Email assets — Supabase auth email templates reference these absolute
+// URLs via {{ .SiteURL }}/email/... . If any of them 404 or return
+// non-image content the branded emails render with broken images in
+// every user's inbox. Added 2026-04-13 with PR #25 email templates.
+
+check("/email/bp-logo-email.png  BLACK PICK wordmark served", async () => {
+  const r = await fetchOk("/email/bp-logo-email.png");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  const contentType = r.headers.get("content-type") || "";
+  assert(
+    contentType.startsWith("image/"),
+    `expected image content-type, got ${contentType}`,
+  );
+  assert(r.body.length > 1000, `logo PNG suspiciously small (${r.body.length} bytes)`);
+});
+
+check("/email/icon-shield  confirm-signup body icon renders 200", async () => {
+  const r = await fetchOk("/email/icon-shield");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  const contentType = r.headers.get("content-type") || "";
+  assert(
+    contentType.startsWith("image/"),
+    `expected image content-type, got ${contentType}`,
+  );
+});
+
+check("/email/icon-key  reset-password body icon renders 200", async () => {
+  const r = await fetchOk("/email/icon-key");
+  assert(r.status === 200, `expected 200, got ${r.status}`);
+  const contentType = r.headers.get("content-type") || "";
+  assert(
+    contentType.startsWith("image/"),
+    `expected image content-type, got ${contentType}`,
+  );
+});
+
 check("/api/analytics/event  accepts POST + returns 204", async () => {
   const url = `${BASE}/api/analytics/event`;
   const res = await fetch(url, {

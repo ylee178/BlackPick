@@ -25,8 +25,8 @@
 ## Production
 - **URL**: https://blackpick.io
 - **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24 + #26) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 7/8/9 are also in.
-- **Pending PROD migration**: `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` (from PR #23). Sean runs via Management API — same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently since DEV is already converged. The PR #24 UI defensively treats both flags as optional booleans so the title-fight / main-card chips just don't render on PROD fights until the migration lands there.
-- **Pending Supabase email template paste-in (PR #25 follow-up)**: after the next preview deploy, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` to confirm all 200, then Supabase Dashboard → Authentication → URL Configuration → Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` and `reset-password.html` into the respective slots, test-email from dashboard. Until this step is done, Supabase sends the default plain-text auth emails — the branded HTML isn't live. README has the full checklist.
+- **PROD migration `202604130001` — APPLIED 2026-04-13** (end of session via `supabase db query --linked --file`). Both `is_title_fight` and `is_main_card` columns now exist on PROD `public.fights` (384 rows × 0 NULLs, BOOLEAN NOT NULL DEFAULT false). `check:schema-drift` clean on both DEV and PROD (14 cols each). The PR #24 title-fight / main-card chips now render on PROD fights.
+- **Pending Supabase email template paste-in (PR #25 follow-up)** — **still manual, Sean-only**: after the next preview deploy lands, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` to confirm all 200 (smoke-prod.mjs now has automated checks for these on PROD deploys), then Supabase Dashboard → Authentication → URL Configuration → Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` and `reset-password.html` into the respective slots, test-email from dashboard. Until this step is done, Supabase sends the default plain-text auth emails — the branded HTML isn't live. Step-by-step checklist in `Wiki_Sean/BlackPick/2026-04-13-manual-handoff-checklist.md`.
 
 ---
 
@@ -125,14 +125,14 @@ Mid-session pivot away from the planned Branch 6 (`fix/hardcoded-korean-leaks`) 
 ### Launch blockers (unchanged)
 | # | Task | Status |
 |---|------|--------|
-| 1 | Facebook OAuth setup (Meta console + Supabase wire-in) | **Pending** — Google pattern verified, same template applies |
+| 1 | Facebook OAuth setup (Meta console + Supabase wire-in) | **Pending** — full step-by-step guide written at `Docs/facebook-oauth-setup.md` (2026-04-13, this session). Sean runs the Meta console + Supabase dashboard steps per the guide. Estimated: 45 min active + 1–3 business days App Review wait. |
 | 2 | Manual e2e of Google OAuth from multiple locales | **Partial** — Sean confirmed login + ring-name save |
 
 ### Launch nice-to-have
 | # | Task | Notes |
 |---|------|-------|
 | 3 | Supabase migration history sync | PROD schema is correct but migration tracking table doesn't have 202604090001/2/3 records. Cosmetic — `IF NOT EXISTS` guards make re-running safe. |
-| 4 | OG image | `public/og/default.png` (1200x630) still missing |
+| 4 | OG image | ✅ **Resolved** — already implemented as a dynamic `src/app/opengraph-image.tsx` Next.js route (not a static PNG). Verified 2026-04-13. Renders via `next/og` `ImageResponse` with BlackPick branding. Served at `/opengraph-image` and hit by `smoke-prod.mjs:124`. |
 | 5 | Sentry production DSN | Package installed, config ready, DSN env var needs value |
 | 6 | Agent-skills plugin install | `/plugin marketplace add addyosmani/agent-skills` + `/plugin install agent-skills@addy-agent-skills` — slash command, Sean runs at next session start |
 
@@ -156,11 +156,12 @@ Mid-session pivot away from the planned Branch 6 (`fix/hardcoded-korean-leaks`) 
 ## Recommended Next Steps
 
 ```
-1. Facebook OAuth (Meta console + Supabase wire-in)
-2. Sentry DSN + OG image
-3. Agent-skills plugin install (Sean runs the slash command)
-4. Phase 2 test infrastructure — start with the BlackPick_Test Supabase project
-5. Refresh local Vercel CLI auth — `vercel login` — so future sessions can use `npm run deploy` directly without depending on the GitHub Actions main-push workflow
+1. Facebook OAuth (Meta console + Supabase wire-in) — step-by-step at Docs/facebook-oauth-setup.md
+2. Sentry DSN — see Wiki_Sean/BlackPick/2026-04-13-manual-handoff-checklist.md
+3. Supabase email template paste-in (PR #25 follow-up) — same checklist
+4. Agent-skills plugin install (Sean runs the slash command)
+5. Phase 2 test infrastructure — start with the BlackPick_Test Supabase project
+6. Refresh local Vercel CLI auth — `vercel login` — so future sessions can use `npm run deploy` directly without depending on the GitHub Actions main-push workflow
 ```
 
 ---
