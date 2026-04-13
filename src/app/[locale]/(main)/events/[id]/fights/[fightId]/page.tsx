@@ -79,18 +79,21 @@ export default async function FightDetailPage({
   // Fetch user prediction, crowd stats, and (if authed) the user's total
   // pick count across all events. The hint card only fires for authed users
   // with zero saved picks — once they've predicted anywhere, they've seen
-  // the flow and don't need the hint.
+  // the flow and don't need the hint. Strict `count === 0` (not `?? 0`)
+  // fails closed on query error so a transient DB error doesn't flash
+  // the hint to an established user.
   const fightIds = [fightId];
   const [{ data: preds }, { data: statsData }, userTotalPicks] = await Promise.all([
     user ? supabase.from("predictions").select("*").eq("user_id", user.id).in("fight_id", fightIds) : Promise.resolve({ data: [] as PredictionRow[] }),
     supabase.from("predictions").select("fight_id, winner_id").in("fight_id", fightIds),
     user
       ? supabase.from("predictions").select("id", { count: "exact", head: true }).eq("user_id", user.id)
-      : Promise.resolve({ count: 0 as number | null }),
+      : Promise.resolve({ count: null as number | null, error: null }),
   ]);
 
   const prediction = ((preds ?? []) as PredictionRow[])[0] ?? null;
-  const hasZeroPicks = Boolean(user) && (userTotalPicks.count ?? 0) === 0;
+  const hasZeroPicks =
+    Boolean(user) && userTotalPicks.count === 0 && !("error" in userTotalPicks && userTotalPicks.error);
   const votes = (statsData ?? []) as Array<{ fight_id: string; winner_id: string }>;
   const total = votes.length;
   const aCount = votes.filter((v) => v.winner_id === fight.fighter_a_id).length;
@@ -128,7 +131,7 @@ export default async function FightDetailPage({
       </div>
 
       {user && hasZeroPicks && eventStatus !== "completed" && !hasStarted ? (
-        <FirstPickHintCard userId={user.id} fightId={fightId} />
+        <FirstPickHintCard userId={user.id} />
       ) : null}
 
       {/* Fight Card */}

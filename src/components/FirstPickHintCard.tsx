@@ -11,13 +11,12 @@ import {
 
 type Props = {
   userId: string;
-  fightId: string;
 };
 
-export default function FirstPickHintCard({ userId, fightId }: Props) {
+export default function FirstPickHintCard({ userId }: Props) {
   const { t } = useI18n();
   const { status, dismiss } = useOnboardingDismissal(
-    ONBOARDING_KEYS.firstPickHint(userId, fightId),
+    ONBOARDING_KEYS.firstPickHint(userId),
     ONBOARDING_TTL_30_DAYS,
   );
 

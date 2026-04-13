@@ -64,6 +64,5 @@ export const ONBOARDING_TTL_30_DAYS = 30 * 24 * 60 * 60 * 1000;
 export const ONBOARDING_KEYS = {
   ringNamePrompt: (userId: string) => `bp.onboarding.ringName.v1:${userId}`,
   anonFirstPickCta: () => `bp.onboarding.anonCta.v1`,
-  firstPickHint: (userId: string, fightId: string) =>
-    `bp.onboarding.firstPickHint.v1:${userId}:${fightId}`,
+  firstPickHint: (userId: string) => `bp.onboarding.firstPickHint.v1:${userId}`,
 } as const;

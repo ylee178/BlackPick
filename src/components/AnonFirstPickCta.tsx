@@ -10,6 +10,7 @@ import {
 import {
   useOnboardingDismissal,
   ONBOARDING_KEYS,
+  ONBOARDING_TTL_30_DAYS,
 } from "@/lib/onboarding-dismissal";
 
 type Props = {
@@ -18,7 +19,10 @@ type Props = {
 
 export default function AnonFirstPickCta({ featuredEventHref }: Props) {
   const { t } = useI18n();
-  const { status, dismiss } = useOnboardingDismissal(ONBOARDING_KEYS.anonFirstPickCta());
+  const { status, dismiss } = useOnboardingDismissal(
+    ONBOARDING_KEYS.anonFirstPickCta(),
+    ONBOARDING_TTL_30_DAYS,
+  );
 
   if (status !== "show") return null;
 

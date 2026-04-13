@@ -9,7 +9,6 @@ import EventDateLine from "@/components/EventDateLine";
 import FlipTimer from "@/components/FlipTimer";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
-import RingNameOnboarding from "@/components/RingNameOnboarding";
 import AnonFirstPickCta from "@/components/AnonFirstPickCta";
 import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventDataFull, type BcFightData } from "@/lib/bc-predictions";
@@ -64,22 +63,13 @@ export default async function HomePage() {
     data: { user: authUser },
   } = await supabase.auth.getUser();
 
-  // Stage 1: Fetch events, top users, series types, and (if authed) the
-  // current user's ring_name in parallel. ring_name is nullable — a first-
-  // time authed user with no ring_name triggers the dismissible onboarding
-  // modal further down.
-  const [{ data: events }, { data: topUsers }, { data: seriesData }, ticketInfo, currentUserRow] = await Promise.all([
+  // Stage 1: Fetch events, top users, and series types in parallel
+  const [{ data: events }, { data: topUsers }, { data: seriesData }, ticketInfo] = await Promise.all([
     supabase.from("events").select("id, name, date, status, series_type, source_event_id").order("date", { ascending: true }),
     supabase.from("users").select("id, ring_name, score, wins, losses, current_streak, best_streak").order("score", { ascending: false }).limit(10),
     supabase.from("events").select("series_type").order("series_type"),
     fetchBcTicketInfo(),
-    authUser
-      ? supabase.from("users").select("ring_name").eq("id", authUser.id).maybeSingle()
-      : Promise.resolve({ data: null as { ring_name: string | null } | null }),
   ]);
-
-  const currentUserRingName = (currentUserRow.data?.ring_name ?? "").trim();
-  const needsRingNameOnboarding = Boolean(authUser && !currentUserRingName);
 
   const typedEvents = (events ?? []) as EventRow[];
   const activeEvents = typedEvents.filter((e) => e.status === "live" || e.status === "upcoming");
@@ -203,10 +193,6 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-10">
-      {needsRingNameOnboarding && authUser ? (
-        <RingNameOnboarding email={authUser.email ?? null} userId={authUser.id} />
-      ) : null}
-
       {/* Sticky sub-header for scrolling */}
       {featured ? (
         <StickyEventHeader
