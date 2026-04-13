@@ -1,12 +1,14 @@
-# BlackPick — Current State (2026-04-13, Phase 1 progress: Branch 5 fully shipped)
+# BlackPick — Current State (2026-04-13, Phase 1 at 6/9 + PR #25 Supabase email templates shipped out-of-phase)
 
 ## Branch
-`develop` (Phase 1 is 6/9 branches shipped after PRs #23 + #24)
+`develop` (Phase 1 is 6/9 branches shipped after PRs #23 + #24; PR #25 shipped a partial Phase 3 branch as a mid-session pivot)
 
 ## Latest Commits (develop tip, newest first)
-- `b2a9dea` feat(ui): title_fight + main_card chips on fight cards + fighter history + DevPanel preview (#24) — **this session**
+- `992fb9e` feat(email): supabase auth templates — confirm signup + reset password (#25) — **this session**
+- `5db7657` chore(docs): session wrap 2026-04-13 — PR #24 Branch 5 Part 2 shipped
+- `b2a9dea` feat(ui): title_fight + main_card chips on fight cards + fighter history + DevPanel preview (#24)
 - `3cf7600` chore(docs): session wrap 2026-04-13 — PR #23 Branch 5 Part 1 shipped
-- `84857f1` db: add is_title_fight + is_main_card flags to public.fights (#23) — **this session**
+- `84857f1` db: add is_title_fight + is_main_card flags to public.fights (#23)
 - `5658b8f` docs: add 3-tier review tier rubric (research-grounded)
 - `56deb48` chore(docs): TASKS.md — Branch 5 resume brief for post-/clear session
 - `0e16e33` docs: switch review path to second-opinion-reviewer subagent
@@ -20,55 +22,58 @@
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24) is on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches once Branches 6–9 are also in.
+- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 6–9 are also in.
 - **Pending PROD migration**: `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` (from PR #23). Sean runs via Management API — same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently since DEV is already converged. The PR #24 UI defensively treats both flags as optional booleans so the title-fight / main-card chips just don't render on PROD fights until the migration lands there.
+- **Pending Supabase email template paste-in (PR #25 follow-up)**: after the next preview deploy, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` to confirm all 200, then Supabase Dashboard → Authentication → URL Configuration → Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` and `reset-password.html` into the respective slots, test-email from dashboard. Until this step is done, Supabase sends the default plain-text auth emails — the branded HTML isn't live. README has the full checklist.
 
 ---
 
-## Completed (this session — 2026-04-12 second pass)
+## Completed (this session — 2026-04-13 third pass)
 
-### #9 — `react-hooks/set-state-in-effect` migration
+### PR #25 — `feature/supabase-email-templates` (Phase 3 partial, out-of-phase pivot)
 
-Killed every flagged use of the legacy `useState(mounted) + useEffect(setMounted(true))` hydration pattern across 7 components (5 from CURRENT_STATE plus `CountdownTimer` and `LanguagePicker`).
+Mid-session pivot away from the planned Branch 6 (`fix/hardcoded-korean-leaks`) after Sean pointed at `public/email/previews/` Codex-designed reference HTMLs and asked for proper Supabase auth email templates. Discovered during exploration that `Docs/email-templates/` already had a 2026-04-10 committed system (`b29a4ec`, GPT-5.4 reviewed) that was never applied to Supabase and had several issues: WCAG AA failure on copy-link label, 10-11px text below DESIGN.md minimum, missing `<meta color-scheme>`, box-shadow glow conflicting with Sean's "no gradient" direction, vague expiry on reset, and a broken logo asset reference (`public/email/bp-logo-email.png` was declared but never committed — the web app uses SVG only, so the PNG never existed in prod). Rewrote from scratch using the pre-existing system as a base, applying every fix surfaced by two rounds of `second-opinion-reviewer` and Sean's mid-session lucide-react instruction.
 
-- New `src/lib/use-sync-store.ts`: `useIsMounted()` (zero-cost SSR guard) + `useClockTick()` (single shared 1Hz wall-clock store; multiple countdown components now share one interval).
-- New `src/lib/use-notifications.ts`: module-level notification poller with subscribe-counted lifecycle. `NotificationBell` no longer touches `useEffect` for data fetching.
-- `src/lib/use-timezone.ts` rewritten as a real `useSyncExternalStore` with cached snapshot identity, in-memory `sessionOverride` for private-browsing fallback, and a `storage`-event handler that filters by key and clears the override so cross-tab writes win.
-- `FlipCard` switches to the "adjusting state during render" pattern with a `flipId` discriminator so the 600ms reset timer restarts on every value change even mid-flip.
-- `LanguagePicker` first-visit hint is rendered from state and persisted in the timeout effect (no `localStorage.setItem` in render under Strict Mode).
-- `eslint.config.mjs` override removed; `react-hooks/set-state-in-effect` is now enforced globally.
-- 84/84 unit tests still passing. Build clean.
+**Templates** (`Docs/email-templates/*.html`):
+- Dark theme (`#0a0a0a` outer, `#000` card, `#050505` footer) with solid gold CTA pill (`#ffba3c`) — no gradients or glow effects.
+- WCAG AA audit: all 12 text/background pairs computed in Node and verified in README, lowest ratio 6.25:1 on the 12px "Or Copy This Link" label. Non-text contrast (1.4.11) explicitly excluded as the copy panel border is presentational decoration, not a UI control.
+- `<meta name="color-scheme" content="dark">` + `supported-color-schemes` as a best-effort dark-mode auto-inversion opt-out. Inline dark color values remain the primary defense.
+- `<table align="center">` HTML attribute on CTA button and copy-link panel tables in addition to CSS `margin:auto`, so Outlook Desktop's Word renderer doesn't left-align the call-to-action.
+- MSO conditional comment forces Arial on Outlook for consistent fallback typography.
+- Preheader hide-bundle: `display:none + visibility + opacity + color:transparent + mso-hide:all + max-heights + font-size:1px` — covers every mainstream client.
+- 32px `<h1>` + 15px body + 12px minimum everywhere (no text below 12px per DESIGN.md §Typography).
+- `reset-password.html` shows `{{ .Email }}` on an "Account:" line (security practice — lets the recipient verify the reset was requested for their own address) and an explicit "1 hour" expiry note matching Supabase's recovery default.
+- `confirm-signup.html` explicit "24 hours" expiry note matching Supabase's confirm default.
+- Footer identity disclosure + "If you didn't request this, safely ignore" pattern meets GDPR transactional requirement.
 
-### #10 — `users.ring_name` case-insensitive unique index + ILIKE escape
+**Icon routes — lucide-react refactor** (`src/app/email/icon-{shield,key}/route.tsx`):
+- Previous versions inlined lucide SVG path data as hardcoded strings. Sean's mid-session feedback: "use the icon library we use on the web" (= `lucide-react`).
+- Both routes now import raw `__iconNode` data from the per-icon module at `lucide-react/dist/esm/icons/<name>.js` (`shield-check.js` + `key-round.js`). The top-level `ShieldCheck`/`KeyRound` components cannot be used because `lucide-react` 1.7.0 ships `Icon.js` with a `'use client'` directive — importing them in a Next.js RSC server route fails at prerender time. The raw `__iconNode` array is pure data, no React wrapper, server-safe.
+- The SVG wrapper hardcodes lucide's `defaultAttributes.js` values (`viewBox="0 0 24 24"`, `fill="none"`, `stroke={BRAND_ACCENT}`, `strokeWidth=2`, `strokeLinecap/Linejoin="round"`) so the visual output matches how lucide-react renders the component on the web.
+- **Satori `currentColor` fix** — set CSS `color: BRAND_ACCENT` on the outer `<div>` so key-round's keyhole dot (which uses `fill="currentColor"` in its iconNode) inherits the brand gold instead of resolving to Satori's default black and disappearing into the dark gold background. Verified visually by inspecting the prerendered PNG at `.next/server/app/email/icon-key.body` — the keyhole dot renders in gold.
+- iconNode `key` extraction uses the modern JSX transform pattern (`const { key, ...rest } = attrs; return <Tag key={key} {...rest} />`) to avoid React list-key warnings.
+- Tag cast widened from 4 elements to the full lucide SVG union (`path | circle | rect | line | ellipse | polygon | polyline`) for future icon routes.
 
-- New `supabase/migrations/202604120001_ring_name_case_insensitive_unique.sql` with a pre-flight DO block that aborts loudly on duplicates and `CREATE UNIQUE INDEX IF NOT EXISTS users_ring_name_lower_unique ON users (lower(ring_name))`.
-- Verified 0 duplicates in DEV and PROD via the management API; applied to both. Collision test confirmed (`UPDATE blackPicker → blackPicker` → 23505).
-- New `escapeIlikePattern()` helper in `lib/ring-name.ts`. Both `share/p/[username]/[eventShortId]/page.tsx` and `api/profile/ring-name/route.ts` now escape `\`/`%`/`_` before passing input to `.ilike("ring_name", ...)`. `_` is a valid ring-name character *and* a single-char ILIKE wildcard — without the escape `/p/a_b/...` silently matched "acb"/"a1b"/etc.
-- Route handler 23505 → `ring_name_taken` mapping was already in place; the index makes it a defense-in-depth backstop for races between concurrent INSERTs.
+**Infrastructure**:
+- New `src/types/lucide-icons.d.ts` — TypeScript shim declaring `declare module "lucide-react/dist/esm/icons/*.js"` with the correct `__iconNode` shape. Required because `lucide-react` ships no per-icon `.d.ts` files.
+- `package.json` — pinned `lucide-react` from `^1.7.0` → `~1.7.0` (patch-only upgrades) to reduce the blast radius of the internal-API coupling. A minor bump could silently rename `__iconNode` or restructure per-icon module paths.
+- New `public/email/bp-logo-email.png` (537×129, 20KB) — Codex-designed silver-gradient BLACK PICK wordmark. Documented as email-specific exception to BlackPick's "web UI uses SVG only" policy because email clients have poor SVG support (Gmail strips, Outlook partial).
+- Deleted `public/email/previews/{confirm-signup,reset-password}.html` (Codex reference HTMLs, used as visual inspiration but not shipped) and `.DS_Store`.
+- `remove_background/` working-tree deletions explicitly NOT staged per the PR #24 "never git add -A" lesson. Remains as an orthogonal future cleanup commit.
 
-### #11 — `SignupGateModal` Tab focus trap
+**Review trail** — two rounds with `second-opinion-reviewer` (blackpick profile):
+- **Round 1** APPROVE_WITH_CHANGES 0.88. 2 [major] + 2 [minor]: missing `align="center"` on 4 tables (MSO centering), README WCAG claim overstating coverage to include non-text contrast, missing footer-link row in audit table, color-scheme meta coverage overclaim. All four fixed before round 2.
+- **Round 2** APPROVE_WITH_CHANGES 0.82 (delta review — round 1 fixes + lucide-react refactor). 1 [major] + 3 [minor]: key-round `currentColor` resolving to black in Satori (visual bug in shipped PNG), spread-key React warning under new JSX transform, incomplete SVG tag cast, lucide-react caret range allowing silent internal API break. All four fixed + **visually verified** by direct PNG inspection.
 
-Lifted the ShareMenu focus trap pattern verbatim:
-- `dialogRef` on the inner panel.
-- `getFocusable()` recomputed per Tab keystroke.
-- Tab cycles forward, Shift+Tab cycles backward.
-- Escape, focus restore, portal-in-`document.body` — unchanged.
+**Verification**:
+- `npm run build` — clean, both `/email/icon-*` routes listed as prerendered static with 1y cache (Satori rendered successfully at build time, no `'use client'` errors).
+- `npm run test:fast` — 125/125 passing.
+- `npm run check:i18n` — 350 keys × 7 locales aligned.
+- Visual inspection of `.next/server/app/email/icon-{shield,key}.body` PNGs — both icons render correctly in gold on dark gold circles. Key-round keyhole dot visible (currentColor fix confirmed).
 
-### Codex CLI cutover (#9 + #10 + #11)
+**Not yet applied to Supabase** — the paste-to-dashboard step is post-merge follow-up. Documented in `Docs/email-templates/README.md` and in the §Production section above.
 
-Replaces all direct OpenAI API calls for review gates with the Codex CLI (`@openai/codex` v0.120.0).
-
-- Profile config in `~/.codex/config.toml`: `[profiles.blackpick]` (high), `[profiles.blackpick_lite]` (medium), `[profiles.blackpick_max]` (xhigh) — same pattern as the SETS_Stock / SETS_Crypto projects.
-- New `scripts/codex-review.sh` wrapper. Diff-review mode (`review`) and free-form prompt mode (stdin → `codex exec -`). Inlines model + reasoning effort per profile because `codex review` doesn't accept `--profile`. Hardened through 6+ codex max review iterations to handle: empty stdout vs stderr noise, profile aliases at any position, value-taking flag list, `set -u`-safe array expansion, ARG_MAX-safe stdin prompt for large free-form payloads.
-- New `Docs/codex-review.md` with the full profile table, escalation rules, and failure modes. CLAUDE.md just imports it via a one-line pointer (per Sean's preference for keeping CLAUDE.md thin).
-- Memory file `feedback_gpt_review_workflow.md` rewritten to mandate Codex CLI for reviews; OpenAI API direct calls are now forbidden for review purposes.
-
-### Workflow discipline (carried + reinforced)
-
-- Three independent PRs (#9, #10, #11), each with its own codex review pass.
-- Each PR rebased onto the latest `develop` after the previous one merged so the wrapper script changes never collided in the bundled history.
-- `merge -s ours` on `develop` reconnects the divergent main parent chain (PR #1 / #2 from 2026-04-09 were never merged back) without resurrecting dead code.
-- Bundled `develop → main` PR (#12) carries everything to prod via the GitHub Actions workflow on push to `main`.
+**Phase impact**: This PR partially ships Phase 3's `feature/supabase-email-templates` branch (2 of 4 templates — `magic_link.html` + `invite.html` still pending). Phase 1 progress unchanged at 6/9. Original plan to start Branch 6 this session was paused for the pivot; resumes next session.
 
 ---
 
