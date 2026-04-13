@@ -1,9 +1,11 @@
-# BlackPick — Current State (2026-04-13, Phase 1 at 6/9 + PR #25 Supabase email templates shipped out-of-phase)
+# BlackPick — Current State (2026-04-13, Phase 1 at 7/9 after PR #26 Branch 6 + PR #25 Supabase email templates out-of-phase)
 
 ## Branch
-`develop` (Phase 1 is 6/9 branches shipped after PRs #23 + #24; PR #25 shipped a partial Phase 3 branch as a mid-session pivot)
+`develop` (Phase 1 is 7/9 branches shipped after PR #26 Branch 6 `fix/hardcoded-korean-leaks`; PR #25 shipped a partial Phase 3 branch as a mid-session pivot earlier this session)
 
 ## Latest Commits (develop tip, newest first)
+- `b24057a` fix(i18n): hardcoded Korean leak sweep + English caps-lock chip labels (#26) — **this session**
+- `976618c` chore(docs): session wrap 2026-04-13 — PR #25 Supabase email templates shipped
 - `992fb9e` feat(email): supabase auth templates — confirm signup + reset password (#25) — **this session**
 - `5db7657` chore(docs): session wrap 2026-04-13 — PR #24 Branch 5 Part 2 shipped
 - `b2a9dea` feat(ui): title_fight + main_card chips on fight cards + fighter history + DevPanel preview (#24)
@@ -22,13 +24,54 @@
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 6–9 are also in.
+- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24 + #26) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 7/8/9 are also in.
 - **Pending PROD migration**: `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` (from PR #23). Sean runs via Management API — same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently since DEV is already converged. The PR #24 UI defensively treats both flags as optional booleans so the title-fight / main-card chips just don't render on PROD fights until the migration lands there.
 - **Pending Supabase email template paste-in (PR #25 follow-up)**: after the next preview deploy, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` to confirm all 200, then Supabase Dashboard → Authentication → URL Configuration → Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` and `reset-password.html` into the respective slots, test-email from dashboard. Until this step is done, Supabase sends the default plain-text auth emails — the branded HTML isn't live. README has the full checklist.
 
 ---
 
-## Completed (this session — 2026-04-13 third pass)
+## Completed (this session — 2026-04-13 third pass, PRs #25 + #26)
+
+### PR #26 — `fix/hardcoded-korean-leaks` (Phase 1 Branch 6, 6/9 → 7/9)
+
+After PR #25 merged, resumed Branch 6 as originally planned. Every hardcoded Korean user-facing string in `src/components/**/*.tsx` and `src/app/[locale]/**/*.tsx` moved behind `t()` or explicitly scoped out. Plus hardcoded English caps-lock chip labels (PR #24 deferred the `MAIN EVENT` chip to this branch).
+
+**Source changes** (5 files):
+- `FightCard.tsx:279` `MAIN EVENT` → `t("event.mainEvent")`. The PR #24 deferred chip.
+- `page.tsx` 3 sites: `LIVE` → `t("event.liveBadge")`, `Score` → `t("ranking.score")` (reused existing), `best` → `t("ranking.best")`.
+- `my-record/[eventId]/page.tsx` — 6 Korean prediction result chips (승자/방법/라운드 맞춤·틀림) → existing `t("myRecord.winnerCorrect")` / `winnerWrong` / etc. keys (keys pre-existed in 7 locales with formal-register `적중/오답` values; Korean users see slightly more formal wording, non-Korean users finally see localized text). Also 3 stat column labels (`WIN`/`LOSS`/`PTS`) → new `myRecord.statWin/statLoss/statPts` keys.
+- `PredictionsList.tsx` — 5 edits: removed 4 dead `|| "전체"/"맞춤"/"틀림"` Korean fallback patterns on `t()` calls (the keys exist in all 7 locales so fallbacks never fire in practice, but they were Korean-leak vectors); `${selectedEvents.size}개 대회` template literal → `t("myRecord.eventsSelected", {count})` via the `{var}` interpolator at `src/lib/i18n-provider.tsx:26-32`; `Perfect Prediction` chip → reused `t("profile.perfectCard")`; `" WIN"` suffix → new `t("myRecord.blackCupWin")`.
+- `ranking/page.tsx` — 5 call sites of `t("ranking.perfectCard")` replaced with `t("profile.perfectCard")`. The wrong key was **pre-existing** — `ranking.perfectCard` does not exist in the ranking namespace and `getNestedValue` was silently returning the raw key string `"ranking.perfectCard"` as visible UI text. Pulled into Branch 6 scope per Quality-Maximizing Path since Branch 6 IS the i18n leak sweep branch. Also added a comment block above the Oracle/Sniper/Sharp Call HoF tier render documenting that these are **intentional brand-fixed English proper nouns** matching the DB `hall_of_fame_entries.tier` enum, not translated strings.
+
+**i18n key additions**: 8 new keys × 7 locales = 56 new entries. Final `check:i18n` **358 × 7 aligned** (up from 350 before Branch 6). New keys: `event.mainEvent`, `event.liveBadge`, `myRecord.eventsSelected`, `myRecord.blackCupWin`, `myRecord.statWin/statLoss/statPts`, `ranking.best`.
+
+**Out of scope** (explicitly deferred): privacy/terms legal documents (`isKo ? X : Y` dual-language ternaries, Phase 5 tone review); admin surface (Korean-only by design, zero i18n imports); crawler scripts (intentional Korean BC parsing); weight-class/locales data structures (canonical Korean keys); Storybook demos; `profile.perfectCard` casing convention gap; dead `event.live` key; `MvpVoteSection IMG` fallback + `ui/ranking.tsx NEW` chip (pre-existing minors round 3 found via broader sweep, Phase 5).
+
+**File-based dialogue pattern — first end-to-end validation in BlackPick**:
+
+Sean asked mid-session to set up conversational review with the `second-opinion-reviewer` subagent. Key findings:
+
+- The `SendMessage` tool (Claude Code changelog line 639 v2.1.77 "use SendMessage to continue a previously spawned agent") is **not loadable** in current non-experimental sessions — `ToolSearch query="select:SendMessage"` returns "No matching deferred tools found". The runtime auto-prints an `agentId: <hash>` hint at the end of every subagent response **regardless of whether SendMessage is actually loadable**, which is misleading.
+- **File-based dialogue is the correct design anyway**: every round must be a fresh-context dispatch so that authorship-blind / self-bias mitigation holds (Yan et al. 2025). SendMessage continuation would carry the prior round's internal state forward and anchor the reviewer to their own past conclusions — self-reinforcing bias. File-based dialogue preserves fresh context per round while transmitting prior-round findings as verifiable READ input.
+- **Directory convention**: `BlackPick/reviews/BlackPick/<YYYY-MM-DD>_<topic>_dialog/` (note the inner `BlackPick/` subfolder — project-isolation visual guard mandated by the generic usage doc). `reviews/` is gitignored. Session-log summaries at the external `Wiki_Sean/BlackPick/` path remain the durable record.
+- **New section** in `Docs/review-tier-rubric.md` § File-based dialogue pattern documents BlackPick adoption: transcript location, profile routing (lite/default/max), when to dispatch round 2, concrete dispatch recipe, token cost awareness.
+
+**Branch 6 review trail — 3 rounds, validated end-to-end**:
+
+- **Round 1** APPROVE_WITH_CHANGES 0.87 — 2 [blocker] (I missed `Perfect Prediction` + `" WIN"` suffix in PredictionsList on the initial grep) + 1 [major] (pre-existing `ranking.perfectCard` raw-key-string bug at 5 sites) + 3 [minor]. All addressed.
+- **Round 2** APPROVE_WITH_CHANGES 0.91 — verified round 1 folds against HEAD, found 1 NEW [blocker] (`WIN`/`LOSS`/`PTS` stat column labels in a file I had already touched but where I missed a broader area) + 1 [major] (Oracle/Sniper/Sharp Call product decision) + 3 [minor]. **Flagged `hardcoded-english-chip-label` as systemic defect class across rounds 1+2 in 3+ files** — the headline cross-round pattern detection feature working as designed.
+- **Round 3** APPROVE 0.94 — verified round 2 folds + broader systemic sweep across `src/**/*.tsx` (excl. stories/admin/email). Defect class now **bounded**: 5 remaining grep hits all intentional (brand wordmark, IMG fallback, NEW rank chip), none i18n leaks.
+
+**Lesson — single-round review would have shipped with 4 missed issues**:
+- Round 1 blocker 1 (`Perfect Prediction`) + round 1 blocker 2 (` WIN`): missed in initial grep
+- Round 2 new blocker (`WIN/LOSS/PTS`): would never have surfaced because round 1's scope was narrower
+- Round 2 major (`ranking.perfectCard` pre-existing bug): also only caught by the systemic sweep round 3 did with full prior-round context
+
+The multi-round dialogue caught all 4. The pattern's value is now empirically validated on this project.
+
+**Verification**: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 358 × 7 aligned, `grep` zero Korean leaks in scope files + zero hardcoded caps-lock chips outside the intentional-brand carve-outs.
+
+---
 
 ### PR #25 — `feature/supabase-email-templates` (Phase 3 partial, out-of-phase pivot)
 
