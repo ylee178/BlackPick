@@ -6,7 +6,7 @@
 >
 > **Two-level model** — this file carries the **full durable roadmap** (all phases 0–7). The in-session `TaskList` tool only carries **actionable-this-session** items (the sub-tasks of the current branch). Loading the full roadmap into the tool drowns current work.
 
-_Last updated: 2026-04-13 (post-/clear resume — Branch 5 Part 1 [major] + [minor] both addressed, re-review APPROVE 0.88, ready to push + PR)_
+_Last updated: 2026-04-13 (end-of-session — PR #23 Branch 5 Part 1 shipped, Phase 1 now 5/9; next up Part 2 `feature/title-fight-badge`)_
 
 ---
 
@@ -26,25 +26,34 @@ _Last updated: 2026-04-13 (post-/clear resume — Branch 5 Part 1 [major] + [min
 
 **Phase 1 — UX bugs + onboarding + streak**.
 
-**Active branch**: `db/title-fight-flag` — **fixes applied, awaiting push + PR**. Part 1 of 2 for Branch 5. Rebased onto latest develop (`5658b8f docs: add 3-tier review tier rubric`). [major] header-comment softening and [minor] post-convergence DO $$ assertion both landed in the working tree; re-review via `second-opinion-reviewer` subagent returned **APPROVE 0.88** with a single [minor] nit (case-insensitive `ILIKE '%false%'` for the default-match check, applied inline). Part 2 (`feature/title-fight-badge`) is pending and will follow Part 1's merge.
+**Active branch**: none. Branch 5 Part 1 (`db/title-fight-flag`) shipped via PR #23 at `84857f1` on develop. Next up is **Part 2 (`feature/title-fight-badge`)** — UI + DevPanel actions on top of the freshly-landed `is_title_fight` / `is_main_card` columns. PROD migration still pending (Sean to run via Management API, same flow as `202604120001_ring_name_case_insensitive_unique.sql`).
 
-### 2026-04-13 resume session outcome
+### Next session resume brief
 
-Both review findings addressed in the working tree (not yet pushed — new WIP commit pending). Summary:
+1. **Start on develop**: `git checkout develop && git pull`. Verify `84857f1 db: add is_title_fight + is_main_card flags` is the tip or close to it.
 
-1. **[major] header-comment softening**: the round-1 subagent review claimed `supabase db query --linked --file` opens an outer transaction, making the inner `BEGIN/COMMIT` a no-op. A second subagent review of MY initial fix pushed back: it argued the Management API `/v1/projects/{ref}/database/query` does NOT wrap SQL in a transaction, so the round-1 concern may itself have been a false positive from shared-training bias. Neither reviewer could verify the factual question without a live CLI test. **Resolution**: step back from the contested claim entirely. New prose (lines 47–59 of the migration) asserts only the always-true Postgres-engine-level atomicity and adds a tool-agnostic "do NOT add statements after COMMIT; behavior varies by tool" warning. No external-tool behavioral claim remains.
+2. **PROD migration pre-check**: if not yet applied, run the migration against PROD via Management API. Verify post-run: both columns exist on `public.fights`, `NOT NULL`, `DEFAULT false`, 0 NULL rows, `check:schema-drift` clean.
 
-2. **[minor] post-convergence DO $$ assertion**: added at lines 99–160, after both COMMENT ON COLUMN statements and before `COMMIT;`. Iterates over `is_title_fight` and `is_main_card`, verifying each exists, is `data_type=boolean`, `is_nullable=NO`, `column_default ILIKE '%false%'`, and zero NULL rows. Pattern lifts from `202604120001_ring_name_case_insensitive_unique.sql`. Comment explicitly notes the null-count check is redundant in the normal path (Step 4 `SET NOT NULL` would have aborted the transaction first) and exists as a guard against a future edit accidentally removing Step 4 from one of the per-column blocks. `ILIKE` (not `LIKE`) after round-2 [minor] nit.
+3. **Open a new branch `feature/title-fight-badge`** from develop. Scope:
+   - Champion badge (lucide icon + gold border) on fight history cards when `fights.is_title_fight=true`.
+   - Main-card visual treatment when `fights.is_main_card=true` — still TBD what shape (gold accent? label? corner flag?). Design-call in Part 2 kickoff.
+   - DevPanel v2 actions: toggle `is_title_fight` and `is_main_card` per fight. Admin-only, dev env guards already in place.
+   - **Wire up or replace the dead `is_title_fight?: boolean` prop at `src/components/FightCard.tsx:50`**. Options: (a) pass the flag from the DB row through the component tree, (b) read it directly from the `fights` row in the parent, (c) delete the prop entirely if a sibling already reads it. Investigate first, pick whichever is smallest.
 
-3. **Re-review outcome**: second subagent pass on the final fix returned **APPROVE 0.88**, zero blockers, single [minor] suggesting `ILIKE` — applied inline before the push.
+4. **Review gate**: blackpick profile (feature + multi-file UI). Use `second-opinion-reviewer` subagent. No external review needed unless scope creeps into auth/RLS/money surfaces (it should not).
 
-4. **Local quality gates**: `npm run test:fast` 125/125 passing, `npx tsc --noEmit` clean. ESLint skips `.sql` by config (expected). Schema-drift check is push-to-main-only, so the PR CI won't block on PROD lacking the two new columns.
+5. **After Part 2 merges**, Phase 1 moves to 6/9 branches shipped. Next is Branch 6 (`fix/hardcoded-korean-leaks`), then Branch 7 (`feature/onboarding-first-time-flow`), Branch 8 (`feature/streak-ux`), Branch 9 (`fix/verify-all-predicted-toast`).
 
-5. **[minor] dead `is_title_fight?: boolean` prop at `src/components/FightCard.tsx:50`** — deferred to Part 2 per the original plan. Not in scope for Part 1.
+### Branch 5 Part 1 review trail (for future reference)
 
-6. **Branch state vs origin**: rebased onto develop (picks up `56deb48` TASKS.md resume brief + `5658b8f` 3-tier review rubric), so `origin/db/title-fight-flag` is now diverged. Push requires `--force-with-lease`. The existing origin wip commit is mine from the prior session; no third-party work at risk.
+The migration went through an unusual 3-round review path. Documenting because the disagreement is load-bearing context for anyone touching this file later:
 
-7. **Next step**: force-push with lease, open PR against develop, CI green, squash-merge, then start **Part 2 `feature/title-fight-badge`** (UI + DevPanel actions, and wire up or replace the dead `FightCard.tsx:50` prop).
+- **Round 1** (prior session, APPROVE_WITH_CHANGES 0.82): 1 [major] flagging header prose claim about atomicity + 1 [minor] missing post-convergence assertion + 1 [minor] dead prop (deferred to Part 2).
+- **Round 2** (this session, on my first fix): subagent PUSHED BACK on my round-1 fix, arguing the round-1 [major] concern was itself a false positive — neither round could verify the Supabase CLI transaction-wrapping behavior without a live test. Both are shared-training assessments.
+- **Resolution**: step back from the contested external-tool claim entirely. Final prose asserts only always-true Postgres atomicity plus a **tool-agnostic** "do NOT add statements after COMMIT" warning.
+- **Round 3** (on the final fix): APPROVE 0.88, zero blockers, single [minor] nit suggesting `ILIKE` over `LIKE` for case-insensitivity, applied inline.
+
+**Lesson for future migrations**: when two subagent reviews contradict each other on an external-tool behavioral claim, the safer answer is usually to **drop the claim entirely** rather than pick a side — SQL-engine-level truths are verifiable, external-tool behavior without live test access is not. The Quality-Maximizing Path meta-rule applies: "canonical approach" wins, and the canonical approach is not making unverifiable claims in permanent documentation.
 
 ### Prior subagent review — verified properties (0.82 confidence, APPROVE_WITH_CHANGES)
 
@@ -55,13 +64,13 @@ Both review findings addressed in the working tree (not yet pushed — new WIP c
 5. **No mutual-exclusion assumption with `is_cup_match`** — grep of `is_cup_match` usages (`src/app/[locale]/(main)/page.tsx:171`, `my-record/page.tsx:124`) shows only single-flag filters, no mutual-exclusion invariant.
 6. **RLS policies unaffected** — `fights` table has one policy (`CREATE POLICY fights_select FOR SELECT USING (true)` at `001_schema.sql:149`). New columns surface identically to existing flags. No security regression.
 
-**Branches already shipped this session**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4), #22 (hotfix). Docs switch committed on develop as `0e16e33` (2026-04-13 review-path switch to subagent).
+**Branches already shipped in Phase 1**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4), #22 (hotfix), **#23 (branch 5 part 1, this session)**. Docs switch committed on develop as `0e16e33` (2026-04-13 review-path switch to subagent). 3-tier review rubric at `5658b8f`.
 
-**Review gate**: primary path is the user-level `second-opinion-reviewer` subagent — "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. Historical fallback only (deprioritized): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. Cumulative OpenAI spend reached **~$8.93** before the 2026-04-13 switch — external review is now reserved for high-stakes calls (auth, RLS, money/score migrations, share-page enumeration) where a cross-family opinion is worth the spend. The subagent SUPPLEMENTS external review, not REPLACES it — every subagent output includes a mandatory `## What this review cannot catch` section declaring its shared-training blind spot.
+**Review gate**: primary path is the user-level `second-opinion-reviewer` subagent — "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. 3-tier rubric: `Docs/review-tier-rubric.md`. Historical fallback only (deprioritized): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. Cumulative OpenAI spend reached **~$8.93** before the 2026-04-13 switch — external review is now reserved for high-stakes calls (auth, RLS, money/score migrations, share-page enumeration) where a cross-family opinion is worth the spend. The subagent SUPPLEMENTS external review, not REPLACES it — every subagent output includes a mandatory `## What this review cannot catch` section declaring its shared-training blind spot.
 
 **Wiki log location**: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/` — **outside** the repo. PR #20 (`chore/move-wiki-out-of-repo`, merged as `9bb0da2`) moved the pre-2026-04-13 in-repo session logs to the external path and added a `.gitignore` block on `Wiki_Sean/`. The memory entry `feedback_wiki_log_location` documents the rule.
 
-**Phase 0 done. Phase 1 in progress (4/9 branches shipped).** Do not start Phase 2 until every Phase 1 item lands.
+**Phase 0 done. Phase 1 in progress (5/9 branches shipped after PR #23).** Do not start Phase 2 until every Phase 1 item lands.
 
 ---
 
@@ -69,6 +78,7 @@ Both review findings addressed in the working tree (not yet pushed — new WIP c
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
+| #23 | `db/title-fight-flag` | `84857f1` (squashed) | **Phase 1 branch 5 part 1 ✅** | Migration adds `is_title_fight BOOLEAN NOT NULL DEFAULT false` and `is_main_card BOOLEAN NOT NULL DEFAULT false` to `public.fights`. Per-column 4-step convergent pattern (ADD with DEFAULT → SET DEFAULT → UPDATE NULL rows → SET NOT NULL) wrapped in `BEGIN;…COMMIT;`. Post-convergence DO \$\$ assertion iterates both columns checking exists / `data_type=boolean` / `is_nullable=NO` / `column_default ILIKE '%false%'` / 0 NULL rows — pattern lifted from `202604120001_ring_name_case_insensitive_unique.sql`. `src/types/database.ts` gets `Row.is_title_fight: boolean` / `Row.is_main_card: boolean` + optional Insert/Update shapes (matches `is_cup_match` precedent). TypeScript types carried over from the pre-rebase wip commit. **Review trail**: 3 rounds with subagent — round 1 flagged header prose (APPROVE_WITH_CHANGES 0.82), round 2 PUSHED BACK on my first fix arguing the round-1 concern was itself a false positive on Supabase CLI behavior, resolution was to drop the contested external-tool claim entirely and keep only always-true PG-engine-level atomicity prose plus a tool-agnostic "do NOT add statements after COMMIT" warning. Round 3 APPROVE 0.88 with one [minor] nit (`ILIKE` not `LIKE`) applied inline. Lesson documented in Current focus: when two subagent reviews contradict each other on external-tool behavior, drop the claim. DEV already migrated in prior session (384 rows × 0 NULLs). PROD still pending Sean's Management API run. Part 2 (`feature/title-fight-badge`) next — UI badge, DevPanel toggles, wire up dead `is_title_fight?: boolean` prop in `FightCard.tsx:50`. |
 | #22 | `fix/prediction-pick-label-consistency` | `f8f9016` (squashed) | **Phase 1 hotfix ✅** | Sean flagged mid-session: the FightCard post-lock "Your Pick" chip from PR #17 differed from the FightCardPicker voting-state chip (gold `tone="accent"` vs neutral green-check, and top-left vs top-right). Two fixes: (1) FightCard now uses `tone="neutral"` + green check icon (`text-[#4ade80]`) + `right-2 top-2` position — matches the picker exactly so upcoming → locked transition looks seamless. (2) FightCardPicker's hardcoded English `"My Pick"` replaced with `t("prediction.yourPick")`, closing a hardcoded-English leak bug. Scope-kept: card border differences (`var(--bp-accent)/40` vs `rgba(229,169,68,0.3)`) left for a later retro-tokens pass. gpt-review.sh lite CLEAN round 1, cost $0.0007. |
 | #21 | `feature/fighter-page-sort` | `08582ef` | **Phase 1 branch 4 ✅** | Adds `winrate_desc` (3-decided-fight minimum gate) + `weightclass_asc` (canonical weight ladder) sort options and country filter to `/fighters`, with URL state for shareability + localStorage persist. New `src/lib/fighter-grid-state.ts` pure helpers (parseStateFromParams with explicit status metadata, isEqualState, serializeStateToQuery, buildFightersHref, readPersistedState, writePersistedState) + 39 unit tests. Architecture: URL as committed source of truth, `useTransition`-wrapped navigation, `optimisticState` anchored to `searchParamsString` (auto-invalidates on URL moves — no render-time setState, no ref-read-in-render), `latestIntentRef` synchronous merge buffer resynced via `useLayoutEffect`, `pendingPersistRef` match-on-settle persistence (clears on supersede), `canonicalizedTargetQueryRef` deterministic shared-link handling, effect order persist → canonicalize → restore. Unrelated query params (utm, feature flags) preserved via baseSearch in buildFightersHref. Duplicated params (`?sort=a&sort=b`) detected via `getAll` + canonicalized. 7 new i18n keys × 7 locales. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT. 125/125 tests. Known trade-off: brief flash of defaults on first mount before localStorage restore commits (~50ms) — fix requires SSR cookie read / useSyncExternalStore, out of scope. Cost ~$0.50 (3 default + 8 lite per Sean's cost rule). |
 | #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` (squashed) | Chore | Moves 7 pre-2026-04-13 session wiki files out of the repo to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`, `.gitignore` blocks `Wiki_Sean/` entirely, CLAUDE.md session-start protocol updated to read from the external path. New memory entry `feedback_wiki_log_location` documents the rule. Docs-only, exempt from review gate. |
@@ -147,15 +157,9 @@ Shipped via **Exit B** (URL-as-state kept) after a full architectural rewrite. 1
 
 FightCard post-lock chip aligned with FightCardPicker voting-state chip (same neutral tone + green check icon + top-right position). Picker's hardcoded English "My Pick" replaced with `t("prediction.yourPick")`. Lite profile CLEAN round 1.
 
-### Branch 5 Part 1: `db/title-fight-flag` ← **WIP committed at `0cd77c0` on origin (2026-04-13)**
+### Branch 5 Part 1: `db/title-fight-flag` ✅ shipped in PR #23 (commit `84857f1`)
 
-Migration adding two admin-managed boolean flags to `public.fights`:
-- **`is_title_fight`** — championship title bout (Sean's original request)
-- **`is_main_card`** — fight is featured on the event's main card (Sean's mid-session addition 2026-04-13 — distinguishes slotted-in main-card fights from undercard prelims in Black Cup events where `is_cup_match=false` alone is ambiguous)
-
-Both `BOOLEAN NOT NULL DEFAULT false`, convergent 4-step pattern per column wrapped in `BEGIN;…COMMIT;`. Applied to DEV idempotently. PROD pending.
-
-**Status**: Awaiting [major] header-comment softening + re-review. See the "Next session resume brief" under §Current focus above for the exact steps. Subagent review gave APPROVE_WITH_CHANGES at 0.82 confidence — zero blockers.
+Migration adds two admin-managed boolean flags (`is_title_fight`, `is_main_card`) to `public.fights`, both `BOOLEAN NOT NULL DEFAULT false`. See Recently shipped row for the full 3-round review trail + lesson. DEV migrated; **PROD still pending Sean's Management API run**.
 
 ### Branch 5 Part 2: `feature/title-fight-badge` (pending Part 1 merge)
 - [ ] Champion badge on fight history cards + gold border when `is_title_fight`.

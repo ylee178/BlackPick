@@ -1,23 +1,25 @@
-# BlackPick — Current State (2026-04-12, Hooks Migration + ring_name index + a11y)
+# BlackPick — Current State (2026-04-13, Phase 1 progress: Branch 5 Part 1 shipped)
 
 ## Branch
-`develop` (all session work merged)
+`develop` (Phase 1 is 5/9 branches shipped after PR #23)
 
-## Latest Commits (this session, on top of the prediction-flow PRs)
-- `b326f32` merge: record main as ancestor of develop without absorbing its tree
-- `e4937da` a11y(signup-gate): full Tab focus trap + codex-review wrapper hardening (#11)
-- `ee1c377` db(users): case-insensitive unique on ring_name + escape ILIKE wildcards (#10)
-- `5ed2710` refactor(hooks): migrate setState-in-effect to useSyncExternalStore stores (#9)
-- `7199bd6` chore(docs): session wrap 2026-04-12 — prediction flow UX + share layer (#8)
-- `f8db5ad` feat(share): public shareable predictions page + multi-channel share menu (#7)
-- `88cfa01` feat(predictions): one-shot toast when all pickable fights are predicted (#6)
-- `5ec5047` feat(auth): signup gate modal on first fighter click for anonymous viewers (#5)
-- `c4e2b1b` feat(predictions): live opponent swap with per-fighter draft memory (#3)
-- `3f726ca` chore(lint): fix pre-existing eslint errors blocking PR CI (#4)
+## Latest Commits (develop tip, newest first)
+- `84857f1` db: add is_title_fight + is_main_card flags to public.fights (#23) — **this session**
+- `5658b8f` docs: add 3-tier review tier rubric (research-grounded)
+- `56deb48` chore(docs): TASKS.md — Branch 5 resume brief for post-/clear session
+- `0e16e33` docs: switch review path to second-opinion-reviewer subagent
+- `4e0f08a` chore(docs): TASKS.md — mark PR #22 pick-label hotfix shipped
+- `eb049a7` fix(prediction): align post-lock "Your Pick" label with voting state (#22)
+- `08582ef` feat(fighters): winrate + weight-class sort + country filter with URL state (#21)
+- `bf6f50e` chore(wiki): move session logs out of repo to ~/Desktop/Wiki_Sean/BlackPick (#20)
+- `d5d03b2` fix(ui): avatar glow drop + placeholder contrast + mobile name wrap (#19)
+- `5ee064d` fix(share): event share CTA visibility + state machine (#18)
+- `93b2d9e` fix(predictions): lock transition watcher + FightCard Your Pick chip (#17)
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) — `develop → main` bundling all of the above plus the prior carryover, deployed via the GitHub Actions workflow on push to `main`. Two stale main-only commits (#1, #2 from 2026-04-09) were absorbed into develop via a `merge -s ours` so the parent chain reconnects without resurrecting dead code (NotFoundKof.tsx and friends) that develop intentionally removed in PR #4.
+- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#23) is on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches once Branches 6–9 are also in.
+- **Pending PROD migration**: `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` (from PR #23). Sean runs via Management API — same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently since DEV is already converged.
 
 ---
 
@@ -120,12 +122,12 @@ Replaces all direct OpenAI API calls for review gates with the Codex CLI (`@open
 | `users` | 11 (id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score, created_at, p4p_score, preferred_language) | New index `users_ring_name_lower_unique` on `lower(ring_name)` (this session) |
 | `admin_users` | 2 (user_id, created_at) | no changes |
 | `events` | 9 | no changes |
-| `fights` | 12 | no changes |
+| `fights` | 14 (DEV only until PROD migrated) | New columns `is_title_fight` and `is_main_card` from PR #23 — both `BOOLEAN NOT NULL DEFAULT false`. DEV converged (384 rows × 0 NULLs). PROD still at 12 columns until Sean runs the migration. `check:schema-drift` will correctly flag both missing on PROD until the migration lands there. |
 | `predictions` | 12 | no changes |
 | `fighters` | 10 | no changes |
 | `fighter_comments` | 6 | no changes |
 
-Drift: none (`npm run check:schema-drift` clean).
+Drift: `fights.is_title_fight` + `fights.is_main_card` present on DEV, not yet on PROD. `check:schema-drift` will flag both until Sean runs the migration on PROD. Expected, not a bug.
 
 ## OAuth Clients (unchanged)
 
@@ -138,7 +140,7 @@ Drift: none (`npm run check:schema-drift` clean).
 
 | Layer | Files | Cases | Runtime |
 |---|---|---|---|
-| Unit + component (vitest) | 9 | 84 | ~1.3s |
+| Unit + component (vitest) | 10 | 125 | ~1.3s |
 | Schema drift script | `scripts/check-schema-drift.mjs` | 7 tables | ~2s |
 | i18n integrity script | `scripts/check-i18n-keys.mjs` | 7 locales (339 keys each) | <1s |
 | Prod smoke script | `scripts/smoke-prod.mjs` | 13 checks | ~5s |
