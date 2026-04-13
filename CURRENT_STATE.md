@@ -1,12 +1,15 @@
-# BlackPick — Current State (2026-04-13, Phase 1 at 7/9 after PR #26 Branch 6 + PR #25 Supabase email templates out-of-phase)
+# BlackPick — Current State (2026-04-13, Phase 1 at 8/9 after PR #27 Branch 7 + PR #26 Branch 6 + PR #25 Supabase email templates out-of-phase)
 
 ## Branch
-`develop` (Phase 1 is 7/9 branches shipped after PR #26 Branch 6 `fix/hardcoded-korean-leaks`; PR #25 shipped a partial Phase 3 branch as a mid-session pivot earlier this session)
+`develop` (Phase 1 is 8/9 branches shipped after PR #27 Branch 7 `feature/onboarding-first-time-flow`; remaining Phase 1: Branch 8 `feature/streak-ux` + Branch 9 `fix/verify-all-predicted-toast`)
 
 ## Latest Commits (develop tip, newest first)
-- `b24057a` fix(i18n): hardcoded Korean leak sweep + English caps-lock chip labels (#26) — **this session**
+- `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **this session**
+- `af5cfec` chore: 2026-04-13 autonomous follow-ups — PROD migration + Facebook OAuth docs + smoke checks
+- `84a274d` chore(docs): session wrap 2026-04-13 — PR #26 Branch 6 shipped, Phase 1 → 7/9
+- `b24057a` fix(i18n): hardcoded Korean leak sweep + English caps-lock chip labels (#26)
 - `976618c` chore(docs): session wrap 2026-04-13 — PR #25 Supabase email templates shipped
-- `992fb9e` feat(email): supabase auth templates — confirm signup + reset password (#25) — **this session**
+- `992fb9e` feat(email): supabase auth templates — confirm signup + reset password (#25)
 - `5db7657` chore(docs): session wrap 2026-04-13 — PR #24 Branch 5 Part 2 shipped
 - `b2a9dea` feat(ui): title_fight + main_card chips on fight cards + fighter history + DevPanel preview (#24)
 - `3cf7600` chore(docs): session wrap 2026-04-13 — PR #23 Branch 5 Part 1 shipped
@@ -24,13 +27,43 @@
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24 + #26) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 7/8/9 are also in.
+- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24 + #26 + #27) + Phase 3 partial (PR #25) are on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches + this session's email templates once Branches 8/9 are also in.
 - **PROD migration `202604130001` — APPLIED 2026-04-13** (end of session via `supabase db query --linked --file`). Both `is_title_fight` and `is_main_card` columns now exist on PROD `public.fights` (384 rows × 0 NULLs, BOOLEAN NOT NULL DEFAULT false). `check:schema-drift` clean on both DEV and PROD (14 cols each). The PR #24 title-fight / main-card chips now render on PROD fights.
 - **Pending Supabase email template paste-in (PR #25 follow-up)** — **still manual, Sean-only**: after the next preview deploy lands, Sean opens `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` to confirm all 200 (smoke-prod.mjs now has automated checks for these on PROD deploys), then Supabase Dashboard → Authentication → URL Configuration → Site URL is `https://blackpick.io`, then Email Templates → paste `Docs/email-templates/confirm-signup.html` and `reset-password.html` into the respective slots, test-email from dashboard. Until this step is done, Supabase sends the default plain-text auth emails — the branded HTML isn't live. Step-by-step checklist in `Wiki_Sean/BlackPick/2026-04-13-manual-handoff-checklist.md`.
 
 ---
 
-## Completed (this session — 2026-04-13 third pass, PRs #25 + #26)
+## Completed (this session — 2026-04-13, PRs #25 + #26 + #27)
+
+### PR #27 — `feature/onboarding-first-time-flow` (Phase 1 Branch 7, 7/9 → 8/9)
+
+Three dismissible first-time onboarding prompts sharing a single `useOnboardingDismissal` hook.
+
+**New files**:
+- `src/lib/onboarding-dismissal.ts` — `useOnboardingDismissal(key, ttlMs?)` returns `{ status, dismiss }` where `status ∈ "checking" | "show" | "hide"`. Three-state transition avoids a flash of the prompt on devices where it was previously dismissed. Passing `ttlMs` enables a 30-day re-show window; omit for permanent dismissal. `ONBOARDING_KEYS` factory centralises the `bp.onboarding.*` key scheme (versioned `v1` per `client-localstorage-schema` react-best-practices rule). `ONBOARDING_TTL_30_DAYS = 30 × 24 × 60 × 60 × 1000`.
+- `src/components/AnonFirstPickCta.tsx` — dismissible CTA rendered above the fight list on `/` when `!authUser && featured && fights.length > 0`. Sparkles lucide icon + retro panel styling + 30-day TTL. Button links to `/events/{featured.id}`.
+- `src/components/FirstPickHintCard.tsx` — dismissible hint on fight detail pages for authed users with zero picks across the app. MousePointerClick lucide icon + retro panel styling + per-user key (so dismissing once suppresses on every fight, not just the one you dismissed on).
+
+**Modified files**:
+- `src/components/RingNameOnboarding.tsx` — new optional `userId?: string | null` prop. When passed, opts the modal into dismissible mode: reads `bp.onboarding.ringName.v1:${userId}` from localStorage with `ONBOARDING_TTL_30_DAYS`, shows a "Skip for now" button at the bottom of the form, and hides itself on dismissal. When omitted, preserves legacy forced-modal behavior for any caller. `useEffect` hook for `document.body.style.overflow = "hidden"` is now gated on `visible` so it only fires when the modal is actually rendering, and cleans up correctly on unmount / visible → false transition. Early return moved to AFTER all hooks (`useMemo(helperText)` now runs before the `if (!visible) return null`) — Rules of Hooks compliance.
+- `src/app/[locale]/(main)/layout.tsx` — `<RingNameOnboarding>` render call now passes `userId={authUser.id}` to opt the modal into dismissible mode. The existing `needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim())` gate remains — the only UX change is that users can now dismiss the modal with the 30-day block instead of being force-blocked. No duplicate fetch in `page.tsx` (round 1 reviewer caught my first attempt at this).
+- `src/app/[locale]/(main)/page.tsx` — imports `AnonFirstPickCta`, computes `featuredHref = featured ? "/events/${featured.id}" : "/"`, renders `<AnonFirstPickCta featuredEventHref={featuredHref} />` above the fight list when `!authUser && featured && fights.length > 0`. No ring-name logic (handled in layout).
+- `src/app/[locale]/(main)/events/[id]/fights/[fightId]/page.tsx` — new third Promise in the existing `Promise.all`: `supabase.from("predictions").select("id", { count: "exact", head: true }).eq("user_id", user.id)` for authed users, resolving to `{ count: null, error: null }` for anons. Computes `hasZeroPicks = Boolean(user) && userTotalPicks.count === 0 && !(error check)` — strict `=== 0` so a Supabase error fails closed instead of flashing the hint to established users. Renders `<FirstPickHintCard userId={user.id} />` when `user && hasZeroPicks && eventStatus !== "completed" && !hasStarted`.
+- `src/components/DevPanel.tsx` — new "Reset onboarding dismissals" action in the Actions section. Iterates `window.localStorage` backwards (to avoid skipping entries after `removeItem`) and wipes any key starting with `bp.onboarding.`. Returns the count in the DevPanel status row. Complements the existing "Reset 'all predicted' toast lock" action — different namespace, different purpose.
+
+**i18n**: 7 new keys × 7 locales = 49 additions. Final `check:i18n` **365 × 7 aligned** (up from 358 after Branch 6). New keys: `onboarding.skipForNow`, `onboarding.dismiss`, `onboarding.anonCtaTitle`, `onboarding.anonCtaDescription`, `onboarding.anonCtaButton`, `onboarding.firstPickHintTitle`, `onboarding.firstPickHintDescription`. Korean uses the retro-boxing casual register ("나중에 할게요", "첫 예측, 준비됐어요?"), pt-BR uses Brazilian casual ("Pronto pra mandar seu primeiro palpite?"), and the other 5 locales match their existing `onboarding.*` namespace voice.
+
+**Review trail — 2 rounds file-based dialogue (blackpick profile)**:
+
+- **Round 1** APPROVE_WITH_CHANGES 0.91 — 1 [blocker] (AnonFirstPickCta missing the `ttlMs` arg → silently permanent dismissal instead of 30-day) + 2 [major] (OAuth signup regression from scoping the ring-name modal to `/` only — users signing up from a fight page via Google OAuth land back on the fight page and never see the prompt + duplicate `users` row fetch on `/` for authed users because I added a second ring_name fetch in page.tsx that the layout was already doing for AccountDropdown) + 2 [minor] (firstPickHint per-fight key violated "single prompt per state" + `hasZeroPicks` `?? 0` treated DB error as zero picks).
+- **Round 1 folds** (`c1e5631`): anon CTA TTL one-liner; RingNameOnboarding moved back to layout (resolves both majors in one move — OAuth regression disappears because the modal is now layout-wide, and the duplicate fetch disappears because page.tsx no longer needs its own ring_name query); firstPickHint key drops `fightId`; hasZeroPicks switched to strict `count === 0` with explicit error check.
+- **Round 2** APPROVE 0.93 — verified all 5 round 1 folds (fold_verified on each), no new blockers, cross-round systemic sweep: 22 `t()` call-sites all resolve in en.json + all 7 locales, no Korean leaks in touched files, no English caps-lock chip label regressions, no localStorage namespace collisions with the existing `allPredictedToast:v1:*` keys. 2 non-blocking minors noted but intentional: redundant TypeScript narrowing guard in the `hasZeroPicks` computation (correct but belt-and-suspenders, leave it) + vanishingly rare edge case where an authed ring-name-less user landing on `/login` sees the modal stacked on the login form (pre-existing middleware gap, not Branch 7 scope).
+
+**Lesson — layout-vs-page scope decision**: the spec said "prompt on `/` landing" literally, and I implemented that literally in round 0 by removing the layout-level render and adding it to page.tsx. Round 1 reviewer correctly called this out as a user-journey regression vs. the pre-existing forced-modal behavior — OAuth flows that redirect to non-`/` pages would never see the prompt. Quality-Maximizing Path meta-rule applied: expand the scope beyond the literal spec to preserve the stronger user journey, since the spec clearly intends "first-time experience" and the layout-wide placement matches that intent better than a strict route restriction. The dismissible flag preserves the "30-day re-show" requirement while keeping the layout-wide coverage.
+
+**Verification**: `npm run build` clean (after one round of Rules-of-Hooks fix for an early return I'd initially placed between `useEffect` and `useMemo` in RingNameOnboarding), `npm run test:fast` 125/125, `npm run check:i18n` 365 × 7 aligned, grep clean on new files, no regressions to the pre-existing forced-modal path (legacy callers omit `userId`).
+
+---
 
 ### PR #26 — `fix/hardcoded-korean-leaks` (Phase 1 Branch 6, 6/9 → 7/9)
 
