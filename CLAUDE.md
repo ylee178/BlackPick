@@ -75,3 +75,15 @@ the OpenAI API from anywhere else.
 
 Docs-only PRs (TASKS.md, wiki, Docs/) remain exempt from the review
 gate — self-review OK.
+
+**3-tier Review rubric** (Tier A routine / Tier B elevated with
+red-team / forensic / oracle framings / Tier C irreversible-
+high-stakes with 8 hard triggers + mandatory cross-family external
+review) lives in [`Docs/review-tier-rubric.md`](Docs/review-tier-rubric.md).
+Read that file before any review-gate judgment call. Self-bias is
+structural (Yan et al. 2025) and cannot be prompted away; the
+rubric routes the ~95% of recoverable work to Tier A/B (subagent
+only) and the ~5% of irreversible work to Tier C (cross-family
+mandatory). CLAUDE.md stays thin on purpose — the rubric's full
+body, Tier C trigger examples, research citations, and measurement
+TODOs live in the Docs file.

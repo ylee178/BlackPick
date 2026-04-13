@@ -27,6 +27,14 @@
 > The rest of this file is the original profile table, escalation
 > rules, and failure modes. Treat it as reference material for the
 > historical fallback path.
+>
+> **3-tier Review rubric** (Tier A routine / Tier B elevated /
+> Tier C irreversible-high-stakes with 8 hard triggers) **lives in
+> [`Docs/review-tier-rubric.md`](./review-tier-rubric.md)**. That
+> rubric is the canonical decision-routing table; this file is
+> reference material for when Tier C escalates to cross-family
+> external review via the `codex-review.sh` / `gpt-review.sh`
+> scripts.
 
 ---
 
