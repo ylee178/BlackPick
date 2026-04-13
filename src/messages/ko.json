@@ -272,7 +272,14 @@
     "invalidCharacters": "문자, 숫자, 공백, 하이픈(-), 언더스코어(_)만 사용할 수 있어요.",
     "taken": "이미 사용 중인 링네임이에요.",
     "notAuthenticated": "온보딩을 마치려면 다시 로그인해 주세요.",
-    "unexpected": "지금은 링네임을 저장하지 못했어요."
+    "unexpected": "지금은 링네임을 저장하지 못했어요.",
+    "skipForNow": "나중에 할게요",
+    "dismiss": "닫기",
+    "anonCtaTitle": "첫 예측, 준비됐어요?",
+    "anonCtaDescription": "가입하고 내 예측을 저장하면 바로 랭킹에 오를 수 있어요.",
+    "anonCtaButton": "첫 경기 예측하기",
+    "firstPickHintTitle": "첫 예측을 시작해보세요",
+    "firstPickHintDescription": "선수 카드를 눌러 승자를 고르면 첫 포인트를 얻을 수 있어요."
   },
   "results": {
     "totalEvents": "완료된 이벤트"

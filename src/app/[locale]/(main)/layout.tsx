@@ -113,8 +113,8 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
           </div>
         </footer>
 
-        {needsRingNameOnboarding ? (
-          <RingNameOnboarding email={authUser?.email ?? null} />
+        {needsRingNameOnboarding && authUser ? (
+          <RingNameOnboarding email={authUser.email ?? null} userId={authUser.id} />
         ) : null}
 
         {/* Mobile Tab Bar */}

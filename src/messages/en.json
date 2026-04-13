@@ -272,7 +272,14 @@
     "invalidCharacters": "Use only letters, numbers, spaces, hyphens, or underscores.",
     "taken": "That ring name is already taken.",
     "notAuthenticated": "Please log in again to finish onboarding.",
-    "unexpected": "We couldn't save your ring name right now."
+    "unexpected": "We couldn't save your ring name right now.",
+    "skipForNow": "Skip for now",
+    "dismiss": "Dismiss",
+    "anonCtaTitle": "Ready to make your first pick?",
+    "anonCtaDescription": "Sign up to lock in your predictions and climb the rankings.",
+    "anonCtaButton": "Pick your first fight",
+    "firstPickHintTitle": "Your first prediction",
+    "firstPickHintDescription": "Tap a fighter to call the winner and earn your first point."
   },
   "results": {
     "totalEvents": "completed events"

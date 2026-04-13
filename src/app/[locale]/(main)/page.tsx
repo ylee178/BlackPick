@@ -9,6 +9,7 @@ import EventDateLine from "@/components/EventDateLine";
 import FlipTimer from "@/components/FlipTimer";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
+import AnonFirstPickCta from "@/components/AnonFirstPickCta";
 import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventDataFull, type BcFightData } from "@/lib/bc-predictions";
 import { fetchBcTicketInfo } from "@/lib/bc-ticket";
@@ -188,6 +189,8 @@ export default async function HomePage() {
 
   const localizedEventName = featured ? getLocalizedEventName(featured, locale, featured.name) : "";
 
+  const featuredHref = featured ? `/events/${featured.id}` : "/";
+
   return (
     <div className="flex flex-col gap-10">
       {/* Sticky sub-header for scrolling */}
@@ -349,6 +352,9 @@ export default async function HomePage() {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         {/* Fight List */}
         <div id="fights" className="flex flex-col">
+          {!authUser && featured && fights.length > 0 ? (
+            <AnonFirstPickCta featuredEventHref={featuredHref} />
+          ) : null}
           {fights.length > 0 ? (
             <>
               <h2 className="mb-4 text-xl font-bold tracking-tight text-[var(--bp-ink)]">

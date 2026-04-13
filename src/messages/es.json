@@ -272,7 +272,14 @@
     "invalidCharacters": "Usa solo letras, números, espacios, guiones o guiones bajos.",
     "taken": "Ese nombre de ring ya está en uso.",
     "notAuthenticated": "Por favor, inicia sesión de nuevo para completar la configuración.",
-    "unexpected": "No pudimos guardar tu nombre de ring en este momento."
+    "unexpected": "No pudimos guardar tu nombre de ring en este momento.",
+    "skipForNow": "Ahora no",
+    "dismiss": "Cerrar",
+    "anonCtaTitle": "¿Listo para hacer tu primera predicción?",
+    "anonCtaDescription": "Regístrate para guardar tus predicciones y escalar en la clasificación.",
+    "anonCtaButton": "Predice tu primera pelea",
+    "firstPickHintTitle": "Tu primera predicción",
+    "firstPickHintDescription": "Toca a un peleador para elegir al ganador y gana tu primer punto."
   },
   "results": {
     "totalEvents": "eventos finalizados"

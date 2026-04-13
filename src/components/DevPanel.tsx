@@ -208,6 +208,24 @@ export default function DevPanel() {
     }
   };
 
+  const handleResetOnboardingDismissals = () => {
+    try {
+      let cleared = 0;
+      const prefixes = ["bp.onboarding."];
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const key = window.localStorage.key(i);
+        if (!key) continue;
+        if (prefixes.some((p) => key.startsWith(p))) {
+          window.localStorage.removeItem(key);
+          cleared++;
+        }
+      }
+      setMessage(`onboarding cleared (${cleared})`);
+    } catch {
+      setMessage("localStorage unavailable");
+    }
+  };
+
   // ── Content Flags (title_fight + main_card preview) ────────────────
   //
   // Title fight and main card are admin-managed flags that the crawler
@@ -358,6 +376,11 @@ export default function DevPanel() {
               label='Reset "all predicted" toast lock'
               onClick={handleResetToastLock}
               disabled={loading !== null || !userId || !state.latest_event_id}
+            />
+            <ActionRow
+              label="Reset onboarding dismissals"
+              onClick={handleResetOnboardingDismissals}
+              disabled={loading !== null}
             />
           </Section>
         </div>

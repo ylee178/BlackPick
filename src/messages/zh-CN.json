@@ -272,7 +272,14 @@
     "invalidCharacters": "仅可使用字母、数字、空格、连字符或下划线。",
     "taken": "该擂台名已被占用。",
     "notAuthenticated": "请重新登录以完成新手设置。",
-    "unexpected": "当前无法保存你的擂台名。"
+    "unexpected": "当前无法保存你的擂台名。",
+    "skipForNow": "稍后再说",
+    "dismiss": "关闭",
+    "anonCtaTitle": "准备好做出你的第一次预测了吗？",
+    "anonCtaDescription": "注册即可锁定你的预测并登上排行榜。",
+    "anonCtaButton": "预测你的第一场对决",
+    "firstPickHintTitle": "你的第一次预测",
+    "firstPickHintDescription": "点击选手卡片选择获胜者，赢得你的第一分。"
   },
   "results": {
     "totalEvents": "已结束赛事"
