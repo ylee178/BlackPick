@@ -105,7 +105,7 @@ export default async function HomePage() {
       supabase
         .from("fights")
         .select(`
-          id, event_id, fighter_a_id, fighter_b_id, start_time, status, winner_id, method, round, is_cup_match,
+          id, event_id, fighter_a_id, fighter_b_id, start_time, status, winner_id, method, round, is_cup_match, is_title_fight, is_main_card,
           fighter_a:fighters!fighter_a_id(*),
           fighter_b:fighters!fighter_b_id(*)
         `)

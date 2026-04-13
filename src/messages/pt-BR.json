@@ -47,7 +47,9 @@
     "status": "Status",
     "totalFights": "Lutas",
     "picked": "Palpitado",
-    "allEvents": "Todos os eventos"
+    "allEvents": "Todos os eventos",
+    "titleFight": "LUTA PELO TÍTULO",
+    "mainCard": "CARD PRINCIPAL"
   },
   "prediction": {
     "selectWinner": "Escolha o vencedor",
@@ -124,11 +126,11 @@
     "loginTitle": "Entrar",
     "loginDescription": "Volte para a arena e acompanhe seus palpites.",
     "emailPlaceholder": "you@example.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "Mínimo de 6 caracteres",
-  "creatingAccount": "Criando conta...",
-  "signupCheckEmail": "Verifique seu e-mail para confirmar sua conta. Se esse endereço puder se cadastrar, um link de confirmação chegará em breve.",
-  "signingIn": "Entrando...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "Mínimo de 6 caracteres",
+    "creatingAccount": "Criando conta...",
+    "signupCheckEmail": "Verifique seu e-mail para confirmar sua conta. Se esse endereço puder se cadastrar, um link de confirmação chegará em breve.",
+    "signingIn": "Entrando...",
     "redirecting": "Redirecionando...",
     "alreadyHaveAccount": "Já tem uma conta?",
     "noAccount": "Ainda não tem conta?",

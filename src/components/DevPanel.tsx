@@ -208,6 +208,39 @@ export default function DevPanel() {
     }
   };
 
+  // ── Content Flags (title_fight + main_card preview) ────────────────
+  //
+  // Title fight and main card are admin-managed flags that the crawler
+  // cannot infer from source markup. In production an admin flips them
+  // on `/admin/events/{id}` (or directly via DB). For dev/preview the
+  // panel flips them on the latest event in two modes:
+  //
+  //   - `preview`: mark fight #1 as is_title_fight + is_main_card, mark
+  //     half the remaining fights is_main_card (the rest stay as the
+  //     undercard). Surfaces both chip + fighter-page gold tint at once.
+  //   - `clear`: set is_title_fight=false AND is_main_card=false on
+  //     every fight of the latest event. Resets to the crawler default.
+  const handleContentFlagsPreview = () => run(
+    "content-flags:preview",
+    "set-content-flags-preview",
+    {},
+    {
+      message: (d) => {
+        const r = d as { title_fights?: number; main_card?: number };
+        return `title=${r.title_fights ?? 0} · main=${r.main_card ?? 0}`;
+      },
+    },
+  );
+
+  const handleContentFlagsClear = () => run(
+    "content-flags:clear",
+    "clear-content-flags",
+    {},
+    {
+      message: (d) => `cleared on ${(d as { fights?: number }).fights ?? 0} fights`,
+    },
+  );
+
   if (!open) {
     return (
       <button
@@ -301,6 +334,20 @@ export default function DevPanel() {
           {/* Content State */}
           <Section label="Content State">
             <ActionRow label="Show 404" onClick={handleShow404} disabled={loading !== null} />
+          </Section>
+
+          {/* Content Flags */}
+          <Section label="Content Flags">
+            <ActionRow
+              label="Preview title + main card"
+              onClick={handleContentFlagsPreview}
+              disabled={loading !== null || !state.latest_event_id}
+            />
+            <ActionRow
+              label="Clear title + main card"
+              onClick={handleContentFlagsClear}
+              disabled={loading !== null || !state.latest_event_id}
+            />
           </Section>
 
           {/* Actions */}

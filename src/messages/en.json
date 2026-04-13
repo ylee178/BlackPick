@@ -47,7 +47,9 @@
     "status": "Status",
     "totalFights": "Fights",
     "picked": "Picked",
-    "allEvents": "All Events"
+    "allEvents": "All Events",
+    "titleFight": "TITLE FIGHT",
+    "mainCard": "MAIN CARD"
   },
   "prediction": {
     "selectWinner": "Pick winner",
@@ -124,11 +126,11 @@
     "loginTitle": "Log in",
     "loginDescription": "Step back into the arena and track your picks.",
     "emailPlaceholder": "you@example.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "Minimum 6 characters",
-  "creatingAccount": "Signing up...",
-  "signupCheckEmail": "Check your email to confirm your account. If that address can sign up, a confirmation link will arrive shortly.",
-  "signingIn": "Logging in...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "Minimum 6 characters",
+    "creatingAccount": "Signing up...",
+    "signupCheckEmail": "Check your email to confirm your account. If that address can sign up, a confirmation link will arrive shortly.",
+    "signingIn": "Logging in...",
     "redirecting": "Redirecting...",
     "alreadyHaveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",

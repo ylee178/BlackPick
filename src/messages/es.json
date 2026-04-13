@@ -47,7 +47,9 @@
     "status": "Estado",
     "totalFights": "Peleas",
     "picked": "Elegidas",
-    "allEvents": "Todos los eventos"
+    "allEvents": "Todos los eventos",
+    "titleFight": "PELEA TITULAR",
+    "mainCard": "CARTA PRINCIPAL"
   },
   "prediction": {
     "selectWinner": "Elige al ganador",
@@ -124,11 +126,11 @@
     "loginTitle": "Iniciar sesión",
     "loginDescription": "Vuelve a la arena y sigue tus predicciones.",
     "emailPlaceholder": "tu@ejemplo.com",
-  "passwordPlaceholder": "••••••••",
-  "passwordHint": "Mínimo 6 caracteres",
-  "creatingAccount": "Creando cuenta...",
-  "signupCheckEmail": "Revisa tu correo para confirmar tu cuenta. Si esa dirección puede registrarse, recibirás un enlace de confirmación en breve.",
-  "signingIn": "Iniciando sesión...",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "Mínimo 6 caracteres",
+    "creatingAccount": "Creando cuenta...",
+    "signupCheckEmail": "Revisa tu correo para confirmar tu cuenta. Si esa dirección puede registrarse, recibirás un enlace de confirmación en breve.",
+    "signingIn": "Iniciando sesión...",
     "redirecting": "Redirigiendo...",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
     "noAccount": "¿No tienes una cuenta?",
