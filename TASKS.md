@@ -6,7 +6,7 @@
 >
 > **Two-level model** — this file carries the **full durable roadmap** (all phases 0–7). The in-session `TaskList` tool only carries **actionable-this-session** items (the sub-tasks of the current branch). Loading the full roadmap into the tool drowns current work.
 
-_Last updated: 2026-04-13 (mid-session — Branch 5 Part 2 implementation complete, re-review APPROVE_WITH_CHANGES 0.87, all [minor] findings addressed, ready to push + PR)_
+_Last updated: 2026-04-13 (end-of-session — PRs #23 + #24 both shipped, Phase 1 now 6/9; next up Branch 6 `fix/hardcoded-korean-leaks`)_
 
 ---
 
@@ -26,23 +26,23 @@ _Last updated: 2026-04-13 (mid-session — Branch 5 Part 2 implementation comple
 
 **Phase 1 — UX bugs + onboarding + streak**.
 
-**Active branch**: none. Branch 5 Part 1 (`db/title-fight-flag`) shipped via PR #23 at `84857f1` on develop. Next up is **Part 2 (`feature/title-fight-badge`)** — UI + DevPanel actions on top of the freshly-landed `is_title_fight` / `is_main_card` columns. PROD migration still pending (Sean to run via Management API, same flow as `202604120001_ring_name_case_insensitive_unique.sql`).
+**Active branch**: none. Branch 5 fully shipped — Part 1 (`db/title-fight-flag`, PR #23, `84857f1`) + Part 2 (`feature/title-fight-badge`, PR #24, `b2a9dea`). Next up is **Branch 6 (`fix/hardcoded-korean-leaks`)**. PROD migration for `202604130001` still pending (Sean to run via Management API, same flow as `202604120001_ring_name_case_insensitive_unique.sql`) — doesn't block Branch 6 UI work.
 
 ### Next session resume brief
 
-1. **Start on develop**: `git checkout develop && git pull`. Verify `84857f1 db: add is_title_fight + is_main_card flags` is the tip or close to it.
+1. **Start on develop**: `git checkout develop && git pull`. Verify `b2a9dea feat(ui): title_fight + main_card chips...` is the tip or close to it.
 
-2. **PROD migration pre-check**: if not yet applied, run the migration against PROD via Management API. Verify post-run: both columns exist on `public.fights`, `NOT NULL`, `DEFAULT false`, 0 NULL rows, `check:schema-drift` clean.
+2. **PROD migration still pending**: apply `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` to PROD via Management API if Sean hasn't already. Same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently. After: `check:schema-drift` clean on both DEV and PROD. Doesn't block Branch 6 UI work.
 
-3. **Open a new branch `feature/title-fight-badge`** from develop. Scope:
-   - Champion badge (lucide icon + gold border) on fight history cards when `fights.is_title_fight=true`.
-   - Main-card visual treatment when `fights.is_main_card=true` — still TBD what shape (gold accent? label? corner flag?). Design-call in Part 2 kickoff.
-   - DevPanel v2 actions: toggle `is_title_fight` and `is_main_card` per fight. Admin-only, dev env guards already in place.
-   - **Wire up or replace the dead `is_title_fight?: boolean` prop at `src/components/FightCard.tsx:50`**. Options: (a) pass the flag from the DB row through the component tree, (b) read it directly from the `fights` row in the parent, (c) delete the prop entirely if a sibling already reads it. Investigate first, pick whichever is smallest.
+3. **Branch 6 (`fix/hardcoded-korean-leaks`)** — this is the natural next target because PR #24 explicitly deferred the `MAIN EVENT` hardcoded-English chip to Branch 6's sweep, which now has a stronger motivator (Korean users see 2 i18n'd chips + 1 English chip side-by-side). Scope:
+   - `grep -rn "[ㄱ-ㅎ가-힣]" src/components src/app --include="*.tsx" --include="*.ts"` — every match not in a comment or a `ko.json` key is a leak.
+   - Also grep for hardcoded English caps-lock labels in tsx files (`"MAIN EVENT"`, `"VS"`, `"LIVE"`, etc.) that should be i18n keys.
+   - Fix each by moving the string to `src/messages/*.json` and `t(key)`.
+   - Bug class, not i18n improvement. Comprehensive tone review stays at Phase 5.
 
-4. **Review gate**: blackpick profile (feature + multi-file UI). Use `second-opinion-reviewer` subagent. No external review needed unless scope creeps into auth/RLS/money surfaces (it should not).
+4. **Review gate**: blackpick profile (default). Use `second-opinion-reviewer` subagent.
 
-5. **After Part 2 merges**, Phase 1 moves to 6/9 branches shipped. Next is Branch 6 (`fix/hardcoded-korean-leaks`), then Branch 7 (`feature/onboarding-first-time-flow`), Branch 8 (`feature/streak-ux`), Branch 9 (`fix/verify-all-predicted-toast`).
+5. **Remaining Phase 1 branches after Branch 6**: Branch 7 (`feature/onboarding-first-time-flow`), Branch 8 (`feature/streak-ux`), Branch 9 (`fix/verify-all-predicted-toast`). Target Phase 1 completion → Phase 2 (feedback widget + ticket system).
 
 ### Branch 5 Part 1 review trail (for future reference)
 
@@ -64,13 +64,13 @@ The migration went through an unusual 3-round review path. Documenting because t
 5. **No mutual-exclusion assumption with `is_cup_match`** — grep of `is_cup_match` usages (`src/app/[locale]/(main)/page.tsx:171`, `my-record/page.tsx:124`) shows only single-flag filters, no mutual-exclusion invariant.
 6. **RLS policies unaffected** — `fights` table has one policy (`CREATE POLICY fights_select FOR SELECT USING (true)` at `001_schema.sql:149`). New columns surface identically to existing flags. No security regression.
 
-**Branches already shipped in Phase 1**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4), #22 (hotfix), **#23 (branch 5 part 1, this session)**. Docs switch committed on develop as `0e16e33` (2026-04-13 review-path switch to subagent). 3-tier review rubric at `5658b8f`.
+**Branches already shipped in Phase 1**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4), #22 (hotfix), **#23 (branch 5 part 1)**, **#24 (branch 5 part 2, this session)**. Docs switch committed on develop as `0e16e33` (2026-04-13 review-path switch to subagent). 3-tier review rubric at `5658b8f`.
 
 **Review gate**: primary path is the user-level `second-opinion-reviewer` subagent — "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. 3-tier rubric: `Docs/review-tier-rubric.md`. Historical fallback only (deprioritized): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. Cumulative OpenAI spend reached **~$8.93** before the 2026-04-13 switch — external review is now reserved for high-stakes calls (auth, RLS, money/score migrations, share-page enumeration) where a cross-family opinion is worth the spend. The subagent SUPPLEMENTS external review, not REPLACES it — every subagent output includes a mandatory `## What this review cannot catch` section declaring its shared-training blind spot.
 
 **Wiki log location**: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/` — **outside** the repo. PR #20 (`chore/move-wiki-out-of-repo`, merged as `9bb0da2`) moved the pre-2026-04-13 in-repo session logs to the external path and added a `.gitignore` block on `Wiki_Sean/`. The memory entry `feedback_wiki_log_location` documents the rule.
 
-**Phase 0 done. Phase 1 in progress (5/9 branches shipped after PR #23).** Do not start Phase 2 until every Phase 1 item lands.
+**Phase 0 done. Phase 1 in progress (6/9 branches shipped after PRs #23 + #24).** Do not start Phase 2 until every Phase 1 item lands.
 
 ---
 
@@ -78,6 +78,7 @@ The migration went through an unusual 3-round review path. Documenting because t
 
 | PR | Branch | Commit | Phase | What shipped |
 |---|---|---|---|---|
+| #24 | `feature/title-fight-badge` | `b2a9dea` (squashed) | **Phase 1 branch 5 part 2 ✅** | UI + DevPanel follow-up to PR #23. FightCard header gets two new RetroLabel chips — `TITLE FIGHT` (accent tone + Crown lucide icon, rendered when `fight.is_title_fight`) and `MAIN CARD` (neutral tone, rendered when `fight.is_main_card && !isMainEvent` to avoid double-chipping the headline). Both i18n'd via new `event.titleFight` + `event.mainCard` keys × 7 locales. Fighter career page (`fighters/[id]/page.tsx`) gets a Crown icon inline with the opponent name + subtle `bg-[var(--bp-accent-dim)]` row tint on title-fight rows so championship bouts stand out in the career retrospective. `is_main_card` intentionally NOT rendered on fighter pages — scope decision to keep main-card distinction on live event context only. 3 FightCard query sites (home, event detail, single-fight detail) and 1 fighter query site updated to select the new columns. DevPanel v2 gets a new "Content Flags" section with 2 dev-only action rows (`Preview title + main card` / `Clear title + main card`) backed by new server actions `set-content-flags-preview` + `clear-content-flags` in `api/dev/seed/route.ts`. Preview logic: reset all flags on latest event, then mark fight[0] (earliest start_time + deterministic id tiebreak) as both flags, mark first half of remaining fights as `is_main_card=true`, leave the rest as undercard. Clear: reset everything. Every supabase update destructures `{ error }` and forwards on failure (round-1 [minor] fix). Storybook MockFightCard extended with `isTitleFight` + `isMainCard` props + 3 new story variants (TitleFightMainEvent, MainCardTitleFight, MainCardOnly). Single subagent review round: APPROVE_WITH_CHANGES 0.87 — 1 [major] on unstaged `remove_background/` deletion risk (avoided by specific-file staging; Sean's intentional orthogonal cleanup) + 4 [minor] all addressed inline (redundant truncate class, supabase error hygiene, deterministic sort tiebreak, Storybook coverage gap). Pre-existing hardcoded-English `MAIN EVENT` chip left alone — Branch 6 scope. Local quality gates: tsc clean, test:fast 125/125, check:i18n 350×7, eslint 0 errors. |
 | #23 | `db/title-fight-flag` | `84857f1` (squashed) | **Phase 1 branch 5 part 1 ✅** | Migration adds `is_title_fight BOOLEAN NOT NULL DEFAULT false` and `is_main_card BOOLEAN NOT NULL DEFAULT false` to `public.fights`. Per-column 4-step convergent pattern (ADD with DEFAULT → SET DEFAULT → UPDATE NULL rows → SET NOT NULL) wrapped in `BEGIN;…COMMIT;`. Post-convergence DO \$\$ assertion iterates both columns checking exists / `data_type=boolean` / `is_nullable=NO` / `column_default ILIKE '%false%'` / 0 NULL rows — pattern lifted from `202604120001_ring_name_case_insensitive_unique.sql`. `src/types/database.ts` gets `Row.is_title_fight: boolean` / `Row.is_main_card: boolean` + optional Insert/Update shapes (matches `is_cup_match` precedent). TypeScript types carried over from the pre-rebase wip commit. **Review trail**: 3 rounds with subagent — round 1 flagged header prose (APPROVE_WITH_CHANGES 0.82), round 2 PUSHED BACK on my first fix arguing the round-1 concern was itself a false positive on Supabase CLI behavior, resolution was to drop the contested external-tool claim entirely and keep only always-true PG-engine-level atomicity prose plus a tool-agnostic "do NOT add statements after COMMIT" warning. Round 3 APPROVE 0.88 with one [minor] nit (`ILIKE` not `LIKE`) applied inline. Lesson documented in Current focus: when two subagent reviews contradict each other on external-tool behavior, drop the claim. DEV already migrated in prior session (384 rows × 0 NULLs). PROD still pending Sean's Management API run. Part 2 (`feature/title-fight-badge`) next — UI badge, DevPanel toggles, wire up dead `is_title_fight?: boolean` prop in `FightCard.tsx:50`. |
 | #22 | `fix/prediction-pick-label-consistency` | `f8f9016` (squashed) | **Phase 1 hotfix ✅** | Sean flagged mid-session: the FightCard post-lock "Your Pick" chip from PR #17 differed from the FightCardPicker voting-state chip (gold `tone="accent"` vs neutral green-check, and top-left vs top-right). Two fixes: (1) FightCard now uses `tone="neutral"` + green check icon (`text-[#4ade80]`) + `right-2 top-2` position — matches the picker exactly so upcoming → locked transition looks seamless. (2) FightCardPicker's hardcoded English `"My Pick"` replaced with `t("prediction.yourPick")`, closing a hardcoded-English leak bug. Scope-kept: card border differences (`var(--bp-accent)/40` vs `rgba(229,169,68,0.3)`) left for a later retro-tokens pass. gpt-review.sh lite CLEAN round 1, cost $0.0007. |
 | #21 | `feature/fighter-page-sort` | `08582ef` | **Phase 1 branch 4 ✅** | Adds `winrate_desc` (3-decided-fight minimum gate) + `weightclass_asc` (canonical weight ladder) sort options and country filter to `/fighters`, with URL state for shareability + localStorage persist. New `src/lib/fighter-grid-state.ts` pure helpers (parseStateFromParams with explicit status metadata, isEqualState, serializeStateToQuery, buildFightersHref, readPersistedState, writePersistedState) + 39 unit tests. Architecture: URL as committed source of truth, `useTransition`-wrapped navigation, `optimisticState` anchored to `searchParamsString` (auto-invalidates on URL moves — no render-time setState, no ref-read-in-render), `latestIntentRef` synchronous merge buffer resynced via `useLayoutEffect`, `pendingPersistRef` match-on-settle persistence (clears on supersede), `canonicalizedTargetQueryRef` deterministic shared-link handling, effect order persist → canonicalize → restore. Unrelated query params (utm, feature flags) preserved via baseSearch in buildFightersHref. Duplicated params (`?sort=a&sort=b`) detected via `getAll` + canonicalized. 7 new i18n keys × 7 locales. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT. 125/125 tests. Known trade-off: brief flash of defaults on first mount before localStorage restore commits (~50ms) — fix requires SSR cookie read / useSyncExternalStore, out of scope. Cost ~$0.50 (3 default + 8 lite per Sean's cost rule). |
@@ -161,20 +162,9 @@ FightCard post-lock chip aligned with FightCardPicker voting-state chip (same ne
 
 Migration adds two admin-managed boolean flags (`is_title_fight`, `is_main_card`) to `public.fights`, both `BOOLEAN NOT NULL DEFAULT false`. See Recently shipped row for the full 3-round review trail + lesson. DEV migrated; **PROD still pending Sean's Management API run**.
 
-### Branch 5 Part 2: `feature/title-fight-badge` ← **in PR (awaiting merge)**
+### Branch 5 Part 2: `feature/title-fight-badge` ✅ shipped in PR #24 (commit `b2a9dea`)
 
-| # | Subtask | Status |
-|---|---|---|
-| 2-1 | Wire up dead `is_title_fight?: boolean` prop in `FightCard.tsx:50` + add `is_main_card?: boolean` sibling. Render new RetroLabel chips in the header row: `TITLE FIGHT` (accent tone + Crown icon) and `MAIN CARD` (neutral tone, suppressed when `isMainEvent` is already true). | ✅ done |
-| 2-2 | Add `is_title_fight, is_main_card` to Supabase select in 3 FightCard call sites: home (`page.tsx`), event detail (`events/[id]/page.tsx`), single-fight detail (`fights/[fightId]/page.tsx`). | ✅ done |
-| 2-3 | Fighter career page (`fighters/[id]/page.tsx`): add flags to select + fightHistory mapper + Crown icon inline with opponent name + `bg-[var(--bp-accent-dim)]` row tint on title-fight rows. `is_main_card` intentionally NOT rendered here — scope decision to keep main-card distinction on live event context only. | ✅ done |
-| 2-4 | DevPanel v2: new "Content Flags" section with "Preview title + main card" and "Clear title + main card" action rows. Preview marks fight[0] (earliest start_time + id tiebreak) as both flags + first half of remaining as main_card; clear resets everything. Dev-only (`NODE_ENV` + 403 server guard already in place). | ✅ done |
-| 2-5 | Server actions `set-content-flags-preview` + `clear-content-flags` in `api/dev/seed/route.ts`. Full Supabase error destructuring on every mutation. Deterministic ordering via secondary `.order("id")` tiebreak. Known limit documented: 3 sequential updates not transactional via supabase-js, mid-sequence failure self-heals on next preview click. | ✅ done |
-| 2-6 | 2 new i18n keys (`event.titleFight`, `event.mainCard`) × 7 locales. `check:i18n` 350/350 × 7 aligned. | ✅ done |
-| 2-7 | Storybook `MockFightCard` updated with `isTitleFight` + `isMainCard` props + 3 new stories (`TitleFightMainEvent`, `MainCardTitleFight`, `MainCardOnly`) so visual regression on the chips isn't a gap. | ✅ done |
-| 2-8 | Local quality gates: `npx tsc --noEmit` clean · `npm run test:fast` 125/125 · `check:i18n` 350/350 × 7 · `npx eslint` 0 errors (2 pre-existing unrelated warnings in `fights/[fightId]/page.tsx`). | ✅ done |
-| 2-9 | Subagent review: round 1 APPROVE_WITH_CHANGES 0.87 — 1 [major] on `remove_background/` unstaged deletion (avoided by specific-file staging), 4 [minor] findings all addressed inline (redundant `truncate`, Supabase error checks, deterministic tiebreak, Storybook gap). MAIN EVENT hardcoded-English [tracking note] deferred to Branch 6 (`fix/hardcoded-korean-leaks`). | ✅ done |
-| 2-10 | Open PR against develop, CI green, squash-merge. | 🟡 pending |
+UI + DevPanel surfacing of the PR #23 schema flags. See Recently shipped row for full detail + review trail.
 
 ### Branch 6: `fix/hardcoded-korean-leaks` (blackpick review)
 - [ ] `grep -rn "[ㄱ-ㅎ가-힣]" src/components src/app --include="*.tsx" --include="*.ts"` — every match not in a comment or a `ko.json` key is a leak.

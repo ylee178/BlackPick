@@ -1,9 +1,11 @@
-# BlackPick — Current State (2026-04-13, Phase 1 progress: Branch 5 Part 1 shipped)
+# BlackPick — Current State (2026-04-13, Phase 1 progress: Branch 5 fully shipped)
 
 ## Branch
-`develop` (Phase 1 is 5/9 branches shipped after PR #23)
+`develop` (Phase 1 is 6/9 branches shipped after PRs #23 + #24)
 
 ## Latest Commits (develop tip, newest first)
+- `b2a9dea` feat(ui): title_fight + main_card chips on fight cards + fighter history + DevPanel preview (#24) — **this session**
+- `3cf7600` chore(docs): session wrap 2026-04-13 — PR #23 Branch 5 Part 1 shipped
 - `84857f1` db: add is_title_fight + is_main_card flags to public.fights (#23) — **this session**
 - `5658b8f` docs: add 3-tier review tier rubric (research-grounded)
 - `56deb48` chore(docs): TASKS.md — Branch 5 resume brief for post-/clear session
@@ -18,8 +20,8 @@
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#23) is on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches once Branches 6–9 are also in.
-- **Pending PROD migration**: `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` (from PR #23). Sean runs via Management API — same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently since DEV is already converged.
+- **Latest production deploy**: PR #12 (`release: prediction flow UX + share layer + hooks migration + a11y`) bundled PRs #3–#11 from the 2026-04-12 session. Phase 1 work (PRs #17–#24) is on `develop` but **not yet released to prod**. Next prod release will bundle all Phase 1 branches once Branches 6–9 are also in.
+- **Pending PROD migration**: `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` (from PR #23). Sean runs via Management API — same flow as `202604120001_ring_name_case_insensitive_unique.sql`. Expected to apply idempotently since DEV is already converged. The PR #24 UI defensively treats both flags as optional booleans so the title-fight / main-card chips just don't render on PROD fights until the migration lands there.
 
 ---
 
