@@ -1,13 +1,12 @@
-# BlackPick — Current State (2026-04-13, Phase 1 at 9/9 after Branch 8 `feature/streak-ux`; only Branch 9 verification-only task remaining)
+# BlackPick — Current State (2026-04-14, Phase 1 at 9/9 after PR #28 squash-merged; only Branch 9 verification-only task remaining)
 
 ## Branch
-`feature/streak-ux` (Branch 8 ready to merge into `develop`; after merge, Phase 1 is 9/9 with only Branch 9 `fix/verify-all-predicted-toast` remaining — a verification-only task, no new code)
+`develop` (PR #28 `feature/streak-ux` squash-merged as `8ad4ac7`; branch deleted local + remote). Phase 1 is 9/9 with only Branch 9 `fix/verify-all-predicted-toast` remaining — a verification-only task Sean runs via DevPanel, no new code.
 
 ## Latest Commits
-**`feature/streak-ux` tip** (newest first):
-- pending commit — Branch 8 `feat(streak): profile streak tiles + PR toast + share CTA wire-up` — **this session**
-
 **`develop` tip** (newest first):
+- `8ad4ac7` feat(streak): profile tiles + PR toast + share CTA wire-up (#28) — **this session 2026-04-14**, Branch 8 + post-ship iterations bundled: sticky streak slot, DevPanel v3 sandbox, HomeShareBar, FlipTimer burned-out state, ShimmerButton gold ray, winner-only save + scoring v3 migration, 마이픽 perspective fix, TASKS.md Phase 5 criteria A–F
+- `eb79fcb` chore(docs): log logo-png cherry-pick to main (commit 20ffbd6)
 - `69a53b6` chore(docs): session wrap 2026-04-13 — PR #27 Branch 7 shipped, Phase 1 → 8/9
 - `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **prior session** (same calendar day)
 - `af5cfec` chore: 2026-04-13 autonomous follow-ups — PROD migration + Facebook OAuth docs + smoke checks
@@ -36,14 +35,84 @@
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: `20ffbd6` on main (2026-04-13, this session) — single-file cherry-pick of `public/email/bp-logo-email.png` from develop. Prior baseline was PR #12 merge (`5b51afc`) which bundled PRs #3–#11. Phase 1 work (PRs #17–#24 + #26 + #27) + Phase 3 partial (PR #25 templates + icon routes) are on `develop` but **not yet released to prod as a bundle**. Next full prod release will bundle all Phase 1 branches + this session's email templates once Branches 8/9 are also in. The logo-PNG-only cherry-pick is a surgical hotfix to unblock Sean's email-template verification path — it does NOT count as the Phase 1 release.
-- **PROD migration `202604130001` — APPLIED 2026-04-13** (end of session via `supabase db query --linked --file`). Both `is_title_fight` and `is_main_card` columns now exist on PROD `public.fights` (384 rows × 0 NULLs, BOOLEAN NOT NULL DEFAULT false). `check:schema-drift` clean on both DEV and PROD (14 cols each). The PR #24 title-fight / main-card chips now render on PROD fights.
-- **PROD email assets — ALL LIVE as of 2026-04-13** (this session, commit `20ffbd6`): `https://blackpick.io/email/bp-logo-email.png` → 200, `/email/icon-shield` → 200, `/email/icon-key` → 200. The icon routes were already on main from an earlier release; the logo PNG was cherry-picked standalone because PR #25 (which added it on develop) is awaiting the Phase 1 release bundle.
-- **Supabase email templates — SAVED in dashboard but NOT YET verified via test email**: Sean saved the branded HTML for `confirm_signup` + `reset_password` into the Supabase dashboard during this session. Dashboard Preview tab shows broken images because Supabase Preview does NOT substitute `{{ .SiteURL }}` template variables (expected, not a bug). **Next step — Sean runs Send Test Email** from the Supabase dashboard now that all PROD assets are live. Validates the end-to-end rendering in Gmail / iOS Mail / Outlook before the Phase 1 release. Once a test email renders cleanly, the PR #25 follow-up is fully closed.
+- **Latest production deploy**: `20ffbd6` on main (2026-04-13) — single-file cherry-pick of `public/email/bp-logo-email.png`. Prior baseline was PR #12 merge (`5b51afc`) which bundled PRs #3–#11. All subsequent Phase 1 work (PRs #17–#24 + #26 + #27 + **#28**) + Phase 3 partial (PR #25 templates + icon routes) are on `develop` but **not yet released to prod as a bundle**. Next full prod release (Phase 6 gate) bundles everything.
+- **Scoring v3 — DEV applied 2026-04-14, PROD pending**: `supabase/migrations/202604140001_scoring_v3_winner_only_2pts.sql` applied on DEV (`BlackPick_Dev`, `lqyzivuxznybmlnlexmq`) via `supabase db query --linked --file` after temporarily re-linking. Winner-only branch returns **2** (was 4); other branches (8/16/20/-2) unchanged. Post-convergence assertion passed. CLI link restored to PROD (`nxjwthpydynoecrvggih`). PROD still on v2 — runs alongside the Phase 1 release bundle at Phase 6.
+- **PROD migration `202604130001` — APPLIED 2026-04-13**. Both `is_title_fight` and `is_main_card` columns exist on PROD (384 rows × 0 NULLs). `check:schema-drift` clean on both DEV and PROD (14 cols each).
+- **PROD email assets — ALL LIVE**: `https://blackpick.io/email/bp-logo-email.png` → 200, `/email/icon-shield` → 200, `/email/icon-key` → 200.
+- **Supabase email templates — SAVED in dashboard, test email pending**: branded HTML saved for `confirm_signup` + `reset_password`. **Next step — Sean runs Send Test Email** from the Supabase dashboard and validates rendering in Gmail / iOS Mail / Outlook.
 
 ---
 
-## Completed (this session — 2026-04-13, Branch 8 `feature/streak-ux`)
+## Completed (this session — 2026-04-14, Branch 8 iterations + squash merge)
+
+PR #28 shipped the original Branch 8 (commit `347c19f`) **plus** an extensive set of post-ship iterations driven by Sean's manual DevPanel testing (commit `ebd1d1d`, squash-merged as `8ad4ac7`).
+
+### UX shell / home page
+- **StickyEventHeader**: streak slot in right cell when `tl` expired; `currentStreak` prop threaded from home server component
+- **FlipTimer burned-out state**: when `tl.total <= 0`, renders "Event in Progress" eyebrow with `gold-dim-pulse` class, dimmed `lcd-dim` wrapper on digits, red `text-[var(--bp-danger)]` Lock icon, `countdown.locked` subtitle. Pre-merge state (upcoming countdown) unchanged.
+- **Watch Live golden ray border**: `ShimmerButton`-pattern conic-gradient 360° ray on the Watch Live button when an event is live. `.shimmer-wrap` + `::before` (conic spark) + `::after` (opaque dark backdrop at `inset:2px`) + `shimmer-spin 6s linear infinite` keyframe. Five iteration rounds with Sean (conic rotate → BorderBeam → ShimmerButton → smooth linear → wide-arc) before landing on continuous full-circle brightness wave.
+- **HomeShareBar**: inline share button in the "Who's Taking This?" h2 row + portal-mounted sticky scroll promote card (glass style, no border — `bg-[rgba(12,12,12,0.55)] backdrop-blur-2xl`). IntersectionObserver with `-80px` rootMargin. Disabled states: `disabled_no_ring_name` → Link, `disabled_no_picks` → disabled button.
+- **AllPredictedToast mounted on home page** — was previously orphaned on `/events/[id]` only. Home page now computes `upcomingPredictableFights` + mounts the toast with count interpolation via `prediction.allPredictedToast` ({count} handler at `i18n-provider.tsx:26-32`).
+- **FightCard**: fighter names → `<Link href="/fighters/[id]">` with gold hover state. `winnerA`/`winnerB` now gated on `isCompleted` (reviewer blocker — preserves `winner_id` across state flips without leaking winner chip back into upcoming state).
+
+### FightCardPicker — winner-only save + scoring v3
+- `canSave = !!winnerId` (was `winner && method && round`) — Sean: "승자만 골라도 세이브할수잇게하자. 리스크를 미니마이즈 하고 싶을수도 잇으니"
+- Points preview shows the full ladder: winner +2, method +6 (8 total), round +8 (16 total), R4 +12 (20 total)
+- **Scoring v3 migration** (`202604140001_scoring_v3_winner_only_2pts.sql`): `calculate_prediction_score` winner-only branch returns 2 (was 4). Other branches (8/16/20/-2) unchanged. Post-convergence DO-block assertion fails the migration if the function returns anything other than 2. **APPLIED on DEV this session** via `supabase db query --linked --file` after temporarily re-linking to `BlackPick_Dev`. PROD still on v2 — will be applied alongside the Phase 1 release bundle at Phase 6.
+
+### DevPanel v3 — sandbox mode + viewport containment
+- Rewrite with Korean-only labels (file-level JSDoc exempts from i18n sweep)
+- **Event picker dropdown** with `handleEventPick` auto-capturing a snapshot (round-trip restore on exit)
+- **4 scenario presets** (firstVisit / picksComplete / live / completed) with corrected ordering (completed: `set-event-status:completed` BEFORE `seed-me` — round 1 reviewer blocker fold)
+- **Timer presets** (30s / 5min / 1h / 3h / 1d) via new `set-timer` action
+- **Self-demonstrating replay actions**: replay onboarding, replay streak toast, replay all-predicted toast — each wipes the relevant localStorage namespace + navigates the user to the triggering state
+- **Sandbox round-trip**: `captureEventSnapshot` / `restoreEventSnapshot` server actions; DevPanel `handleResetToSnapshot` + `handleResnapshot`
+- **Viewport containment**: `fixed bottom-20 right-4 md:bottom-5` + `maxHeight: min(calc(100dvh - 180px), 720px)` with `flex-col` scrollable body (Sean: "데브패널이 화면안에 컨테인되도록 스크롤러블하게해 지금 브라우저 밖으로 나가버려")
+- New seed-route actions: `list-events`, `capture-snapshot`, `restore-snapshot`, `set-timer`. All mutation actions accept an explicit `eventId` in the body.
+
+### Cache + event targeting fixes
+- **`layout.tsx` + `page.tsx` → `export const dynamic = "force-dynamic"`**: was ISR (`revalidate = 60`) + cached layout publicUser — DevPanel state flips weren't propagating to the home page. Also fixed `RingNameOnboarding` cache-stale repro.
+- **Layout `publicUser` select extended**: `current_streak, best_streak` now fetched alongside ring_name/score/wins/losses for StreakPrToast + sticky header.
+- **Event targeting divergence fix**: DevPanel's "latest event by date" query diverged from home page's "earliest active + latest completed fallback" rule, producing the "엑소더스 끝난 경기만 나오네" bug. Fix: new `selectFeaturedEventId<T>(events)` pure helper matches the home page's rule. Applied to `resolveTargetEvent` in `setEventStatus` / `getUserState` / `seedMyData` (all 3 sites).
+- **Resettable fight filter**: `selectResettableFightIds` pure helper excludes `cancelled` / `no_contest` so `resetFights` no longer stomps admin-set cancellations.
+- **`?dev_event={id}` override** on home page `searchParams` lets DevPanel target any event by ID.
+
+### Pure helpers + test coverage → 166/166
+- **New file** `src/lib/dev-state-helpers.ts`: 7 pure functions (`selectResettableFightIds`, `selectStartTimePushIds`, `computeFutureEventDate`, `computeFutureStartTime`, `computePastStartTime`, `computeTodayEventDate`, `computeStartTimeFromMinutes`), `TIMER_PRESETS`, `selectFeaturedEventId`, `EventSnapshot` + `snapshotLocalStorageKey` + `isValidSnapshot`, `DEV_LOCK_NAMESPACES` + `filterKeysByPrefixes`.
+- **New file** `src/lib/dev-state-helpers.test.ts`: 41 unit tests covering state transitions, snapshot round-trip, event-selection rule, namespace-filter edge cases, timer presets.
+- **Total: 125 → 166 tests** (vitest unit + component). Sean called this out mid-session ("테스트 커버리지 신경안써?") — honest audit + test extraction pattern.
+
+### UX writing review across 7 locales
+- **`prediction.yourPick` — 1인칭 perspective restored** across all locales: `My Pick` / `마이픽` / `マイピック` / `我的选择` / `Mi predicción` / `Meu palpite` / `Миний сонголт`. Korean specifically went "내 픽" → "마이픽" on Sean's 2026-04-14 feedback ("내 픽은 좀 어색. 마이픽으로").
+- **`prediction.allPredictedToast`**: count interpolation ({count}) + polite encouragement tone. Korean uses 존댓말 "~해보세요".
+- **`share.cta*` + `share.stickyPrompt`**: em-dash purge, emoji purge, perspective split (1인칭 chip vs 2인칭 CTA), polite verb strength.
+- **`countdown.eventInProgress`**: new key for burned-out FlipTimer.
+- **`fighter.shareText` + `fighter.statFights` / `statStreak` / `statWinRate`**: new keys for fighter detail page hero ShareMenu.
+- **i18n alignment**: 358 → **372 keys × 7 locales**.
+
+### TASKS.md Phase 5 criteria A–F added
+Sean 2026-04-14 additional criteria for the "Phase 5 i18n comprehensive tone review" branch:
+- (A) Perspective consistency (1인칭 소유 vs 2인칭 권유)
+- (B) Politeness register per culture (ko 해보세요, ja ですます, zh 你+吧, es LatAm tú, pt-BR você, mn та)
+- (C) Em-dash purge
+- (D) Emoji purge in i18n strings (per DESIGN.md)
+- (E) Count interpolation presence (via existing {var} handler)
+- (F) CTA verb strength (active + concrete)
+- Deliverable: 7-locale spreadsheet with `POV / register / em-dash / emoji / proposed rewrite` columns
+
+### Gates passed
+- `check:i18n` **372 × 7 aligned**
+- `test:fast` **166/166**
+- `tsc --noEmit` clean
+- `build` clean
+- CI (GitHub Actions) all green on PR #28
+
+### Review trail
+2 file-based dialogue rounds against `reviews/BlackPick/...` per Branch 8's proven spec-phase → impl-phase pattern. All blockers folded before merge. See the 2026-04-13 section below for the original Branch 8 spec/impl review trail and the Branch 6 3-round systemic-defect sweep (reference pattern).
+
+---
+
+## Completed (prior session — 2026-04-13, Branch 8 `feature/streak-ux`)
 
 ### Branch 8 — `feature/streak-ux` (Phase 1 Branch 8, 8/9 → 9/9)
 
