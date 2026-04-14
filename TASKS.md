@@ -227,62 +227,76 @@ Profile streak tiles (muted + gold Flame), layout-mounted `StreakPrToast` with `
 
 ---
 
-## Phase 2 — Feedback widget + ticket system + admin consolidation
+## Phase 2 — Email infrastructure + feedback relay + Sentry setup + admin consolidation
 
-_Goal: replace the DevPanel position in prod with a user-facing feedback button, build the ticket table that feedback + Sentry + (future) analytics anomalies all flow into, and consolidate the two admin surfaces into one._
+_Goal: ship a zero-cost, PIPA-compliant email stack; route user feedback through Gmail (not a custom DB ticket system); set up Sentry with native email alerts; consolidate admin surfaces._
 
-### Branch: `db/feedback-tickets` (max review)
-- [ ] Migration creates `feedback_tickets`:
-  - `id uuid pk default gen_random_uuid()`
-  - `user_id uuid nullable references users(id)` (nullable for anonymous)
-  - `source enum('user_feedback', 'sentry_error', 'claude_autofix_failed', 'analytics_anomaly')` — **all four reserved now** per GPT review, even though anomaly detection lands in Phase 7
-  - `status enum('open', 'triaged', 'in_progress', 'resolved', 'wontfix')`
-  - `priority enum('p0', 'p1', 'p2', 'p3')`
-  - `title text not null`
-  - `body text not null`
-  - `metadata jsonb not null default '{}'` (Sentry event id, page URL, UA, screenshot URL, metric name+value, etc.)
-  - `github_issue_url text nullable`
-  - `cluster_key text nullable` (Phase 7 feedback clustering reserved slot)
-  - `created_at timestamptz not null default now()`
-  - `updated_at timestamptz not null default now()` — trigger-updated
-  - `resolved_at timestamptz nullable`
-- [ ] RLS: anon/users can insert only with `source = 'user_feedback'`; only admin can insert other sources; only admin can select/update/delete.
-- [ ] Index: `(status, priority, created_at desc)` for admin dashboard queries.
+**2026-04-14 scope correction**: the original Phase 2 plan (5 branches, DB-based `feedback_tickets` table + custom admin dashboard + Sentry webhook bridge) was replaced after Sean's pushback during scope re-evaluation. Gmail + Sentry native email alerts achieve the same outcome with 200+ fewer lines of code, stronger PIPA defensibility (Gmail DPA > custom RLS), and zero DB migration risk. See `Docs/specs/2026-04-14-feedback-tickets.md` for the deferred DB spec preserved for future revival if BlackPick hits the scale where Gmail-based triage breaks down (~500+ active users / ~50+ tickets/week).
 
-### Branch: `feature/feedback-widget` (blackpick review)
-- [ ] New `FeedbackButton` component in the DevPanel bottom-right slot, but only when `NODE_ENV === 'production'`. DevPanel and FeedbackButton are mutually exclusive by env.
-- [ ] Modal UI: category dropdown (Bug / UX / Question / Other), title + body, optional screenshot paste via `navigator.clipboard`.
-- [ ] `POST /api/feedback` — inserts to `feedback_tickets` with `source='user_feedback'`, then fire-and-forget mirrors to GH Issues via `gh api` using a scoped PAT (`FEEDBACK_GH_PAT` in Vercel env).
-- [ ] GH issue body includes a link back to `/admin/tickets/{id}`.
-- [ ] If GH mirror fails, Supabase insert still wins — UI returns 200 either way.
+**Current Phase 2 = 4 branches, all blackpick profile (max review eliminated)**. Monthly cost: **$0**.
 
-### Branch: `feature/sentry-webhook-ingest` (max review)
-- [ ] `POST /api/feedback/sentry-webhook` — accepts Sentry's issue.created webhook, verifies HMAC via `SENTRY_WEBHOOK_SECRET`, normalizes into `feedback_tickets` with `source='sentry_error'`.
-- [ ] Auto-priority: `level=fatal → p0`, `level=error → p1`, else `p2`.
-- [ ] Dedupe by Sentry `issue.id` in `metadata`.
+### Branch: `docs/email-setup` — **SHIPPED 2026-04-14 (this session)**
+- [x] `Docs/email-setup.md` — full Cloudflare Email Routing + Resend + Gmail Send As guide. 4 addresses: `noreply@`, `support@`, `admin@`, `privacy@` (privacy@ as alias for PIPA 제30조 개인정보보호책임자 contact). Architecture diagram, step-by-step (Resend domain add → Cloudflare routing → DNS records → API key → Vercel env → Gmail Send As → optional Supabase Custom SMTP), troubleshooting, PIPA 처리방침 language, $0 cost projection.
+- [ ] **Sean runs the guide async** (~30 min manual: Cloudflare + Resend + Gmail config). **Blocks `feature/feedback-email-relay`** — that branch cannot ship until Resend domain is verified and Vercel env vars are set.
 
-### Branch: `feature/admin-tickets-dashboard` (blackpick review)
-- [ ] New page `/admin/tickets` (admin-only via existing check).
-- [ ] Filterable list: status, priority, source, date range.
-- [ ] Click into ticket shows body, metadata, GH issue link, status transitions.
-- [ ] No SLA tracking, no assignment, no comment thread. Triage only.
+### Branch: `feature/feedback-email-relay` (blackpick review) — **next session**
+Blocked by: `docs/email-setup` execution (Resend domain verified, `RESEND_API_KEY` + `FEEDBACK_RECIPIENT_EMAIL` in Vercel env).
 
-### Branch: `feature/admin-surface-consolidation` (blackpick review)
+- [ ] `POST /api/feedback` route handler:
+  - **Auth-optional**: `getUser()` can return null. **Login-error users MUST be able to submit feedback** — Sean 2026-04-14 killer-point insight: "로그인 필수면 로그인 못 하는 에러 나는 유저가 피드백을 못 주자나". If feedback is gated on login, the most important bug reports are self-censored.
+  - Input validation: category from allowlist (Bug / UX / Question / Other), body 1-8000 chars, optional `contactEmail` field for anon users who want a reply
+  - Rate limit: in-memory Map keyed by `user_id` (authed) or SHA-256(IP + day-salt) (anon), 5-min TTL, max 5 submissions per window. **No persistence** — request-scope only, no PIPA implications
+  - Vercel BotID (free, edge-level) for anon spam mitigation
+  - For authed users: server reads `public.users` (ring_name, score, wins, losses, current_streak) + `auth.users.email` — enriches Slack/email payload, never returned to client
+  - Build email payload (structured HTML + plain text):
+    - Subject: `[BP Feedback] [{Category}] {ringname or 익명} — {first 40 chars of body}`
+    - From: `noreply@blackpick.io`
+    - To: `FEEDBACK_RECIPIENT_EMAIL` (probably `admin@blackpick.io`)
+    - **Reply-To: user's email** (authed user's auth.email, OR anon's provided contactEmail if given). **Critical UX trick** — Sean hits "Reply" in Gmail and it goes straight to the user; no copy-paste
+    - Body: category, ringname + stats, email, page URL, user-agent, timestamp, feedback body
+  - `resend` SDK call → 200 on success, 503 on Resend API failure (UI retries once then shows error)
+- [ ] `FeedbackButton` component — DevPanel bottom-right slot in `NODE_ENV === 'production'` (mutually exclusive with DevPanel). Always available regardless of auth state.
+- [ ] `FeedbackModal` component — retro-styled modal (`retroPanelClassName` + `retroButtonClassName`): category dropdown, body textarea (1-8000 char counter), conditional `contactEmail` field when `!authUser`, submit button with loading state + error state
+- [ ] Pure validator `src/lib/feedback-validation.ts` + `.test.ts` (~15 cases, Branch 8 pure-helper pattern — 166 → ~181 tests)
+- [ ] i18n: ~14 new keys × 7 locales (`feedback.button`, `feedback.modalTitle`, `feedback.categoryLabel`, 4 category options, `feedback.bodyLabel`, `feedback.contactEmailLabel` (optional-hint copy for anon), `feedback.submitCta`, `feedback.successToast`, `feedback.errorToast`, `feedback.rateLimitError`, `feedback.authOptionalHint`). Target: 372 → ~386 × 7.
+- [ ] Integration smoke (local dev): submit feedback → verify email lands in Sean's Gmail with correct Reply-To → reply via Gmail → confirm user receives. Both authed + anon paths.
+- [ ] Privacy policy update (`src/app/[locale]/privacy/page.tsx` or equivalent) — add PIPA 처리위탁 section listing Resend / Cloudflare / Gmail. Content pre-drafted in `Docs/email-setup.md § PIPA 처리방침`.
+
+### Branch: `feature/sentry-setup` (blackpick review) — **next session, parallel-safe with feedback relay**
+Blocked by: Sentry account + project created, `SENTRY_DSN` in Vercel env.
+
+- [ ] `npm install @sentry/nextjs` + run the init wizard (`npx @sentry/wizard@latest -i nextjs`)
+- [ ] `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts` — enable `tracesSampleRate: 0.1` (10% sampling to stay within free tier), `replaysOnErrorSampleRate: 1.0`, scrub `ring_name` + `email` + `user_id` from error context by default (beforeSend hook)
+- [ ] `instrumentation.ts` — Next.js 16 server-side instrumentation hook
+- [ ] Source map upload in CI: `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` Vercel env vars
+- [ ] Sentry dashboard config (Sean manual, ~5 min post-merge):
+  - Project → Alerts → **Issue Alerts** → new rule: "When a new issue is created" → Action: "Send email to `admin@blackpick.io`"
+  - (optional) Separate rule for `level = fatal` → email + Slack (if Sean has Slack) + optional mobile push
+  - Configure data retention + PII scrubbing in project settings
+- [ ] Smoke test: temporary `/api/_sentry-test` route that throws → verify Sentry captures the error → verify email hits `admin@blackpick.io` within 2 min → **delete the test route before merging**
+- [ ] **No custom webhook bridge, no Notion integration, no DB writes** — Sentry dashboard IS the error ticket store. Sean triages directly in Sentry UI. Sentry native email alerts replace the removed `feature/sentry-webhook-ingest` branch entirely.
+
+### Branch: `feature/admin-surface-consolidation` (blackpick review) — **independent, any session**
 - [ ] Port everything from `/[locale]/(main)/fighters/manage` into `/admin/fighters` (list, search, create/edit/delete, pixel avatar upload, country/weight/record edit).
 - [ ] Restyle all `/admin/*` pages with the retro CSS tokens; drop `gray-900` / `amber-400` Tailwind literals.
-- [ ] Unified `/admin` index with sidebar: Dashboard / Events / Fighters / Results / Tickets / Feedback.
+- [ ] Unified `/admin` index with sidebar: Dashboard / Events / Fighters / Results. **No Tickets / Feedback tab** (removed from scope — feedback lives in Gmail, errors live in Sentry dashboard).
 - [ ] Flip `AccountDropdown` admin link from `/fighters/manage` to `/admin`.
 - [ ] Delete the old `/[locale]/(main)/fighters/manage` route after parity confirmed.
 - [ ] Admin UI stays English-only — intentional, note it in the admin layout header.
 
 ---
 
-## Phase 3 — Email infra
+### Phase 2 removed branches (were in the original plan, no longer needed)
 
-_Goal: unblock every "send an email" task with zero-operating-cost stack. Docs first so Sean can execute DNS/provider setup in parallel._
+- **`db/feedback-tickets`** — DEFERRED. Spec preserved at `Docs/specs/2026-04-14-feedback-tickets.md` with DEFERRED header. Revive only if user count × feedback volume exceeds Gmail-based triage capacity (~500 users / ~50 tickets/week threshold).
+- **`feature/sentry-webhook-ingest`** — REMOVED. Sentry native email alerts replace the webhook → DB bridge entirely. Zero code for us to maintain.
+- **`feature/admin-tickets-dashboard`** — REMOVED. Gmail + Sentry dashboard replace the custom triage UI. Sean's workflow: Gmail for user feedback (labels/threads), Sentry UI for errors (native triage).
 
-### Branch: `docs/email-setup`
-- [ ] `Docs/email-setup.md`: Cloudflare Email Routing (receive, free) + Resend (send, 3000/mo free). DNS records Sean enters in Cloudflare: SPF TXT, DKIM CNAME ×3, DMARC TXT, MX ×2. Step-by-step: domain → nameservers → Email Routing (admin@/support@/noreply@) → Resend sign-up → verify → Supabase Custom SMTP switch-over → smoke test. Alternative comparison (SendGrid, Postmark, SES) — why Resend wins at this scale. Monthly cost: $0 (domain excluded).
+---
+
+## Phase 3 — Supabase email templates (HTML only)
+
+_Goal: finish the remaining 2 Supabase auth email templates. **Email infrastructure (`docs/email-setup`) was moved to Phase 2** so it could unblock `feature/feedback-email-relay`. The Cloudflare + Resend + Gmail Send As setup now lives in `Docs/email-setup.md` (committed 2026-04-14, this session)._
 
 ### Branch: `feature/supabase-email-templates` (lite review — HTML only) — ⚠️ **partially shipped out-of-phase in PR #25 (`992fb9e`, this session)**
 - [x] `Docs/email-templates/confirm-signup.html` — shipped. Dark-theme + WCAG AA + `<meta color-scheme>` + MSO bulletproof + lucide shield icon via ImageResponse route + `<h1>` + 12px min + 24h expiry note. Review trail: 2 rounds, all findings fixed.
