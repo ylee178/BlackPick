@@ -5,7 +5,9 @@
 
 ## Latest Commits
 **`develop` tip** (newest first):
-- `8ad4ac7` feat(streak): profile tiles + PR toast + share CTA wire-up (#28) — **this session 2026-04-14**, Branch 8 + post-ship iterations bundled: sticky streak slot, DevPanel v3 sandbox, HomeShareBar, FlipTimer burned-out state, ShimmerButton gold ray, winner-only save + scoring v3 migration, 마이픽 perspective fix, TASKS.md Phase 5 criteria A–F
+- `aee34c4` chore(docs): Phase 2 scope correction — email infra + Gmail relay replaces DB ticket system — **2026-04-14 session 2**. Docs/email-setup.md (Cloudflare+Resend+Gmail Send As guide), Docs/specs/2026-04-14-feedback-tickets.md preserved with DEFERRED header, TASKS.md Phase 2 rewritten (4 branches, all blackpick profile). db/feedback-tickets branch deleted. Full journey + lessons at /Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-14-session-2-phase2-scope-correction.md. New memory entry at feedback_proposal_discipline.md.
+- `07543fc` chore(docs): session wrap 2026-04-14 — PR #28 shipped, Phase 1 → 9/9, scoring v3 on DEV
+- `8ad4ac7` feat(streak): profile tiles + PR toast + share CTA wire-up (#28) — **session 1 2026-04-14**, Branch 8 + post-ship iterations bundled: sticky streak slot, DevPanel v3 sandbox, HomeShareBar, FlipTimer burned-out state, ShimmerButton gold ray, winner-only save + scoring v3 migration, 마이픽 perspective fix, TASKS.md Phase 5 criteria A–F
 - `eb79fcb` chore(docs): log logo-png cherry-pick to main (commit 20ffbd6)
 - `69a53b6` chore(docs): session wrap 2026-04-13 — PR #27 Branch 7 shipped, Phase 1 → 8/9
 - `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **prior session** (same calendar day)
