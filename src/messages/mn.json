@@ -56,7 +56,7 @@
   "prediction": {
     "selectWinner": "Ялагчийг сонго",
     "selectWinnerMessage": "Ялагчийг сонгоно уу.",
-    "yourPick": "Таны сонголт",
+    "yourPick": "Миний сонголт",
     "method": "Тэд хэрхэн ялах вэ?",
     "round": "Хэддүгээр үед дуусах вэ?",
     "savePick": "Сонголтыг хадгалах",
@@ -80,13 +80,14 @@
     "predictAll": "Бүгдийг таамаглах",
     "correct": "Зөв таамагласан!",
     "wrong": "Харамсалтай, буруу таамагласан",
-    "allPredictedToast": "Бүх таамаг хадгалагдлаа. Амжилт хүсье."
+    "allPredictedToast": "{count} таамаг бүгд хадгалагдлаа. Үр дүнг хүлээцгээе."
   },
   "profile": {
     "fightRecord": "Тулааны амжилт",
     "score": "Оноо",
     "currentStreak": "Одоогийн цуврал",
     "bestStreak": "Шилдэг цуврал",
+    "streakPrToast": "{streak} дараалсан ялалт!",
     "hallOfFame": "Алдрын танхим",
     "perfectCard": "Төгс",
     "ranking": "Чансаа",
@@ -188,6 +189,10 @@
     "notifRankingChange": "Чансааны өөрчлөлтийн мэдэгдэл"
   },
   "fighter": {
+    "shareText": "Black Pick дээр {name}-г үзээрэй",
+    "statFights": "Тулаан",
+    "statStreak": "Цуврал",
+    "statWinRate": "Ялалтын %",
     "record": "Амжилт",
     "nationality": "Иргэншил",
     "weightClass": "Жингийн ангилал",
@@ -234,6 +239,7 @@
   "countdown": {
     "closesIn": "Таамаглал хаагдах хүртэл",
     "eventStartsIn": "Тэмцээн эхлэхэд",
+    "eventInProgress": "Тэмцээн өрнөж байна",
     "locked": "Таамаглал түгжигдсэн",
     "lockedHint": "Цаг дуусахад таамаглал хаагдана",
     "daysShort": "Өдөр",
@@ -369,13 +375,14 @@
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "И-мэйл",
     "channelSms": "SMS",
-    "ctaDefault": "Миний таамгаа хуваалцах",
-    "ctaAllLocked": "{n}/{total} хадгаллаа — таамгаа хуваалц",
-    "ctaCompleteRecord": "{wins}-{losses} энэ картанд — хуваалц",
-    "ctaCompleteStreak": "🔥 {streak} дараалсан — хуваалц",
+    "ctaDefault": "Таамгаа найзуудтайгаа хуваалцаарай",
+    "ctaAllLocked": "{total} таамаг бэлэн боллоо. Найзуудтайгаа хуваалцаарай.",
+    "ctaCompleteRecord": "Энэ карт {wins}-{losses}. Найзуудад үзүүлээрэй.",
+    "ctaCompleteStreak": "{streak} дараалсан ялалт. Найзуудад харуулаарай.",
     "ctaDisabledNoRingName": "Хуваалцахын тулд бөхийн нэрээ тохируул",
     "ctaDisabledNoPicks": "Таамаг хадгалсны дараа хуваалцах боломжтой",
-    "goToProfile": "Профайл руу очих"
+    "goToProfile": "Профайл руу очих",
+    "stickyPrompt": "Таамаглал бэлэн боллоо. Найзуудтайгаа хуваалцаарай."
   },
   "common": {
     "loading": "Ачаалж байна...",

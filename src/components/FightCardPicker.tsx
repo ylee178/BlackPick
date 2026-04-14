@@ -2,6 +2,7 @@
 
 import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
 import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
 import { logEvent } from "@/lib/analytics";
 import { useI18n } from "@/lib/i18n-provider";
@@ -122,7 +123,16 @@ export default function FightCardPicker({
       : {},
   );
   const hasSaved = savedSnapshot !== null;
-  const canSave = !!winnerId && !!method && !!round;
+  // 2026-04-14: relaxed save validation — winner is the only
+  // required field. Users can save a winner-only pick (no method,
+  // no round) as a lower-risk prediction. Scoring rule change on
+  // the server side: winner-only correct = 2pts instead of the
+  // standard 4pts, so users can't game the system by only ever
+  // picking winners. Sean's ask: "승자만 골라도 세이브할수잇게
+  // 하자. 리스크를 미니마이즈 하고 싶을수도 잇으니" + "승자
+  // 맞추면 2점으로해 너무 높으면 승자만 맞추는 꼼수 피울수도
+  // 잇으니".
+  const canSave = !!winnerId;
   const { toast } = useToast();
 
   // Signup-gate modal visibility. Only opens when an anonymous user clicks
@@ -346,30 +356,45 @@ export default function FightCardPicker({
       ? translateWeightClass(bcDiv.weightClass, locale)
       : null;
 
+    const pickFighter = () =>
+      selectWinner(fighterId, side === "left" ? "a" : "b");
+
     return (
+      // Visual wrapper is a non-interactive container. The radio role
+      // lives on an absolute-positioned sibling (not an ancestor) of
+      // the fighter-name Link so the ARIA spec's "no interactive
+      // descendants inside role=radio" rule is satisfied and screen
+      // readers see the radio + link as siblings, not nested widgets.
+      // Reviewer round 2 [major] fold.
       <div
-        role="radio"
-        aria-checked={isPicked}
-        aria-label={`${displayName} ${isPicked ? "selected" : ""}`}
-        tabIndex={0}
-        onClick={() => {
-          selectWinner(fighterId, side === "left" ? "a" : "b");
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            selectWinner(fighterId, side === "left" ? "a" : "b");
-          }
-        }}
         className={cn(
-          "flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150 cursor-pointer",
+          "relative flex flex-1 flex-col rounded-[12px] border text-center transition-colors duration-150",
           isPicked
             ? "border-[rgba(229,169,68,0.3)] bg-[var(--bp-card-inset)] fighter-card-selected"
             : "border-[var(--bp-line)] bg-[var(--bp-card-inset)] hover:border-[var(--bp-line-strong)] hover:bg-[var(--bp-card-hover)]",
         )}
       >
+        {/* Invisible radio overlay — captures clicks on the whole
+            card area for fighter selection. Pointer events on
+            descendant Links/buttons still fire because they
+            re-enable `pointer-events-auto` inside the content
+            layer below. */}
+        <div
+          role="radio"
+          aria-checked={isPicked}
+          aria-label={`${displayName} ${isPicked ? "selected" : ""}`}
+          tabIndex={0}
+          onClick={pickFighter}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              pickFighter();
+            }
+          }}
+          className="absolute inset-0 cursor-pointer rounded-[12px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bp-accent)]"
+        />
         <div className={cn(
-          "relative flex flex-1 flex-col items-center gap-2 p-3 pt-4",
+          "pointer-events-none relative flex flex-1 flex-col items-center gap-2 p-3 pt-4",
           isPicked && "justify-center",
         )}>
           <div className="absolute right-3 top-3">
@@ -408,9 +433,21 @@ export default function FightCardPicker({
                 Cyrillic / accented names don't truncate on narrow
                 mobile widths. The flag sits inline so it wraps
                 alongside the last word rather than floating off
-                alone on a new line. */}
+                alone on a new line. The name wraps in a Link to the
+                fighter detail page with `stopPropagation` so clicking
+                the name navigates to the profile without firing the
+                parent radio's pick handler. */}
             <p className={cn("text-sm font-bold break-words", isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]")}>
-              {displayName} {countryCodeToFlag(fighter.nationality)}
+              <Link
+                href={`/fighters/${fighter.id}`}
+                className={cn(
+                  "pointer-events-auto transition-colors hover:text-[var(--bp-accent)]",
+                  isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]",
+                )}
+              >
+                {displayName}
+              </Link>{" "}
+              {countryCodeToFlag(fighter.nationality)}
             </p>
             {subLabel ? (
               <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
@@ -439,10 +476,10 @@ export default function FightCardPicker({
           {!isPicked ? (
             <button
               type="button"
-              className="mt-2 w-full cursor-pointer rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-2 py-1.5 text-xs font-semibold text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)] hover:text-[var(--bp-ink)]"
+              className="pointer-events-auto mt-2 w-full cursor-pointer rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] px-2 py-1.5 text-xs font-semibold text-[var(--bp-muted)] transition hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.14)] hover:text-[var(--bp-ink)]"
               onClick={(e) => {
                 e.stopPropagation();
-                selectWinner(fighterId, side === "left" ? "a" : "b");
+                pickFighter();
               }}
             >
               {t("prediction.selectWinner")}
@@ -452,7 +489,7 @@ export default function FightCardPicker({
 
         {/* Method/Round options — inside selected card */}
         {isPicked ? (
-          <div className="w-full px-3 pb-3 pt-2.5" onClick={(e) => e.stopPropagation()}>
+          <div className="pointer-events-auto relative w-full px-3 pb-3 pt-2.5" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 text-xs font-semibold text-[var(--bp-muted)]">
               {t("prediction.method")}
             </p>
@@ -516,9 +553,13 @@ export default function FightCardPicker({
               const hasMethod = !!method;
               const hasRound = !!round;
               const isR4 = round === "4";
+              // Tier totals (with scoring v3 — winner-only reduced
+              // from 4 to 2): winner 2 → winner+method 8 →
+              // winner+method+round 16 (R4: 20). Displayed as
+              // additive deltas: 2 + 6 = 8, + 8 = 16, or + 12 = 20.
               const rows: { label: string; pts: string; active: boolean }[] = [
-                { label: t("prediction.pointsWinner"), pts: "+4", active: !!winnerId },
-                { label: t("prediction.pointsMethod"), pts: "+4", active: hasMethod },
+                { label: t("prediction.pointsWinner"), pts: "+2", active: !!winnerId },
+                { label: t("prediction.pointsMethod"), pts: "+6", active: hasMethod },
                 { label: t("prediction.pointsRound"), pts: "+8", active: hasRound && !isR4 },
                 { label: t("prediction.pointsR4"), pts: "+12", active: hasRound && isR4 },
               ];

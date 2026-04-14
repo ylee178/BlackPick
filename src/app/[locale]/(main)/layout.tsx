@@ -6,12 +6,20 @@ import LanguagePicker from "@/components/LanguagePicker";
 import AccountDropdown from "@/components/AccountDropdown";
 import { getTranslations } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
+import StreakPrToast from "@/components/StreakPrToast";
 import { ToastProvider } from "@/components/Toast";
 import { isAdminUser } from "@/lib/admin-auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import {
   retroButtonClassName,
 } from "@/components/ui/retro";
+
+// 2026-04-14: force dynamic so `publicUser` (ring_name / streak /
+// score) re-fetches on every request. Without this, DevPanel's
+// "온보딩 다시 보기" action can't trigger `RingNameOnboarding`
+// because the layout's `publicUser.ring_name` stays cached at the
+// prior value and `needsRingNameOnboarding` never flips to true.
+export const dynamic = "force-dynamic";
 
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const { t } = await getTranslations();
@@ -23,7 +31,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
   const { data: publicUser } = authUser
     ? await supabase
         .from("users")
-        .select("ring_name, score, wins, losses")
+        .select("ring_name, score, wins, losses, current_streak, best_streak")
         .eq("id", authUser.id)
         .maybeSingle()
     : { data: null };
@@ -115,6 +123,14 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
 
         {needsRingNameOnboarding && authUser ? (
           <RingNameOnboarding email={authUser.email ?? null} userId={authUser.id} />
+        ) : null}
+
+        {authUser && publicUser ? (
+          <StreakPrToast
+            userId={authUser.id}
+            currentStreak={publicUser.current_streak ?? 0}
+            bestStreak={publicUser.best_streak ?? 0}
+          />
         ) : null}
 
         {/* Mobile Tab Bar */}

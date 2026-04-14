@@ -1,12 +1,15 @@
-# BlackPick — Current State (2026-04-13, Phase 1 at 8/9 after PR #27 Branch 7 + PR #26 Branch 6 + PR #25 Supabase email templates out-of-phase)
+# BlackPick — Current State (2026-04-13, Phase 1 at 9/9 after Branch 8 `feature/streak-ux`; only Branch 9 verification-only task remaining)
 
 ## Branch
-`develop` (Phase 1 is 8/9 branches shipped after PR #27 Branch 7 `feature/onboarding-first-time-flow`; remaining Phase 1: Branch 8 `feature/streak-ux` + Branch 9 `fix/verify-all-predicted-toast`)
+`feature/streak-ux` (Branch 8 ready to merge into `develop`; after merge, Phase 1 is 9/9 with only Branch 9 `fix/verify-all-predicted-toast` remaining — a verification-only task, no new code)
 
 ## Latest Commits
+**`feature/streak-ux` tip** (newest first):
+- pending commit — Branch 8 `feat(streak): profile streak tiles + PR toast + share CTA wire-up` — **this session**
+
 **`develop` tip** (newest first):
 - `69a53b6` chore(docs): session wrap 2026-04-13 — PR #27 Branch 7 shipped, Phase 1 → 8/9
-- `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **this session**
+- `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **prior session** (same calendar day)
 - `af5cfec` chore: 2026-04-13 autonomous follow-ups — PROD migration + Facebook OAuth docs + smoke checks
 - `84a274d` chore(docs): session wrap 2026-04-13 — PR #26 Branch 6 shipped, Phase 1 → 7/9
 - `b24057a` fix(i18n): hardcoded Korean leak sweep + English caps-lock chip labels (#26)
@@ -40,7 +43,60 @@
 
 ---
 
-## Completed (this session — 2026-04-13, PRs #25 + #26 + #27)
+## Completed (this session — 2026-04-13, Branch 8 `feature/streak-ux`)
+
+### Branch 8 — `feature/streak-ux` (Phase 1 Branch 8, 8/9 → 9/9)
+
+**Scope**: profile page streak tiles + layout-mounted streak PR toast + share CTA streak wire-up + DevPanel self-contained test loop.
+
+**New files**:
+- `src/components/StreakPrToast.tsx` — layout-mounted client component. Two localStorage keys:
+  - `bp.streakBest.v1:{userId}` = last-observed `best_streak` baseline. Null → silent first-sync (never fires on first observation because we can't distinguish "fresh PR" from "pre-feature history" without server trail).
+  - `bp.streakPR.v1:{userId}:{bestStreakValue}` = dismissal lock keyed on PR value. Fires at most once per device per distinct PR value.
+  - Fire condition (all must hold): `serverBest > storedBest && currentStreak >= STREAK_PR_MIN (2) && currentStreak === bestStreak && !lock`. The **strict-increase** `>` (not `>=`) gate is the round-1 blocker-2 fix — closes the `current=4, best=5 → win → current=5, best=5` false-positive case where `current===best` was true but `best` hadn't actually increased.
+  - `firedThisMountRef` prevents double-fire within a single mount.
+  - Null-userId short-circuit at the very top of the effect; layout-level guard `authUser && publicUser` means the component never mounts for anon users (defense in depth).
+  - Try/catch around all localStorage access → private-browsing degrades gracefully without crashing.
+
+**Modified files**:
+- `src/components/ui/retro.tsx` — `RetroStatTile` extended with optional `icon?: ReactNode` prop. Rendered inline with the label via `inline-flex items-center gap-1.5`. Backwards-compatible for all existing callers (they omit the prop and render unchanged).
+- `src/components/Toast.tsx` — fourth ToastType `"streak"` added. Flame lucide icon in gold (`text-[var(--bp-accent)]`). Three-line change, fully backwards-compatible with the existing 11 callsites that pass `"success" | "error" | "info"`. Removed pre-existing unused `X` import from lucide-react (dead code on a line I was already editing).
+- `src/app/[locale]/(main)/layout.tsx` — `publicUser` select extended from `ring_name, score, wins, losses` → `ring_name, score, wins, losses, current_streak, best_streak` (one query, two extra columns, no new DB round-trip). `StreakPrToast` mounted next to `RingNameOnboarding`, gated on `authUser && publicUser`.
+- `src/app/[locale]/(main)/profile/page.tsx` — new 2-col grid of `RetroStatTile` between the existing `BadgeList` and the `ProfileSettings` panel. Current streak: muted Flame + `t("profile.currentStreak")` label + `t("profile.streakInARow")` caption. Best streak: gold Flame + `t("profile.bestStreak")` label + `t("profile.streakPersonalBest")` caption. Grid is hidden when both streaks === 0 (fresh-account rule, consistent with `BadgeList` hide-when-empty pattern). Reuses pre-existing `profile.currentStreak` / `profile.bestStreak` i18n keys (round 1 reviewer corrected my initial assumption that these were new keys).
+- `src/app/[locale]/(main)/events/[id]/page.tsx` — `dbUser` select extended from `ring_name` → `ring_name, current_streak`. New `userCurrentStreakFromDb: number | null` captured alongside `userRingName`. Replaces the `userCurrentStreak: number | null = null` placeholder from Branch 2 (PR #18) with the real value. `EventShareCta.computeVariant()` `streak_badge` variant (threshold `>= 3`, shipped in PR #18) now fires correctly.
+- `src/app/api/dev/seed/route.ts` — new `setStreak(admin, userId, current, best)` server action. Validates `isFinite`, `>= 0`, `current <= best`. Single-statement update of `current_streak + best_streak`. Action dispatch wired at `action === "set-streak"` with 400 on validation error. `getUserState` extended to select + return `current_streak + best_streak`.
+- `src/components/DevPanel.tsx` — `UserState` type extended with `current_streak: number; best_streak: number`. `DEFAULT_STATE` matches. New `streakDraft` local state for the two number inputs, synced from server on `refreshState`. New "Streak" sub-block in the User State section: two `<input type="number" min="0">` fields + Set button with client-side `current <= best` validation (disabled when invalid, red inline error when user types an invalid combination). `handleSetStreak` dispatches the new `set-streak` action. New "Reset streak PR toast lock" ActionRow in Actions section — wipes BOTH `bp.streakPR.*` AND `bp.streakBest.*` namespaces (critical: resetting just the lock without the baseline leaves the silent-sync state, so the toast wouldn't re-fire until a genuine increase).
+
+**i18n**: 3 new keys × 7 locales = 21 additions. Final `check:i18n` **368 × 7 aligned** (up from 365 after Branch 7). New keys: `profile.streakInARow`, `profile.streakPersonalBest`, `profile.streakPrToast` (with `{streak}` interpolation via the existing handler at `src/lib/i18n-provider.tsx:26-32`). Korean `"{streak}연승 신기록!"` is semantically correct under the Option B strict-increase design — we only claim "신기록" when the server state reflects a genuine new record relative to the device's last-observed baseline.
+
+**Review trail — 2 rounds, FIRST spec-phase round 1 in BlackPick**:
+
+The novelty: round 1 was dispatched against `reviews/BlackPick/2026-04-13_branch8_streak-ux_dialog/00-spec.md` BEFORE any code was written. Sean + Claude agreed on this pivot after Branch 7's round 1 caught a design-level regression (OAuth-from-fight-page user journey break) that should have been caught at spec time. Per the Quality-Maximizing Path meta-rule, catch design flaws as early and cheaply as possible.
+
+- **Round 1 (spec)** APPROVE_WITH_CHANGES 0.88 — 2 [blocker] + 2 [major] + 4 [minor]. Blockers:
+  1. Pre-existing `profile.currentStreak` + `profile.bestStreak` i18n keys already in all 7 locales — my spec had listed them as new, claiming 365 → 370. Actual: 365 → 368 (3 new keys only).
+  2. **PR detection tie-rebuild false positive**. Reviewer ran a Python state-machine walk and found `old_current=4, old_best=5 → win → new_current=5, new_best=5` — `current===best` fires `true`, but `best_streak` didn't actually increase. Fires a false "신기록!" celebration for every existing Korean user the first time they rebuild past their old best after Branch 8 ships. Fix options:
+     - (A) Neutralize the Korean copy to "연승 달성!" (streak achieved, not "new record")
+     - (B) Client-side baseline `bp.streakBest.v1:{userId}`, silent first-sync on null, strict-increase gate `serverBest > storedBest`
+     - (C) Accept and document
+  - **Selected Option B** per Quality-Maximizing Path — the feature should do what its name says ("personal record toast" fires only on genuine records), not soften copy to mask a detection bug. Cost: ~10 additional lines of state-machine logic vs. a 1-line Korean string change.
+
+  Majors:
+  3. DevPanel `set-streak` action claim in spec was false — the action didn't exist. Added a new `setStreak` server action + DevPanel UI (number inputs + Set button + validation) for self-contained manual testing. Sean never needs to touch Supabase Studio to verify the feature.
+  4. Layout-wide mount + null userId contamination risk — `bp.streakPR.v1:null:*` would be a shared key across all signed-out users on a device. Mitigation: component-level null-userId short-circuit + layout-level `authUser && publicUser` guard (both present, defense in depth).
+
+- **Round 2 (implementation)** APPROVE 0.93 — all 6 round-1 findings marked `fold_verified` with grounded evidence. Reviewer hand-simulated 9 edge cases including the original round-1 false-positive (case 7: `storedBest=5, serverBest=5, current=5 → bestStreak > storedBest is false → no fire`). Zero new blockers. 3 non-blocking minors all intentional or deferred:
+  - `t` from `useI18n()` is a fresh function reference on every call, causing spurious `useEffect` re-runs in `StreakPrToast`. **Pre-existing project-wide pattern** — `AllPredictedToast.tsx:88` has the same shape. The `firedThisMountRef` guard prevents any actual double-fire. Fix is in `i18n-provider.tsx` (wrap `t` in `useCallback`), benefits all consumers, not Branch 8 scope. Tracked for Phase 5.
+  - DevPanel streak sub-section uses `text-[10px]/[11px]`. DESIGN.md minimum is 12px, but DevPanel's existing `Section` labels use `text-[9px]` — internally consistent with the dev-only convention. Not user-facing.
+  - `setStreak` server action lacks Postgres INTEGER upper-bound validation. Entering billions would fail at DB write, surfacing as a DevPanel message (not a crash). Dev-only, low priority.
+
+**Lesson — spec-phase review economics validated**: catching the tie-rebuild blocker at spec-review time cost ~0 rework. Had it been caught in a round 1 on HEAD, it would have required rewriting `StreakPrToast` from the naive `current === best` check to the baseline + strict-increase design (~60-line delta plus re-testing all edge cases). The spec-first pattern is now validated for non-trivial state-machine branches or anything introducing a new localStorage schema. Added to the session-start playbook.
+
+**Verification**: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 368 × 7, `tsc --noEmit` clean, `npx eslint` 0 errors / 0 warnings on touched files (the pre-existing `<img>` warning on `layout.tsx:46` logo line is untouched by Branch 8). Phase 1 advances **8/9 → 9/9**. Only remaining Phase 1 item: Branch 9 verification task (no new code expected).
+
+---
+
+## Earlier this calendar day (2026-04-13, prior session before `/clear` — PRs #25 + #26 + #27)
 
 ### PR #27 — `feature/onboarding-first-time-flow` (Phase 1 Branch 7, 7/9 → 8/9)
 

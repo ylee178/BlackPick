@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-provider";
 import { RetroLabel } from "@/components/ui/retro";
-import { Clock } from "lucide-react";
+import { Clock, Flame } from "lucide-react";
 
 type Props = {
   eventName: string;
   eventStatus: "upcoming" | "live" | "completed";
   countdownTargetTime?: string | null;
   watchElementId: string;
+  /**
+   * Current user's `users.current_streak`. When the sub-header
+   * countdown timer has expired (or was never set, e.g., completed
+   * events) and this is >= 1, the right slot renders a Flame + streak
+   * indicator instead of an empty slot. Null for anonymous viewers.
+   */
+  currentStreak?: number | null;
 };
 
 function getTimeLeft(target: string) {
@@ -32,7 +39,13 @@ function MiniDigit({ value }: { value: string }) {
   );
 }
 
-export default function StickyEventHeader({ eventName, eventStatus, countdownTargetTime, watchElementId }: Props) {
+export default function StickyEventHeader({
+  eventName,
+  eventStatus,
+  countdownTargetTime,
+  watchElementId,
+  currentStreak = null,
+}: Props) {
   const { t } = useI18n();
   const [visible, setVisible] = useState(false);
   const [headerH, setHeaderH] = useState(67);
@@ -93,7 +106,7 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
             {t(`status.${eventStatus}`)}
           </RetroLabel>
         </div>
-        {tl && (
+        {tl ? (
           <div className="flex shrink-0 items-center gap-0.5" suppressHydrationWarning>
             <Clock className="mr-1 h-4 w-4 shrink-0 text-[var(--bp-accent)]" strokeWidth={2} />
             <MiniDigit value={pad(tl.d)} />
@@ -104,7 +117,22 @@ export default function StickyEventHeader({ eventName, eventStatus, countdownTar
             <span className="lcd-colon-mini">:</span>
             <MiniDigit value={pad(tl.s)} />
           </div>
-        )}
+        ) : currentStreak != null && currentStreak > 0 ? (
+          // Timer expired (or never set for completed events) — the
+          // right slot surfaces the viewer's correct-pick streak as a
+          // quiet reminder. Sean's 2026-04-13 refinement: "히어로에
+          // 잇던게 서브헤더에 타이머 대신 들어가면돼 스틱키로". Only
+          // renders when streak >= 1 so fresh accounts get an empty
+          // slot instead of a "0" tile.
+          <div className="flex shrink-0 items-center gap-1.5" suppressHydrationWarning>
+            <Flame
+              className="h-4 w-4 shrink-0 text-[var(--bp-accent)]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <span className="text-sm font-bold text-[var(--bp-ink)]">{currentStreak}</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );

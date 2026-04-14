@@ -1,6 +1,6 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { Info, Lock } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
 import { useClockTick } from "@/lib/use-sync-store";
 
@@ -48,12 +48,40 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  // Burned-out post-lock state: keep the LCD timer mounted at 00:00:00
+  // with dimmed digits so the "event started, timer spent" feeling is
+  // preserved in place, rather than swapping the card out for a plain
+  // text block. Sean's 2026-04-13 refinement: "타이머 00 00 00이 되면
+  // 불이꺼진 타이머가 그대로잇고".
   if (tl.total <= 0 && mounted) {
     return (
-      <div className="rounded-[12px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-4 py-4 text-center">
-        <p className="text-sm font-semibold text-[var(--bp-muted)]">
-          {t("countdown.locked")}
-        </p>
+      <div>
+        <div className="rounded-[12px] bg-[#060606] px-6 py-6">
+          <p className="gold-dim-pulse mb-2 text-center text-xs font-semibold uppercase tracking-[0.12em]">
+            {t("countdown.eventInProgress")}
+          </p>
+          {/* `lcd-dim` cascades to .lcd-digit span + .lcd-colon
+              inside, turning the digits subtle gray instead of gold.
+              No opacity dim needed — the color override is self
+              contained. */}
+          <div className="lcd-dim flex items-start justify-center gap-1.5 sm:gap-2">
+            <DigitCard value="00" label={t("countdown.daysShort")} />
+            <span className="lcd-colon">:</span>
+            <DigitCard value="00" label={t("countdown.hoursShort")} />
+            <span className="lcd-colon">:</span>
+            <DigitCard value="00" label={t("countdown.minutesShort")} />
+            <span className="lcd-colon">:</span>
+            <DigitCard value="00" label={t("countdown.secondsShort")} />
+          </div>
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[var(--bp-muted)]">
+            <Lock
+              className="h-3 w-3 shrink-0 text-[var(--bp-danger)]"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span>{t("countdown.locked")}</span>
+          </p>
+        </div>
       </div>
     );
   }

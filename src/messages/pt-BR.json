@@ -56,7 +56,7 @@
   "prediction": {
     "selectWinner": "Escolha o vencedor",
     "selectWinnerMessage": "Por favor, selecione um vencedor.",
-    "yourPick": "Seu palpite",
+    "yourPick": "Meu palpite",
     "method": "Como vai vencer?",
     "round": "Em qual round acaba?",
     "savePick": "Salvar palpite",
@@ -80,13 +80,14 @@
     "predictAll": "Prever tudo",
     "correct": "Você acertou!",
     "wrong": "Mais sorte na próxima",
-    "allPredictedToast": "Todos os palpites foram salvos. Boa sorte."
+    "allPredictedToast": "{count} palpites travados. Agora é só esperar."
   },
   "profile": {
     "fightRecord": "Cartel de lutas",
     "score": "Pontuação",
     "currentStreak": "Sequência atual",
     "bestStreak": "Melhor sequência",
+    "streakPrToast": "Sequência de {streak}!",
     "hallOfFame": "Hall da Fama",
     "perfectCard": "Perfeito",
     "ranking": "Ranking",
@@ -188,6 +189,10 @@
     "notifRankingChange": "Notificações de mudança de ranking"
   },
   "fighter": {
+    "shareText": "Olha {name} no Black Pick",
+    "statFights": "Lutas",
+    "statStreak": "Sequência",
+    "statWinRate": "% Vitórias",
     "record": "Cartel",
     "nationality": "Nacionalidade",
     "weightClass": "Categoria de peso",
@@ -234,6 +239,7 @@
   "countdown": {
     "closesIn": "Palpites encerram em",
     "eventStartsIn": "O evento começa em",
+    "eventInProgress": "Evento em andamento",
     "locked": "Palpites encerrados",
     "lockedHint": "Os palpites encerram quando o tempo acabar",
     "daysShort": "Dias",
@@ -369,13 +375,14 @@
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "E-mail",
     "channelSms": "SMS",
-    "ctaDefault": "Compartilhar meu card",
-    "ctaAllLocked": "{n}/{total} prontos — compartilhe seu card",
-    "ctaCompleteRecord": "{wins}-{losses} neste card — compartilhe",
-    "ctaCompleteStreak": "🔥 {streak} seguidos — compartilhe",
+    "ctaDefault": "Compartilhe seus palpites com os amigos",
+    "ctaAllLocked": "{total} palpites prontos. Compartilhe com os amigos.",
+    "ctaCompleteRecord": "{wins}-{losses} neste card. Mostra pros amigos o resultado.",
+    "ctaCompleteStreak": "{streak} seguidos. Mostra essa sequência pros amigos.",
     "ctaDisabledNoRingName": "Escolha um nome de ringue para compartilhar",
     "ctaDisabledNoPicks": "Salve um palpite para liberar",
-    "goToProfile": "Ir para o perfil"
+    "goToProfile": "Ir para o perfil",
+    "stickyPrompt": "Seus palpites estão prontos. Compartilhe com os amigos."
   },
   "common": {
     "loading": "Carregando...",

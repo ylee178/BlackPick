@@ -56,7 +56,7 @@
   "prediction": {
     "selectWinner": "选择胜者",
     "selectWinnerMessage": "请选择一位胜者。",
-    "yourPick": "你的选择",
+    "yourPick": "我的选择",
     "method": "他们将如何获胜？",
     "round": "比赛会在第几回合结束？",
     "savePick": "保存预测",
@@ -80,13 +80,14 @@
     "predictAll": "全部预测",
     "correct": "猜对了！",
     "wrong": "很遗憾，没猜中",
-    "allPredictedToast": "所有预测已保存。祝你好运。"
+    "allPredictedToast": "{count}个预测全部锁定。等结果吧。"
   },
   "profile": {
     "fightRecord": "战绩",
     "score": "得分",
     "currentStreak": "当前连胜",
     "bestStreak": "最佳连胜",
+    "streakPrToast": "{streak}连胜新纪录！",
     "hallOfFame": "名人堂",
     "perfectCard": "完美卡",
     "ranking": "排名",
@@ -188,6 +189,10 @@
     "notifRankingChange": "排名变动通知"
   },
   "fighter": {
+    "shareText": "在 Black Pick 看看 {name}",
+    "statFights": "比赛数",
+    "statStreak": "连胜",
+    "statWinRate": "胜率",
     "record": "战绩",
     "nationality": "国籍",
     "weightClass": "体重级别",
@@ -234,6 +239,7 @@
   "countdown": {
     "closesIn": "预测截止倒计时",
     "eventStartsIn": "比赛开始倒计时",
+    "eventInProgress": "比赛进行中",
     "locked": "预测已锁定",
     "lockedHint": "时间结束时预测锁定",
     "daysShort": "天",
@@ -369,13 +375,14 @@
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "邮件",
     "channelSms": "短信",
-    "ctaDefault": "分享我的预测",
-    "ctaAllLocked": "{n}/{total} 已锁定 — 分享我的预测",
-    "ctaCompleteRecord": "{wins}胜 {losses}负 — 分享这张卡",
-    "ctaCompleteStreak": "🔥 {streak}连胜 — 分享",
+    "ctaDefault": "把你的预测分享给朋友们",
+    "ctaAllLocked": "{total}个预测已就绪。把你的预测分享给朋友们。",
+    "ctaCompleteRecord": "本卡 {wins}胜 {losses}负。向朋友们晒晒你的战绩。",
+    "ctaCompleteStreak": "{streak}连胜。把你的气势分享给朋友们。",
     "ctaDisabledNoRingName": "设置拳名后即可分享",
     "ctaDisabledNoPicks": "保存一个预测即可分享",
-    "goToProfile": "前往个人资料"
+    "goToProfile": "前往个人资料",
+    "stickyPrompt": "预测已就绪。把你的预测分享给朋友们。"
   },
   "common": {
     "loading": "加载中...",

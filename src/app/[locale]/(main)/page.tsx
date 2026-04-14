@@ -10,6 +10,9 @@ import FlipTimer from "@/components/FlipTimer";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
 import AnonFirstPickCta from "@/components/AnonFirstPickCta";
+import AllPredictedToast from "@/components/AllPredictedToast";
+import HomeShareBar from "@/components/HomeShareBar";
+import { buildSharePath } from "@/lib/share-url";
 import { fetchBcOfficialEventCard } from "@/lib/bc-official";
 import { fetchBcEventDataFull, type BcFightData } from "@/lib/bc-predictions";
 import { fetchBcTicketInfo } from "@/lib/bc-ticket";
@@ -23,7 +26,13 @@ import {
 import { RankingRowCompact } from "@/components/ui/ranking";
 import type { Database } from "@/types/database";
 
-export const revalidate = 60; // ISR: 1 minute
+// 2026-04-14 Sean bug fix: was `revalidate = 60` which cached the
+// server-rendered HTML for 1 minute. DevPanel state flips hit the
+// DB but `router.refresh()` didn't bust the data cache, so Sean
+// was seeing stale "끝난 경기" state after clicking 업커밍. Force
+// dynamic rendering so every request re-fetches. Trade-off: DB
+// hit per request (acceptable for MVP scale; revisit post-launch).
+export const dynamic = "force-dynamic";
 
 type EventRow = {
   id: string;
@@ -56,12 +65,28 @@ function getStatusTone(status: string) {
   return "info" as const;
 }
 
-export default async function HomePage() {
+type HomePageProps = {
+  searchParams?: Promise<{ dev_event?: string | string[] }>;
+};
+
+export default async function HomePage({ searchParams }: HomePageProps) {
   const supabase = await createSupabaseServer();
   const { t, locale } = await getTranslations();
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
+
+  // Dev-only event override: DevPanel's event picker navigates to
+  // `/?dev_event={id}` so Sean sees the selected event immediately
+  // on the home page instead of whatever the featured-logic resolves
+  // to. Respected only when NODE_ENV === "development" — production
+  // ignores the param entirely.
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const devEventParam = resolvedSearchParams?.dev_event;
+  const devEventId =
+    process.env.NODE_ENV === "development" && typeof devEventParam === "string"
+      ? devEventParam
+      : null;
 
   // Stage 1: Fetch events, top users, and series types in parallel
   const [{ data: events }, { data: topUsers }, { data: seriesData }, ticketInfo] = await Promise.all([
@@ -74,9 +99,29 @@ export default async function HomePage() {
   const typedEvents = (events ?? []) as EventRow[];
   const activeEvents = typedEvents.filter((e) => e.status === "live" || e.status === "upcoming");
   const completedEvents = typedEvents.filter((e) => e.status === "completed").reverse();
-  const featured = activeEvents[0] ?? completedEvents[0] ?? null;
+  // Dev event override takes precedence when present and the event
+  // actually exists in DB.
+  const devOverride = devEventId
+    ? typedEvents.find((e) => e.id === devEventId) ?? null
+    : null;
+  const featured = devOverride ?? activeEvents[0] ?? completedEvents[0] ?? null;
   const allTimeUsers = (topUsers ?? []) as RankingUser[];
   const seriesTypes = [...new Set((seriesData ?? []).map((e: { series_type: string }) => e.series_type))];
+
+  // Current user's streak + ring_name — used by StickyEventHeader's
+  // post-lock streak indicator and the fight-list share button. The
+  // layout also fetches this (for AccountDropdown), but RSC children
+  // can't read the layout's server state — one extra query is the
+  // simplest correct path.
+  const { data: selfUser } = authUser
+    ? await supabase
+        .from("users")
+        .select("ring_name, current_streak")
+        .eq("id", authUser.id)
+        .maybeSingle()
+    : { data: null };
+  const selfCurrentStreak: number | null = selfUser?.current_streak ?? null;
+  const selfRingName: string | null = selfUser?.ring_name ?? null;
 
   const p4pUsers = [...allTimeUsers]
     .filter((u) => ((u.wins ?? 0) + (u.losses ?? 0)) >= 5)
@@ -155,6 +200,22 @@ export default async function HomePage() {
   const nowTimestamp = new Date().getTime();
   const pickedCount = fights.filter((f) => predictionMap.has(f.id)).length;
 
+  // AllPredictedToast props — counts only upcoming (pickable) fights
+  // on the featured event. Matches the displayState derivation on the
+  // event detail page so the transition-detection logic behaves
+  // consistently whether Sean is on / or /events/[id]. 2026-04-14
+  // fix: previously mounted only on /events/[id] (the orphan page),
+  // so the toast never fired when picks were saved from home.
+  const upcomingPredictableFights = fights.filter((f) => {
+    const hasStarted = new Date(f.start_time).getTime() <= nowTimestamp;
+    const isCompleted =
+      eventStatus === "completed" || f.status === "completed" || f.status === "cancelled";
+    const isLive = !isCompleted && (eventStatus === "live" || hasStarted);
+    return !isCompleted && !isLive;
+  });
+  const predictableTotal = upcomingPredictableFights.length;
+  const predictedCount = upcomingPredictableFights.filter((f) => predictionMap.has(f.id)).length;
+
   // Black Cup completed: compute country scores from cup matches
   const isBlackCup = featured?.series_type === "black_cup";
   let cupScores: { flagA: string; flagB: string; nameA: string; nameB: string; winsA: number; winsB: number } | null = null;
@@ -193,6 +254,21 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-10">
+      {/* 2026-04-14 fix: AllPredictedToast previously mounted only on
+          the orphan /events/[id] page, so saving all picks from home
+          never triggered it. Now also mounted here keyed on user+event
+          so transition detection + localStorage lock both work when
+          Sean uses the home page as his primary surface. */}
+      {featured && authUser ? (
+        <AllPredictedToast
+          key={`home:${authUser.id}:${featured.id}`}
+          userId={authUser.id}
+          eventId={featured.id}
+          predictableTotal={predictableTotal}
+          predictedCount={predictedCount}
+        />
+      ) : null}
+
       {/* Sticky sub-header for scrolling */}
       {featured ? (
         <StickyEventHeader
@@ -200,6 +276,7 @@ export default async function HomePage() {
           eventStatus={eventStatus ?? "upcoming"}
           countdownTargetTime={eventStatus === "upcoming" ? earliestStart : null}
           watchElementId={eventStatus === "upcoming" && earliestStart ? "home-timer" : "home-hero"}
+          currentStreak={selfCurrentStreak}
         />
       ) : null}
 
@@ -257,9 +334,9 @@ export default async function HomePage() {
                   ) : null}
                 </div>
 
-                {eventStatus === "upcoming" ? (
+                {eventStatus === "upcoming" || eventStatus === "live" ? (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    {ticketInfo.soldOut ? (
+                    {eventStatus === "upcoming" && ticketInfo.soldOut ? (
                       <button
                         type="button"
                         disabled
@@ -273,7 +350,7 @@ export default async function HomePage() {
                         <Ticket className="h-4 w-4" strokeWidth={1.5} />
                         {t("home.soldOut")}
                       </button>
-                    ) : ticketInfo.url ? (
+                    ) : eventStatus === "upcoming" && ticketInfo.url ? (
                       <a
                         href={ticketInfo.url}
                         target="_blank"
@@ -285,18 +362,53 @@ export default async function HomePage() {
                         {t("home.buyTickets")}
                       </a>
                     ) : null}
-                    <a href="https://www.youtube.com/@blackcombat" target="_blank" rel="noopener noreferrer" className={retroButtonClassName({ variant: "secondary", size: "sm" })}>
-                      <Play className="h-4 w-4" strokeWidth={1.5} />
-                      {t("home.watchLive")}
-                    </a>
+                    {eventStatus === "live" ? (
+                      // ShimmerButton wrapper — Sean 2026-04-14
+                      // reference: magicui ShimmerButton. Button
+                      // keeps its original secondary style; CSS
+                      // pseudos on the wrapper render the rotating
+                      // shimmer ring.
+                      <span className="shimmer-wrap">
+                        <a
+                          href="https://www.youtube.com/@blackcombat"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={retroButtonClassName({
+                            variant: "secondary",
+                            size: "sm",
+                          })}
+                        >
+                          <Play className="h-4 w-4" strokeWidth={1.5} />
+                          {t("home.watchLive")}
+                        </a>
+                      </span>
+                    ) : (
+                      <a
+                        href="https://www.youtube.com/@blackcombat"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={retroButtonClassName({
+                          variant: "secondary",
+                          size: "sm",
+                        })}
+                      >
+                        <Play className="h-4 w-4" strokeWidth={1.5} />
+                        {t("home.watchLive")}
+                      </a>
+                    )}
                   </div>
                 ) : null}
 
               </div>
 
               {/* Right: Timer or Cup Scoreboard */}
-              {eventStatus === "upcoming" && earliestStart ? (
+              {(eventStatus === "upcoming" || eventStatus === "live") && earliestStart ? (
                 <div id="home-timer" className="shrink-0">
+                  {/* FlipTimer's internal tl.total <= 0 branch renders
+                      the burned-out "Event in Progress" + Lock state
+                      when start_time is past. setEventStatus("live")
+                      pushes start_time to past so Sean sees the
+                      locked state immediately. */}
                   <FlipTimer targetTime={earliestStart} />
                 </div>
               ) : cupScores ? (
@@ -357,9 +469,19 @@ export default async function HomePage() {
           ) : null}
           {fights.length > 0 ? (
             <>
-              <h2 className="mb-4 text-xl font-bold tracking-tight text-[var(--bp-ink)]">
-                {eventStatus === "completed" ? t("event.fightResultTitle") : t("event.fightListTitle")}
-              </h2>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-bold tracking-tight text-[var(--bp-ink)]">
+                  {eventStatus === "completed" ? t("event.fightResultTitle") : t("event.fightListTitle")}
+                </h2>
+                {authUser && featured ? (
+                  <HomeShareBar
+                    ringName={selfRingName}
+                    eventName={localizedEventName}
+                    shareUrl={selfRingName ? buildSharePath(selfRingName, featured.id) : null}
+                    hasAnyPicks={pickedCount > 0}
+                  />
+                ) : null}
+              </div>
 
               <div className="flex flex-col gap-6">
               {fights.map((fight, index) => {

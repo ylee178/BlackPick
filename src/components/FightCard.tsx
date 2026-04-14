@@ -175,8 +175,18 @@ function FighterSideStatic({
       </div>
       <div className="min-w-0 w-full text-center">
         {/* `break-words` + min-w-0 so long names wrap instead of
-            truncating on narrow mobile fight cards. */}
-        <p className="text-sm font-bold break-words text-[var(--bp-ink)]">{displayName} {countryCodeToFlag(fighter.nationality)}</p>
+            truncating on narrow mobile fight cards. The name wraps in
+            a Link to the fighter detail page with a gold hover state —
+            users can tap through directly from any fight card. */}
+        <p className="text-sm font-bold break-words">
+          <Link
+            href={`/fighters/${fighter.id}`}
+            className="text-[var(--bp-ink)] transition-colors hover:text-[var(--bp-accent)]"
+          >
+            {displayName}
+          </Link>{" "}
+          {countryCodeToFlag(fighter.nationality)}
+        </p>
         {subLabel ? (
           <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
         ) : null}
@@ -259,8 +269,16 @@ export default async function FightCard({
   const isLive = !isCompleted && (eventStatus === "live" || hasStarted);
   const isUpcoming = !isCompleted && !isLive;
 
-  const winnerA = !!fight.winner_id && fight.winner_id === fight.fighter_a_id;
-  const winnerB = !!fight.winner_id && fight.winner_id === fight.fighter_b_id;
+  // Winner derivation is gated on `isCompleted` because the DevPanel
+  // resetFights flow intentionally preserves `fight.winner_id` across
+  // state flips (for idempotency — flipping Upcoming → Completed a
+  // second time re-uses the existing winner instead of re-randomizing).
+  // Without this gate the fight card would show green winner styling +
+  // WIN chip + method text even after the user flipped back to
+  // Upcoming, because the dormant winner_id value would still be
+  // truthy. Reviewer round 1 [blocker 1] fold.
+  const winnerA = isCompleted && !!fight.winner_id && fight.winner_id === fight.fighter_a_id;
+  const winnerB = isCompleted && !!fight.winner_id && fight.winner_id === fight.fighter_b_id;
   const fighterALabel = getLocalizedFighterName(fight.fighter_a, locale, fight.fighter_a.name);
   const fighterBLabel = getLocalizedFighterName(fight.fighter_b, locale, fight.fighter_b.name);
   const rawWeight = fight.fighter_a.weight_class || fight.fighter_b.weight_class || bcWeightClass;

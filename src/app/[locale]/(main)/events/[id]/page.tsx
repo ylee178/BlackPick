@@ -63,10 +63,16 @@ export default async function EventPage({
 
   let userInitial = "?";
   let userRingName: string | null = null;
+  let userCurrentStreakFromDb: number | null = null;
   if (user) {
-    const { data: dbUser } = await supabase.from("users").select("ring_name").eq("id", user.id).single();
+    const { data: dbUser } = await supabase
+      .from("users")
+      .select("ring_name, current_streak")
+      .eq("id", user.id)
+      .single();
     userRingName = dbUser?.ring_name ?? null;
     userInitial = userRingName?.charAt(0) || "?";
+    userCurrentStreakFromDb = dbUser?.current_streak ?? null;
   }
 
   const { data: event } = await supabase
@@ -189,11 +195,7 @@ export default async function EventPage({
   const lossesThisCard = pickedEntries.filter(
     (entry) => entry.prediction?.is_winner_correct === false,
   ).length;
-  // Streak wiring lands in Branch 8 (feature/streak-ux). Leaving this
-  // null for now means the `streak_badge` variant of EventShareCta
-  // can't fire yet; the CTA falls back to `record_badge` or the
-  // pre-result variants.
-  const userCurrentStreak: number | null = null;
+  const userCurrentStreak: number | null = userCurrentStreakFromDb;
 
   // LockTransitionWatcher feed: timestamps where fights transition from
   // pickable to locked. When `useClockTick` crosses any of these, the

@@ -56,7 +56,7 @@
   "prediction": {
     "selectWinner": "승자 선택",
     "selectWinnerMessage": "승자를 선택해 주세요.",
-    "yourPick": "내 선택",
+    "yourPick": "마이픽",
     "method": "어떻게 이길 것 같나요?",
     "round": "몇 라운드에 끝날까요?",
     "savePick": "예측 저장",
@@ -80,13 +80,14 @@
     "predictAll": "전체 예측",
     "correct": "맞췄습니다!",
     "wrong": "아쉽네요, 못 맞췄습니다",
-    "allPredictedToast": "모든 픽 저장 완료. 행운을 빕니다."
+    "allPredictedToast": "{count}개 픽이 모두 저장됐어요. 당신의 픽을 친구들에게 공유해보세요."
   },
   "profile": {
     "fightRecord": "전적",
     "score": "점수",
     "currentStreak": "현재 연승",
     "bestStreak": "최고 연승",
+    "streakPrToast": "{streak}연승 신기록!",
     "hallOfFame": "명예의 전당",
     "perfectCard": "퍼펙트",
     "ranking": "랭킹",
@@ -188,6 +189,10 @@
     "notifRankingChange": "랭킹 변동 알림"
   },
   "fighter": {
+    "shareText": "Black Pick에서 {name} 확인해봐",
+    "statFights": "경기 수",
+    "statStreak": "연승",
+    "statWinRate": "승률",
     "record": "전적",
     "nationality": "국적",
     "weightClass": "체급",
@@ -234,6 +239,7 @@
   "countdown": {
     "closesIn": "예측 마감까지",
     "eventStartsIn": "경기 시작까지",
+    "eventInProgress": "이벤트 진행 중",
     "locked": "예측 마감됨",
     "lockedHint": "시간이 끝나면 예측이 마감돼요",
     "daysShort": "일",
@@ -369,13 +375,14 @@
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "이메일",
     "channelSms": "문자",
-    "ctaDefault": "내 픽 공유하기",
-    "ctaAllLocked": "{n}/{total} 완료 — 내 픽 공유하기",
-    "ctaCompleteRecord": "{wins}승 {losses}패 — 이번 카드 공유",
-    "ctaCompleteStreak": "🔥 {streak}연승 — 공유하기",
+    "ctaDefault": "당신의 픽을 친구들에게 공유해보세요",
+    "ctaAllLocked": "{total}개 픽이 모두 준비됐어요. 당신의 픽을 친구들에게 공유해보세요.",
+    "ctaCompleteRecord": "이번 카드 {wins}승 {losses}패. 당신의 성적을 친구들에게 자랑해보세요.",
+    "ctaCompleteStreak": "{streak}연승 중이에요. 당신의 기세를 친구들에게 보여주세요.",
     "ctaDisabledNoRingName": "공유하려면 링네임을 설정하세요",
     "ctaDisabledNoPicks": "픽을 저장하면 공유할 수 있습니다",
-    "goToProfile": "프로필로 이동"
+    "goToProfile": "프로필로 이동",
+    "stickyPrompt": "픽이 모두 준비됐어요. 당신의 픽을 친구들에게 공유해보세요."
   },
   "common": {
     "loading": "로딩 중...",
