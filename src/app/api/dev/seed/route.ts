@@ -1,7 +1,152 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  computeFutureEventDate,
+  computeFutureStartTime,
+  computePastStartTime,
+  computeTodayEventDate,
+  isValidSnapshot,
+  selectFeaturedEventId,
+  selectResettableFightIds,
+  selectStartTimePushIds,
+  type EventSnapshot,
+  type FightStatus,
+} from "@/lib/dev-state-helpers";
+
+/**
+ * Resolves the event that DevPanel actions should target. Priority:
+ *   1. Explicit `eventId` param (from DevPanel event picker) — caller
+ *      is overriding the default.
+ *   2. Featured event via `selectFeaturedEventId` — matches the home
+ *      page's event selection so DevPanel flips the event Sean is
+ *      actually looking at.
+ *
+ * Returns the event id + name, or null on no-match / error.
+ */
+async function resolveTargetEvent(
+  admin: ReturnType<typeof getAdminClient>,
+  explicitEventId?: string,
+): Promise<{ id: string; name: string } | null> {
+  if (explicitEventId) {
+    const { data: explicitEvent } = await admin
+      .from("events")
+      .select("id, name")
+      .eq("id", explicitEventId)
+      .maybeSingle();
+    if (explicitEvent) return explicitEvent;
+  }
+
+  // Fetch all events and pick via the home-featured rule
+  const { data: events } = await admin
+    .from("events")
+    .select("id, name, date, status")
+    .order("date", { ascending: true });
+  if (!events || events.length === 0) return null;
+
+  const featuredId = selectFeaturedEventId(
+    events as Array<{ id: string; date: string; status: "upcoming" | "live" | "completed" }>,
+  );
+  if (!featuredId) return null;
+
+  const featured = events.find((e) => e.id === featuredId);
+  return featured ? { id: featured.id, name: featured.name } : null;
+}
 
 const isDev = process.env.NODE_ENV === "development";
+
+/**
+ * Captures an event's current state + all its fights as a snapshot.
+ * Used by DevPanel's sandbox mode so Sean can pick an event, mutate
+ * its state, then "reset" back to the captured snapshot.
+ *
+ * Only schema-minimal fields are captured — columns DevPanel can
+ * mutate (status, start_time, winner, method, round, flags, date).
+ * Other columns stay untouched by mutations so they don't need to
+ * be in the snapshot.
+ */
+async function captureEventSnapshot(
+  admin: ReturnType<typeof getAdminClient>,
+  eventId: string,
+): Promise<{ ok: true; snapshot: EventSnapshot } | { ok: false; reason: string }> {
+  const { data: event, error: eventErr } = await admin
+    .from("events")
+    .select("id, date, status")
+    .eq("id", eventId)
+    .single();
+  if (eventErr || !event) {
+    return { ok: false, reason: `fetch event: ${eventErr?.message ?? "not found"}` };
+  }
+
+  const { data: fights, error: fightsErr } = await admin
+    .from("fights")
+    .select("id, status, winner_id, method, round, start_time, is_title_fight, is_main_card")
+    .eq("event_id", eventId)
+    .order("start_time", { ascending: true });
+  if (fightsErr) {
+    return { ok: false, reason: `fetch fights: ${fightsErr.message}` };
+  }
+
+  const snapshot: EventSnapshot = {
+    event: {
+      id: event.id as string,
+      date: event.date as string,
+      status: event.status as "upcoming" | "live" | "completed",
+    },
+    fights: (fights ?? []).map((f) => ({
+      id: f.id as string,
+      status: f.status as "upcoming" | "completed" | "cancelled" | "no_contest",
+      winner_id: (f.winner_id as string | null) ?? null,
+      method: (f.method as string | null) ?? null,
+      round: (f.round as number | null) ?? null,
+      start_time: f.start_time as string,
+      is_title_fight: (f.is_title_fight as boolean | null) ?? null,
+      is_main_card: (f.is_main_card as boolean | null) ?? null,
+    })),
+  };
+
+  return { ok: true, snapshot };
+}
+
+/**
+ * Restores an event + its fights back to a captured snapshot. All
+ * mutable columns are overwritten to match. Fight rows are matched
+ * by id; snapshot fights not present in current DB are skipped
+ * (shouldn't happen — DevPanel doesn't delete fights).
+ */
+async function restoreEventSnapshot(
+  admin: ReturnType<typeof getAdminClient>,
+  snapshot: EventSnapshot,
+): Promise<{ ok: true; fights_restored: number } | { ok: false; reason: string }> {
+  const { error: eventErr } = await admin
+    .from("events")
+    .update({
+      date: snapshot.event.date,
+      status: snapshot.event.status,
+    })
+    .eq("id", snapshot.event.id);
+  if (eventErr) {
+    return { ok: false, reason: `restore event: ${eventErr.message}` };
+  }
+
+  let restored = 0;
+  for (const fight of snapshot.fights) {
+    const { error: fightErr } = await admin
+      .from("fights")
+      .update({
+        status: fight.status,
+        winner_id: fight.winner_id,
+        method: fight.method,
+        round: fight.round,
+        start_time: fight.start_time,
+        is_title_fight: fight.is_title_fight ?? false,
+        is_main_card: fight.is_main_card ?? false,
+      })
+      .eq("id", fight.id);
+    if (!fightErr) restored++;
+  }
+
+  return { ok: true, fights_restored: restored };
+}
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -814,7 +959,11 @@ async function seedFullData(admin: ReturnType<typeof getAdminClient>) {
   };
 }
 
-async function seedMyData(admin: ReturnType<typeof getAdminClient>, userId: string) {
+async function seedMyData(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+  explicitEventId?: string,
+) {
   // Clean existing data for this user
   await admin.from("hall_of_fame_entries").delete().eq("user_id", userId);
   await admin.from("perfect_card_entries").delete().eq("user_id", userId);
@@ -892,6 +1041,55 @@ async function seedMyData(admin: ReturnType<typeof getAdminClient>, userId: stri
 
   await admin.from("predictions").insert(preds);
 
+  // Seed pre-lock predictions on the latest event's upcoming fights
+  // too. Without this, DevPanel presets like `예측 완료` / `라이브 중`
+  // produce a user with historical picks on old completed events but
+  // ZERO picks on the current featured event — so the fight cards
+  // visible on the home page show no "Your Pick" chip, defeating the
+  // purpose of the preset. Pre-lock predictions have no method/round/
+  // score (those land on result-verification), only a winner guess.
+  // Safe to scope to the latest event only because Sean's test flow
+  // runs against the featured event; older upcoming events in test
+  // data rarely exist anyway.
+  // Reviewer round 2 [major] fold: previously used `latest by date
+  // desc` which could target a different event than home featured.
+  // Now uses resolveTargetEvent so upcoming picks land on the event
+  // Sean is actually looking at.
+  const targetedEvent = await resolveTargetEvent(admin, explicitEventId);
+  if (targetedEvent) {
+    const { data: upcomingFights } = await admin
+      .from("fights")
+      .select("id, fighter_a_id, fighter_b_id")
+      .eq("event_id", targetedEvent.id)
+      .eq("status", "upcoming");
+    if (upcomingFights && upcomingFights.length > 0) {
+      const upcomingPreds = upcomingFights.map((f, i) => ({
+        user_id: userId,
+        fight_id: f.id,
+        // Deterministic left/right alternation so the same Full Seed
+        // + seed-me run produces consistent picks across repeated
+        // dev sessions.
+        winner_id: i % 2 === 0 ? f.fighter_a_id : f.fighter_b_id,
+        method: null,
+        round: null,
+        score: null,
+        is_winner_correct: null,
+        is_method_correct: null,
+        is_round_correct: null,
+      }));
+      // Delete any stale upcoming predictions for this user on these
+      // fights before insert — the earlier `delete().eq(user_id)`
+      // already wiped everything so this is defense-in-depth for
+      // partial failures.
+      await admin
+        .from("predictions")
+        .delete()
+        .eq("user_id", userId)
+        .in("fight_id", upcomingFights.map((f) => f.id));
+      await admin.from("predictions").insert(upcomingPreds);
+    }
+  }
+
   // Update user stats
   const wins = preds.filter((p) => p.is_winner_correct).length;
   const losses = preds.filter((p) => !p.is_winner_correct).length;
@@ -951,34 +1149,53 @@ async function seedMyData(admin: ReturnType<typeof getAdminClient>, userId: stri
   return { predictions: preds.length, wins, losses, score: Math.max(0, totalScore), weightClasses: wcMap.size };
 }
 
-async function completeFights(admin: ReturnType<typeof getAdminClient>) {
+async function completeFights(
+  admin: ReturnType<typeof getAdminClient>,
+  explicitEventId?: string,
+) {
   const methods = ["KO/TKO", "Submission", "Decision"] as const;
 
-  // Find the latest upcoming/live event (the one featured on homepage)
-  const { data: latestEvent } = await admin
-    .from("events")
-    .select("id, name")
-    .in("status", ["upcoming", "live"])
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+  // Target the event the home page is featuring (or the explicit
+  // eventId from the DevPanel picker). Previously this used
+  // `latest by date desc` which could diverge from the home page's
+  // `activeEvents[0]` (earliest active) selection — causing
+  // DevPanel to silently flip the wrong event.
+  const latestEvent = await resolveTargetEvent(admin, explicitEventId);
 
   if (!latestEvent) {
     return { completed_fights: 0, completed_events: 0, event_name: null };
   }
 
+  // Include winner_id in the select so the randomizer can skip fights
+  // that already have a recorded result. This preserves user picks
+  // across repeated state flips — Sean's "경기 데이터가 바뀌네?"
+  // complaint was that every flip re-randomized winners.
   const { data: fights } = await admin
     .from("fights")
-    .select("id, fighter_a_id, fighter_b_id, status")
-    .eq("event_id", latestEvent.id)
-    .in("status", ["upcoming", "live"]);
+    .select("id, fighter_a_id, fighter_b_id, status, winner_id, method, round")
+    .eq("event_id", latestEvent.id);
 
   if (!fights || fights.length === 0) {
     return { completed_fights: 0, completed_events: 0, event_name: latestEvent.name };
   }
 
   let completedFights = 0;
+  let preservedFights = 0;
   for (const fight of fights) {
+    // Idempotency: if this fight already has a recorded winner from an
+    // earlier completion pass, leave it untouched and just flip status.
+    if (fight.winner_id != null) {
+      const { error } = await admin
+        .from("fights")
+        .update({ status: "completed" })
+        .eq("id", fight.id);
+      if (!error) {
+        completedFights++;
+        preservedFights++;
+      }
+      continue;
+    }
+
     const winnerId = Math.random() < 0.5 ? fight.fighter_a_id : fight.fighter_b_id;
     const method = methods[Math.floor(Math.random() * methods.length)];
     const round = method === "Decision" ? 3 : Math.floor(Math.random() * 3) + 1;
@@ -997,7 +1214,12 @@ async function completeFights(admin: ReturnType<typeof getAdminClient>) {
     .update({ status: "completed" })
     .eq("id", latestEvent.id);
 
-  return { completed_fights: completedFights, completed_events: 1, event_name: latestEvent.name };
+  return {
+    completed_fights: completedFights,
+    preserved_fights: preservedFights,
+    completed_events: 1,
+    event_name: latestEvent.name,
+  };
 }
 
 // ── DevPanel v2 actions ────────────────────────────────────────────────
@@ -1011,42 +1233,142 @@ async function completeFights(admin: ReturnType<typeof getAdminClient>) {
 async function setEventStatus(
   admin: ReturnType<typeof getAdminClient>,
   status: "upcoming" | "live" | "completed",
+  explicitEventId?: string,
 ) {
-  const { data: latestEvent } = await admin
-    .from("events")
-    .select("id, name")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+  const latestEvent = await resolveTargetEvent(admin, explicitEventId);
 
   if (!latestEvent) {
     return { ok: false, reason: "no event" };
   }
 
-  // Mapping:
-  //   upcoming  → delegate to resetFights so fights + predictions are
-  //               cleaned back to a pre-event state. This is destructive
-  //               (clears winner/method/round/scores) but it's dev-only.
-  //   completed → delegate to completeFights so random winners + scoring
-  //               fills in. Also destructive.
-  //   live      → keep the fights untouched (status stays 'upcoming' per
-  //               the CHECK constraint on fights.status) but flip the
-  //               event itself to 'live'. The fight-level live state is
-  //               derived from start_time vs now() in the UI, so this is
-  //               enough to simulate the "event in progress" surface.
+  // Mapping after the 2026-04-13 DevPanel fix pass:
+  //
+  //   upcoming  → resetFights flips fights + event back to upcoming
+  //               WITHOUT clearing winner/method/round. Idempotent.
+  //               Also restores fight.start_time to the future (+1d)
+  //               so `hasStarted` reverts to false and the UI's lock
+  //               derivation matches the user's mental model.
+  //   completed → completeFights flips fights + event to completed,
+  //               assigning random winners ONLY to fights that don't
+  //               already have one. Idempotent across repeated flips.
+  //               Leaves start_time untouched (display is driven by
+  //               status === "completed" regardless).
+  //   live      → event.status = "live" plus a fight.start_time push
+  //               into the past so the sub-header countdown timer
+  //               expires and the streak indicator can take its slot.
+  //               fights.status stays "upcoming" (schema CHECK blocks
+  //               "live" on fights); fight-level live state is derived
+  //               from start_time vs now() plus event.status === "live".
   if (status === "upcoming") {
-    const result = await resetFights(admin);
+    // 2026-04-14 Sean bug fix: also bump event.date to a future
+    // value. Without this, BC seed events are dated 2026-01/02/03
+    // (in the past relative to today) and the home hero's
+    // EventDateLine shows "끝난 경기" feel even though event.status
+    // is "upcoming". This was the root cause of his "첫방문에
+    // 업커밍인데 끝난 경기 디스플레이" report.
+    const now = Date.now();
+    const futureStartTime = computeFutureStartTime(now);
+    const futureEventDate = computeFutureEventDate(now);
+
+    // Preserve cancelled/no_contest fights' start_time untouched —
+    // the pure helper excludes them.
+    const { data: startTimeFights, error: fetchStartErr } = await admin
+      .from("fights")
+      .select("id, status")
+      .eq("event_id", latestEvent.id);
+    if (fetchStartErr) {
+      return { ok: false, reason: `fetch fights for start_time: ${fetchStartErr.message}` };
+    }
+    const pushIds = selectStartTimePushIds(
+      (startTimeFights ?? []) as Array<{ id: string; status: FightStatus }>,
+    );
+    if (pushIds.length > 0) {
+      const { error: resetStartTimeErr } = await admin
+        .from("fights")
+        .update({ start_time: futureStartTime })
+        .in("id", pushIds);
+      if (resetStartTimeErr) {
+        return { ok: false, reason: `reset start_time: ${resetStartTimeErr.message}` };
+      }
+    }
+
+    // Bump event.date to future so hero EventDateLine matches state
+    const { error: dateErr } = await admin
+      .from("events")
+      .update({ date: futureEventDate })
+      .eq("id", latestEvent.id);
+    if (dateErr) {
+      return { ok: false, reason: `bump event date: ${dateErr.message}` };
+    }
+
+    const result = await resetFights(admin, latestEvent.id);
+    if ("ok" in result && result.ok === false) {
+      return result;
+    }
     return { ok: true, status, ...result };
   }
   if (status === "completed") {
-    const result = await completeFights(admin);
+    const result = await completeFights(admin, latestEvent.id);
+    if ("ok" in result && result.ok === false) {
+      return result;
+    }
+    // Event.date stays as-is for completed state (past dates are
+    // semantically correct for a finished event).
     return { ok: true, status, ...result };
   }
   // live
-  await admin
+  //
+  // Sequence: reset fights → push start_time to past → bump event.date
+  // to today → set event.status = live. The reset step preserves
+  // cancelled/no_contest and flips completed → upcoming (so the UI's
+  // displayState derivation doesn't falsely show completed). The
+  // start_time push makes `hasStarted = true` so the sub-header
+  // timer expires and the streak indicator can appear. The event.date
+  // bump ensures the hero EventDateLine matches the semantic state.
+  const now = Date.now();
+  const pastStartTime = computePastStartTime(now);
+  const todayEventDate = computeTodayEventDate(now);
+
+  const resetResult = await resetFights(admin, latestEvent.id);
+  if ("ok" in resetResult && resetResult.ok === false) {
+    return resetResult;
+  }
+
+  const { data: liveFights, error: fetchLiveErr } = await admin
+    .from("fights")
+    .select("id, status")
+    .eq("event_id", latestEvent.id);
+  if (fetchLiveErr) {
+    return { ok: false, reason: `fetch fights for live: ${fetchLiveErr.message}` };
+  }
+  const livePushIds = selectStartTimePushIds(
+    (liveFights ?? []) as Array<{ id: string; status: FightStatus }>,
+  );
+  if (livePushIds.length > 0) {
+    const { error: startTimeErr } = await admin
+      .from("fights")
+      .update({ start_time: pastStartTime })
+      .in("id", livePushIds);
+    if (startTimeErr) {
+      return { ok: false, reason: `push start_time: ${startTimeErr.message}` };
+    }
+  }
+
+  const { error: dateErr } = await admin
+    .from("events")
+    .update({ date: todayEventDate })
+    .eq("id", latestEvent.id);
+  if (dateErr) {
+    return { ok: false, reason: `bump event date: ${dateErr.message}` };
+  }
+
+  const { error: eventErr } = await admin
     .from("events")
     .update({ status: "live" })
     .eq("id", latestEvent.id);
+  if (eventErr) {
+    return { ok: false, reason: `set live: ${eventErr.message}` };
+  }
   return { ok: true, status, event_name: latestEvent.name };
 }
 
@@ -1063,13 +1385,9 @@ async function setEventStatus(
  */
 async function setContentFlagsPreview(
   admin: ReturnType<typeof getAdminClient>,
+  explicitEventId?: string,
 ) {
-  const { data: latestEvent } = await admin
-    .from("events")
-    .select("id, name")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+  const latestEvent = await resolveTargetEvent(admin, explicitEventId);
 
   if (!latestEvent) {
     return { ok: false, reason: "no event" };
@@ -1139,13 +1457,11 @@ async function setContentFlagsPreview(
   };
 }
 
-async function clearContentFlags(admin: ReturnType<typeof getAdminClient>) {
-  const { data: latestEvent } = await admin
-    .from("events")
-    .select("id, name")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+async function clearContentFlags(
+  admin: ReturnType<typeof getAdminClient>,
+  explicitEventId?: string,
+) {
+  const latestEvent = await resolveTargetEvent(admin, explicitEventId);
 
   if (!latestEvent) {
     return { ok: false, reason: "no event" };
@@ -1171,13 +1487,24 @@ async function clearContentFlags(admin: ReturnType<typeof getAdminClient>) {
 async function getUserState(
   admin: ReturnType<typeof getAdminClient>,
   userId: string,
+  explicitEventId?: string,
 ) {
-  const { data: latestEvent } = await admin
-    .from("events")
-    .select("id, name, status, date")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+  // Reviewer round 2 [major] fold: previously used `latest by date
+  // desc` which diverged from the home page's featured logic. With
+  // a crawler event (Exodus, later date) alongside a seed event
+  // (BC9, earlier active), getUserState returned Exodus but the home
+  // page featured BC9 — causing `handleReplayAllPredictedToast` to
+  // wipe the wrong toast lock.
+  const target = await resolveTargetEvent(admin, explicitEventId);
+  let latestEvent: { id: string; name: string; status: string; date: string } | null = null;
+  if (target) {
+    const { data } = await admin
+      .from("events")
+      .select("id, name, status, date")
+      .eq("id", target.id)
+      .single();
+    latestEvent = data as { id: string; name: string; status: string; date: string } | null;
+  }
 
   const { data: userRow } = await admin
     .from("users")
@@ -1226,6 +1553,85 @@ async function getUserState(
   };
 }
 
+/**
+ * Pushes all non-final-state fights' `start_time` to `now + minutesAhead`.
+ * Used by DevPanel's 타이머 프리셋 (Timer Presets) so Sean can set
+ * the countdown to a specific duration for testing (30s, 5min, 1h,
+ * 3h, 1d).
+ *
+ * Preserves cancelled/no_contest via `selectStartTimePushIds` pure
+ * helper. Also bumps `event.date` to align with the new timer —
+ * specifically, if the timer is >= 1 day ahead, event.date moves
+ * accordingly; shorter timers keep event.date at today so the hero
+ * hero reads "today's event starting in Xh".
+ */
+async function setTimerOffset(
+  admin: ReturnType<typeof getAdminClient>,
+  minutesAhead: number,
+  explicitEventId?: string,
+) {
+  const latestEvent = await resolveTargetEvent(admin, explicitEventId);
+
+  if (!latestEvent) {
+    return { ok: false, reason: "no event" };
+  }
+
+  const now = Date.now();
+  const newStartTime = new Date(now + minutesAhead * 60 * 1000).toISOString();
+  // If timer is < 1 day, event is today; otherwise bump event.date forward
+  const daysAhead = minutesAhead / (60 * 24);
+  const newEventDate =
+    daysAhead < 1
+      ? new Date(now).toISOString().slice(0, 10)
+      : new Date(now + daysAhead * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const { data: fights, error: fetchErr } = await admin
+    .from("fights")
+    .select("id, status")
+    .eq("event_id", latestEvent.id);
+  if (fetchErr) {
+    return { ok: false, reason: `fetch fights: ${fetchErr.message}` };
+  }
+  const pushIds = selectStartTimePushIds(
+    (fights ?? []) as Array<{ id: string; status: FightStatus }>,
+  );
+
+  if (pushIds.length > 0) {
+    const { error: startErr } = await admin
+      .from("fights")
+      .update({ start_time: newStartTime })
+      .in("id", pushIds);
+    if (startErr) {
+      return { ok: false, reason: `push start_time: ${startErr.message}` };
+    }
+  }
+
+  const { error: dateErr } = await admin
+    .from("events")
+    .update({ date: newEventDate, status: "upcoming" })
+    .eq("id", latestEvent.id);
+  if (dateErr) {
+    return { ok: false, reason: `bump event date: ${dateErr.message}` };
+  }
+
+  // Also flip any non-upcoming fights back to upcoming so the timer
+  // preset produces a consistent "upcoming with countdown X" state
+  // regardless of the prior state. Pass latestEvent.id explicitly to
+  // ensure the reset targets the same event as the timer push.
+  const resetResult = await resetFights(admin, latestEvent.id);
+  if ("ok" in resetResult && resetResult.ok === false) {
+    return resetResult;
+  }
+
+  return {
+    ok: true,
+    event_name: latestEvent.name,
+    new_start_time: newStartTime,
+    new_event_date: newEventDate,
+    fights_pushed: pushIds.length,
+  };
+}
+
 async function setStreak(
   admin: ReturnType<typeof getAdminClient>,
   userId: string,
@@ -1271,45 +1677,55 @@ async function clearMyPredictions(
   return { ok: !error, cleared: count ?? 0, error: error?.message };
 }
 
-async function resetFights(admin: ReturnType<typeof getAdminClient>) {
-  // Reset the latest event (featured on homepage) back to upcoming
-  const { data: latestEvent } = await admin
-    .from("events")
-    .select("id, name")
-    .eq("status", "completed")
-    .order("date", { ascending: false })
-    .limit(1)
-    .single();
+async function resetFights(
+  admin: ReturnType<typeof getAdminClient>,
+  explicitEventId?: string,
+) {
+  // Target via resolveTargetEvent — matches the home page's
+  // featured event (or the explicit DevPanel picker selection).
+  const latestEvent = await resolveTargetEvent(admin, explicitEventId);
 
   if (!latestEvent) {
     return { reset_fights: 0, reset_events: 0, event_name: null };
   }
 
-  let resetCount = 0;
-  const { data: fights } = await admin
+  // Select fights to reset via the pure helper — this deliberately
+  // excludes cancelled and no_contest fights (final states that
+  // should never flip back to upcoming). Sean's 2026-04-14 bug:
+  // the old `.neq("status", "upcoming")` filter also matched
+  // cancelled/no_contest, so resetFights was wiping final-state
+  // markers. `selectResettableFightIds` is unit-tested at
+  // `src/lib/dev-state-helpers.test.ts`.
+  const { data: fights, error: fetchErr } = await admin
     .from("fights")
-    .select("id")
-    .eq("event_id", latestEvent.id)
-    .eq("status", "completed");
+    .select("id, status")
+    .eq("event_id", latestEvent.id);
+  if (fetchErr) {
+    return { ok: false, reason: `fetch fights: ${fetchErr.message}` };
+  }
+  const resetIds = selectResettableFightIds(
+    (fights ?? []) as Array<{ id: string; status: FightStatus }>,
+  );
 
-  for (const f of fights ?? []) {
-    await admin
-      .from("predictions")
-      .update({ is_winner_correct: null, is_method_correct: null, is_round_correct: null, score: null })
-      .eq("fight_id", f.id);
-
-    const { error } = await admin
+  let resetCount = 0;
+  if (resetIds.length > 0) {
+    const { error: fightErr, count } = await admin
       .from("fights")
-      .update({ status: "upcoming", winner_id: null, method: null, round: null })
-      .eq("id", f.id);
-
-    if (!error) resetCount++;
+      .update({ status: "upcoming" }, { count: "exact" })
+      .in("id", resetIds);
+    if (fightErr) {
+      return { ok: false, reason: `reset fights: ${fightErr.message}` };
+    }
+    resetCount = count ?? resetIds.length;
   }
 
-  await admin
+  const { error: eventErr } = await admin
     .from("events")
     .update({ status: "upcoming" })
     .eq("id", latestEvent.id);
+  if (eventErr) {
+    return { ok: false, reason: `reset event: ${eventErr.message}` };
+  }
 
   return { reset_fights: resetCount, reset_events: 1, event_name: latestEvent.name };
 }
@@ -1336,12 +1752,14 @@ export async function POST(request: Request) {
     }
 
     if (action === "complete-fights") {
-      const result = await completeFights(admin);
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
+      const result = await completeFights(admin, eventId);
       return NextResponse.json({ ok: true, action, ...result });
     }
 
     if (action === "reset-fights") {
-      const result = await resetFights(admin);
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
+      const result = await resetFights(admin, eventId);
       return NextResponse.json({ ok: true, action, ...result });
     }
 
@@ -1357,10 +1775,11 @@ export async function POST(request: Request) {
 
     if (action === "seed-me") {
       const userId = body?.userId;
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
       if (!userId) {
         return NextResponse.json({ error: "Missing userId" }, { status: 400 });
       }
-      const result = await seedMyData(admin, userId);
+      const result = await seedMyData(admin, userId, eventId);
       return NextResponse.json({ ok: true, action, ...result });
     }
 
@@ -1368,19 +1787,64 @@ export async function POST(request: Request) {
 
     if (action === "set-event-status") {
       const next = body?.status;
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
       if (next !== "upcoming" && next !== "live" && next !== "completed") {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }
-      const result = await setEventStatus(admin, next);
+      const result = await setEventStatus(admin, next, eventId);
+      return NextResponse.json({ action, ...result });
+    }
+
+    if (action === "list-events") {
+      // Dev-only: returns all events so DevPanel can show them in a
+      // picker dropdown. Sean 2026-04-14 ask: "내가 이벤트 고를수
+      // 잇게해줘 지금 엑소더스에서 안바껴"
+      const { data: allEvents } = await admin
+        .from("events")
+        .select("id, name, date, status")
+        .order("date", { ascending: false });
+      return NextResponse.json({ action, events: allEvents ?? [] });
+    }
+
+    if (action === "capture-snapshot") {
+      // Dev sandbox — Sean picks an event in DevPanel, this captures
+      // its current state so subsequent mutations can be reverted.
+      const eventId = typeof body?.eventId === "string" ? body.eventId : null;
+      if (!eventId) {
+        return NextResponse.json({ error: "eventId required" }, { status: 400 });
+      }
+      const result = await captureEventSnapshot(admin, eventId);
+      if (!result.ok) {
+        return NextResponse.json({ action, ...result }, { status: 400 });
+      }
+      return NextResponse.json({ action, ok: true, snapshot: result.snapshot });
+    }
+
+    if (action === "restore-snapshot") {
+      // Dev sandbox — restores DB to a previously-captured snapshot.
+      // The snapshot payload is passed in the body (client holds it
+      // in localStorage and sends it on 리셋 click).
+      const snapshot = body?.snapshot;
+      if (!isValidSnapshot(snapshot)) {
+        return NextResponse.json(
+          { error: "invalid snapshot payload" },
+          { status: 400 },
+        );
+      }
+      const result = await restoreEventSnapshot(admin, snapshot);
+      if (!result.ok) {
+        return NextResponse.json({ action, ...result }, { status: 400 });
+      }
       return NextResponse.json({ action, ...result });
     }
 
     if (action === "get-user-state") {
       const userId = body?.userId;
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
       if (!userId) {
         return NextResponse.json({ error: "Missing userId" }, { status: 400 });
       }
-      const state = await getUserState(admin, userId);
+      const state = await getUserState(admin, userId, eventId);
       return NextResponse.json({ ok: true, action, ...state });
     }
 
@@ -1408,6 +1872,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ action, ...result });
     }
 
+    if (action === "set-timer") {
+      const minutesAhead = Number(body?.minutesAhead);
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
+      if (!Number.isFinite(minutesAhead)) {
+        return NextResponse.json({ error: "minutesAhead required" }, { status: 400 });
+      }
+      const result = await setTimerOffset(admin, minutesAhead, eventId);
+      if ("ok" in result && result.ok === false) {
+        return NextResponse.json({ action, ...result }, { status: 400 });
+      }
+      return NextResponse.json({ action, ...result });
+    }
+
     if (action === "clear-my-predictions") {
       const userId = body?.userId;
       if (!userId) {
@@ -1418,12 +1895,14 @@ export async function POST(request: Request) {
     }
 
     if (action === "set-content-flags-preview") {
-      const result = await setContentFlagsPreview(admin);
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
+      const result = await setContentFlagsPreview(admin, eventId);
       return NextResponse.json({ action, ...result });
     }
 
     if (action === "clear-content-flags") {
-      const result = await clearContentFlags(admin);
+      const eventId = typeof body?.eventId === "string" ? body.eventId : undefined;
+      const result = await clearContentFlags(admin, eventId);
       return NextResponse.json({ action, ...result });
     }
 

@@ -56,7 +56,7 @@
   "prediction": {
     "selectWinner": "Pick winner",
     "selectWinnerMessage": "Please select a winner.",
-    "yourPick": "Your Pick",
+    "yourPick": "My Pick",
     "method": "How will they win?",
     "round": "What round does it end?",
     "savePick": "Save Pick",
@@ -80,15 +80,13 @@
     "predictAll": "Predict All",
     "correct": "You got it right!",
     "wrong": "Better luck next time",
-    "allPredictedToast": "All picks locked in. Good luck out there."
+    "allPredictedToast": "All {count} picks locked. You're set."
   },
   "profile": {
     "fightRecord": "Fight Record",
     "score": "Score",
     "currentStreak": "Current Streak",
     "bestStreak": "Best Streak",
-    "streakInARow": "in a row",
-    "streakPersonalBest": "personal best",
     "streakPrToast": "Streak to {streak}!",
     "hallOfFame": "Hall of Fame",
     "perfectCard": "Perfect",
@@ -191,6 +189,10 @@
     "notifRankingChange": "Ranking change notifications"
   },
   "fighter": {
+    "shareText": "Check out {name} on Black Pick",
+    "statFights": "Fights",
+    "statStreak": "Streak",
+    "statWinRate": "Win %",
     "record": "Record",
     "nationality": "Nationality",
     "weightClass": "Weight Class",
@@ -237,6 +239,7 @@
   "countdown": {
     "closesIn": "Predictions close in",
     "eventStartsIn": "Event starts in",
+    "eventInProgress": "Event in Progress",
     "locked": "Predictions locked",
     "lockedHint": "Predictions lock when time's up",
     "daysShort": "Days",
@@ -372,13 +375,14 @@
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "Email",
     "channelSms": "SMS",
-    "ctaDefault": "Share your card",
-    "ctaAllLocked": "{n}/{total} locked in — share your card",
-    "ctaCompleteRecord": "{wins}-{losses} this card — share",
-    "ctaCompleteStreak": "🔥 {streak} in a row — share",
+    "ctaDefault": "Share your picks with friends",
+    "ctaAllLocked": "All {total} picks ready. Share them with friends.",
+    "ctaCompleteRecord": "{wins}W {losses}L this card. Show it off to friends.",
+    "ctaCompleteStreak": "{streak} in a row. Show your friends.",
     "ctaDisabledNoRingName": "Set a ring name to share",
     "ctaDisabledNoPicks": "Save a pick to unlock sharing",
-    "goToProfile": "Go to profile"
+    "goToProfile": "Go to profile",
+    "stickyPrompt": "Your picks are ready. Share them with friends."
   },
   "common": {
     "loading": "Loading...",

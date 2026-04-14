@@ -84,7 +84,10 @@ export default function AllPredictedToast({
     }
 
     firedThisMountRef.current = true;
-    toast(t("prediction.allPredictedToast"), "success");
+    toast(
+      t("prediction.allPredictedToast", { count: predictableTotal }),
+      "success",
+    );
   }, [userId, eventId, predictableTotal, predictedCount, toast, t]);
 
   return null;

@@ -747,6 +747,168 @@ button:disabled {
   animation: shimmer 2.2s ease-in-out infinite;
 }
 
+/* ── Rotating golden ray border (Watch Live live-state badge) ── */
+
+/* Shimmer button — adapted from magicui's ShimmerButton (Sean's
+   reference, 2026-04-14). A rotating conic-gradient sits BEHIND
+   an opaque backdrop layer; the backdrop is inset by 2px leaving
+   only the outer ring visible, so the gradient reads as a
+   shimmering border.
+
+   Note: magicui's original `shimmer-spin` had 4 eased corner
+   stops (0%/15-35%/65-85%/100%) that made the beam pause at each
+   side. Sean 2026-04-14: "부드럽게 계속 안돌고" — replaced with
+   plain linear 0→360 rotation for continuous smooth motion. */
+@keyframes shimmer-spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Gold dim pulse — brightens from 40% to 100% color AND adds a
+   text-shadow glow at peak so the eyebrow reads as actual light,
+   not just a color change. Sean 2026-04-14: "금색으로 밝아질때
+   좀 빛번짐이 잇게해서 진짜 빛처럼 보이게". */
+@keyframes gold-dim-pulse {
+  0%, 100% {
+    color: rgba(255, 186, 60, 0.4);
+    text-shadow: none;
+  }
+  50% {
+    color: rgba(255, 186, 60, 1);
+    text-shadow:
+      0 0 8px rgba(255, 186, 60, 0.9),
+      0 0 18px rgba(255, 186, 60, 0.6),
+      0 0 36px rgba(255, 186, 60, 0.35),
+      0 0 64px rgba(255, 186, 60, 0.15);
+  }
+}
+
+.gold-dim-pulse {
+  animation: gold-dim-pulse 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-dim-pulse {
+    animation: none;
+    color: rgba(255, 186, 60, 0.7);
+    text-shadow: 0 0 12px rgba(255, 186, 60, 0.4);
+  }
+}
+
+/* LCD "off" variant — when the countdown hits 00:00:00 and the
+   FlipTimer enters burned-out state, the digits lose their gold
+   glow and render as subtle gray instead. Sean 2026-04-14:
+   "lcd디짓은 000000 이되면 회색으로 바뀌게". */
+.lcd-dim .lcd-digit span {
+  color: rgba(255, 255, 255, 0.22);
+  text-shadow: none;
+}
+
+.lcd-dim .lcd-digit::before {
+  color: rgba(255, 255, 255, 0.03);
+}
+
+.lcd-dim .lcd-colon {
+  color: rgba(255, 255, 255, 0.22);
+  text-shadow: none;
+}
+
+/* ShimmerButton — adapted from magicui ShimmerButton (Sean's
+   reference, https://magicui.design/docs/components/shimmer-button).
+   Structure:
+
+     <span class="shimmer-wrap">              ← container + overflow
+       <a class="retro-button">...</a>        ← button, unchanged
+     </span>
+
+   Layers inside the wrapper via pseudos:
+     ::before — rotating conic-gradient spark (z:0). Absolutely
+                positioned larger than the wrapper (220% square),
+                centered. Rotated by `shimmer-spin` which lingers
+                at 90deg and 270deg corners before sweeping.
+                `filter: blur(2px)` softens into a glow.
+     ::after  — opaque dark backdrop at `inset: 2px` (z:1). Covers
+                the interior of the wrapper EXCEPT a 2px outer
+                slot. The spark is visible ONLY through that slot,
+                producing a shimmering border ring.
+     button   — sits on top (z:2) at wrapper's content-box (inside
+                wrapper `padding: 2px`) with original styling
+                (retro-button-secondary dark bg + white text).
+                The button's own 1px var(--input) border is
+                overridden transparent so the shimmer is the only
+                visible frame. */
+.shimmer-wrap {
+  position: relative;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9999px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Rotating gold spark — z:0, behind backdrop + button.
+   Wide 180°+ arc so something is always visible as the ring
+   rotates (prior 90° arc had 270° of transparent "dark zones"
+   which Sean perceived as the ray pausing mid-button). */
+.shimmer-wrap::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 220%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 186, 60, 0.05) 0deg,
+    rgba(255, 186, 60, 0.35) 60deg,
+    rgba(255, 186, 60, 0.85) 120deg,
+    rgba(255, 255, 255, 1) 180deg,
+    rgba(255, 186, 60, 0.85) 240deg,
+    rgba(255, 186, 60, 0.35) 300deg,
+    rgba(255, 186, 60, 0.05) 360deg
+  );
+  filter: blur(2px);
+  animation: shimmer-spin 6s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Opaque backdrop at inset 2px — covers wrapper interior except
+   the 2px outer ring slot where the spark shows through. */
+.shimmer-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background: rgb(10, 10, 10);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Button on top — z:2, original secondary styling preserved, inner
+   1px border killed so only the shimmer ring is the visible frame. */
+.shimmer-wrap > .retro-button {
+  position: relative;
+  z-index: 2;
+  border-color: transparent !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-wrap::before {
+    animation: none;
+    background: conic-gradient(
+      from 45deg,
+      transparent 0deg,
+      rgba(255, 186, 60, 0.4) 90deg,
+      transparent 180deg
+    );
+  }
+}
+
 /* ── Percentage unit — top-aligned to number cap height ── */
 
 .pct-unit {

@@ -14,6 +14,13 @@ import {
   retroButtonClassName,
 } from "@/components/ui/retro";
 
+// 2026-04-14: force dynamic so `publicUser` (ring_name / streak /
+// score) re-fetches on every request. Without this, DevPanel's
+// "온보딩 다시 보기" action can't trigger `RingNameOnboarding`
+// because the layout's `publicUser.ring_name` stays cached at the
+// prior value and `needsRingNameOnboarding` never flips to true.
+export const dynamic = "force-dynamic";
+
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const { t } = await getTranslations();
   const supabase = await createSupabaseServer();

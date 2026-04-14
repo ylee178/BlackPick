@@ -56,7 +56,7 @@
   "prediction": {
     "selectWinner": "Elige al ganador",
     "selectWinnerMessage": "Por favor, selecciona un ganador.",
-    "yourPick": "Tu predicción",
+    "yourPick": "Mi predicción",
     "method": "¿Cómo ganará?",
     "round": "¿En qué asalto termina?",
     "savePick": "Guardar predicción",
@@ -80,15 +80,13 @@
     "predictAll": "Predecir todo",
     "correct": "¡Acertaste!",
     "wrong": "No acertaste esta vez",
-    "allPredictedToast": "Todos tus pronósticos quedaron guardados. Suerte."
+    "allPredictedToast": "Los {count} pronósticos están listos. Ya está."
   },
   "profile": {
     "fightRecord": "Historial de peleas",
     "score": "Puntuación",
     "currentStreak": "Racha actual",
     "bestStreak": "Mejor racha",
-    "streakInARow": "seguidas",
-    "streakPersonalBest": "mejor marca",
     "streakPrToast": "¡Racha de {streak}!",
     "hallOfFame": "Salón de la fama",
     "perfectCard": "Perfecto",
@@ -191,6 +189,10 @@
     "notifRankingChange": "Notificaciones de cambios en la clasificación"
   },
   "fighter": {
+    "shareText": "Mira a {name} en Black Pick",
+    "statFights": "Peleas",
+    "statStreak": "Racha",
+    "statWinRate": "% Victorias",
     "record": "Historial",
     "nationality": "Nacionalidad",
     "weightClass": "Categoría de peso",
@@ -237,6 +239,7 @@
   "countdown": {
     "closesIn": "Las predicciones cierran en",
     "eventStartsIn": "El evento comienza en",
+    "eventInProgress": "Evento en progreso",
     "locked": "Predicciones bloqueadas",
     "lockedHint": "Las predicciones cierran al acabar el tiempo",
     "daysShort": "Días",
@@ -372,13 +375,14 @@
     "channelWhatsApp": "WhatsApp",
     "channelEmail": "Correo",
     "channelSms": "SMS",
-    "ctaDefault": "Compartir mi cartelera",
-    "ctaAllLocked": "{n}/{total} listos — comparte tu cartelera",
-    "ctaCompleteRecord": "{wins}-{losses} en esta cartelera — comparte",
-    "ctaCompleteStreak": "🔥 {streak} seguidos — comparte",
+    "ctaDefault": "Comparte tus pronósticos con tus amigos",
+    "ctaAllLocked": "Los {total} pronósticos están listos. Compártelos con tus amigos.",
+    "ctaCompleteRecord": "{wins}-{losses} en esta cartelera. Presume tus resultados con los amigos.",
+    "ctaCompleteStreak": "{streak} seguidos. Muéstrales a tus amigos tu racha.",
     "ctaDisabledNoRingName": "Elige un nombre de púgil para compartir",
     "ctaDisabledNoPicks": "Guarda un pronóstico para desbloquear",
-    "goToProfile": "Ir al perfil"
+    "goToProfile": "Ir al perfil",
+    "stickyPrompt": "Tus pronósticos están listos. Compártelos con tus amigos."
   },
   "common": {
     "loading": "Cargando...",

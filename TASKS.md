@@ -338,6 +338,39 @@ _Goal: the "proper" pass Sean wanted. Comes last because it benefits from all co
 - [ ] **pt-BR gets priority attention** per GPT review (Brazil is the early-growth market).
 - [ ] Cross-check: no hardcoded Korean leaks (Phase 1 already fixed the bugs — this double-checks).
 
+#### Perspective + tone sweep — Sean 2026-04-14 additional criteria
+
+Sean surfaced a class of issues during Branch 8 DevPanel sandbox testing that the general tone review should systematically catch. Each locale must be swept for:
+
+**(A) Perspective consistency**: every copy string has an implicit POV. Two patterns and they must not mix within the same surface:
+1. **1인칭 소유** (user's own label for their own thing) — e.g., fight card chip showing the user's saved pick. Korean uses "마이픽" (loanword) or "내 픽". English "My Pick". Applied to artifacts the user OWNS and labels for themselves.
+2. **2인칭 권유** (UI addressing the user, asking them to do something) — e.g., share CTA telling the user to share their picks. Korean "당신의 픽을 친구들에게 공유해보세요". English "Share your picks with friends". Applied to CTAs / banners / nudges.
+
+Confusing 1인칭 with 2인칭 on the same surface produces copy that reads as "inside the user's head" vs "the app talking to the user" — jarring. Sweep every string and classify its POV explicitly.
+
+**(B) Politeness register per culture**:
+- **Korean**: default polite "해보세요" register for CTAs. Avoid "~자" / "~해" casual (반말) unless brand-intentional (e.g., retro-boxing chest-thump). Sean explicit ask 2026-04-14: "너무 반말보다 해보세요 이런거 권유".
+- **Japanese**: ですます form for CTAs, casual 動詞原形 only for intentional energy bursts. Consider keigo for confirmation moments.
+- **Chinese (zh-CN)**: avoid overly formal 您 unless addressing a recipient. Default 你 for user-facing copy. "吧" particle for soft suggestion.
+- **Spanish**: tú vs usted — BlackPick target audience is casual sports fan → tú. But Latin American Spanish vs Peninsular → prefer LatAm (tú, "ustedes" for plural). No "vosotros".
+- **Portuguese (pt-BR)**: você, NOT tu. Brazilian casual register. Avoid European PT forms.
+- **Mongolian**: та (polite) for CTAs, чи (familiar) only in intentional brand voice.
+
+**(C) Em-dash (`—`) purge**: Sean 2026-04-14 "글도 emdash쓰지말고". Replace all `—` in share/CTA copy with period + new sentence OR comma + conjunction. em-dash makes copy feel dramatic-typographic in a way that doesn't fit BlackPick's direct voice.
+
+**(D) Emoji purge in i18n strings**: Per DESIGN.md §Icons ("no unicode symbols for icons"), i18n values should NOT contain `🔥`, `🎯`, `✨`, etc. Render the equivalent with a `lucide-react` icon component in the JSX callsite instead. Exceptions: country flags (intentional Unicode data), OS-level emoji inputs in user content (not translation strings).
+
+**(E) Count interpolation presence**: any copy of the form "N items saved" should use `{count}` interpolation via the existing `i18n-provider.tsx:26-32` `{var}` handler, not split into "items saved" + rendered count separately. Sean asked for this specifically on `prediction.allPredictedToast` — a single string with count reads as one completion event instead of a fragmentary "X picks" + "saved" + "good luck".
+
+**(F) CTA verb strength**: every CTA verb should be active + concrete. Replace:
+- "OK" / "Done" (weak acknowledgment) → action verb like "Save" / "Confirm"
+- "Continue" (directionless) → "Save your pick" / "See results"
+- Passive "~되었습니다" / "was saved" → active "saved" / "locked in"
+
+**Criteria deliverable**: 7-locale spreadsheet (or markdown table) keyed by i18n path, with columns: `current value` / `POV (1인칭/2인칭/3인칭/neutral)` / `register (formal/casual/brand)` / `has em-dash?` / `has emoji?` / `proposed rewrite`. Any row that changes POV or register requires per-locale native-speaker check before commit.
+
+**Dependencies**: must run AFTER Phase 1–4 copy is finalized. Otherwise the sweep will be rewriting strings that are themselves about to change. Confirm with Sean before starting.
+
 ---
 
 ## Phase 6 — LAUNCH GATE

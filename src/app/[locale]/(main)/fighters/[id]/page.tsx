@@ -8,6 +8,7 @@ import { translateWeightClass } from "@/lib/weight-class";
 import { RetroEmptyState, retroPanelClassName } from "@/components/ui/retro";
 import FighterComments from "@/components/FighterComments";
 import FighterAvatar from "@/components/FighterAvatar";
+import ShareMenu from "@/components/ShareMenu";
 import { parseRecord } from "@/lib/parse-record";
 import { Crown, Flame } from "lucide-react";
 
@@ -121,6 +122,20 @@ export default async function FighterDetailPage({ params }: PageProps) {
           {ringName.slice(0, 2)}
         </span>
 
+        {/* Share button — top-right inside hero. Direct share of this
+            fighter page URL, with a localized "Check out {name}"
+            sub-title for share intents. */}
+        <div className="absolute right-3 top-3 z-10 sm:right-5 sm:top-5">
+          <ShareMenu
+            url={`/fighters/${id}`}
+            title={displayName}
+            text={t("fighter.shareText", { name: displayName })}
+            triggerLabel={t("share.trigger")}
+            triggerVariant="soft"
+            triggerSize="sm"
+          />
+        </div>
+
         <div className="relative grid min-h-[340px] grid-cols-[auto_1fr] sm:min-h-[400px]">
           {/* Image — left, bottom-anchored, original proportions */}
           <div className="relative w-[200px] sm:w-[280px] md:w-[320px]">
@@ -170,10 +185,14 @@ export default async function FighterDetailPage({ params }: PageProps) {
       {/* ═══════════ STAT TILES ═══════════ */}
       <section className="grid grid-cols-4 divide-x divide-[rgba(255,255,255,0.06)] border-b border-[rgba(255,255,255,0.06)] bg-[var(--bp-card)]">
         {[
-          { value: totalFights, label: "Fights", hasFlame: false },
+          { value: totalFights, label: t("fighter.statFights"), hasFlame: false },
           { value: koWins, label: "KO", hasFlame: false },
           { value: subWins, label: "SUB", hasFlame: false },
-          { value: currentStreak > 0 ? currentStreak : `${winRate}%`, label: currentStreak > 0 ? "Streak" : "Win %", hasFlame: currentStreak > 0 },
+          {
+            value: currentStreak > 0 ? currentStreak : `${winRate}%`,
+            label: currentStreak > 0 ? t("fighter.statStreak") : t("fighter.statWinRate"),
+            hasFlame: currentStreak > 0,
+          },
         ].map((stat) => (
           <div key={stat.label} className="flex flex-col items-center gap-1 py-5">
             <div className="flex items-center gap-1.5">
