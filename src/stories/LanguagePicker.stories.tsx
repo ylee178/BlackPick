@@ -75,12 +75,54 @@ function FlagBR() {
     </svg>
   );
 }
+function FlagES() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4 rounded-full">
+      <defs><clipPath id="sb-es"><circle cx="10" cy="10" r="10" /></clipPath></defs>
+      <g clipPath="url(#sb-es)">
+        <rect width="20" height="5" fill="#aa151b" />
+        <rect y="5" width="20" height="10" fill="#f1bf00" />
+        <rect y="15" width="20" height="5" fill="#aa151b" />
+      </g>
+    </svg>
+  );
+}
+function FlagCN() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4 rounded-full">
+      <defs><clipPath id="sb-cn"><circle cx="10" cy="10" r="10" /></clipPath></defs>
+      <g clipPath="url(#sb-cn)">
+        <rect width="20" height="20" fill="#ee1c25" />
+        <path
+          d="M5 4.5 5.8 6.8 8.2 6.8 6.2 8.2 7 10.6 5 9.1 3 10.6 3.8 8.2 1.8 6.8 4.2 6.8Z"
+          fill="#ffff00"
+          transform="scale(0.5) translate(2 2)"
+        />
+      </g>
+    </svg>
+  );
+}
+function FlagMN() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4 rounded-full">
+      <defs><clipPath id="sb-mn"><circle cx="10" cy="10" r="10" /></clipPath></defs>
+      <g clipPath="url(#sb-mn)">
+        <rect width="6.67" height="20" fill="#c4272f" />
+        <rect x="6.67" width="6.67" height="20" fill="#015cab" />
+        <rect x="13.34" width="6.67" height="20" fill="#c4272f" />
+      </g>
+    </svg>
+  );
+}
 
 const languages = [
   { flag: <FlagUS />, label: "English", short: "EN", active: true },
   { flag: <FlagKR />, label: "\uD55C\uAD6D\uC5B4", short: "KO", active: false },
   { flag: <FlagJP />, label: "\u65E5\u672C\u8A9E", short: "JA", active: false },
+  { flag: <FlagES />, label: "Espa\u00F1ol", short: "ES", active: false },
   { flag: <FlagBR />, label: "Portugu\u00EAs", short: "PT", active: false },
+  { flag: <FlagCN />, label: "\u7B80\u4F53\u4E2D\u6587", short: "ZH", active: false },
+  { flag: <FlagMN />, label: "\u041C\u043E\u043D\u0433\u043E\u043B", short: "MN", active: false },
 ];
 
 export const OpenDropdown = () => (

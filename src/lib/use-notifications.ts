@@ -49,6 +49,28 @@ function emit(): void {
   for (const listener of listeners) listener();
 }
 
+/**
+ * @internal — exported for unit tests. Structural equality check used by
+ * the polling path to skip no-change emit cycles.
+ */
+export function snapshotsEqual(
+  a: NotificationsSnapshot,
+  b: NotificationsSnapshot,
+): boolean {
+  if (a.unreadCount !== b.unreadCount) return false;
+  if (a.notifications.length !== b.notifications.length) return false;
+  for (let i = 0; i < a.notifications.length; i++) {
+    const prev = a.notifications[i];
+    const next = b.notifications[i];
+    // id + is_read are the only fields the bell actually reads. Matching on
+    // both covers the read-state flip flow. Created_at/title/body are
+    // effectively immutable for an already-emitted notification, so
+    // ignoring them here is safe and keeps the check cheap.
+    if (prev.id !== next.id || prev.is_read !== next.is_read) return false;
+  }
+  return true;
+}
+
 async function fetchOnce(): Promise<void> {
   if (inflight) return inflight;
   inflight = (async () => {
@@ -56,10 +78,15 @@ async function fetchOnce(): Promise<void> {
       const res = await fetch("/api/notifications?limit=20");
       const data = await res.json();
       if (res.ok) {
-        snapshot = {
+        const next: NotificationsSnapshot = {
           notifications: (data.notifications ?? []) as Notification[],
           unreadCount: data.unread_count ?? 0,
         };
+        // Skip the assign + emit when the new payload is structurally
+        // equal to the current snapshot. Subscribers would otherwise
+        // re-render every 60s on idle pages even though nothing changed.
+        if (snapshotsEqual(snapshot, next)) return;
+        snapshot = next;
         emit();
       }
     } catch {

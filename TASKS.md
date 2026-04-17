@@ -4,7 +4,7 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 (session 5) — `db/integrity-atomicity-followup` branch shipped. Closes 6 Codex-deferred items from PR #30 + folds round-1 reviewer findings (added `recalculate_all_scores` hardening + 5-table LOCK TABLE scope + `process_fight_result` REVOKE). Tier C review: round-1 parallel (red-team / forensic / oracle) + round-2 fold-verify, APPROVE_WITH_CHANGES 0.87 no blockers. DEV apply approved; PROD apply gated on Sean's cross-family dispatch decision._
+_Last updated: 2026-04-17 (session 5) — 3 PRs shipped to develop: #39 (`db/integrity-atomicity-followup`, Tier C review APPROVE 0.87) + #40 (`a11y/pt-br-activation-followup`, Storybook 4→7 flags + 20 pt-BR accent drops) + #41 (`chore/store-hook-perf-dedupe`, notification/timezone store perf + 13 new tests). PROD apply of #39's migration gated on Sean's cross-family dispatch decision._
 
 ---
 
@@ -14,9 +14,20 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 ### 🟣 Claude — queue (priority order)
 
-1. **ACTIVE NEXT — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
-2. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
-3. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
+The 7-branch queue agreed mid-session (see `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md` for full specs):
+
+1. **ACTIVE NEXT — `fix/logout-loading-state`** (Tier A). `AccountDropdown.handleLogout:51-57` awaits `signOut` with no visible feedback. Add `isLoggingOut` state + disabled button + "Logging out..." i18n label × 7 locales.
+2. **Next — `a11y/mobile-nav-icon-mapping`** (Tier A lite). `MainNav.tsx:31-37`: Picks `Home → Target`, My Record `CalendarDays → ClipboardList`. Dashboard/Ranking/Fighters unchanged.
+3. **Next — `chore/supabase-email-sender-docs`** (Docs). Tier-1 dashboard guide for "Black Pick" sender name swap (Sean runs ~5 min). Tier-2 custom SMTP via Resend bundles into `feature/feedback-email-relay`.
+4. **Next — `fix/legal-pages-redesign-and-disclaimer`** (Tier A). Add "fan-made community, NOT Black Combat official" banner × 7 locales + split Articles into per-panel cards. Leave `isKo` binary body prose for Phase 5 full i18n migration.
+5. **Next — `feature/comment-reply-threading`** (Tier B). 1-level flat replies + auto `@username` prepend (YouTube/Twitter pattern, not Reddit N-depth). No schema change — `parent_id` already exists on `fighter_comments` + `fight_comments`.
+6. **Next — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
+7. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
+
+### Blocked-on-Sean-manual (carried from session 5)
+
+- **PR #39 PROD apply decision**: Codex CLI / GPT cross-family on (a) PgBouncer + `LOCK TABLE` interaction, (b) PgBouncer + `TRUNCATE` in `recalculate_all_scores`, (c) prod `pg_proc.proacl` baseline (`REVOKE ALL FROM PUBLIC` doesn't revoke role-specific grants). Or defer PROD to Phase 6 bundle.
+- **pt-BR activation follow-up**: Manual `?lang=pt-BR` smoke across 5–10 pages (home / events / fight detail / ranking / my-record / profile / share). Accent fixes may change line-wrap behavior on narrow containers. Needs dev server session.
 
 ### Blocked-on-Sean-manual (scorecard follow-ups)
 
@@ -59,7 +70,9 @@ Full per-branch narrative + review trails live in `/Users/uxersean/Desktop/Wiki_
 
 | PR | Branch | Commit (squash) | Phase | Summary |
 |---|---|---|---|---|
-| TBD | `db/integrity-atomicity-followup` | pending | **P4 followup ✅** | Migration `202604180001_integrity_atomicity_followup.sql` closes 6 Codex-deferred items from PR #30 + folds in round-1 reviewer findings. Hardens `reset_user_record` (5-table LOCK TABLE, not 1), `process_fight_result` (REVOKE from PUBLIC + search_path pin), `recalculate_all_scores` (same hardening — NEW in fold, round-1 oracle + forensic caught the gap). Documents dual-guard invariant + completed_at semantic split + comment_likes UPDATE-policy absence. `manual-remote-rollout.sql` marked `[DEPRECATED]` to prevent future silent search_path clear. 248/248 tests pass (+1 mvp-vote-window invalid-date case). Tier C review: 3 parallel round-1 framings (red-team 0.82, forensic 0.90, oracle 0.87) + round-2 fold-verify 0.87, all APPROVE_WITH_CHANGES no blockers. Dialog at `reviews/BlackPick/2026-04-17_integrity-followup_dialog/` (gitignored). PROD apply gated on Sean's cross-family dispatch decision per round-2 recommendation. |
+| #41 | `chore/store-hook-perf-dedupe` | pending | **Chore ✅** | `use-notifications` snapshot dedupe before emit (skip no-change polls) + `use-timezone` `oldValue === newValue` short-circuit on cross-tab storage events. `snapshotsEqual` + `subscribe` exported `@internal` for tests. 260/260 tests (+13 new). Tier A blackpick profile APPROVE_WITH_CHANGES 0.88. |
+| #40 | `a11y/pt-br-activation-followup` | pending | **P5 prep ✅** | Storybook `LanguagePicker.stories.tsx` mock expanded from 4 → 7 flags (added inline SVGs for ES, CN, MN to match EN/KR/JP/BR style). pt-BR.json quality spot-check fixed 20 accent drops across `event`, `account`, `onboarding`, `myRecord`, `discussion`, `notification` sections (Visão, faça, possível, Não, Método×3, Precisão, Tendência, Pontuação×3, previsão, Discussão×2, Notificações, começando, disponíveis, Votação). Manual `?lang=pt-BR` smoke on 5–10 pages deferred to Sean. 7/7 locales still 378 keys. |
+| #39 | `db/integrity-atomicity-followup` | pending | **P4 followup ✅** | Migration `202604180001_integrity_atomicity_followup.sql` closes 6 Codex-deferred items from PR #30 + folds in round-1 reviewer findings. Hardens `reset_user_record` (5-table LOCK TABLE, not 1), `process_fight_result` (REVOKE from PUBLIC + search_path pin), `recalculate_all_scores` (same hardening — NEW in fold, round-1 oracle + forensic caught the gap). Documents dual-guard invariant + completed_at semantic split + comment_likes UPDATE-policy absence. `manual-remote-rollout.sql` marked `[DEPRECATED]` to prevent future silent search_path clear. 248/248 tests pass (+1 mvp-vote-window invalid-date case). Tier C review: 3 parallel round-1 framings (red-team 0.82, forensic 0.90, oracle 0.87) + round-2 fold-verify 0.87, all APPROVE_WITH_CHANGES no blockers. Dialog at `reviews/BlackPick/2026-04-17_integrity-followup_dialog/` (gitignored). PROD apply gated on Sean's cross-family dispatch decision per round-2 recommendation. |
 | #37 | `feature/fight-scorecard-ui` | `c59fdb5` | **P4 PR B ✅** | `FightScoreCard` server component (5-col judge-as-row, draw-preserving `winnerSide: "A" \| "B" \| "draw"`) + 6 state-matrix tests + FightCard `scoreCard?` prop + 3 call sites wiring `resolveScoreCardsByDbFightId` with `.catch` empty-Map fallback + 5 i18n keys × 7 locales (373 → 378). Also unbroke develop CI (pre-existing `winnerSourceId` tsc failure landed in PR #35, visible on Vercel CI/CD runs for #34 + #36). Second-opinion-reviewer APPROVE 0.88 (no blockers; 2 minors deferred). Wiki: `2026-04-17-session-4-scorecard-ui-pr-b.md` |
 | #35 | `feature/fight-scorecard-display` | `ff6fe87` | **P4 PR A ✅** | BC scorecard plumbing: `fetchBcScoreCard` (3s timeout + split-TTL cache + Sentry), `resolveScoreCardsByDbFightId` strict 2-sided matcher keyed by dbFight.id, 23 unit tests. Dormant in prod until PR B wires up. Spec v3 survived subagent BLOCK v1→v2 + Codex BLOCK v2→v3. Codex lite tiebreaker caught inflight-stampede + null-seq first-match gaps subagent missed. Wiki: `2026-04-17-session-3-scorecard-plumbing.md` |
 | #34 | `feature/crawler-result-sync` | `971ca12` | **P4 chore ✅** | BC winner-label parser + `sync-bc-event-results.ts` script + admin preselect. No auto-run — `npm run sync:bc-results` on demand. Addresses Sean's 2026-04-17 "crawler is wrong" theory — crawler wasn't parsing results AT ALL, now it does for winner; method/round still admin. |
@@ -346,8 +359,8 @@ _Goal: cron / anomaly / clustering / hot-fight features that only make sense wit
 _No phase assigned — pull when a related area is already being touched._
 
 - [ ] Share page enumeration opt-out — `users.is_public` flag, gate `loadSharePageData`
-- [ ] Notification store snapshot dedupe (`use-notifications.ts`)
-- [ ] Timezone storage event filter with `oldValue === newValue` short-circuit
+- [x] Notification store snapshot dedupe (`use-notifications.ts`) — shipped in `chore/store-hook-perf-dedupe` (session 5)
+- [x] Timezone storage event filter with `oldValue === newValue` short-circuit — shipped in same branch
 - [ ] Storybook stories for `useIsMounted`, `useClockTick`, notification store
 - [ ] CODEOWNERS + branch protection on main
 - [ ] Replace GitHub Actions `push-to-main` deploy with manual approval gate (Vercel Deployment Protection)
