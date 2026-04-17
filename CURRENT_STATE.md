@@ -1,394 +1,68 @@
-# BlackPick — Current State (2026-04-14, Phase 1 at 9/9 after PR #28 squash-merged; only Branch 9 verification-only task remaining)
+# BlackPick — Current State
+
+_Snapshot only. Durable roadmap lives in [`TASKS.md`](TASKS.md). Per-branch narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Commit history: `git log`._
+
+_Last refreshed: 2026-04-17 (Codex integrity branch applied to DEV + PROD; predeploy green)._
 
 ## Branch
-`develop` (PR #28 `feature/streak-ux` squash-merged as `8ad4ac7`; branch deleted local + remote). Phase 1 is 9/9 with only Branch 9 `fix/verify-all-predicted-toast` remaining — a verification-only task Sean runs via DevPanel, no new code.
+`develop` tip `1c11e30` — cleanup commit (`5f7ad41`) + Codex branch registration (`22297cf`) + parallel-queue split (`1c11e30`) shipped 2026-04-17. PR #28 `feature/streak-ux` squash-merged as `8ad4ac7` on 2026-04-14. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel). Codex remediation branch `db/codex-integrity-atomicity` is approved/applied but not merged yet.
 
-## Latest Commits
-**`develop` tip** (newest first):
-- `aee34c4` chore(docs): Phase 2 scope correction — email infra + Gmail relay replaces DB ticket system — **2026-04-14 session 2**. Docs/email-setup.md (Cloudflare+Resend+Gmail Send As guide), Docs/specs/2026-04-14-feedback-tickets.md preserved with DEFERRED header, TASKS.md Phase 2 rewritten (4 branches, all blackpick profile). db/feedback-tickets branch deleted. Full journey + lessons at /Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-14-session-2-phase2-scope-correction.md. New memory entry at feedback_proposal_discipline.md.
-- `07543fc` chore(docs): session wrap 2026-04-14 — PR #28 shipped, Phase 1 → 9/9, scoring v3 on DEV
-- `8ad4ac7` feat(streak): profile tiles + PR toast + share CTA wire-up (#28) — **session 1 2026-04-14**, Branch 8 + post-ship iterations bundled: sticky streak slot, DevPanel v3 sandbox, HomeShareBar, FlipTimer burned-out state, ShimmerButton gold ray, winner-only save + scoring v3 migration, 마이픽 perspective fix, TASKS.md Phase 5 criteria A–F
-- `eb79fcb` chore(docs): log logo-png cherry-pick to main (commit 20ffbd6)
-- `69a53b6` chore(docs): session wrap 2026-04-13 — PR #27 Branch 7 shipped, Phase 1 → 8/9
-- `cc7bbc7` feat(onboarding): first-time user flow — dismissible ring-name + anon CTA + first-pick hint (#27) — **prior session** (same calendar day)
-- `af5cfec` chore: 2026-04-13 autonomous follow-ups — PROD migration + Facebook OAuth docs + smoke checks
-- `84a274d` chore(docs): session wrap 2026-04-13 — PR #26 Branch 6 shipped, Phase 1 → 7/9
-- `b24057a` fix(i18n): hardcoded Korean leak sweep + English caps-lock chip labels (#26)
-
-**`main` tip** (PROD):
-- `20ffbd6` chore(email): ship bp-logo-email.png to PROD for Supabase template verification — **this session**, single static PNG cherry-pick to unblock Sean's test-email verification without waiting for Phase 1 release bundle
-- `5b51afc` Merge pull request #12 from ylee178/develop (prediction flow UX + share layer + hooks migration + a11y) — previous PROD baseline
-- `976618c` chore(docs): session wrap 2026-04-13 — PR #25 Supabase email templates shipped
-- `992fb9e` feat(email): supabase auth templates — confirm signup + reset password (#25)
-- `5db7657` chore(docs): session wrap 2026-04-13 — PR #24 Branch 5 Part 2 shipped
-- `b2a9dea` feat(ui): title_fight + main_card chips on fight cards + fighter history + DevPanel preview (#24)
-- `3cf7600` chore(docs): session wrap 2026-04-13 — PR #23 Branch 5 Part 1 shipped
-- `84857f1` db: add is_title_fight + is_main_card flags to public.fights (#23)
-- `5658b8f` docs: add 3-tier review tier rubric (research-grounded)
-- `56deb48` chore(docs): TASKS.md — Branch 5 resume brief for post-/clear session
-- `0e16e33` docs: switch review path to second-opinion-reviewer subagent
-- `4e0f08a` chore(docs): TASKS.md — mark PR #22 pick-label hotfix shipped
-- `eb049a7` fix(prediction): align post-lock "Your Pick" label with voting state (#22)
-- `08582ef` feat(fighters): winrate + weight-class sort + country filter with URL state (#21)
-- `bf6f50e` chore(wiki): move session logs out of repo to ~/Desktop/Wiki_Sean/BlackPick (#20)
-- `d5d03b2` fix(ui): avatar glow drop + placeholder contrast + mobile name wrap (#19)
-- `5ee064d` fix(share): event share CTA visibility + state machine (#18)
-- `93b2d9e` fix(predictions): lock transition watcher + FightCard Your Pick chip (#17)
+### Two agents active — parallel, non-overlapping file sets
+- **Codex CLI** owns branch `db/codex-integrity-atomicity` (11/11 review findings folded, 3-round Claude review approved). Migrations `202604170001_integrity_atomicity.sql`, `202604170002_comment_likes.sql`, and `202604170003_user_events_api_only.sql` are applied to **DEV + PROD** and recorded in `supabase_migrations.schema_migrations`. Branch still needs final commit/PR merge.
+- **Claude Code** active on `feature/admin-surface-consolidation` (Phase 2). UI-only scope, zero overlap with Codex file set.
+- Coordination protocol + hands-off file list in [TASKS.md §Parallel-agent discipline](TASKS.md#parallel-agent-discipline).
 
 ## Production
 - **URL**: https://blackpick.io
-- **Latest production deploy**: `20ffbd6` on main (2026-04-13) — single-file cherry-pick of `public/email/bp-logo-email.png`. Prior baseline was PR #12 merge (`5b51afc`) which bundled PRs #3–#11. All subsequent Phase 1 work (PRs #17–#24 + #26 + #27 + **#28**) + Phase 3 partial (PR #25 templates + icon routes) are on `develop` but **not yet released to prod as a bundle**. Next full prod release (Phase 6 gate) bundles everything.
-- **Scoring v3 — DEV applied 2026-04-14, PROD pending**: `supabase/migrations/202604140001_scoring_v3_winner_only_2pts.sql` applied on DEV (`BlackPick_Dev`, `lqyzivuxznybmlnlexmq`) via `supabase db query --linked --file` after temporarily re-linking. Winner-only branch returns **2** (was 4); other branches (8/16/20/-2) unchanged. Post-convergence assertion passed. CLI link restored to PROD (`nxjwthpydynoecrvggih`). PROD still on v2 — runs alongside the Phase 1 release bundle at Phase 6.
-- **PROD migration `202604130001` — APPLIED 2026-04-13**. Both `is_title_fight` and `is_main_card` columns exist on PROD (384 rows × 0 NULLs). `check:schema-drift` clean on both DEV and PROD (14 cols each).
-- **PROD email assets — ALL LIVE**: `https://blackpick.io/email/bp-logo-email.png` → 200, `/email/icon-shield` → 200, `/email/icon-key` → 200.
-- **Supabase email templates — SAVED in dashboard, test email pending**: branded HTML saved for `confirm_signup` + `reset_password`. **Next step — Sean runs Send Test Email** from the Supabase dashboard and validates rendering in Gmail / iOS Mail / Outlook.
-
----
-
-## Completed (this session — 2026-04-14, Branch 8 iterations + squash merge)
-
-PR #28 shipped the original Branch 8 (commit `347c19f`) **plus** an extensive set of post-ship iterations driven by Sean's manual DevPanel testing (commit `ebd1d1d`, squash-merged as `8ad4ac7`).
-
-### UX shell / home page
-- **StickyEventHeader**: streak slot in right cell when `tl` expired; `currentStreak` prop threaded from home server component
-- **FlipTimer burned-out state**: when `tl.total <= 0`, renders "Event in Progress" eyebrow with `gold-dim-pulse` class, dimmed `lcd-dim` wrapper on digits, red `text-[var(--bp-danger)]` Lock icon, `countdown.locked` subtitle. Pre-merge state (upcoming countdown) unchanged.
-- **Watch Live golden ray border**: `ShimmerButton`-pattern conic-gradient 360° ray on the Watch Live button when an event is live. `.shimmer-wrap` + `::before` (conic spark) + `::after` (opaque dark backdrop at `inset:2px`) + `shimmer-spin 6s linear infinite` keyframe. Five iteration rounds with Sean (conic rotate → BorderBeam → ShimmerButton → smooth linear → wide-arc) before landing on continuous full-circle brightness wave.
-- **HomeShareBar**: inline share button in the "Who's Taking This?" h2 row + portal-mounted sticky scroll promote card (glass style, no border — `bg-[rgba(12,12,12,0.55)] backdrop-blur-2xl`). IntersectionObserver with `-80px` rootMargin. Disabled states: `disabled_no_ring_name` → Link, `disabled_no_picks` → disabled button.
-- **AllPredictedToast mounted on home page** — was previously orphaned on `/events/[id]` only. Home page now computes `upcomingPredictableFights` + mounts the toast with count interpolation via `prediction.allPredictedToast` ({count} handler at `i18n-provider.tsx:26-32`).
-- **FightCard**: fighter names → `<Link href="/fighters/[id]">` with gold hover state. `winnerA`/`winnerB` now gated on `isCompleted` (reviewer blocker — preserves `winner_id` across state flips without leaking winner chip back into upcoming state).
-
-### FightCardPicker — winner-only save + scoring v3
-- `canSave = !!winnerId` (was `winner && method && round`) — Sean: "승자만 골라도 세이브할수잇게하자. 리스크를 미니마이즈 하고 싶을수도 잇으니"
-- Points preview shows the full ladder: winner +2, method +6 (8 total), round +8 (16 total), R4 +12 (20 total)
-- **Scoring v3 migration** (`202604140001_scoring_v3_winner_only_2pts.sql`): `calculate_prediction_score` winner-only branch returns 2 (was 4). Other branches (8/16/20/-2) unchanged. Post-convergence DO-block assertion fails the migration if the function returns anything other than 2. **APPLIED on DEV this session** via `supabase db query --linked --file` after temporarily re-linking to `BlackPick_Dev`. PROD still on v2 — will be applied alongside the Phase 1 release bundle at Phase 6.
-
-### DevPanel v3 — sandbox mode + viewport containment
-- Rewrite with Korean-only labels (file-level JSDoc exempts from i18n sweep)
-- **Event picker dropdown** with `handleEventPick` auto-capturing a snapshot (round-trip restore on exit)
-- **4 scenario presets** (firstVisit / picksComplete / live / completed) with corrected ordering (completed: `set-event-status:completed` BEFORE `seed-me` — round 1 reviewer blocker fold)
-- **Timer presets** (30s / 5min / 1h / 3h / 1d) via new `set-timer` action
-- **Self-demonstrating replay actions**: replay onboarding, replay streak toast, replay all-predicted toast — each wipes the relevant localStorage namespace + navigates the user to the triggering state
-- **Sandbox round-trip**: `captureEventSnapshot` / `restoreEventSnapshot` server actions; DevPanel `handleResetToSnapshot` + `handleResnapshot`
-- **Viewport containment**: `fixed bottom-20 right-4 md:bottom-5` + `maxHeight: min(calc(100dvh - 180px), 720px)` with `flex-col` scrollable body (Sean: "데브패널이 화면안에 컨테인되도록 스크롤러블하게해 지금 브라우저 밖으로 나가버려")
-- New seed-route actions: `list-events`, `capture-snapshot`, `restore-snapshot`, `set-timer`. All mutation actions accept an explicit `eventId` in the body.
-
-### Cache + event targeting fixes
-- **`layout.tsx` + `page.tsx` → `export const dynamic = "force-dynamic"`**: was ISR (`revalidate = 60`) + cached layout publicUser — DevPanel state flips weren't propagating to the home page. Also fixed `RingNameOnboarding` cache-stale repro.
-- **Layout `publicUser` select extended**: `current_streak, best_streak` now fetched alongside ring_name/score/wins/losses for StreakPrToast + sticky header.
-- **Event targeting divergence fix**: DevPanel's "latest event by date" query diverged from home page's "earliest active + latest completed fallback" rule, producing the "엑소더스 끝난 경기만 나오네" bug. Fix: new `selectFeaturedEventId<T>(events)` pure helper matches the home page's rule. Applied to `resolveTargetEvent` in `setEventStatus` / `getUserState` / `seedMyData` (all 3 sites).
-- **Resettable fight filter**: `selectResettableFightIds` pure helper excludes `cancelled` / `no_contest` so `resetFights` no longer stomps admin-set cancellations.
-- **`?dev_event={id}` override** on home page `searchParams` lets DevPanel target any event by ID.
-
-### Pure helpers + test coverage → 166/166
-- **New file** `src/lib/dev-state-helpers.ts`: 7 pure functions (`selectResettableFightIds`, `selectStartTimePushIds`, `computeFutureEventDate`, `computeFutureStartTime`, `computePastStartTime`, `computeTodayEventDate`, `computeStartTimeFromMinutes`), `TIMER_PRESETS`, `selectFeaturedEventId`, `EventSnapshot` + `snapshotLocalStorageKey` + `isValidSnapshot`, `DEV_LOCK_NAMESPACES` + `filterKeysByPrefixes`.
-- **New file** `src/lib/dev-state-helpers.test.ts`: 41 unit tests covering state transitions, snapshot round-trip, event-selection rule, namespace-filter edge cases, timer presets.
-- **Total: 125 → 166 tests** (vitest unit + component). Sean called this out mid-session ("테스트 커버리지 신경안써?") — honest audit + test extraction pattern.
-
-### UX writing review across 7 locales
-- **`prediction.yourPick` — 1인칭 perspective restored** across all locales: `My Pick` / `마이픽` / `マイピック` / `我的选择` / `Mi predicción` / `Meu palpite` / `Миний сонголт`. Korean specifically went "내 픽" → "마이픽" on Sean's 2026-04-14 feedback ("내 픽은 좀 어색. 마이픽으로").
-- **`prediction.allPredictedToast`**: count interpolation ({count}) + polite encouragement tone. Korean uses 존댓말 "~해보세요".
-- **`share.cta*` + `share.stickyPrompt`**: em-dash purge, emoji purge, perspective split (1인칭 chip vs 2인칭 CTA), polite verb strength.
-- **`countdown.eventInProgress`**: new key for burned-out FlipTimer.
-- **`fighter.shareText` + `fighter.statFights` / `statStreak` / `statWinRate`**: new keys for fighter detail page hero ShareMenu.
-- **i18n alignment**: 358 → **372 keys × 7 locales**.
-
-### TASKS.md Phase 5 criteria A–F added
-Sean 2026-04-14 additional criteria for the "Phase 5 i18n comprehensive tone review" branch:
-- (A) Perspective consistency (1인칭 소유 vs 2인칭 권유)
-- (B) Politeness register per culture (ko 해보세요, ja ですます, zh 你+吧, es LatAm tú, pt-BR você, mn та)
-- (C) Em-dash purge
-- (D) Emoji purge in i18n strings (per DESIGN.md)
-- (E) Count interpolation presence (via existing {var} handler)
-- (F) CTA verb strength (active + concrete)
-- Deliverable: 7-locale spreadsheet with `POV / register / em-dash / emoji / proposed rewrite` columns
-
-### Gates passed
-- `check:i18n` **372 × 7 aligned**
-- `test:fast` **166/166**
-- `tsc --noEmit` clean
-- `build` clean
-- CI (GitHub Actions) all green on PR #28
-
-### Review trail
-2 file-based dialogue rounds against `reviews/BlackPick/...` per Branch 8's proven spec-phase → impl-phase pattern. All blockers folded before merge. See the 2026-04-13 section below for the original Branch 8 spec/impl review trail and the Branch 6 3-round systemic-defect sweep (reference pattern).
-
----
-
-## Completed (prior session — 2026-04-13, Branch 8 `feature/streak-ux`)
-
-### Branch 8 — `feature/streak-ux` (Phase 1 Branch 8, 8/9 → 9/9)
-
-**Scope**: profile page streak tiles + layout-mounted streak PR toast + share CTA streak wire-up + DevPanel self-contained test loop.
-
-**New files**:
-- `src/components/StreakPrToast.tsx` — layout-mounted client component. Two localStorage keys:
-  - `bp.streakBest.v1:{userId}` = last-observed `best_streak` baseline. Null → silent first-sync (never fires on first observation because we can't distinguish "fresh PR" from "pre-feature history" without server trail).
-  - `bp.streakPR.v1:{userId}:{bestStreakValue}` = dismissal lock keyed on PR value. Fires at most once per device per distinct PR value.
-  - Fire condition (all must hold): `serverBest > storedBest && currentStreak >= STREAK_PR_MIN (2) && currentStreak === bestStreak && !lock`. The **strict-increase** `>` (not `>=`) gate is the round-1 blocker-2 fix — closes the `current=4, best=5 → win → current=5, best=5` false-positive case where `current===best` was true but `best` hadn't actually increased.
-  - `firedThisMountRef` prevents double-fire within a single mount.
-  - Null-userId short-circuit at the very top of the effect; layout-level guard `authUser && publicUser` means the component never mounts for anon users (defense in depth).
-  - Try/catch around all localStorage access → private-browsing degrades gracefully without crashing.
-
-**Modified files**:
-- `src/components/ui/retro.tsx` — `RetroStatTile` extended with optional `icon?: ReactNode` prop. Rendered inline with the label via `inline-flex items-center gap-1.5`. Backwards-compatible for all existing callers (they omit the prop and render unchanged).
-- `src/components/Toast.tsx` — fourth ToastType `"streak"` added. Flame lucide icon in gold (`text-[var(--bp-accent)]`). Three-line change, fully backwards-compatible with the existing 11 callsites that pass `"success" | "error" | "info"`. Removed pre-existing unused `X` import from lucide-react (dead code on a line I was already editing).
-- `src/app/[locale]/(main)/layout.tsx` — `publicUser` select extended from `ring_name, score, wins, losses` → `ring_name, score, wins, losses, current_streak, best_streak` (one query, two extra columns, no new DB round-trip). `StreakPrToast` mounted next to `RingNameOnboarding`, gated on `authUser && publicUser`.
-- `src/app/[locale]/(main)/profile/page.tsx` — new 2-col grid of `RetroStatTile` between the existing `BadgeList` and the `ProfileSettings` panel. Current streak: muted Flame + `t("profile.currentStreak")` label + `t("profile.streakInARow")` caption. Best streak: gold Flame + `t("profile.bestStreak")` label + `t("profile.streakPersonalBest")` caption. Grid is hidden when both streaks === 0 (fresh-account rule, consistent with `BadgeList` hide-when-empty pattern). Reuses pre-existing `profile.currentStreak` / `profile.bestStreak` i18n keys (round 1 reviewer corrected my initial assumption that these were new keys).
-- `src/app/[locale]/(main)/events/[id]/page.tsx` — `dbUser` select extended from `ring_name` → `ring_name, current_streak`. New `userCurrentStreakFromDb: number | null` captured alongside `userRingName`. Replaces the `userCurrentStreak: number | null = null` placeholder from Branch 2 (PR #18) with the real value. `EventShareCta.computeVariant()` `streak_badge` variant (threshold `>= 3`, shipped in PR #18) now fires correctly.
-- `src/app/api/dev/seed/route.ts` — new `setStreak(admin, userId, current, best)` server action. Validates `isFinite`, `>= 0`, `current <= best`. Single-statement update of `current_streak + best_streak`. Action dispatch wired at `action === "set-streak"` with 400 on validation error. `getUserState` extended to select + return `current_streak + best_streak`.
-- `src/components/DevPanel.tsx` — `UserState` type extended with `current_streak: number; best_streak: number`. `DEFAULT_STATE` matches. New `streakDraft` local state for the two number inputs, synced from server on `refreshState`. New "Streak" sub-block in the User State section: two `<input type="number" min="0">` fields + Set button with client-side `current <= best` validation (disabled when invalid, red inline error when user types an invalid combination). `handleSetStreak` dispatches the new `set-streak` action. New "Reset streak PR toast lock" ActionRow in Actions section — wipes BOTH `bp.streakPR.*` AND `bp.streakBest.*` namespaces (critical: resetting just the lock without the baseline leaves the silent-sync state, so the toast wouldn't re-fire until a genuine increase).
-
-**i18n**: 3 new keys × 7 locales = 21 additions. Final `check:i18n` **368 × 7 aligned** (up from 365 after Branch 7). New keys: `profile.streakInARow`, `profile.streakPersonalBest`, `profile.streakPrToast` (with `{streak}` interpolation via the existing handler at `src/lib/i18n-provider.tsx:26-32`). Korean `"{streak}연승 신기록!"` is semantically correct under the Option B strict-increase design — we only claim "신기록" when the server state reflects a genuine new record relative to the device's last-observed baseline.
-
-**Review trail — 2 rounds, FIRST spec-phase round 1 in BlackPick**:
-
-The novelty: round 1 was dispatched against `reviews/BlackPick/2026-04-13_branch8_streak-ux_dialog/00-spec.md` BEFORE any code was written. Sean + Claude agreed on this pivot after Branch 7's round 1 caught a design-level regression (OAuth-from-fight-page user journey break) that should have been caught at spec time. Per the Quality-Maximizing Path meta-rule, catch design flaws as early and cheaply as possible.
-
-- **Round 1 (spec)** APPROVE_WITH_CHANGES 0.88 — 2 [blocker] + 2 [major] + 4 [minor]. Blockers:
-  1. Pre-existing `profile.currentStreak` + `profile.bestStreak` i18n keys already in all 7 locales — my spec had listed them as new, claiming 365 → 370. Actual: 365 → 368 (3 new keys only).
-  2. **PR detection tie-rebuild false positive**. Reviewer ran a Python state-machine walk and found `old_current=4, old_best=5 → win → new_current=5, new_best=5` — `current===best` fires `true`, but `best_streak` didn't actually increase. Fires a false "신기록!" celebration for every existing Korean user the first time they rebuild past their old best after Branch 8 ships. Fix options:
-     - (A) Neutralize the Korean copy to "연승 달성!" (streak achieved, not "new record")
-     - (B) Client-side baseline `bp.streakBest.v1:{userId}`, silent first-sync on null, strict-increase gate `serverBest > storedBest`
-     - (C) Accept and document
-  - **Selected Option B** per Quality-Maximizing Path — the feature should do what its name says ("personal record toast" fires only on genuine records), not soften copy to mask a detection bug. Cost: ~10 additional lines of state-machine logic vs. a 1-line Korean string change.
-
-  Majors:
-  3. DevPanel `set-streak` action claim in spec was false — the action didn't exist. Added a new `setStreak` server action + DevPanel UI (number inputs + Set button + validation) for self-contained manual testing. Sean never needs to touch Supabase Studio to verify the feature.
-  4. Layout-wide mount + null userId contamination risk — `bp.streakPR.v1:null:*` would be a shared key across all signed-out users on a device. Mitigation: component-level null-userId short-circuit + layout-level `authUser && publicUser` guard (both present, defense in depth).
-
-- **Round 2 (implementation)** APPROVE 0.93 — all 6 round-1 findings marked `fold_verified` with grounded evidence. Reviewer hand-simulated 9 edge cases including the original round-1 false-positive (case 7: `storedBest=5, serverBest=5, current=5 → bestStreak > storedBest is false → no fire`). Zero new blockers. 3 non-blocking minors all intentional or deferred:
-  - `t` from `useI18n()` is a fresh function reference on every call, causing spurious `useEffect` re-runs in `StreakPrToast`. **Pre-existing project-wide pattern** — `AllPredictedToast.tsx:88` has the same shape. The `firedThisMountRef` guard prevents any actual double-fire. Fix is in `i18n-provider.tsx` (wrap `t` in `useCallback`), benefits all consumers, not Branch 8 scope. Tracked for Phase 5.
-  - DevPanel streak sub-section uses `text-[10px]/[11px]`. DESIGN.md minimum is 12px, but DevPanel's existing `Section` labels use `text-[9px]` — internally consistent with the dev-only convention. Not user-facing.
-  - `setStreak` server action lacks Postgres INTEGER upper-bound validation. Entering billions would fail at DB write, surfacing as a DevPanel message (not a crash). Dev-only, low priority.
-
-**Lesson — spec-phase review economics validated**: catching the tie-rebuild blocker at spec-review time cost ~0 rework. Had it been caught in a round 1 on HEAD, it would have required rewriting `StreakPrToast` from the naive `current === best` check to the baseline + strict-increase design (~60-line delta plus re-testing all edge cases). The spec-first pattern is now validated for non-trivial state-machine branches or anything introducing a new localStorage schema. Added to the session-start playbook.
-
-**Verification**: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 368 × 7, `tsc --noEmit` clean, `npx eslint` 0 errors / 0 warnings on touched files (the pre-existing `<img>` warning on `layout.tsx:46` logo line is untouched by Branch 8). Phase 1 advances **8/9 → 9/9**. Only remaining Phase 1 item: Branch 9 verification task (no new code expected).
-
----
-
-## Earlier this calendar day (2026-04-13, prior session before `/clear` — PRs #25 + #26 + #27)
-
-### PR #27 — `feature/onboarding-first-time-flow` (Phase 1 Branch 7, 7/9 → 8/9)
-
-Three dismissible first-time onboarding prompts sharing a single `useOnboardingDismissal` hook.
-
-**New files**:
-- `src/lib/onboarding-dismissal.ts` — `useOnboardingDismissal(key, ttlMs?)` returns `{ status, dismiss }` where `status ∈ "checking" | "show" | "hide"`. Three-state transition avoids a flash of the prompt on devices where it was previously dismissed. Passing `ttlMs` enables a 30-day re-show window; omit for permanent dismissal. `ONBOARDING_KEYS` factory centralises the `bp.onboarding.*` key scheme (versioned `v1` per `client-localstorage-schema` react-best-practices rule). `ONBOARDING_TTL_30_DAYS = 30 × 24 × 60 × 60 × 1000`.
-- `src/components/AnonFirstPickCta.tsx` — dismissible CTA rendered above the fight list on `/` when `!authUser && featured && fights.length > 0`. Sparkles lucide icon + retro panel styling + 30-day TTL. Button links to `/events/{featured.id}`.
-- `src/components/FirstPickHintCard.tsx` — dismissible hint on fight detail pages for authed users with zero picks across the app. MousePointerClick lucide icon + retro panel styling + per-user key (so dismissing once suppresses on every fight, not just the one you dismissed on).
-
-**Modified files**:
-- `src/components/RingNameOnboarding.tsx` — new optional `userId?: string | null` prop. When passed, opts the modal into dismissible mode: reads `bp.onboarding.ringName.v1:${userId}` from localStorage with `ONBOARDING_TTL_30_DAYS`, shows a "Skip for now" button at the bottom of the form, and hides itself on dismissal. When omitted, preserves legacy forced-modal behavior for any caller. `useEffect` hook for `document.body.style.overflow = "hidden"` is now gated on `visible` so it only fires when the modal is actually rendering, and cleans up correctly on unmount / visible → false transition. Early return moved to AFTER all hooks (`useMemo(helperText)` now runs before the `if (!visible) return null`) — Rules of Hooks compliance.
-- `src/app/[locale]/(main)/layout.tsx` — `<RingNameOnboarding>` render call now passes `userId={authUser.id}` to opt the modal into dismissible mode. The existing `needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim())` gate remains — the only UX change is that users can now dismiss the modal with the 30-day block instead of being force-blocked. No duplicate fetch in `page.tsx` (round 1 reviewer caught my first attempt at this).
-- `src/app/[locale]/(main)/page.tsx` — imports `AnonFirstPickCta`, computes `featuredHref = featured ? "/events/${featured.id}" : "/"`, renders `<AnonFirstPickCta featuredEventHref={featuredHref} />` above the fight list when `!authUser && featured && fights.length > 0`. No ring-name logic (handled in layout).
-- `src/app/[locale]/(main)/events/[id]/fights/[fightId]/page.tsx` — new third Promise in the existing `Promise.all`: `supabase.from("predictions").select("id", { count: "exact", head: true }).eq("user_id", user.id)` for authed users, resolving to `{ count: null, error: null }` for anons. Computes `hasZeroPicks = Boolean(user) && userTotalPicks.count === 0 && !(error check)` — strict `=== 0` so a Supabase error fails closed instead of flashing the hint to established users. Renders `<FirstPickHintCard userId={user.id} />` when `user && hasZeroPicks && eventStatus !== "completed" && !hasStarted`.
-- `src/components/DevPanel.tsx` — new "Reset onboarding dismissals" action in the Actions section. Iterates `window.localStorage` backwards (to avoid skipping entries after `removeItem`) and wipes any key starting with `bp.onboarding.`. Returns the count in the DevPanel status row. Complements the existing "Reset 'all predicted' toast lock" action — different namespace, different purpose.
-
-**i18n**: 7 new keys × 7 locales = 49 additions. Final `check:i18n` **365 × 7 aligned** (up from 358 after Branch 6). New keys: `onboarding.skipForNow`, `onboarding.dismiss`, `onboarding.anonCtaTitle`, `onboarding.anonCtaDescription`, `onboarding.anonCtaButton`, `onboarding.firstPickHintTitle`, `onboarding.firstPickHintDescription`. Korean uses the retro-boxing casual register ("나중에 할게요", "첫 예측, 준비됐어요?"), pt-BR uses Brazilian casual ("Pronto pra mandar seu primeiro palpite?"), and the other 5 locales match their existing `onboarding.*` namespace voice.
-
-**Review trail — 2 rounds file-based dialogue (blackpick profile)**:
-
-- **Round 1** APPROVE_WITH_CHANGES 0.91 — 1 [blocker] (AnonFirstPickCta missing the `ttlMs` arg → silently permanent dismissal instead of 30-day) + 2 [major] (OAuth signup regression from scoping the ring-name modal to `/` only — users signing up from a fight page via Google OAuth land back on the fight page and never see the prompt + duplicate `users` row fetch on `/` for authed users because I added a second ring_name fetch in page.tsx that the layout was already doing for AccountDropdown) + 2 [minor] (firstPickHint per-fight key violated "single prompt per state" + `hasZeroPicks` `?? 0` treated DB error as zero picks).
-- **Round 1 folds** (`c1e5631`): anon CTA TTL one-liner; RingNameOnboarding moved back to layout (resolves both majors in one move — OAuth regression disappears because the modal is now layout-wide, and the duplicate fetch disappears because page.tsx no longer needs its own ring_name query); firstPickHint key drops `fightId`; hasZeroPicks switched to strict `count === 0` with explicit error check.
-- **Round 2** APPROVE 0.93 — verified all 5 round 1 folds (fold_verified on each), no new blockers, cross-round systemic sweep: 22 `t()` call-sites all resolve in en.json + all 7 locales, no Korean leaks in touched files, no English caps-lock chip label regressions, no localStorage namespace collisions with the existing `allPredictedToast:v1:*` keys. 2 non-blocking minors noted but intentional: redundant TypeScript narrowing guard in the `hasZeroPicks` computation (correct but belt-and-suspenders, leave it) + vanishingly rare edge case where an authed ring-name-less user landing on `/login` sees the modal stacked on the login form (pre-existing middleware gap, not Branch 7 scope).
-
-**Lesson — layout-vs-page scope decision**: the spec said "prompt on `/` landing" literally, and I implemented that literally in round 0 by removing the layout-level render and adding it to page.tsx. Round 1 reviewer correctly called this out as a user-journey regression vs. the pre-existing forced-modal behavior — OAuth flows that redirect to non-`/` pages would never see the prompt. Quality-Maximizing Path meta-rule applied: expand the scope beyond the literal spec to preserve the stronger user journey, since the spec clearly intends "first-time experience" and the layout-wide placement matches that intent better than a strict route restriction. The dismissible flag preserves the "30-day re-show" requirement while keeping the layout-wide coverage.
-
-**Verification**: `npm run build` clean (after one round of Rules-of-Hooks fix for an early return I'd initially placed between `useEffect` and `useMemo` in RingNameOnboarding), `npm run test:fast` 125/125, `npm run check:i18n` 365 × 7 aligned, grep clean on new files, no regressions to the pre-existing forced-modal path (legacy callers omit `userId`).
-
----
-
-### PR #26 — `fix/hardcoded-korean-leaks` (Phase 1 Branch 6, 6/9 → 7/9)
-
-After PR #25 merged, resumed Branch 6 as originally planned. Every hardcoded Korean user-facing string in `src/components/**/*.tsx` and `src/app/[locale]/**/*.tsx` moved behind `t()` or explicitly scoped out. Plus hardcoded English caps-lock chip labels (PR #24 deferred the `MAIN EVENT` chip to this branch).
-
-**Source changes** (5 files):
-- `FightCard.tsx:279` `MAIN EVENT` → `t("event.mainEvent")`. The PR #24 deferred chip.
-- `page.tsx` 3 sites: `LIVE` → `t("event.liveBadge")`, `Score` → `t("ranking.score")` (reused existing), `best` → `t("ranking.best")`.
-- `my-record/[eventId]/page.tsx` — 6 Korean prediction result chips (승자/방법/라운드 맞춤·틀림) → existing `t("myRecord.winnerCorrect")` / `winnerWrong` / etc. keys (keys pre-existed in 7 locales with formal-register `적중/오답` values; Korean users see slightly more formal wording, non-Korean users finally see localized text). Also 3 stat column labels (`WIN`/`LOSS`/`PTS`) → new `myRecord.statWin/statLoss/statPts` keys.
-- `PredictionsList.tsx` — 5 edits: removed 4 dead `|| "전체"/"맞춤"/"틀림"` Korean fallback patterns on `t()` calls (the keys exist in all 7 locales so fallbacks never fire in practice, but they were Korean-leak vectors); `${selectedEvents.size}개 대회` template literal → `t("myRecord.eventsSelected", {count})` via the `{var}` interpolator at `src/lib/i18n-provider.tsx:26-32`; `Perfect Prediction` chip → reused `t("profile.perfectCard")`; `" WIN"` suffix → new `t("myRecord.blackCupWin")`.
-- `ranking/page.tsx` — 5 call sites of `t("ranking.perfectCard")` replaced with `t("profile.perfectCard")`. The wrong key was **pre-existing** — `ranking.perfectCard` does not exist in the ranking namespace and `getNestedValue` was silently returning the raw key string `"ranking.perfectCard"` as visible UI text. Pulled into Branch 6 scope per Quality-Maximizing Path since Branch 6 IS the i18n leak sweep branch. Also added a comment block above the Oracle/Sniper/Sharp Call HoF tier render documenting that these are **intentional brand-fixed English proper nouns** matching the DB `hall_of_fame_entries.tier` enum, not translated strings.
-
-**i18n key additions**: 8 new keys × 7 locales = 56 new entries. Final `check:i18n` **358 × 7 aligned** (up from 350 before Branch 6). New keys: `event.mainEvent`, `event.liveBadge`, `myRecord.eventsSelected`, `myRecord.blackCupWin`, `myRecord.statWin/statLoss/statPts`, `ranking.best`.
-
-**Out of scope** (explicitly deferred): privacy/terms legal documents (`isKo ? X : Y` dual-language ternaries, Phase 5 tone review); admin surface (Korean-only by design, zero i18n imports); crawler scripts (intentional Korean BC parsing); weight-class/locales data structures (canonical Korean keys); Storybook demos; `profile.perfectCard` casing convention gap; dead `event.live` key; `MvpVoteSection IMG` fallback + `ui/ranking.tsx NEW` chip (pre-existing minors round 3 found via broader sweep, Phase 5).
-
-**File-based dialogue pattern — first end-to-end validation in BlackPick**:
-
-Sean asked mid-session to set up conversational review with the `second-opinion-reviewer` subagent. Key findings:
-
-- The `SendMessage` tool (Claude Code changelog line 639 v2.1.77 "use SendMessage to continue a previously spawned agent") is **not loadable** in current non-experimental sessions — `ToolSearch query="select:SendMessage"` returns "No matching deferred tools found". The runtime auto-prints an `agentId: <hash>` hint at the end of every subagent response **regardless of whether SendMessage is actually loadable**, which is misleading.
-- **File-based dialogue is the correct design anyway**: every round must be a fresh-context dispatch so that authorship-blind / self-bias mitigation holds (Yan et al. 2025). SendMessage continuation would carry the prior round's internal state forward and anchor the reviewer to their own past conclusions — self-reinforcing bias. File-based dialogue preserves fresh context per round while transmitting prior-round findings as verifiable READ input.
-- **Directory convention**: `BlackPick/reviews/BlackPick/<YYYY-MM-DD>_<topic>_dialog/` (note the inner `BlackPick/` subfolder — project-isolation visual guard mandated by the generic usage doc). `reviews/` is gitignored. Session-log summaries at the external `Wiki_Sean/BlackPick/` path remain the durable record.
-- **New section** in `Docs/review-tier-rubric.md` § File-based dialogue pattern documents BlackPick adoption: transcript location, profile routing (lite/default/max), when to dispatch round 2, concrete dispatch recipe, token cost awareness.
-
-**Branch 6 review trail — 3 rounds, validated end-to-end**:
-
-- **Round 1** APPROVE_WITH_CHANGES 0.87 — 2 [blocker] (I missed `Perfect Prediction` + `" WIN"` suffix in PredictionsList on the initial grep) + 1 [major] (pre-existing `ranking.perfectCard` raw-key-string bug at 5 sites) + 3 [minor]. All addressed.
-- **Round 2** APPROVE_WITH_CHANGES 0.91 — verified round 1 folds against HEAD, found 1 NEW [blocker] (`WIN`/`LOSS`/`PTS` stat column labels in a file I had already touched but where I missed a broader area) + 1 [major] (Oracle/Sniper/Sharp Call product decision) + 3 [minor]. **Flagged `hardcoded-english-chip-label` as systemic defect class across rounds 1+2 in 3+ files** — the headline cross-round pattern detection feature working as designed.
-- **Round 3** APPROVE 0.94 — verified round 2 folds + broader systemic sweep across `src/**/*.tsx` (excl. stories/admin/email). Defect class now **bounded**: 5 remaining grep hits all intentional (brand wordmark, IMG fallback, NEW rank chip), none i18n leaks.
-
-**Lesson — single-round review would have shipped with 4 missed issues**:
-- Round 1 blocker 1 (`Perfect Prediction`) + round 1 blocker 2 (` WIN`): missed in initial grep
-- Round 2 new blocker (`WIN/LOSS/PTS`): would never have surfaced because round 1's scope was narrower
-- Round 2 major (`ranking.perfectCard` pre-existing bug): also only caught by the systemic sweep round 3 did with full prior-round context
-
-The multi-round dialogue caught all 4. The pattern's value is now empirically validated on this project.
-
-**Verification**: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 358 × 7 aligned, `grep` zero Korean leaks in scope files + zero hardcoded caps-lock chips outside the intentional-brand carve-outs.
-
----
-
-### PR #25 — `feature/supabase-email-templates` (Phase 3 partial, out-of-phase pivot)
-
-Mid-session pivot away from the planned Branch 6 (`fix/hardcoded-korean-leaks`) after Sean pointed at `public/email/previews/` Codex-designed reference HTMLs and asked for proper Supabase auth email templates. Discovered during exploration that `Docs/email-templates/` already had a 2026-04-10 committed system (`b29a4ec`, GPT-5.4 reviewed) that was never applied to Supabase and had several issues: WCAG AA failure on copy-link label, 10-11px text below DESIGN.md minimum, missing `<meta color-scheme>`, box-shadow glow conflicting with Sean's "no gradient" direction, vague expiry on reset, and a broken logo asset reference (`public/email/bp-logo-email.png` was declared but never committed — the web app uses SVG only, so the PNG never existed in prod). Rewrote from scratch using the pre-existing system as a base, applying every fix surfaced by two rounds of `second-opinion-reviewer` and Sean's mid-session lucide-react instruction.
-
-**Templates** (`Docs/email-templates/*.html`):
-- Dark theme (`#0a0a0a` outer, `#000` card, `#050505` footer) with solid gold CTA pill (`#ffba3c`) — no gradients or glow effects.
-- WCAG AA audit: all 12 text/background pairs computed in Node and verified in README, lowest ratio 6.25:1 on the 12px "Or Copy This Link" label. Non-text contrast (1.4.11) explicitly excluded as the copy panel border is presentational decoration, not a UI control.
-- `<meta name="color-scheme" content="dark">` + `supported-color-schemes` as a best-effort dark-mode auto-inversion opt-out. Inline dark color values remain the primary defense.
-- `<table align="center">` HTML attribute on CTA button and copy-link panel tables in addition to CSS `margin:auto`, so Outlook Desktop's Word renderer doesn't left-align the call-to-action.
-- MSO conditional comment forces Arial on Outlook for consistent fallback typography.
-- Preheader hide-bundle: `display:none + visibility + opacity + color:transparent + mso-hide:all + max-heights + font-size:1px` — covers every mainstream client.
-- 32px `<h1>` + 15px body + 12px minimum everywhere (no text below 12px per DESIGN.md §Typography).
-- `reset-password.html` shows `{{ .Email }}` on an "Account:" line (security practice — lets the recipient verify the reset was requested for their own address) and an explicit "1 hour" expiry note matching Supabase's recovery default.
-- `confirm-signup.html` explicit "24 hours" expiry note matching Supabase's confirm default.
-- Footer identity disclosure + "If you didn't request this, safely ignore" pattern meets GDPR transactional requirement.
-
-**Icon routes — lucide-react refactor** (`src/app/email/icon-{shield,key}/route.tsx`):
-- Previous versions inlined lucide SVG path data as hardcoded strings. Sean's mid-session feedback: "use the icon library we use on the web" (= `lucide-react`).
-- Both routes now import raw `__iconNode` data from the per-icon module at `lucide-react/dist/esm/icons/<name>.js` (`shield-check.js` + `key-round.js`). The top-level `ShieldCheck`/`KeyRound` components cannot be used because `lucide-react` 1.7.0 ships `Icon.js` with a `'use client'` directive — importing them in a Next.js RSC server route fails at prerender time. The raw `__iconNode` array is pure data, no React wrapper, server-safe.
-- The SVG wrapper hardcodes lucide's `defaultAttributes.js` values (`viewBox="0 0 24 24"`, `fill="none"`, `stroke={BRAND_ACCENT}`, `strokeWidth=2`, `strokeLinecap/Linejoin="round"`) so the visual output matches how lucide-react renders the component on the web.
-- **Satori `currentColor` fix** — set CSS `color: BRAND_ACCENT` on the outer `<div>` so key-round's keyhole dot (which uses `fill="currentColor"` in its iconNode) inherits the brand gold instead of resolving to Satori's default black and disappearing into the dark gold background. Verified visually by inspecting the prerendered PNG at `.next/server/app/email/icon-key.body` — the keyhole dot renders in gold.
-- iconNode `key` extraction uses the modern JSX transform pattern (`const { key, ...rest } = attrs; return <Tag key={key} {...rest} />`) to avoid React list-key warnings.
-- Tag cast widened from 4 elements to the full lucide SVG union (`path | circle | rect | line | ellipse | polygon | polyline`) for future icon routes.
-
-**Infrastructure**:
-- New `src/types/lucide-icons.d.ts` — TypeScript shim declaring `declare module "lucide-react/dist/esm/icons/*.js"` with the correct `__iconNode` shape. Required because `lucide-react` ships no per-icon `.d.ts` files.
-- `package.json` — pinned `lucide-react` from `^1.7.0` → `~1.7.0` (patch-only upgrades) to reduce the blast radius of the internal-API coupling. A minor bump could silently rename `__iconNode` or restructure per-icon module paths.
-- New `public/email/bp-logo-email.png` (537×129, 20KB) — Codex-designed silver-gradient BLACK PICK wordmark. Documented as email-specific exception to BlackPick's "web UI uses SVG only" policy because email clients have poor SVG support (Gmail strips, Outlook partial).
-- Deleted `public/email/previews/{confirm-signup,reset-password}.html` (Codex reference HTMLs, used as visual inspiration but not shipped) and `.DS_Store`.
-- `remove_background/` working-tree deletions explicitly NOT staged per the PR #24 "never git add -A" lesson. Remains as an orthogonal future cleanup commit.
-
-**Review trail** — two rounds with `second-opinion-reviewer` (blackpick profile):
-- **Round 1** APPROVE_WITH_CHANGES 0.88. 2 [major] + 2 [minor]: missing `align="center"` on 4 tables (MSO centering), README WCAG claim overstating coverage to include non-text contrast, missing footer-link row in audit table, color-scheme meta coverage overclaim. All four fixed before round 2.
-- **Round 2** APPROVE_WITH_CHANGES 0.82 (delta review — round 1 fixes + lucide-react refactor). 1 [major] + 3 [minor]: key-round `currentColor` resolving to black in Satori (visual bug in shipped PNG), spread-key React warning under new JSX transform, incomplete SVG tag cast, lucide-react caret range allowing silent internal API break. All four fixed + **visually verified** by direct PNG inspection.
-
-**Verification**:
-- `npm run build` — clean, both `/email/icon-*` routes listed as prerendered static with 1y cache (Satori rendered successfully at build time, no `'use client'` errors).
-- `npm run test:fast` — 125/125 passing.
-- `npm run check:i18n` — 350 keys × 7 locales aligned.
-- Visual inspection of `.next/server/app/email/icon-{shield,key}.body` PNGs — both icons render correctly in gold on dark gold circles. Key-round keyhole dot visible (currentColor fix confirmed).
-
-**Not yet applied to Supabase** — the paste-to-dashboard step is post-merge follow-up. Documented in `Docs/email-templates/README.md` and in the §Production section above.
-
-**Phase impact**: This PR partially ships Phase 3's `feature/supabase-email-templates` branch (2 of 4 templates — `magic_link.html` + `invite.html` still pending). Phase 1 progress unchanged at 6/9. Original plan to start Branch 6 this session was paused for the pivot; resumes next session.
-
----
-
-## Remaining Tasks (carried over from prior sessions)
-
-### Launch blockers (unchanged)
-| # | Task | Status |
-|---|------|--------|
-| 1 | Facebook OAuth setup (Meta console + Supabase wire-in) | **Pending** — full step-by-step guide written at `Docs/facebook-oauth-setup.md` (2026-04-13, this session). Sean runs the Meta console + Supabase dashboard steps per the guide. Estimated: 45 min active + 1–3 business days App Review wait. |
-| 2 | Manual e2e of Google OAuth from multiple locales | **Partial** — Sean confirmed login + ring-name save |
-
-### Launch nice-to-have
-| # | Task | Notes |
-|---|------|-------|
-| 3 | Supabase migration history sync | PROD schema is correct but migration tracking table doesn't have 202604090001/2/3 records. Cosmetic — `IF NOT EXISTS` guards make re-running safe. |
-| 4 | OG image | ✅ **Resolved** — already implemented as a dynamic `src/app/opengraph-image.tsx` Next.js route (not a static PNG). Verified 2026-04-13. Renders via `next/og` `ImageResponse` with BlackPick branding. Served at `/opengraph-image` and hit by `smoke-prod.mjs:124`. |
-| 5 | Sentry production DSN | Package installed, config ready, DSN env var needs value |
-| 6 | Agent-skills plugin install | `/plugin marketplace add addyosmani/agent-skills` + `/plugin install agent-skills@addy-agent-skills` — slash command, Sean runs at next session start |
-
-### Phase 2 test infrastructure (not started)
-- BlackPick_Test new Supabase project (~5 min create)
-- Real DB integration test for ring-name route (covers Bug 3 class directly)
-- Test data factories with `@faker-js/faker`
-- `supabase gen types` automation + diff against committed `database.ts`
-- Direct middleware/proxy.ts unit tests
-- lefthook pre-commit hook
-- Coverage measurement (no thresholds yet)
-
-### Phase 3 test infrastructure (later)
-- Route handler unit tests for auth/admin critical paths
-- Playwright OAuth stub flow (no real Google in CI)
-- Coverage thresholds for `src/lib/auth/**`
-- BC scraper isolation test (mock fetch)
-
----
-
-## Recommended Next Steps
-
-```
-1. Facebook OAuth (Meta console + Supabase wire-in) — step-by-step at Docs/facebook-oauth-setup.md
-2. Sentry DSN — see Wiki_Sean/BlackPick/2026-04-13-manual-handoff-checklist.md
-3. Supabase email template paste-in (PR #25 follow-up) — same checklist
-4. Agent-skills plugin install (Sean runs the slash command)
-5. Phase 2 test infrastructure — start with the BlackPick_Test Supabase project
-6. Refresh local Vercel CLI auth — `vercel login` — so future sessions can use `npm run deploy` directly without depending on the GitHub Actions main-push workflow
-```
-
----
+- **main tip**: `20ffbd6` (bp-logo-email.png cherry-pick, 2026-04-13). Prior baseline `5b51afc` bundled PRs #3–#11.
+- **Develop → main release pending**: PRs #17–#28 (Phase 1) + PR #25 (Phase 3 partial) bundle at Phase 6 launch gate.
+- **Scoring v3**: applied on DEV (`202604140001_scoring_v3_winner_only_2pts.sql`, winner-only returns 2). PROD still on v2; applied with Phase 6 bundle.
+- **Integrity/atomicity bundle**: `202604170001` + `170002` + `170003` applied on DEV + PROD. `check:schema-drift` clean on DEV + PROD, `verify-remote-schema` OK, and `npm run predeploy` passes with `SUPABASE_ACCESS_TOKEN` present.
+- **Email assets on PROD**: `/email/{bp-logo-email.png, icon-shield, icon-key}` → all 200.
+- **Supabase email templates**: saved in dashboard for `confirm_signup` + `reset_password`. **Sean TODO**: Send Test Email + validate rendering in Gmail / iOS Mail / Outlook.
 
 ## Schema (PROD)
 
-| Table | Columns | Notes |
+| Table | Cols | Notes |
 |---|---|---|
-| `users` | 11 (id, ring_name, wins, losses, current_streak, best_streak, hall_of_fame_count, score, created_at, p4p_score, preferred_language) | New index `users_ring_name_lower_unique` on `lower(ring_name)` (this session) |
-| `admin_users` | 2 (user_id, created_at) | no changes |
-| `events` | 9 | no changes |
-| `fights` | 14 (DEV only until PROD migrated) | New columns `is_title_fight` and `is_main_card` from PR #23 — both `BOOLEAN NOT NULL DEFAULT false`. DEV converged (384 rows × 0 NULLs). PROD still at 12 columns until Sean runs the migration. `check:schema-drift` will correctly flag both missing on PROD until the migration lands there. |
-| `predictions` | 12 | no changes |
-| `fighters` | 10 | no changes |
-| `fighter_comments` | 6 | no changes |
+| `users` | 11 | index `users_ring_name_lower_unique` on `lower(ring_name)` |
+| `admin_users` | 2 | |
+| `events` | 10 | includes `completed_at` |
+| `fights` | 14 | `is_title_fight` + `is_main_card` both `BOOLEAN NOT NULL DEFAULT false` |
+| `predictions` | 12 | |
+| `fighters` | 10 | |
+| `comment_likes` | 3 | PK `(comment_id, user_id)` present on DEV + PROD |
+| `fighter_comments` | 6 | |
 
-Drift: `fights.is_title_fight` + `fights.is_main_card` present on DEV, not yet on PROD. `check:schema-drift` will flag both until Sean runs the migration on PROD. Expected, not a bug.
+## OAuth Clients
 
-## OAuth Clients (unchanged)
+| Env | Google Client ID prefix | Supabase project |
+|---|---|---|
+| DEV | `312732011458-6dd753flhh...` | `lqyzivuxznybmlnlexmq` |
+| PROD | `312732011458-ju6m9oe4s2b...` | `nxjwthpydynoecrvggih` |
 
-| Environment | Google Client ID prefix | Supabase project | Redirect URI |
-|---|---|---|---|
-| DEV | `312732011458-6dd753flhh...` | `lqyzivuxznybmlnlexmq` | `https://lqyzivuxznybmlnlexmq.supabase.co/auth/v1/callback` |
-| PROD | `312732011458-ju6m9oe4s2b...` | `nxjwthpydynoecrvggih` | `https://nxjwthpydynoecrvggih.supabase.co/auth/v1/callback` |
+Redirect URI pattern: `https://<project>.supabase.co/auth/v1/callback`.
 
-## Test Surface
+## Test surface
 
 | Layer | Files | Cases | Runtime |
 |---|---|---|---|
-| Unit + component (vitest) | 10 | 125 | ~1.3s |
-| Schema drift script | `scripts/check-schema-drift.mjs` | 7 tables | ~2s |
-| i18n integrity script | `scripts/check-i18n-keys.mjs` | 7 locales (339 keys each) | <1s |
-| Prod smoke script | `scripts/smoke-prod.mjs` | 13 checks | ~5s |
+| vitest (unit + component) | 11 | 168 | ~1.5s |
+| schema drift (`scripts/check-schema-drift.mjs`) | — | 14 tables | ~2s |
+| i18n integrity (`scripts/check-i18n-keys.mjs`) | — | 7 locales × 372 keys | <1s |
+| prod smoke (`scripts/smoke-prod.mjs`) | — | 13 checks | ~5s |
 
-`npm run test:fast` — 84/84 passing
-`npm run predeploy` — i18n + schema-drift + tests + build
-`npm run deploy` — predeploy + `vercel --prod` + smoke (note: requires `vercel login` — currently stale; use the GitHub Actions deploy on push to `main` instead)
+`npm run test:fast` 168/168 · `SUPABASE_ACCESS_TOKEN=... npm run predeploy` (i18n + drift + tests + build) · `npm run deploy` = predeploy + `vercel --prod` + smoke (requires fresh `vercel login`; currently stale — use GitHub Actions push-to-main instead).
 
----
+## Dev tools
+DevPanel (우하단 톱니, dev-only):
+- Seed presets: Full Data / Complete / Empty
+- Scenario presets: firstVisit / picksComplete / live / completed
+- Timer presets: 30s / 5min / 1h / 3h / 1d
+- Sandbox: capture-snapshot / restore-snapshot (auto-captured on event pick)
+- Replays: onboarding, streak toast, all-predicted toast
+- State: event status, user streak (current + best), ring name, content flags, `?dev_event={id}` override
 
-## Review gate
-
-**Primary review path (as of 2026-04-13)**: the user-level `second-opinion-reviewer` subagent. Invoke via natural language: "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. **3-tier Review rubric** (Tier A routine / Tier B elevated with red-team / forensic / oracle framings / Tier C irreversible-high-stakes with 8 hard triggers + mandatory cross-family external review) **lives in `Docs/review-tier-rubric.md`**. Supplements — does NOT replace — cross-family external review; reach for external (GPT / Codex / Gemini) when stakes justify the cost. Historical fallback (deprioritized for cost after ~$8.93 cumulative spend on 2026-04-12): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. CLAUDE.md imports this section.
-
-| Profile          | Model           | Effort | Use for                                                                              |
-|------------------|-----------------|--------|--------------------------------------------------------------------------------------|
-| `blackpick_lite` | `gpt-5.4-mini`  | medium | lint cleanup, single-file CSS/copy tweaks, isolated component fixes                 |
-| `blackpick`      | `gpt-5.4`       | high   | feature PRs, hook/store refactors, multi-file UI changes (default)                  |
-| `blackpick_max`  | `gpt-5.4`       | xhigh  | auth/RLS, Supabase migrations, money/score/streak math, share-page enumeration risk |
-
----
-
-## Dev Tools Available
-
-DevPanel (dev only, 우하단 톱니):
-- **Full Data** — 시드 유저 10명, 이벤트 3개, 예측, 댓글, 랭킹 생성
-- **Complete** — upcoming/live 경기 → completed (랜덤 승자)
-- **Empty** — 시드 데이터 전부 삭제
-
-## Fighter Images
-- 84개 픽셀아트 in `public/fighters/pixel/`
-- 배경: #2A2A2A
-- 머리 잘린 이미지 31개 — 리스트는 `Wiki_Sean/BlackPick/2026-04-08-session.md`
+## Fighter images
+- 84 pixel-art portraits in `public/fighters/pixel/` (background `#2A2A2A`)
+- 31 head-cut images — list in `Wiki_Sean/BlackPick/2026-04-08-session.md`

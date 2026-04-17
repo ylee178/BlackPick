@@ -4,10 +4,9 @@
  * projects. Catches the class of bug where a migration is applied to dev but
  * not to prod, and code that depends on the new schema then fails in prod.
  *
- * Specifically: reads `public.{users, fights, predictions, events, admin_users,
- * fighter_comments, fighter_comment_translations}` schema from both projects
- * via the Supabase Management API and diffs the columns. Exits non-zero on
- * any mismatch.
+ * Specifically: reads the schema of the runtime-critical public tables from
+ * both projects via the Supabase Management API and diffs the columns. Exits
+ * non-zero on any mismatch.
  *
  * Run via:
  *   SUPABASE_ACCESS_TOKEN=sbp_... node scripts/check-schema-drift.mjs
@@ -32,10 +31,16 @@ const CRITICAL_TABLES = [
   "admin_users",
   "events",
   "fights",
+  "fight_comments",
+  "comment_likes",
+  "comment_translations",
   "predictions",
+  "mvp_votes",
   "fighters",
   "fighter_comments",
-  "comments",
+  "fighter_comment_likes",
+  "fighter_comment_translations",
+  "user_events",
 ];
 
 const UA = "blackpick-cli/1.0 (schema-drift-check)";
@@ -139,7 +144,8 @@ async function main() {
       ]);
 
       if (devCols.length === 0 && prodCols.length === 0) {
-        console.log("⚠ table missing in both (skipped)");
+        console.log("✗ missing in both");
+        allDiffs.push({ kind: "table_missing_in_both", table });
         continue;
       }
       if (devCols.length === 0) {

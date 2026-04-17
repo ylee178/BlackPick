@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServer } from "@/lib/supabase-server";
+import { createSupabasePublicClient } from "@/lib/supabase-public";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createSupabaseServer();
+  const supabase = createSupabasePublicClient();
   const { id } = await params;
 
   const { data: fights, error: fightsError } = await supabase
