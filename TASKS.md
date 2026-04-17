@@ -4,7 +4,7 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 (session 4) — PR #37 (scorecard UI PR B) merged + unbroke develop CI. 8 PRs merged to develop across sessions 3 + 4. Scorecard feature fully live end-to-end on develop._
+_Last updated: 2026-04-17 (session 5) — `db/integrity-atomicity-followup` branch shipped. Closes 6 Codex-deferred items from PR #30 + folds round-1 reviewer findings (added `recalculate_all_scores` hardening + 5-table LOCK TABLE scope + `process_fight_result` REVOKE). Tier C review: round-1 parallel (red-team / forensic / oracle) + round-2 fold-verify, APPROVE_WITH_CHANGES 0.87 no blockers. DEV apply approved; PROD apply gated on Sean's cross-family dispatch decision._
 
 ---
 
@@ -14,10 +14,9 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 ### 🟣 Claude — queue (priority order)
 
-1. **ACTIVE NEXT — `db/integrity-atomicity-followup`** (blocked-on-post-launch). 6 follow-on items Codex flagged but deferred in PR #30 (non-blocking): `reset_user_record` LOCK TABLE race-close, `admin_process_fight_result` explicit `result_processed_at` set, `process_fight_result` search_path, `comment_likes` UPDATE-policy doc, `completed_at` semantic backfill-vs-trigger doc, `mvp-vote-window` invalid-date test. Tier C review applies (money-path + RPC).
-2. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
-3. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
-4. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
+1. **ACTIVE NEXT — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
+2. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
+3. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
 
 ### Blocked-on-Sean-manual (scorecard follow-ups)
 
@@ -60,6 +59,7 @@ Full per-branch narrative + review trails live in `/Users/uxersean/Desktop/Wiki_
 
 | PR | Branch | Commit (squash) | Phase | Summary |
 |---|---|---|---|---|
+| TBD | `db/integrity-atomicity-followup` | pending | **P4 followup ✅** | Migration `202604180001_integrity_atomicity_followup.sql` closes 6 Codex-deferred items from PR #30 + folds in round-1 reviewer findings. Hardens `reset_user_record` (5-table LOCK TABLE, not 1), `process_fight_result` (REVOKE from PUBLIC + search_path pin), `recalculate_all_scores` (same hardening — NEW in fold, round-1 oracle + forensic caught the gap). Documents dual-guard invariant + completed_at semantic split + comment_likes UPDATE-policy absence. `manual-remote-rollout.sql` marked `[DEPRECATED]` to prevent future silent search_path clear. 248/248 tests pass (+1 mvp-vote-window invalid-date case). Tier C review: 3 parallel round-1 framings (red-team 0.82, forensic 0.90, oracle 0.87) + round-2 fold-verify 0.87, all APPROVE_WITH_CHANGES no blockers. Dialog at `reviews/BlackPick/2026-04-17_integrity-followup_dialog/` (gitignored). PROD apply gated on Sean's cross-family dispatch decision per round-2 recommendation. |
 | #37 | `feature/fight-scorecard-ui` | `c59fdb5` | **P4 PR B ✅** | `FightScoreCard` server component (5-col judge-as-row, draw-preserving `winnerSide: "A" \| "B" \| "draw"`) + 6 state-matrix tests + FightCard `scoreCard?` prop + 3 call sites wiring `resolveScoreCardsByDbFightId` with `.catch` empty-Map fallback + 5 i18n keys × 7 locales (373 → 378). Also unbroke develop CI (pre-existing `winnerSourceId` tsc failure landed in PR #35, visible on Vercel CI/CD runs for #34 + #36). Second-opinion-reviewer APPROVE 0.88 (no blockers; 2 minors deferred). Wiki: `2026-04-17-session-4-scorecard-ui-pr-b.md` |
 | #35 | `feature/fight-scorecard-display` | `ff6fe87` | **P4 PR A ✅** | BC scorecard plumbing: `fetchBcScoreCard` (3s timeout + split-TTL cache + Sentry), `resolveScoreCardsByDbFightId` strict 2-sided matcher keyed by dbFight.id, 23 unit tests. Dormant in prod until PR B wires up. Spec v3 survived subagent BLOCK v1→v2 + Codex BLOCK v2→v3. Codex lite tiebreaker caught inflight-stampede + null-seq first-match gaps subagent missed. Wiki: `2026-04-17-session-3-scorecard-plumbing.md` |
 | #34 | `feature/crawler-result-sync` | `971ca12` | **P4 chore ✅** | BC winner-label parser + `sync-bc-event-results.ts` script + admin preselect. No auto-run — `npm run sync:bc-results` on demand. Addresses Sean's 2026-04-17 "crawler is wrong" theory — crawler wasn't parsing results AT ALL, now it does for winner; method/round still admin. |
@@ -215,15 +215,19 @@ Codex CLI shipped all 11 items from the 2026-04-11 + 2026-04-17 review rounds in
 
 **Gate outcome**: Tier C review path completed. Second-opinion-reviewer verdict `APPROVE_WITH_CHANGES` confidence 0.82, **no blockers** — 2 [major] + 4 [minor] findings deferred to follow-on migration. Cross-family (GPT/Gemini) review on `process_fight_result` scoring arithmetic recommended before Phase 6 production launch.
 
-**Follow-on hardening (new branch after PR #30 merges)** — `db/integrity-atomicity-followup`:
-- [ ] [major] `reset_user_record` race: concurrent prediction insert between DELETE and UPDATE can leave `users` aggregate inconsistent with `predictions` table (READ COMMITTED isolation). Fix: add `LOCK TABLE predictions IN SHARE ROW EXCLUSIVE MODE` at function start. Follow-on `CREATE OR REPLACE FUNCTION`, no data migration.
-- [ ] [major] `admin_process_fight_result` doesn't set `result_processed_at` before delegating to `process_fight_result` — currently safe via dual-guard but implicit dependency is brittle. Fix: explicit `UPDATE fights SET result_processed_at = now()` inside the wrapper, OR add inline comments on both functions documenting the invariant.
-- [ ] [minor] `process_fight_result` (pre-existing) missing `SET search_path = public, pg_temp` on its `SECURITY DEFINER`. Now called by `admin_process_fight_result` which correctly pins search_path. Low-risk but CVE-adjacent. Follow-on signature amendment.
-- [ ] [minor] `comment_likes` migration: document intentional UPDATE-policy absence via SQL comment so future contributors don't silently add a no-op update path.
-- [ ] [minor] `completed_at` semantic inconsistency: backfill uses `MAX(fight.start_time)` while trigger uses `now()`. Document the split or unify.
-- [ ] [minor] `src/lib/mvp-vote-window.test.ts` missing test for invalid non-null `completed_at` string path.
+**Follow-on hardening** — `db/integrity-atomicity-followup` ✅ **shipped session 5, migration `202604180001_integrity_atomicity_followup.sql`**:
+- [x] [major] `reset_user_record` race closed via `LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE` on all 5 tables the function mutates (predictions + user_weight_class_stats + hall_of_fame_entries + perfect_card_entries + rankings), not just predictions — round-1 forensic caught the partial-scope gap.
+- [x] [major] `admin_process_fight_result` invariant documented via `COMMENT ON FUNCTION` (documentation-only resolution; explicit result_processed_at UPDATE would trip inner guard, prior dialog confirmed).
+- [x] [minor] `process_fight_result` `SET search_path = public, pg_temp` via `ALTER FUNCTION`. **Also added REVOKE from PUBLIC + GRANT service_role** — round-1 oracle caught that the implicit default PUBLIC EXECUTE grant still existed, contradicting the migration's own claim.
+- [x] [minor] `comment_likes` UPDATE-policy absence documented via `COMMENT ON TABLE`.
+- [x] [minor] `completed_at` backfill-vs-trigger semantic split documented via expanded `COMMENT ON COLUMN`.
+- [x] [minor] `src/lib/mvp-vote-window.test.ts` invalid non-null date test case added.
+- [x] **NEW scope from round-1 fold**: `recalculate_all_scores` same defect class as `process_fight_result` — `ALTER FUNCTION SET search_path` + `REVOKE FROM PUBLIC` + `GRANT service_role` + `COMMENT ON FUNCTION` with liveness warning (TRUNCATE blocks reset_user_record's SHARE ROW EXCLUSIVE).
+- [x] **NEW scope from round-1 fold**: `scripts/ops/manual-remote-rollout.sql` marked `[DEPRECATED]` with explicit warning that re-running it would silently clear the search_path pins (its embedded CREATE OR REPLACE definitions omit the SET clauses).
 
-**Cross-family Tier C review TODO** (before Phase 6 launch): run GPT-4o / Gemini review on `process_fight_result` (scoring arithmetic, streak multiplier, perfect-card detection) — Claude reviewer shares training weights with Codex author and did not re-audit the ~180-line scoring function.
+**Open Tier C cross-family TODO** (before PROD apply of 202604180001, not before merge to develop): round-2 reviewer explicitly recommends Codex CLI / GPT dispatch for 3 specific concerns — (a) PgBouncer transaction-mode interaction with LOCK TABLE inside SECURITY DEFINER, (b) PgBouncer + TRUNCATE edge cases in recalculate_all_scores, (c) production `pg_proc.proacl` state verification (`REVOKE ALL FROM PUBLIC` does NOT revoke role-specific explicit grants — confirm baseline before PROD apply). Sean's call whether to dispatch Codex (paused post-PR #30 per 2026-04-17 incident log) or to apply DEV-only and defer PROD apply to Phase 6 bundled release.
+
+**Cross-family Tier C review TODO** (before Phase 6 launch): run GPT-4o / Gemini review on `process_fight_result` (scoring arithmetic, streak multiplier, perfect-card detection) — Claude reviewer shares training weights with Codex author and did not re-audit the ~180-line scoring function. The 202604180001 followup migration did NOT modify process_fight_result's body (only its grants + search_path); the arithmetic audit remains outstanding.
 
 ### Branch: `docs/facebook-oauth-setup`
 - [ ] `Docs/facebook-oauth-setup.md` — Meta App creation, App Review lite, redirect URIs for dev + prod, Supabase provider setup. Sean runs these steps.
