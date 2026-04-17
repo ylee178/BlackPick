@@ -147,6 +147,7 @@
     "authUnexpected": "지금은 인증을 진행하지 못했어요.",
     "oauthCallbackFailed": "소셜 로그인을 완료하지 못했어요. 다시 시도해주세요.",
     "logout": "로그아웃",
+    "loggingOut": "로그아웃 중...",
     "forgotPassword": "비밀번호를 잊으셨나요?",
     "resetPassword": "비밀번호 재설정",
     "resetPasswordDescription": "가입한 이메일을 입력하면 비밀번호 재설정 링크를 보내드려요.",

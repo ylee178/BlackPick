@@ -147,6 +147,7 @@
     "authUnexpected": "現在、認証を完了できませんでした。",
     "oauthCallbackFailed": "ソーシャルログインを完了できませんでした。もう一度お試しください。",
     "logout": "ログアウト",
+    "loggingOut": "ログアウト中...",
     "forgotPassword": "パスワードをお忘れですか？",
     "resetPassword": "パスワード再設定",
     "resetPasswordDescription": "登録したメールアドレスを入力すると、再設定リンクをお送りします。",

@@ -147,6 +147,7 @@
     "authUnexpected": "We couldn't complete authentication right now.",
     "oauthCallbackFailed": "We couldn't complete that social login. Please try again.",
     "logout": "Log out",
+    "loggingOut": "Logging out...",
     "forgotPassword": "Forgot your password?",
     "resetPassword": "Reset Password",
     "resetPasswordDescription": "Enter your email and we'll send you a link to reset your password.",

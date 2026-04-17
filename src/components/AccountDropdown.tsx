@@ -9,6 +9,7 @@ import {
   retroButtonClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
+import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import ConfirmModal from "@/components/ConfirmModal";
 
 type Props = {
@@ -31,6 +32,7 @@ export default function AccountDropdown({
   const [open, setOpen] = useState(false);
   const [resetModal, setResetModal] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,11 +51,17 @@ export default function AccountDropdown({
   }, []);
 
   async function handleLogout() {
-    setOpen(false);
-    const supabase = createBrowserSupabaseClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const supabase = createBrowserSupabaseClient();
+      await supabase.auth.signOut();
+      setOpen(false);
+      router.push("/");
+      router.refresh();
+    } catch {
+      setLoggingOut(false);
+    }
   }
 
   async function handleResetRecord() {
@@ -166,10 +174,19 @@ export default function AccountDropdown({
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-danger)] transition-colors duration-150 hover:bg-[rgba(239,68,68,0.08)]"
+                disabled={loggingOut}
+                aria-busy={loggingOut}
+                className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-danger)] transition-colors duration-150 hover:bg-[rgba(239,68,68,0.08)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent enabled:cursor-pointer"
               >
-                <LogOut className="h-4 w-4" strokeWidth={1.8} />
-                {t("auth.logout")}
+                <LoadingButtonContent
+                  loading={loggingOut}
+                  loadingLabel={t("auth.loggingOut")}
+                  icon={<LogOut className="h-4 w-4" strokeWidth={1.8} />}
+                  className="justify-start gap-2.5"
+                  spinnerClassName="text-[var(--bp-danger)]"
+                >
+                  {t("auth.logout")}
+                </LoadingButtonContent>
               </button>
             </div>
           </div>

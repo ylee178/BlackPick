@@ -147,6 +147,7 @@
     "authUnexpected": "No pudimos completar la autenticación en este momento.",
     "oauthCallbackFailed": "No pudimos completar ese inicio de sesión social. Inténtalo de nuevo.",
     "logout": "Cerrar sesión",
+    "loggingOut": "Cerrando sesión...",
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "resetPassword": "Restablecer contraseña",
     "resetPasswordDescription": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",

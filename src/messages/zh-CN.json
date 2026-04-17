@@ -147,6 +147,7 @@
     "authUnexpected": "当前无法完成身份验证。",
     "oauthCallbackFailed": "无法完成该社交登录，请重试。",
     "logout": "退出登录",
+    "loggingOut": "正在退出…",
     "forgotPassword": "忘记密码？",
     "resetPassword": "重置密码",
     "resetPasswordDescription": "输入你的邮箱，我们会向你发送重置密码的链接。",
