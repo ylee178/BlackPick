@@ -158,9 +158,36 @@ _Goal: ship Supabase auth email templates for BlackPick's active auth paths (ema
 
 ---
 
-## Phase 4 — Auth, comments, MVP timer
+## Phase 4 — Auth, comments, MVP timer, Codex security remediation
 
-_Goal: close remaining feature gaps before launch. Facebook OAuth, comment edit/delete, MVP timer replaces Sean's manual workflow._
+_Goal: close remaining feature gaps before launch. Facebook OAuth, comment edit/delete, MVP timer replaces Sean's manual workflow. Plus absorb the 2026-04-11 Codex review P0/P1 findings via a dedicated branch owned by Codex CLI._
+
+### Branch: `db/codex-integrity-atomicity` — **OWNED BY CODEX CLI** (token-blocked as of 2026-04-17)
+
+Codex CLI has an uncommitted worktree implementing 6 of 11 items from the 2026-04-11 + 2026-04-17 review rounds. **Do not touch these files in parallel branches** — merge conflict risk high, and Codex owns the mental model. Original guide: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-11-codex-review-remediation-guide.md`.
+
+**Codex-owned files (hands off)**:
+- `supabase/migrations/202604170001_integrity_atomicity.sql` (206 lines, unapplied)
+- `src/lib/mvp-vote-window.{ts,test.ts}`
+- `src/types/database.ts`
+- `src/app/api/{admin/results,comments,fighter-comments,mvp-vote,profile/delete-account,profile/reset-record}/route.ts`
+
+**Completed in Codex WIP (uncommitted, tests pass)**:
+- [x] Account deletion cascade ordering (auth user delete → public.users CASCADE, not reverse)
+- [x] `reset_user_record()` atomic RPC replacing multi-step client orchestration
+- [x] `admin_process_fight_result()` atomic RPC with `FOR UPDATE` row lock — prevents duplicate scoring under concurrent admin submits
+- [x] `fight_comments` parent-thread validation (API check + DB trigger `enforce_fight_comment_parent_match`)
+- [x] `fighter_comments` parent-thread validation (API check + DB trigger `enforce_fighter_comment_parent_match`)
+- [x] MVP vote deadline anchored to `events.completed_at` + `trg_events_completed_at` auto-sync trigger + legacy KST fallback in helper
+
+**Pending in Codex queue (5 new issues surfaced 2026-04-17)**:
+- [ ] `comment_likes` schema drift — DEV (`lqyzivuxznybmlnlexmq`) missing the table, PROD (`nxjwthpydynoecrvggih`) has it. `scripts/check-schema-drift.mjs:30` returns green despite divergence. Recovery migration + drift-check broadening required; affects `src/app/api/comments/like/route.ts:23` + `src/app/api/comments/route.ts:72`
+- [ ] `src/app/api/fighter-avatar/ref/[id]/route.ts:6` — admin-only reference images currently public-accessible; conflicts with `src/lib/fighter-avatar.ts:15` intent. Lock to admin auth
+- [ ] `supabase/migrations/202604100001_create_user_events.sql:34` — `user_events` RLS too permissive; DB-direct inserts bypass rate-limit in `src/app/api/analytics/event/route.ts:55`. Tighten policy
+- [ ] `src/components/MvpVoteSection.tsx:50` — client still computes deadline in UTC; API (`src/app/api/mvp-vote/route.ts:64`) already moved to `completed_at` anchor. Screen drifts from server truth. Sync client
+- [ ] `src/app/api/events/[id]/stats/route.ts:8` — RLS-scoped result cached with `public` cache-control; cache can cross-bleed pre-prediction data. Scope cache to session or strip caching
+
+**Gate**: DB functions + columns are in the migration file only. **Not yet applied to DEV/PROD**. Tier C rubric applies (money-path + irreversible) — `second-opinion-reviewer` + external cross-family review before `supabase db push` to DEV, then again before PROD.
 
 ### Branch: `docs/facebook-oauth-setup`
 - [ ] `Docs/facebook-oauth-setup.md` — Meta App creation, App Review lite, redirect URIs for dev + prod, Supabase provider setup. Sean runs these steps.
@@ -170,13 +197,17 @@ _Goal: close remaining feature gaps before launch. Facebook OAuth, comment edit/
 - [ ] `SocialAuthButtons` already has Facebook gated — verify after flip
 - [ ] Smoke from each locale
 
-### Branch: `db/fighter-comments-edit-delete` + `feature/comment-edit-delete` (max review for migration)
+### Branch: `db/fighter-comments-edit-delete` + `feature/comment-edit-delete` (max review for migration) — **SCHEDULE AFTER Codex branch merges**
+Blocked by: `db/codex-integrity-atomicity` (modifies same route file `src/app/api/fighter-comments/route.ts`). Rebase on Codex branch once merged.
+
 - [ ] Migration: `fighter_comments.edited_at timestamptz nullable`, `deleted_at timestamptz nullable`, `deleted_by uuid nullable references users(id)`, `deleted_body text nullable`
 - [ ] UI: edit button on own comments (`edited` badge if `edited_at is not null`), delete renders as "[Deleted by {ring_name}]" so thread structure stays intact
 - [ ] PUT / DELETE endpoints on `/api/fighter-comments/{id}` — owner or admin
 
-### Branch: `db/mvp-voting-timer` + `feature/mvp-timer-admin` (max review)
-- [ ] Migration: `events.mvp_voting_opens_at timestamptz nullable`, `fights.result_pending boolean not null default false`
+### Branch: `feature/mvp-timer-admin` (max review) — **SCHEDULE AFTER Codex branch merges**
+Blocked by: `db/codex-integrity-atomicity` (Codex's migration adds `events.completed_at` and anchors MVP window on it; this branch layers the admin-open control on top).
+
+- [ ] Migration: `events.mvp_voting_opens_at timestamptz nullable`, `fights.result_pending boolean not null default false` (Codex's `completed_at` already landed in `202604170001`)
 - [ ] MVP vote insert CHECK: `fight.status = 'completed'` AND (`mvp_voting_opens_at is not null AND now() >= mvp_voting_opens_at`)
 - [ ] **Primary**: admin "Open MVP Voting" button on `/admin/events/{id}` → `mvp_voting_opens_at = now()`
 - [ ] **Fallback**: any page load — if `mvp_voting_opens_at is null AND now() >= event.date + 8h`, lazily set it. No cron; first-read triggers
