@@ -11,6 +11,7 @@
     "build-storybook": "storybook build",
     "ops:remote:verify": "node scripts/ops/verify-remote-schema.mjs",
     "ops:admin:bootstrap": "node scripts/ops/bootstrap-admin.mjs",
+    "sync:bc-results": "tsx src/scripts/sync-bc-event-results.ts",
     "test:unit": "vitest run --project unit",
     "test:component": "vitest run --project component",
     "test:fast": "vitest run --project unit --project component",

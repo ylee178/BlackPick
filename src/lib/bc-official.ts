@@ -20,6 +20,21 @@ export type BcOfficialFight = {
   fightSeq: string | null;
   boutLabel: string | null;
   isMainEvent: boolean;
+  /**
+   * `sourceId` of whichever fighter the BC site flags with the "Win"
+   * badge (a `<div>Win</div>` nested inside one fighter's anchor tag,
+   * styled with `background-color: #ffba3c`). `null` for fights that
+   * are not yet resulted, are cancelled, or where the BC site hasn't
+   * published a winner yet.
+   *
+   * Method and round of victory are NOT in the static HTML — those
+   * live behind a "SCORE CARD" JS modal on the BC site, so admins
+   * still have to enter method + round via `/admin/results`. This
+   * field exists so the sync script can pre-stage `winner_id` and
+   * the admin UI can default the winner dropdown to the correct
+   * pick, dropping the admin's entry cost to 2 fields per fight.
+   */
+  winnerSourceId: string | null;
 };
 
 export type BcOfficialEventMeta = {
@@ -406,6 +421,25 @@ export async function fetchBcOfficialEventCard(sourceEventId: string): Promise<B
       fight.find(".cheer-mini").attr("data-fight-seq") ||
       null;
 
+    // Winner detection: BC marks the winning fighter's anchor with a
+    // nested `<div>Win</div>` (cosmetic badge). We scope the search to
+    // anchors INSIDE this fight row so a winner from a neighbouring
+    // fight can't leak in. Fighter-detail anchors have href shaped
+    // like `/fighter/{id}` — we pull the id from the first anchor
+    // that contains a `div` with exact text "Win".
+    let winnerSourceId: string | null = null;
+    for (const fighterLink of fighterLinks) {
+      const $link = $(fighterLink);
+      const hasWinBadge = $link
+        .find("div")
+        .toArray()
+        .some((d) => cleanText($(d).text()) === "Win");
+      if (hasWinBadge) {
+        winnerSourceId = extractFighterIdFromHref($link.attr("href"));
+        break;
+      }
+    }
+
     const boutLabel = cleanText(
       fight
         .find("div")
@@ -436,6 +470,7 @@ export async function fetchBcOfficialEventCard(sourceEventId: string): Promise<B
       fightSeq,
       boutLabel,
       isMainEvent: boutLabel?.includes("[MAIN EVENT]") ?? false,
+      winnerSourceId,
     });
   }
 
