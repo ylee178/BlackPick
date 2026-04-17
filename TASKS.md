@@ -4,31 +4,21 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 (session 2 wrap) — Both 2026-04-17 branches PR-open and ready for develop merge. Codex `db/codex-integrity-atomicity` (PR #30): 11/11 remediation + migrations applied to DEV + PROD, Tier C review APPROVE_WITH_CHANGES 0.82 (no blockers). Claude `feature/admin-surface-consolidation` (PR #29): 6/6 admin slices + second-opinion review fixes, APPROVE_WITH_CHANGES 0.88._
+_Last updated: 2026-04-17 (session 3 wrap) — 7 PRs merged to develop today (#29 admin / #30 Codex integrity / #31 event UI state / #32 pre-Exodus hide / #33 DevPanel intl hotfix / #34 crawler result-sync / #35 scorecard plumbing PR A). PR B (scorecard UI) is the immediate next work item._
 
 ---
 
 ## Current focus
 
-**Two agents working in parallel, non-overlapping file sets.** See [§Parallel-agent discipline](#parallel-agent-discipline) for the coordination rule.
+Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 2026-04-17. Codex CLI is still on call for **Tier C cross-family review** or explicit-user-requested tiebreakers (see memory `feedback_review_tier_discipline.md`), but isn't actively owning files.
 
-### 🤖 Codex CLI (owner) — `db/codex-integrity-atomicity`
-**Status**: 11/11 items completed (single commit `ff96f93`), migrations applied to DEV + PROD, PR #30 open awaiting merge. Tier C review passed (APPROVE_WITH_CHANGES 0.82, no blockers, 2 [major] + 4 [minor] findings deferred to follow-on migration). Full details in [Phase 4 → Branch `db/codex-integrity-atomicity`](#branch-dbcodex-integrity-atomicity--owned-by-codex-cli-approved--applied-2026-04-17-pr-30).
+### 🟣 Claude — queue (priority order)
 
-### 🟣 Claude — parallel work queue (priority order)
-
-1. **PR #29 OPEN — `feature/admin-surface-consolidation`** (Phase 2, independent) · branch tip `98756b2` · **6/6 slices + review fixes done**, 2026-04-17 session 2
-   - [x] Slice 1 — `/admin/layout.tsx` + `/admin/page.tsx` retro tokens + new `AdminNav.tsx` client component. Commit `00d2387`.
-   - [x] Slice 2 — `/admin/fighters/page.tsx` port of `FighterImageManager` + retro tokens. Commit `39b180e`.
-   - [x] Slice 3 — `/admin/events/page.tsx` + `/admin/events/[id]/page.tsx` retro tokens. Commit `8aebcaa`.
-   - [x] Slice 4 — `/admin/results/page.tsx` retro tokens. Commit `9b55037`.
-   - [x] Slice 5 — `AccountDropdown.tsx:139` admin-link flip `/fighters/manage` → `/admin`. Commit `64a1b6e`.
-   - [x] Slice 6 — deleted legacy `/[locale]/(main)/fighters/manage/page.tsx`. Commit `8a3417e`.
-   - [x] Review fixes (second-opinion-reviewer APPROVE_WITH_CHANGES 0.88): `AdminNav` hardcoded rgba → `--bp-accent-border` token; `getSeriesLabelEn` helper in `constants.ts` + both admin event pages using English labels (fixes pre-existing i18n-key leak in Series dropdown/column). Commit `98756b2`.
-   - **Status**: PR #29 open against `develop`, awaiting merge. Docs conflict with PR #30 pre-resolved on this branch (see `CURRENT_STATE.md` combined view).
-2. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
-3. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
-4. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
+1. **ACTIVE NEXT — PR B `feature/fight-scorecard-ui`** (builds on PR #35 plumbing). Spec `Docs/specs/2026-04-17-fight-scorecard-display.md` v3. L3 `FightScoreCard` server component (5-col judge-as-row, draw-preserving) + L3 state-matrix tests (6 cases) + L4 wire into `FightCard` + 3 call sites (home / events/[id] / fights/[fightId]) using `resolveScoreCardsByDbFightId` + L5 i18n (5 keys × 7 locales → 373 + 5 = 378). Second-opinion-reviewer sweep before merge. **PR A (#35) already landed the plumbing — L1 + L2 + 23 tests dormant on develop, ready to wire up.**
+2. **Next — `db/integrity-atomicity-followup`** (blocked-on-post-launch). 6 follow-on items Codex flagged but deferred in PR #30 (non-blocking): `reset_user_record` LOCK TABLE race-close, `admin_process_fight_result` explicit `result_processed_at` set, `process_fight_result` search_path, `comment_likes` UPDATE-policy doc, `completed_at` semantic backfill-vs-trigger doc, `mvp-vote-window` invalid-date test. Tier C review applies (money-path + RPC).
+3. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
+4. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
+5. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
 
 ### ⏸ Claude — blocked-on-Codex queue (rebase after Codex merges)
 
@@ -63,8 +53,15 @@ Full per-branch narrative + review trails live in `/Users/uxersean/Desktop/Wiki_
 
 ## Recently shipped
 
-| PR | Branch | Commit | Phase | Summary |
+| PR | Branch | Commit (squash) | Phase | Summary |
 |---|---|---|---|---|
+| #35 | `feature/fight-scorecard-display` | `ff6fe87` | **P4 PR A ✅** | BC scorecard plumbing: `fetchBcScoreCard` (3s timeout + split-TTL cache + Sentry), `resolveScoreCardsByDbFightId` strict 2-sided matcher keyed by dbFight.id, 23 unit tests. Dormant in prod until PR B wires up. Spec v3 survived subagent BLOCK v1→v2 + Codex BLOCK v2→v3. Codex lite tiebreaker caught inflight-stampede + null-seq first-match gaps subagent missed. Wiki: `2026-04-17-session-3-scorecard-plumbing.md` |
+| #34 | `feature/crawler-result-sync` | `971ca12` | **P4 chore ✅** | BC winner-label parser + `sync-bc-event-results.ts` script + admin preselect. No auto-run — `npm run sync:bc-results` on demand. Addresses Sean's 2026-04-17 "crawler is wrong" theory — crawler wasn't parsing results AT ALL, now it does for winner; method/round still admin. |
+| #33 | `fix/devpanel-intl-provider-scope` | `7f3f8e8` | Hotfix | DevPanel `useRouter` from `@/i18n/navigation` needs to be descendant of `NextIntlClientProvider`. One-line move in `[locale]/layout.tsx`. Unblocked local dev after PR #31. |
+| #32 | `fix/pre-exodus-discovery-hide` | `4d8aede` | **P2 fix ✅** | `EXODUS_ANCHOR_DATE = '2026-01-31'` constant; pre-Exodus events hidden from home featured + event lists + ranking By-Event selector + DevPanel picker. Direct URLs + my-record + dashboard + fighter records + share pages all untouched. 10 new unit tests. |
+| #31 | `fix/event-state-foundation` | `63d69cd` | **P2 fix ✅** | Unified event UI state helpers `deriveEventUiFacts` (L1 facts) + `deriveStickyHeaderSlot` / `derivePostLockTimerState` / `deriveFightDisplayState` (L2 UI derivations). Fixes Sean's 2026-04-17 screenshot — 4 UI signals (UPCOMING badge + 00:00:00 timer + "EVENT IN PROGRESS" + "Predictions locked") now share one authoritative source. Also fixes DevPanel `?dev_event=` locale-aware routing. 39 new unit tests. |
+| #30 | `db/codex-integrity-atomicity` | `2202e23` | **P4 Codex ✅** | Codex CLI 11/11 review remediation in single commit. Migrations `202604170001` + `170002` + `170003` applied to DEV + PROD. `admin_process_fight_result` atomic RPC + `reset_user_record` + `comment_likes` drift recovery + `user_events` RLS lock + `MvpVoteSection` UTC sync + events stats cache scope. Tier C review passed APPROVE_WITH_CHANGES 0.82 (no blockers); 6 follow-on hardening items tracked. |
+| #29 | `feature/admin-surface-consolidation` | `45b3a2e` | **P2 ✅** | Admin UI 6/6 slices: `/admin/layout` + `/admin/page` retro tokens + new `AdminNav` client; `/admin/fighters` FighterImageManager port; `/admin/events` + `/admin/events/[id]` retro; `/admin/results` retro; `AccountDropdown` admin link flip; legacy `/fighters/manage` deleted. second-opinion-reviewer APPROVE_WITH_CHANGES 0.88. Fixed pre-existing i18n-key leak in Series dropdown via `getSeriesLabelEn`. Wiki: `2026-04-17-session-2-admin-consolidation-complete.md` |
 | #28 | `feature/streak-ux` | `8ad4ac7` | **P1 branch 8 ✅** | Profile streak tiles + `StreakPrToast` (baseline + strict-increase) + share CTA wire-up + DevPanel v3 sandbox. 372×7 i18n, 166/166 tests. First spec-phase review round in BlackPick. Wiki: `2026-04-14-branch8-iterations-and-devpanel-v3.md` |
 | — | main direct | `20ffbd6` | Hotfix | `bp-logo-email.png` cherry-pick to unblock Supabase test-email |
 | #27 | `feature/onboarding-first-time-flow` | `cc7bbc7` | **P1 branch 7 ✅** | 3 dismissible prompts (ring-name modal opt-in, anon CTA, first-pick hint) via `useOnboardingDismissal`. Wiki: `2026-04-13-branch7-onboarding-first-time-flow.md` |
