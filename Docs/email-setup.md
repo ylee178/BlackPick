@@ -257,9 +257,9 @@ Gmail Settings → Accounts → "When replying to a message:" → **Reply from t
 
 ---
 
-## Step 6: Supabase Auth 이메일을 Custom SMTP로 전환 (선택, 5분)
+## Step 6: Supabase Auth 이메일을 Custom SMTP로 전환 (브랜딩용, 5분)
 
-**지금은 선택**: Supabase는 기본적으로 자체 도메인 (`*.supabase.co`)에서 인증 메일을 보냄. 이것도 동작은 하는데, `noreply@blackpick.io`에서 보내면 브랜드 일관성 좋아짐.
+**왜 필요**: Supabase 기본 SMTP는 **sender name이 "Supabase Auth"로 고정**돼서 유저 인박스 리스트에 그대로 표시됨. `Docs/email-templates/*.html` 본문은 "Black Pick" 브랜딩인데 From display name은 못 바꿈. [Supabase 공식 문서](https://supabase.com/docs/guides/auth/auth-smtp) 기준 sender name 변경은 **Custom SMTP 활성 상태에서만** 가능 — 대시보드 only quick-swap 경로는 존재하지 않음. From 도메인(`*.supabase.co` → `noreply@blackpick.io`)도 같이 바뀌어 브랜드 일관성 완성.
 
 ### 6.1 Supabase 대시보드 설정
 
@@ -268,7 +268,7 @@ Gmail Settings → Accounts → "When replying to a message:" → **Reply from t
 3. **Enable Custom SMTP** 토글
 4. 설정:
    - Sender email: `noreply@blackpick.io`
-   - Sender name: `BlackPick`
+   - Sender name: `Black Pick` ← 띄어쓰기 있음. `Docs/email-templates/*.html` 본문 브랜딩 + `Docs/blackpick-prd.md` 표기와 일치
    - Host: `smtp.resend.com`
    - Port: `587`
    - Username: `resend`
