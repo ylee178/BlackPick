@@ -7,6 +7,7 @@ import {
   retroFieldClassName,
   retroPanelClassName,
 } from '@/components/ui/retro'
+import { getSeriesLabelEn } from '@/lib/constants'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import type { Database } from '@/types/database'
 
@@ -20,13 +21,6 @@ function fightStatusTone(status: FightStatus): 'accent' | 'success' | 'danger' |
   if (status === 'upcoming') return 'accent'
   if (status === 'cancelled') return 'danger'
   return 'neutral'
-}
-
-function seriesLabel(series: Database['public']['Tables']['events']['Row']['series_type']) {
-  if (series === 'black_cup') return 'Black Cup'
-  if (series === 'numbering') return 'Numbering'
-  if (series === 'rise') return 'Rise'
-  return 'Champions League'
 }
 
 async function EventStatusForm({
@@ -206,7 +200,7 @@ export default async function AdminEventDetailPage({
       <div className={retroPanelClassName({ className: 'p-5' })}>
         <h1 className="text-2xl font-bold text-[var(--bp-ink)] sm:text-3xl">{event.name}</h1>
         <p className="mt-2 text-sm text-[var(--bp-muted)]">
-          {seriesLabel(event.series_type)} • {event.date}
+          {getSeriesLabelEn(event.series_type)} • {event.date}
         </p>
 
         <div className="mt-6">

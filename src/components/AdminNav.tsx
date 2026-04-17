@@ -29,7 +29,7 @@ export default function AdminNav() {
             className={cn(
               "inline-flex cursor-pointer items-center gap-2.5 rounded-[12px] border px-4 py-3 text-sm font-medium transition md:w-full",
               active
-                ? "border-[rgba(229,169,68,0.25)] bg-[var(--bp-accent-dim)] text-[var(--bp-accent)]"
+                ? "border-[var(--bp-accent-border)] bg-[var(--bp-accent-dim)] text-[var(--bp-accent)]"
                 : "border-[var(--bp-line)] bg-[var(--bp-card)] text-[var(--bp-muted)] hover:border-[var(--bp-line-strong)] hover:text-[var(--bp-ink)]",
             )}
           >

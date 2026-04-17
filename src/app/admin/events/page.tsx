@@ -11,7 +11,7 @@ import {
   retroPanelClassName,
 } from '@/components/ui/retro'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
-import { getSeriesLabel } from '@/lib/constants'
+import { getSeriesLabelEn } from '@/lib/constants'
 import type { Database } from '@/types/database'
 
 type EventRow = Database['public']['Tables']['events']['Row']
@@ -141,7 +141,7 @@ export default function AdminEventsPage() {
             >
               {seriesOptions.map((option) => (
                 <option key={option} value={option}>
-                  {getSeriesLabel(option)}
+                  {getSeriesLabelEn(option)}
                 </option>
               ))}
             </select>
@@ -234,7 +234,7 @@ export default function AdminEventsPage() {
                 {events.map((event) => (
                   <tr key={event.id} className="border-b border-[var(--bp-line)]/70">
                     <td className="px-3 py-3 text-[var(--bp-ink)]">{event.name}</td>
-                    <td className="px-3 py-3 text-[var(--bp-muted)]">{getSeriesLabel(event.series_type)}</td>
+                    <td className="px-3 py-3 text-[var(--bp-muted)]">{getSeriesLabelEn(event.series_type)}</td>
                     <td className="px-3 py-3 text-[var(--bp-muted)]">{event.date}</td>
                     <td className="px-3 py-3">
                       <RetroStatusBadge tone={statusTone(event.status)}>
