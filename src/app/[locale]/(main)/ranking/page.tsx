@@ -15,6 +15,7 @@ import { RankingRowFull } from "@/components/ui/ranking";
 import { getUsersBadgeMap } from "@/lib/badge-service";
 import { BadgeList } from "@/components/BadgeChip";
 import type { EarnedBadge } from "@/lib/badge-config";
+import { filterUserVisibleEvents } from "@/lib/event-visibility";
 
 const PAGE_SIZE = 50;
 
@@ -271,7 +272,10 @@ export default async function RankingPage({ searchParams }: { searchParams: Sear
       .order("date", { ascending: false })
       .limit(10);
 
-    eventList = availableEvents ?? [];
+    // Pre-Exodus seed events stay out of the user-facing event
+    // selector — but their rankings rows remain in the DB untouched
+    // (users can still see their past scores via /my-record).
+    eventList = filterUserVisibleEvents(availableEvents ?? []);
 
     // Auto-select first event if none selected
     if (!selectedEvent && eventList.length > 0) {

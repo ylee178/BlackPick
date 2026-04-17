@@ -12,6 +12,7 @@ import {
   type EventSnapshot,
   type FightStatus,
 } from "@/lib/dev-state-helpers";
+import { filterUserVisibleEvents } from "@/lib/event-visibility";
 
 /**
  * Resolves the event that DevPanel actions should target. Priority:
@@ -1796,14 +1797,18 @@ export async function POST(request: Request) {
     }
 
     if (action === "list-events") {
-      // Dev-only: returns all events so DevPanel can show them in a
-      // picker dropdown. Sean 2026-04-14 ask: "내가 이벤트 고를수
-      // 잇게해줘 지금 엑소더스에서 안바껴"
+      // Dev-only: returns events for the DevPanel picker dropdown.
+      // Pre-Exodus seed rows are filtered out — they're still reachable
+      // via `?dev_event={id}` URL override (see `src/lib/event-visibility.ts`
+      // for the rationale), but don't clutter Sean's picker. Sean
+      // 2026-04-17 ask: "엑소더스 이벤트 전에 이벤트들은 데브패널에서
+      // 안보여도 된다는거야. 테스트용으로 남기라는거지."
       const { data: allEvents } = await admin
         .from("events")
         .select("id, name, date, status")
         .order("date", { ascending: false });
-      return NextResponse.json({ action, events: allEvents ?? [] });
+      const visible = filterUserVisibleEvents(allEvents ?? []);
+      return NextResponse.json({ action, events: visible });
     }
 
     if (action === "capture-snapshot") {
