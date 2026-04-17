@@ -2,15 +2,16 @@
 
 _Snapshot only. Durable roadmap lives in [`TASKS.md`](TASKS.md). Per-branch narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Commit history: `git log`._
 
-_Last refreshed: 2026-04-17 (Codex parallel-agent coordination + cleanup)._
+_Last refreshed: 2026-04-17 session 2 (admin-consolidation 6/6 complete, awaiting review-gate + PR)._
 
 ## Branch
 `develop` tip `1c11e30` — cleanup commit (`5f7ad41`) + Codex branch registration (`22297cf`) + parallel-queue split (`1c11e30`) shipped 2026-04-17. PR #28 `feature/streak-ux` squash-merged as `8ad4ac7` on 2026-04-14. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel).
 
 ### Two agents active — parallel, non-overlapping file sets
-- **Codex CLI** owns uncommitted worktree on branch `db/codex-integrity-atomicity` (11 items: 6 shipped in worktree, 5 pending). **Token-blocked as of 2026-04-17.** Codex-owned files listed in TASKS.md Phase 4 — Claude treats them as read-only. Migration `202604170001_integrity_atomicity.sql` present in worktree but **unapplied to DEV/PROD**.
-- **Claude Code** active on `feature/admin-surface-consolidation` (Phase 2). UI-only scope, zero overlap with Codex file set.
+- **Codex CLI** owns uncommitted worktree on branch `db/codex-integrity-atomicity` (11 items: 6 shipped 2026-04-17 session 1; in session 2 Codex expanded WIP with 3 more migrations — `202604170002_comment_likes.sql`, `202604170003_user_events_api_only.sql` + edits to `fighter-avatar/ref/[id]`, `analytics/event`, `events/[id]/stats`, `MvpVoteSection.tsx`, `scripts/check-schema-drift.mjs`, `scripts/ops/verify-remote-schema.mjs`). **Token-blocked as of 2026-04-17.** All three migrations unapplied to DEV/PROD.
+- **Claude Code** shipped `feature/admin-surface-consolidation` 6/6 slices — tip `8a3417e`. UI-only scope, zero overlap with Codex file set. Awaiting `second-opinion-reviewer` gate → PR against develop.
 - Coordination protocol + hands-off file list in [TASKS.md §Parallel-agent discipline](TASKS.md#parallel-agent-discipline).
+- **⚠ Known incident this session**: main worktree's `HEAD` silently reverted from `feature/admin-surface-consolidation` → `db/codex-integrity-atomicity` at least once during Claude's Slice 2 commit (reflog line `HEAD@{1}: checkout: moving from feature/admin-surface-consolidation to db/codex-integrity-atomicity`). No custom hooks in `.git/hooks/`. Most likely cause: background Codex CLI process touching the same worktree. **Mitigation adopted**: every `git commit` now chains `git branch --show-current` guard. Future sessions should either use a separate `git worktree add` for Claude's branch, or pause Codex CLI daemons before starting Claude work.
 
 ## Production
 - **URL**: https://blackpick.io

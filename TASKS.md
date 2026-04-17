@@ -4,7 +4,7 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 — Codex CLI owns in-flight `db/codex-integrity-atomicity` P0/P1 remediation (token-blocked). Claude picks up parallel non-overlapping tracks in priority order below._
+_Last updated: 2026-04-17 (session 2) — Claude wrapped `feature/admin-surface-consolidation` 6/6 slices (tip `8a3417e`); awaiting review-gate + PR. Codex CLI still token-blocked on `db/codex-integrity-atomicity`._
 
 ---
 
@@ -17,14 +17,14 @@ _Last updated: 2026-04-17 — Codex CLI owns in-flight `db/codex-integrity-atomi
 
 ### 🟣 Claude — parallel work queue (priority order)
 
-1. **ACTIVE — `feature/admin-surface-consolidation`** (Phase 2, independent) · branch tip `00d2387` · **1/6 slices done**, paused 2026-04-17 session end
-   - [x] Slice 1 — `/admin/layout.tsx` + `/admin/page.tsx` retro tokens + new `AdminNav.tsx` client component (lucide icons, `usePathname` active state). Commit `00d2387`.
-   - [ ] Slice 2 — `/admin/fighters/page.tsx` · port `FighterImageManager` from `/fighters/manage` + retro tokens · target files: `src/app/admin/fighters/page.tsx` only (FighterImageManager already uses tokens — reference, no edit)
-   - [ ] Slice 3 — `/admin/events/page.tsx` + `/admin/events/[id]/page.tsx` retro tokens. Biggest slice — 31+ and 29+ violations respectively. Use `retroFieldClassName` for form inputs, `retroButtonClassName({ variant: "primary" })` for submits, `retroPanelClassName()` for cards
-   - [ ] Slice 4 — `/admin/results/page.tsx` retro tokens. 31+ violations. **Do not edit the /api/admin/results/route.ts Codex owns — the page calls it as-is**
-   - [ ] Slice 5 — `AccountDropdown.tsx:139` · flip `href="/fighters/manage"` → `href="/admin"`
-   - [ ] Slice 6 — delete `src/app/[locale]/(main)/fighters/manage/page.tsx` + check for any remaining `/fighters/manage` references in i18n strings or redirects
-   - Next-session resume: `git checkout feature/admin-surface-consolidation && git pull`, then start Slice 2. Gold-standard reference for image-manager token use: `src/components/FighterImageManager.tsx:219-291`.
+1. **READY FOR REVIEW — `feature/admin-surface-consolidation`** (Phase 2, independent) · branch tip `8a3417e` · **6/6 slices done**, 2026-04-17 session 2
+   - [x] Slice 1 — `/admin/layout.tsx` + `/admin/page.tsx` retro tokens + new `AdminNav.tsx` client component. Commit `00d2387`.
+   - [x] Slice 2 — `/admin/fighters/page.tsx` port of `FighterImageManager` + retro tokens. Commit `39b180e`.
+   - [x] Slice 3 — `/admin/events/page.tsx` + `/admin/events/[id]/page.tsx` retro tokens. Commit `8aebcaa`.
+   - [x] Slice 4 — `/admin/results/page.tsx` retro tokens. Commit `9b55037`.
+   - [x] Slice 5 — `AccountDropdown.tsx:139` admin-link flip `/fighters/manage` → `/admin`. Commit `64a1b6e`.
+   - [x] Slice 6 — deleted legacy `/[locale]/(main)/fighters/manage/page.tsx`. Commit `8a3417e`.
+   - **Next gate**: `second-opinion-reviewer` sweep → address findings → open PR against `develop`. Tier A routine per review rubric (pure UI token work, no auth/money-path).
 2. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
 3. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
 4. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
@@ -161,13 +161,13 @@ Blocked by: Sentry account + project created, `SENTRY_DSN` in Vercel env.
 - [ ] Smoke: `/api/_sentry-test` route that throws → Sentry captures → email lands within 2 min → **delete test route before merge**
 - [ ] **No custom webhook bridge, no Notion, no DB writes** — Sentry dashboard IS the error ticket store
 
-### Branch: `feature/admin-surface-consolidation` (blackpick review) — **independent**
-- [ ] Port `/[locale]/(main)/fighters/manage` → `/admin/fighters` (list, search, CRUD, pixel avatar upload, country/weight/record edit)
-- [ ] Restyle all `/admin/*` pages with retro CSS tokens; drop `gray-900` / `amber-400` Tailwind literals
-- [ ] Unified `/admin` index with sidebar: Dashboard / Events / Fighters / Results. **No Tickets / Feedback tab** (Gmail + Sentry dashboard)
-- [ ] Flip `AccountDropdown` admin link from `/fighters/manage` to `/admin`
-- [ ] Delete old `/[locale]/(main)/fighters/manage` route after parity confirmed
-- [ ] Admin UI stays English-only — intentional, note in layout header
+### Branch: `feature/admin-surface-consolidation` (blackpick review) — **6/6 slices done, tip `8a3417e`, awaiting review-gate + PR**
+- [x] Port `/[locale]/(main)/fighters/manage` → `/admin/fighters` (image upload/crop/delete via `FighterImageManager`). **Scope trim**: country/weight/record edit deferred — legacy manage page never exposed those, so "port" ≠ "add new capability". File as a follow-up if/when Sean needs roster CRUD from the admin surface.
+- [x] Restyle all `/admin/*` pages with retro CSS tokens; drop `gray-900` / `amber-400` / `text-red-400` / `text-green-400` Tailwind literals
+- [x] Unified `/admin` index with sidebar (`AdminNav` client component, `usePathname` active state): Dashboard / Events / Fighters / Results. No Tickets / Feedback tab per scope correction.
+- [x] Flip `AccountDropdown` admin link from `/fighters/manage` to `/admin`
+- [x] Delete old `/[locale]/(main)/fighters/manage` route
+- [x] Admin UI stays English-only — no `[locale]` prefix on `/admin/*`, no `getTranslations()` calls in admin pages
 
 ---
 
