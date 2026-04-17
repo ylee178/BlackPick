@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { findFighterReferenceFile } from "@/lib/fighter-reference-files";
 import { invalidatePixelFileCache } from "@/lib/pixel-files";
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   // up even if Gemini / remove.bg / the write step throws.
   const facePath = `/tmp/pixel_face_${fighter_id.substring(0, 8)}.png`;
   try {
-    const r = execSync(`/tmp/face_crop "${srcPath}" "${facePath}" 0.7`, {
+    const r = execFileSync("/tmp/face_crop", [srcPath, facePath, "0.7"], {
       encoding: "utf8",
       timeout: 10000,
     });

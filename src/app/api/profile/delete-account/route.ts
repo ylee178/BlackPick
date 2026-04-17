@@ -9,22 +9,19 @@ export async function POST() {
 
   const admin = createSupabaseAdmin();
 
-  const { error: profileDeleteError } = await admin
-    .from("users")
-    .delete()
-    .eq("id", authUser.id);
-
-  if (profileDeleteError) {
-    return NextResponse.json({ error: profileDeleteError.message }, { status: 500 });
-  }
-
   const { error: authDeleteError } = await admin.auth.admin.deleteUser(authUser.id);
 
   if (authDeleteError) {
     return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
   }
 
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch (signOutError) {
+    // The auth row is already gone, so treat local sign-out as best-effort
+    // cookie cleanup instead of failing the entire deletion request.
+    console.error("Failed to clear deleted user's local session", signOutError);
+  }
 
   return NextResponse.json({ ok: true });
 }

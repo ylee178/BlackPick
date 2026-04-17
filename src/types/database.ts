@@ -153,6 +153,7 @@ export type Database = {
           series_type: 'black_cup' | 'numbering' | 'rise' | 'other'
           date: string
           status: 'upcoming' | 'live' | 'completed'
+          completed_at: string | null
           mvp_video_url: string | null
           poster_url: string | null
           source_event_id: string | null
@@ -164,6 +165,7 @@ export type Database = {
           series_type: 'black_cup' | 'numbering' | 'rise' | 'other'
           date: string
           status?: 'upcoming' | 'live' | 'completed'
+          completed_at?: string | null
           mvp_video_url?: string | null
           poster_url?: string | null
           source_event_id?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           series_type?: 'black_cup' | 'numbering' | 'rise' | 'other'
           date?: string
           status?: 'upcoming' | 'live' | 'completed'
+          completed_at?: string | null
           mvp_video_url?: string | null
           poster_url?: string | null
           source_event_id?: string | null
@@ -786,6 +789,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_process_fight_result: {
+        Args: {
+          p_fight_id: string
+          p_method: string
+          p_round: number
+          p_winner_id: string
+        }
+        Returns: undefined
+      }
       calculate_prediction_score: {
         Args: {
           p_is_winner_correct: boolean
@@ -816,6 +828,12 @@ export type Database = {
       }
       recalculate_all_scores: {
         Args: Record<string, never>
+        Returns: undefined
+      }
+      reset_user_record: {
+        Args: {
+          p_user_id: string
+        }
         Returns: undefined
       }
     }

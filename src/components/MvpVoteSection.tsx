@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
+import { getMvpVotingDeadline } from "@/lib/mvp-vote-window";
 import FighterAvatar from "@/components/FighterAvatar";
 import { useI18n } from "@/lib/i18n-provider";
 import { getLocalizedFighterName } from "@/lib/localized-name";
@@ -36,21 +37,49 @@ type Result = {
 type Props = {
   eventId: string;
   eventDate: string;
+  eventCompletedAt: string | null;
   fighters: Fighter[];
 };
 
-export default function MvpVoteSection({ eventId, eventDate, fighters }: Props) {
+export default function MvpVoteSection({
+  eventId,
+  eventDate,
+  eventCompletedAt,
+  fighters,
+}: Props) {
   const { locale, t } = useI18n();
   const [selectedFighterId, setSelectedFighterId] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
-  const votingOpen = useMemo(() => {
-    const deadline = new Date(`${eventDate}T00:00:00Z`).getTime() + 24 * 60 * 60 * 1000;
-    return Date.now() <= deadline;
-  }, [eventDate]);
+  const votingDeadlineMs = useMemo(() => {
+    try {
+      return getMvpVotingDeadline(eventDate, eventCompletedAt).getTime();
+    } catch {
+      return null;
+    }
+  }, [eventCompletedAt, eventDate]);
+
+  useEffect(() => {
+    if (votingDeadlineMs === null) return;
+
+    const remainingMs = votingDeadlineMs - Date.now();
+    if (remainingMs <= 0) {
+      setNow(Date.now());
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setNow(Date.now());
+    }, remainingMs + 50);
+
+    return () => window.clearTimeout(timer);
+  }, [votingDeadlineMs]);
+
+  const votingOpen = votingDeadlineMs !== null && now <= votingDeadlineMs;
 
   const loadResults = useCallback(async () => {
     try {

@@ -77,7 +77,7 @@ export default async function EventPage({
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, name, date, status, mvp_video_url, series_type, source_event_id")
+    .select("id, name, date, status, completed_at, mvp_video_url, series_type, source_event_id")
     .eq("id", id)
     .single();
 
@@ -492,6 +492,7 @@ export default async function EventPage({
         <MvpVoteSection
           eventId={event.id}
           eventDate={event.date}
+          eventCompletedAt={event.completed_at}
           fighters={Array.from(eventFighterMap.values())}
         />
       ) : null}
