@@ -11,6 +11,7 @@ import {
   deriveEventUiFacts,
   derivePostLockTimerState,
 } from "@/lib/event-ui-state";
+import { filterUserVisibleEvents } from "@/lib/event-visibility";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
 import AnonFirstPickCta from "@/components/AnonFirstPickCta";
@@ -101,10 +102,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ]);
 
   const typedEvents = (events ?? []) as EventRow[];
-  const activeEvents = typedEvents.filter((e) => e.status === "live" || e.status === "upcoming");
-  const completedEvents = typedEvents.filter((e) => e.status === "completed").reverse();
+  // Discovery surfaces (featured event + active/completed lists) hide
+  // pre-Exodus seed data. `typedEvents` stays unfiltered so the
+  // `?dev_event={id}` override can still resolve older rows in dev
+  // (useful for regression testing against legacy seeds). See
+  // `src/lib/event-visibility.ts` for the scope contract.
+  const visibleEvents = filterUserVisibleEvents(typedEvents);
+  const activeEvents = visibleEvents.filter((e) => e.status === "live" || e.status === "upcoming");
+  const completedEvents = visibleEvents.filter((e) => e.status === "completed").reverse();
   // Dev event override takes precedence when present and the event
-  // actually exists in DB.
+  // actually exists in DB. Deliberately reads from the unfiltered
+  // `typedEvents` so dev overrides can target pre-Exodus seeds.
   const devOverride = devEventId
     ? typedEvents.find((e) => e.id === devEventId) ?? null
     : null;
