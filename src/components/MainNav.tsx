@@ -4,11 +4,11 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { retroNavLinkClassName } from "@/components/ui/retro";
-import { Home, CalendarDays, Trophy, User, BarChart3, Users } from "lucide-react";
+import { Target, ClipboardList, Trophy, User, BarChart3, Users } from "lucide-react";
 
 const iconClass = "h-5 w-5";
-function HomeIcon() { return <Home className={iconClass} strokeWidth={1.8} />; }
-function CalendarIcon() { return <CalendarDays className={iconClass} strokeWidth={1.8} />; }
+function PicksIcon() { return <Target className={iconClass} strokeWidth={1.8} />; }
+function MyRecordIcon() { return <ClipboardList className={iconClass} strokeWidth={1.8} />; }
 function TrophyIcon() { return <Trophy className={iconClass} strokeWidth={1.8} />; }
 function DashboardIcon() { return <BarChart3 className={iconClass} strokeWidth={1.8} />; }
 function FightersIcon() { return <Users className={iconClass} strokeWidth={1.8} />; }
@@ -29,8 +29,8 @@ export default function MainNav({ mobile = false }: { mobile?: boolean }) {
   ];
 
   const mobileLinks = [
-    { href: "/", label: t("nav.picks") || "Picks", icon: <HomeIcon /> },
-    { href: "/my-record", label: t("nav.myRecord") || "My Record", icon: <CalendarIcon /> },
+    { href: "/", label: t("nav.picks") || "Picks", icon: <PicksIcon /> },
+    { href: "/my-record", label: t("nav.myRecord") || "My Record", icon: <MyRecordIcon /> },
     { href: "/dashboard", label: t("myRecord.dashboard") || "Dashboard", icon: <DashboardIcon /> },
     { href: "/ranking", label: t("nav.ranking") || "Ranking", icon: <TrophyIcon /> },
     { href: "/fighters", label: t("nav.fighters") || "Fighters", icon: <FightersIcon /> },
