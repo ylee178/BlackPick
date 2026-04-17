@@ -29,6 +29,41 @@ export type BcOfficialEventMeta = {
   category: BcEventCategory;
 };
 
+/**
+ * One referee's card for one fight — per-round scores (10-point-must
+ * system) + their reported total. `roundPenalties` captures point
+ * deductions from fouls. Round 4 is always populated but is `0`
+ * unless the fight went to overtime — `overtime` surfaces that flag.
+ */
+export type BcRefereeScore = {
+  name: string;
+  fighterA: {
+    roundScores: number[];     // length 4
+    roundPenalties: number[];  // length 4
+    total: number;
+    overtime: boolean;
+  };
+  fighterB: {
+    roundScores: number[];
+    roundPenalties: number[];
+    total: number;
+    overtime: boolean;
+  };
+};
+
+/**
+ * Aggregated scorecard for a decision fight. BC's judges only
+ * fill cards for bouts that go to the judges — KO/TKO/Submission
+ * fights have no scorecard (the endpoint returns
+ * `{success:false, error:"not found"}`).
+ *
+ * Typically 3 referees. Some legacy fights have 1–2 referees
+ * recorded — those still parse fine.
+ */
+export type BcScoreCard = {
+  referees: BcRefereeScore[];
+};
+
 const BC_BASE_URL = "https://blackcombat-official.com";
 const BC_CATEGORIES: readonly BcEventCategory[] = ["BC", "N", "R", "C"];
 
@@ -84,6 +119,164 @@ function weightClassFromBoutLabel(label: string | null): string | null {
 async function fetchHtml(path: string): Promise<string> {
   const response = await client.get<string>(path);
   return response.data;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Scorecard fetch + parse
+//
+// Public JSON endpoint: `/findScore.php?score_seq={fightSeq}`.
+// Returns raw judges' data shaped like:
+//   {
+//     "referee_name1": "VEGETABLE",
+//     "score111": "9",  // ref1, fighter1, round1
+//     "score112": "9",  // ref1, fighter1, round2
+//     ...
+//     "score121": "10", // ref1, fighter2, round1
+//     ...
+//     "total_score11": "27", "total_score12": "30",
+//     "overtimeYn11": "0",
+//     "referee_name2": "MASTER KIM", ...
+//     "referee_name3": "LOGAN", ...
+//   }
+// Key pattern: `score{referee 1-3}{fighter 1-2}{round 1-4}`.
+//
+// Error envelope from BC for non-decision fights:
+//   { "success": false, "error": "not found" }
+// ─────────────────────────────────────────────────────────────
+
+function toSafeInt(value: unknown): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const n = Number.parseInt(value, 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function parseFighterSideScore(
+  raw: Record<string, unknown>,
+  refIdx: 1 | 2 | 3,
+  fighterIdx: 1 | 2,
+): BcRefereeScore["fighterA"] {
+  const roundScores: number[] = [];
+  const roundPenalties: number[] = [];
+  for (let r = 1; r <= 4; r += 1) {
+    roundScores.push(toSafeInt(raw[`score${refIdx}${fighterIdx}${r}`]));
+    roundPenalties.push(toSafeInt(raw[`minus_score${refIdx}${fighterIdx}${r}`]));
+  }
+  return {
+    roundScores,
+    roundPenalties,
+    total: toSafeInt(raw[`total_score${refIdx}${fighterIdx}`]),
+    overtime: String(raw[`overtimeYn${refIdx}${fighterIdx}`] ?? "0") === "1",
+  };
+}
+
+/**
+ * Pure parser — used both by `fetchBcScoreCard` (for live BC data)
+ * and by unit tests (for fixtures). Handles:
+ *   - `{success: false}` BC error envelope → null
+ *   - Legacy fights with 1–2 referees → emitted as-is (skipping absent slots)
+ *   - Missing individual score fields → coerced to 0 (judges sometimes leave R4 blank)
+ */
+export function parseScoreCardJson(raw: unknown): BcScoreCard | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  if (obj.success === false) return null;
+
+  const referees: BcRefereeScore[] = [];
+  for (const refIdx of [1, 2, 3] as const) {
+    const name = obj[`referee_name${refIdx}`];
+    if (typeof name !== "string" || name.trim() === "") continue;
+    referees.push({
+      name: name.trim(),
+      fighterA: parseFighterSideScore(obj, refIdx, 1),
+      fighterB: parseFighterSideScore(obj, refIdx, 2),
+    });
+  }
+
+  return referees.length > 0 ? { referees } : null;
+}
+
+type ScoreCardCacheEntry = {
+  value: BcScoreCard | null;
+  expiresAt: number;
+  kind: "success" | "error";
+};
+
+const SCORECARD_SUCCESS_TTL_MS = 10 * 60 * 1000; // 10 min
+const SCORECARD_ERROR_TTL_MS = 60 * 1000; // 1 min — recover quickly from transient BC 5xx
+const scoreCardCache = new Map<string, ScoreCardCacheEntry>();
+
+/** Test-only helper — resets the module-level cache between vitest runs. */
+export function _resetScoreCardCache(): void {
+  scoreCardCache.clear();
+}
+
+/**
+ * Fetches the judges' scorecard for one fight. `scoreSeq` is the
+ * `openScoreCard(N)` parameter extracted from the BC event-card
+ * HTML (exposed on `BcOfficialFight.fightSeq`).
+ *
+ * Returns `null` when:
+ *   - BC returns its `{success:false}` envelope (KO/TKO/Sub fights —
+ *     no judges' card exists)
+ *   - The fetch fails (timeout, network error, 5xx, malformed JSON)
+ *
+ * Caching: per-process `Map<scoreSeq, ...>` with separate TTLs —
+ * 10 min for successful parses (including `null` for a confirmed
+ * no-card state) and 1 min for thrown errors. This avoids a single
+ * transient BC 5xx blanking a legitimate scorecard for 10 minutes.
+ *
+ * Observability: exceptions (NOT `{success:false}` envelopes) are
+ * captured as Sentry warnings in production so external dependency
+ * failures are visible without user-facing error banners.
+ */
+export async function fetchBcScoreCard(
+  scoreSeq: string,
+): Promise<BcScoreCard | null> {
+  const now = Date.now();
+  const hit = scoreCardCache.get(scoreSeq);
+  if (hit && hit.expiresAt > now) return hit.value;
+
+  try {
+    const res = await client.get<unknown>(
+      `/findScore.php?score_seq=${scoreSeq}`,
+      {
+        timeout: 3_000,
+        headers: {
+          Accept: "application/json, text/javascript, */*; q=0.01",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      },
+    );
+    const parsed = parseScoreCardJson(res.data);
+    scoreCardCache.set(scoreSeq, {
+      value: parsed,
+      expiresAt: now + SCORECARD_SUCCESS_TTL_MS,
+      kind: "success",
+    });
+    return parsed;
+  } catch (err) {
+    if (process.env.NODE_ENV === "production") {
+      // Dynamic import — keeps tests free of Sentry init + guards
+      // against a broken Sentry build surfacing as a BC fetch failure.
+      void import("@sentry/nextjs")
+        .then(({ captureException }) =>
+          captureException(err, {
+            level: "warning",
+            tags: { scope: "bc-scorecard", scoreSeq },
+          }),
+        )
+        .catch(() => {});
+    }
+    scoreCardCache.set(scoreSeq, {
+      value: null,
+      expiresAt: now + SCORECARD_ERROR_TTL_MS,
+      kind: "error",
+    });
+    return null;
+  }
 }
 
 export async function fetchBcEventList(
