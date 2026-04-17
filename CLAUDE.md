@@ -38,8 +38,15 @@ Pattern lifted from `SETS_Stock/CLAUDE.md` Core Principle #7 (Sean 2026-04-12). 
 5. **Sanity-check**: if `CURRENT_STATE.md` disagrees with TASKS.md (e.g.
    something marked done in one place but pending in the other), flag to
    Sean. Do not silently trust either side.
-6. **Update TASKS.md immediately on every task transition** — not at
-   session end. Stale manifest = process failure.
+6. **Update TASKS.md forward-looking state on every task transition** —
+   queue (ACTIVE NEXT reshuffle), backlog (new idea captured, old
+   idea closed), blocked-on-Sean sections. **Do NOT add Recently-
+   shipped rows or touch Last-updated timestamps** — those were
+   removed 2026-04-17 after repeat merge conflicts; git log +
+   session wiki are authoritative for shipped history. See TASKS.md
+   § Process notes for the full boundary. `.gitattributes` uses
+   `merge=union` on TASKS.md as a safety net for the remaining
+   concurrent forward-looking edits.
 
 # Review gate
 

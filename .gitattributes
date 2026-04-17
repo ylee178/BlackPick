@@ -1,0 +1,11 @@
+# Use union merge for TASKS.md — concurrent branches often append the same
+# queue/backlog sections and otherwise collide on every merge. Union keeps
+# BOTH sides' lines (may produce duplicate bullets on occasion, which a human
+# cleans up in the PR) instead of surfacing merge markers that block CI.
+#
+# Why this file exists: repeat merge conflicts during session 5 (2026-04-17)
+# when 3 parallel branches each updated TASKS.md queue/shipped-log sections.
+# Deeper structural fix (removing Last-updated line + Recently-shipped table
+# from TASKS.md) shipped in the same commit. This safety net covers the
+# remaining queue/backlog edits that ARE legitimate forward-looking state.
+TASKS.md merge=union
