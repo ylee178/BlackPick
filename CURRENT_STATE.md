@@ -2,10 +2,10 @@
 
 _Snapshot only. Durable roadmap lives in [`TASKS.md`](TASKS.md). Per-branch narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Commit history: `git log`._
 
-_Last refreshed: 2026-04-17 session 3 wrap — 7 PRs merged today (#29/#30/#31/#32/#33/#34/#35). Codex parallel-agent era closed; next up: PR B scorecard UI on top of PR #35 plumbing._
+_Last refreshed: 2026-04-17 session 4 — PR #37 (scorecard UI, PR B) merged and also unbroke develop CI that had been red since PRs #34/#35/#36 due to a pre-existing `winnerSourceId` tsc error in `bc-scorecards.test.ts`. Scorecard feature fully live on develop (PR A plumbing + PR B UI)._
 
 ## Branch
-`develop` tip `971ca12` (PR #34 squash-merge) — 7 session-3 merges land the full Phase 2 admin surface, Codex integrity bundle, event state unification, pre-Exodus visibility filter, DevPanel intl hotfix, crawler result-sync, and BC scorecard plumbing.
+`develop` tip `c59fdb5` (PR #37 squash-merge) — PR B wires the BC judges' scorecard into `FightCard` on home / event detail / fight detail for completed Decision fights. Develop CI back to green (Verify build health + lint + typecheck + unit + component + i18n both pass).
 
 ### Solo-agent era
 Codex CLI branch `db/codex-integrity-atomicity` landed as PR #30. No active parallel Codex work. Codex CLI remains on call for **Tier C cross-family review** per the discipline memory (`feedback_review_tier_discipline.md`) but isn't owning files.
@@ -15,7 +15,7 @@ Codex CLI branch `db/codex-integrity-atomicity` landed as PR #30. No active para
 ## Production
 - **URL**: https://blackpick.io
 - **main tip**: `20ffbd6` (bp-logo-email.png cherry-pick, 2026-04-13). Prior baseline `5b51afc` bundled PRs #3–#11.
-- **Develop → main release pending**: PRs #17–#35 (Phase 1 + 2 + admin + Codex + event-state + pre-Exodus + hotfix + crawler + scorecard plumbing) bundle at Phase 6 launch gate.
+- **Develop → main release pending**: PRs #17–#37 (Phase 1 + 2 + admin + Codex + event-state + pre-Exodus + hotfix + crawler + scorecard plumbing + scorecard UI) bundle at Phase 6 launch gate.
 - **Scoring v3**: applied on DEV. PROD still on v2; applied with Phase 6 bundle.
 - **Integrity/atomicity bundle**: `202604170001` + `170002` + `170003` applied on DEV + PROD. `check:schema-drift` clean on DEV + PROD, `verify-remote-schema` OK, and `npm run predeploy` passes with `SUPABASE_ACCESS_TOKEN` present.
 - **Email assets on PROD**: `/email/{bp-logo-email.png, icon-shield, icon-key}` → all 200.
@@ -48,19 +48,21 @@ Redirect URI pattern: `https://<project>.supabase.co/auth/v1/callback`.
 
 | Layer | Files | Cases | Runtime |
 |---|---|---|---|
-| vitest (unit + component) | 14 | 231 | ~1.5s |
+| vitest (unit + component) | 16 | 247 | ~1.5s |
 | schema drift (`scripts/check-schema-drift.mjs`) | — | 14 tables | ~2s |
-| i18n integrity (`scripts/check-i18n-keys.mjs`) | — | 7 locales × 373 keys | <1s |
+| i18n integrity (`scripts/check-i18n-keys.mjs`) | — | 7 locales × 378 keys | <1s |
 | prod smoke (`scripts/smoke-prod.mjs`) | — | 13 checks | ~5s |
 
-`npm run test:fast` 231/231 · `SUPABASE_ACCESS_TOKEN=... npm run predeploy` (i18n + drift + tests + build) · `npm run deploy` = predeploy + `vercel --prod` + smoke (requires fresh `vercel login`; currently stale — use GitHub Actions push-to-main instead).
+`npm run test:fast` 247/247 · `SUPABASE_ACCESS_TOKEN=... npm run predeploy` (i18n + drift + tests + build) · `npm run deploy` = predeploy + `vercel --prod` + smoke (requires fresh `vercel login`; currently stale — use GitHub Actions push-to-main instead).
 
-### New surfaces added session 3
+### New surfaces added session 3 + 4
 - `src/lib/event-ui-state.ts` — single-source event facts + thin UI derivations (PR #31, 39 tests)
 - `src/lib/event-visibility.ts` — `EXODUS_ANCHOR_DATE` gating (PR #32, 10 tests)
 - `src/lib/bc-official.ts` — scorecard parser + cached fetch (PR #35, 11 tests)
 - `src/lib/bc-scorecards.ts` — strict matcher + resolver (PR #35, 12 tests)
+- `src/components/FightScoreCard.tsx` — 5-col judge-as-row server component (PR #37, 6 state-matrix tests)
 - `src/scripts/sync-bc-event-results.ts` — winner-staging script (PR #34). Usage: `npm run sync:bc-results [-- --apply] [-- --event-id=<uuid>]`.
+- i18n: new `scorecard.{title,judge,total,roundLabel,overtime}` keys × 7 locales (373 → 378 per PR #37).
 
 ## Dev tools
 DevPanel (우하단 톱니, dev-only):

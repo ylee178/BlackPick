@@ -4,7 +4,7 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 (session 3 wrap) — 7 PRs merged to develop today (#29 admin / #30 Codex integrity / #31 event UI state / #32 pre-Exodus hide / #33 DevPanel intl hotfix / #34 crawler result-sync / #35 scorecard plumbing PR A). PR B (scorecard UI) is the immediate next work item._
+_Last updated: 2026-04-17 (session 4) — PR #37 (scorecard UI PR B) merged + unbroke develop CI. 8 PRs merged to develop across sessions 3 + 4. Scorecard feature fully live end-to-end on develop._
 
 ---
 
@@ -14,11 +14,16 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 ### 🟣 Claude — queue (priority order)
 
-1. **ACTIVE NEXT — PR B `feature/fight-scorecard-ui`** (builds on PR #35 plumbing). Spec `Docs/specs/2026-04-17-fight-scorecard-display.md` v3. L3 `FightScoreCard` server component (5-col judge-as-row, draw-preserving) + L3 state-matrix tests (6 cases) + L4 wire into `FightCard` + 3 call sites (home / events/[id] / fights/[fightId]) using `resolveScoreCardsByDbFightId` + L5 i18n (5 keys × 7 locales → 373 + 5 = 378). Second-opinion-reviewer sweep before merge. **PR A (#35) already landed the plumbing — L1 + L2 + 23 tests dormant on develop, ready to wire up.**
-2. **Next — `db/integrity-atomicity-followup`** (blocked-on-post-launch). 6 follow-on items Codex flagged but deferred in PR #30 (non-blocking): `reset_user_record` LOCK TABLE race-close, `admin_process_fight_result` explicit `result_processed_at` set, `process_fight_result` search_path, `comment_likes` UPDATE-policy doc, `completed_at` semantic backfill-vs-trigger doc, `mvp-vote-window` invalid-date test. Tier C review applies (money-path + RPC).
-3. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
-4. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
-5. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
+1. **ACTIVE NEXT — `db/integrity-atomicity-followup`** (blocked-on-post-launch). 6 follow-on items Codex flagged but deferred in PR #30 (non-blocking): `reset_user_record` LOCK TABLE race-close, `admin_process_fight_result` explicit `result_processed_at` set, `process_fight_result` search_path, `comment_likes` UPDATE-policy doc, `completed_at` semantic backfill-vs-trigger doc, `mvp-vote-window` invalid-date test. Tier C review applies (money-path + RPC).
+2. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
+3. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
+4. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
+
+### Blocked-on-Sean-manual (scorecard follow-ups)
+
+- Event 286 manual acceptance: run `npm run sync:bc-results -- --apply`, then admin method/round via `/admin/results` on 3 decision fights; verify scorecards render inline on `/events/286` + `/events/286/fights/[fightId]` + home-featured when 286 is surfaced.
+- Mobile 360px visual check — 5-col density confirmation on a real device.
+- (Optional post-launch) Spanish `scorecard.title` narrow note: "Tarjeta" vs sport-conventional "Tarjetas" — Tier A reviewer [minor], deferred.
 
 ### ⏸ Claude — blocked-on-Codex queue (rebase after Codex merges)
 
@@ -55,6 +60,7 @@ Full per-branch narrative + review trails live in `/Users/uxersean/Desktop/Wiki_
 
 | PR | Branch | Commit (squash) | Phase | Summary |
 |---|---|---|---|---|
+| #37 | `feature/fight-scorecard-ui` | `c59fdb5` | **P4 PR B ✅** | `FightScoreCard` server component (5-col judge-as-row, draw-preserving `winnerSide: "A" \| "B" \| "draw"`) + 6 state-matrix tests + FightCard `scoreCard?` prop + 3 call sites wiring `resolveScoreCardsByDbFightId` with `.catch` empty-Map fallback + 5 i18n keys × 7 locales (373 → 378). Also unbroke develop CI (pre-existing `winnerSourceId` tsc failure landed in PR #35, visible on Vercel CI/CD runs for #34 + #36). Second-opinion-reviewer APPROVE 0.88 (no blockers; 2 minors deferred). Wiki: `2026-04-17-session-4-scorecard-ui-pr-b.md` |
 | #35 | `feature/fight-scorecard-display` | `ff6fe87` | **P4 PR A ✅** | BC scorecard plumbing: `fetchBcScoreCard` (3s timeout + split-TTL cache + Sentry), `resolveScoreCardsByDbFightId` strict 2-sided matcher keyed by dbFight.id, 23 unit tests. Dormant in prod until PR B wires up. Spec v3 survived subagent BLOCK v1→v2 + Codex BLOCK v2→v3. Codex lite tiebreaker caught inflight-stampede + null-seq first-match gaps subagent missed. Wiki: `2026-04-17-session-3-scorecard-plumbing.md` |
 | #34 | `feature/crawler-result-sync` | `971ca12` | **P4 chore ✅** | BC winner-label parser + `sync-bc-event-results.ts` script + admin preselect. No auto-run — `npm run sync:bc-results` on demand. Addresses Sean's 2026-04-17 "crawler is wrong" theory — crawler wasn't parsing results AT ALL, now it does for winner; method/round still admin. |
 | #33 | `fix/devpanel-intl-provider-scope` | `7f3f8e8` | Hotfix | DevPanel `useRouter` from `@/i18n/navigation` needs to be descendant of `NextIntlClientProvider`. One-line move in `[locale]/layout.tsx`. Unblocked local dev after PR #31. |
