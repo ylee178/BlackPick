@@ -240,6 +240,7 @@
     "closesIn": "Таамаглал хаагдах хүртэл",
     "eventStartsIn": "Тэмцээн эхлэхэд",
     "eventInProgress": "Тэмцээн өрнөж байна",
+    "eventStartingSoon": "Удахгүй эхэлнэ",
     "locked": "Таамаглал түгжигдсэн",
     "lockedHint": "Цаг дуусахад таамаглал хаагдана",
     "daysShort": "Өдөр",

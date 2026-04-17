@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveEventUiFacts,
+  deriveFightDisplayState,
+  derivePostLockTimerState,
+  deriveStickyHeaderSlot,
   isFightTerminal,
   type EventUiFacts,
 } from "./event-ui-state";
@@ -250,5 +253,188 @@ describe("deriveEventUiFacts — edge cases", () => {
     );
     expect(facts.hasLiveFight).toBe(false);
     expect(facts.hasCompletedFight).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// L2 — UI derivations (thin wrappers)
+// ─────────────────────────────────────────────────────────────
+
+function factsFor(
+  eventStatus: EventStatus,
+  fights: { id: string; status: FightStatus; start_time: string }[],
+): EventUiFacts {
+  return deriveEventUiFacts(makeEvent(eventStatus), fights, NOW);
+}
+
+describe("deriveStickyHeaderSlot — Sean's streak-gating spec", () => {
+  it("timer running + streak>0 → countdown (streak suppressed)", () => {
+    const facts = factsFor("upcoming", [makeFight("upcoming", FUTURE)]);
+    const slot = deriveStickyHeaderSlot(facts, 5, NOW);
+    expect(slot).toEqual({ kind: "countdown", targetTime: FUTURE });
+  });
+
+  it("timer running + streak=0 → countdown", () => {
+    const facts = factsFor("upcoming", [makeFight("upcoming", FUTURE)]);
+    expect(deriveStickyHeaderSlot(facts, 0, NOW)).toEqual({
+      kind: "countdown",
+      targetTime: FUTURE,
+    });
+  });
+
+  it("live event + timer expired + streak>0 → show streak", () => {
+    const facts = factsFor("live", [makeFight("upcoming", PAST)]);
+    expect(deriveStickyHeaderSlot(facts, 3, NOW)).toEqual({
+      kind: "streak",
+      value: 3,
+    });
+  });
+
+  it("live event + timer expired + streak=0 → empty slot", () => {
+    const facts = factsFor("live", [makeFight("upcoming", PAST)]);
+    expect(deriveStickyHeaderSlot(facts, 0, NOW)).toEqual({ kind: "none" });
+  });
+
+  it("completed event + streak>0 → empty slot (Sean's regression guard)", () => {
+    // The bug Sean flagged: streak surfacing on completed events.
+    // Spec says streak is only allowed during timer or prediction-
+    // locked state, which completed is NOT.
+    const facts = factsFor("completed", [makeFight("completed", PAST)]);
+    expect(deriveStickyHeaderSlot(facts, 7, NOW)).toEqual({ kind: "none" });
+  });
+
+  it("completed event + anonymous viewer (null streak) → empty slot", () => {
+    const facts = factsFor("completed", [makeFight("completed", PAST)]);
+    expect(deriveStickyHeaderSlot(facts, null, NOW)).toEqual({ kind: "none" });
+  });
+
+  it("upcoming event with no fights → empty slot", () => {
+    const facts = factsFor("upcoming", []);
+    expect(deriveStickyHeaderSlot(facts, 3, NOW)).toEqual({ kind: "none" });
+  });
+
+  it("upcoming event with stale start_time (seed data) + streak → show streak (not completed yet)", () => {
+    // eventPhase is upcoming but firstLockAt is past. Timer not
+    // running. Event not completed. Streak displays — consistent
+    // with "prediction locked" state.
+    const facts = factsFor("upcoming", [makeFight("upcoming", PAST)]);
+    expect(deriveStickyHeaderSlot(facts, 2, NOW)).toEqual({
+      kind: "streak",
+      value: 2,
+    });
+  });
+});
+
+describe("derivePostLockTimerState — FlipTimer burned-out copy", () => {
+  it("live event → 'eventInProgress' message", () => {
+    const facts = factsFor("live", [makeFight("upcoming", PAST)]);
+    expect(derivePostLockTimerState(facts)).toEqual({
+      kind: "burnedOut",
+      messageKey: "eventInProgress",
+    });
+  });
+
+  it("completed event → hide the timer entirely", () => {
+    const facts = factsFor("completed", [makeFight("completed", PAST)]);
+    expect(derivePostLockTimerState(facts)).toEqual({ kind: "hide" });
+  });
+
+  it("upcoming event with past firstLockAt (inconsistent seed) → 'eventStartingSoon' softer copy", () => {
+    // Sean's screenshot root cause: upcoming event with stale
+    // start_time was saying 'EVENT IN PROGRESS' beside an UPCOMING
+    // badge. Now emits the softer copy so the UI doesn't contradict
+    // itself — and the inconsistent state is surfaced to the admin
+    // via DevPanel rather than rendered as truth to users.
+    const facts = factsFor("upcoming", [makeFight("upcoming", PAST)]);
+    expect(derivePostLockTimerState(facts)).toEqual({
+      kind: "burnedOut",
+      messageKey: "eventStartingSoon",
+    });
+  });
+});
+
+describe("deriveFightDisplayState — per-fight state collapse", () => {
+  const facts = factsFor("live", [makeFight("upcoming", PAST)]);
+
+  it.each([
+    ["cancelled", "cancelled"],
+    ["no_contest", "no_contest"],
+  ] as const)(
+    "terminal status %s is preserved regardless of event phase",
+    (status, expected) => {
+      const result = deriveFightDisplayState(
+        { status, start_time: PAST },
+        facts,
+        NOW,
+      );
+      expect(result).toBe(expected);
+    },
+  );
+
+  it("fight.status=completed → 'completed' (even in live event)", () => {
+    expect(
+      deriveFightDisplayState(
+        { status: "completed", start_time: PAST },
+        facts,
+        NOW,
+      ),
+    ).toBe("completed");
+  });
+
+  it("event.status=completed overrides upcoming fight status", () => {
+    const completedEventFacts = factsFor("completed", [
+      makeFight("upcoming", PAST),
+    ]);
+    expect(
+      deriveFightDisplayState(
+        { status: "upcoming", start_time: PAST },
+        completedEventFacts,
+        NOW,
+      ),
+    ).toBe("completed");
+  });
+
+  it("upcoming fight in past → 'live'", () => {
+    expect(
+      deriveFightDisplayState(
+        { status: "upcoming", start_time: PAST },
+        facts,
+        NOW,
+      ),
+    ).toBe("live");
+  });
+
+  it("upcoming fight in future on live event → 'live' (event is live)", () => {
+    expect(
+      deriveFightDisplayState(
+        { status: "upcoming", start_time: FUTURE },
+        facts,
+        NOW,
+      ),
+    ).toBe("live");
+  });
+
+  it("upcoming fight in future on upcoming event → 'upcoming'", () => {
+    const upcomingFacts = factsFor("upcoming", [makeFight("upcoming", FUTURE)]);
+    expect(
+      deriveFightDisplayState(
+        { status: "upcoming", start_time: FUTURE },
+        upcomingFacts,
+        NOW,
+      ),
+    ).toBe("upcoming");
+  });
+
+  it("cancelled fight with past start_time on live event → still 'cancelled'", () => {
+    // Regression guard: terminal states must survive the
+    // `hasStarted` OR path. Without the terminal check first, this
+    // would erroneously return 'live'.
+    expect(
+      deriveFightDisplayState(
+        { status: "cancelled", start_time: PAST },
+        facts,
+        NOW,
+      ),
+    ).toBe("cancelled");
   });
 });

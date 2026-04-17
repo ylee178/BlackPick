@@ -136,3 +136,123 @@ export function deriveEventUiFacts(
     hasCompletedFight,
   };
 }
+
+// ─────────────────────────────────────────────────────────────
+// L2 — thin UI-specific derivations on top of EventUiFacts
+//
+// Each helper picks the small subset of facts relevant to its
+// surface and returns a state shape that maps directly to the
+// rendering component. Keep them pure, keep them small, and
+// NEVER reach around facts back to the raw event/fight rows.
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Sticky sub-header right-slot state.
+ *
+ * Spec (Sean 2026-04-17): streak only shown in timer-active OR
+ * prediction-locked state, NOT after the event completes.
+ *
+ * - Timer still running → countdown takes the slot.
+ * - Timer expired AND event not yet marked completed AND user has
+ *   streak ≥ 1 → show streak.
+ * - Event completed → empty slot (results are in; streak isn't
+ *   contextually relevant here and Sean found it visually noisy).
+ */
+export type StickyHeaderSlot =
+  | { kind: "countdown"; targetTime: string }
+  | { kind: "streak"; value: number }
+  | { kind: "none" };
+
+export function deriveStickyHeaderSlot(
+  facts: EventUiFacts,
+  currentStreak: number | null,
+  now: number,
+): StickyHeaderSlot {
+  const firstLockMs = facts.firstLockAt
+    ? new Date(facts.firstLockAt).getTime()
+    : null;
+  const timerRunning = firstLockMs !== null && firstLockMs > now;
+
+  if (timerRunning && facts.firstLockAt) {
+    return { kind: "countdown", targetTime: facts.firstLockAt };
+  }
+
+  // Streak shows only in the "prediction locked" state — which
+  // requires an actual non-terminal fight to exist. Empty events
+  // or all-terminal events don't qualify (there's nothing to be
+  // locked on).
+  const streak = currentStreak ?? 0;
+  if (
+    streak > 0 &&
+    facts.eventPhase !== "completed" &&
+    facts.firstLockAt !== null
+  ) {
+    return { kind: "streak", value: streak };
+  }
+
+  return { kind: "none" };
+}
+
+/**
+ * FlipTimer's post-lock message.
+ *
+ * Before: when `tl.total <= 0` the hero always rendered
+ * `countdown.eventInProgress` regardless of the event's actual
+ * phase. For an `upcoming` event with stale seed `start_time`s
+ * this produced "EVENT IN PROGRESS" next to an UPCOMING badge.
+ *
+ * After: honor `eventPhase` when choosing the post-lock copy.
+ * Returning `null` tells the hero to unmount the timer entirely
+ * (used for completed events — a burned-out timer on a finished
+ * card is just noise).
+ */
+export type PostLockTimerState =
+  | { kind: "hide" }
+  | { kind: "burnedOut"; messageKey: "eventInProgress" | "eventStartingSoon" };
+
+export function derivePostLockTimerState(
+  facts: EventUiFacts,
+): PostLockTimerState {
+  if (facts.eventPhase === "completed") return { kind: "hide" };
+  if (facts.eventPhase === "live")
+    return { kind: "burnedOut", messageKey: "eventInProgress" };
+  // eventPhase === "upcoming" with firstLockAt past: seed/data
+  // state out of sync. Show a softer "starting soon" copy instead
+  // of asserting the event is already in progress.
+  return { kind: "burnedOut", messageKey: "eventStartingSoon" };
+}
+
+/**
+ * Per-fight display state used by FightCard + related summaries.
+ * Collapses the fight-level status with the event-level phase so
+ * callers never have to re-reconcile the two.
+ *
+ * Order of precedence:
+ *   1. Terminal fight status (cancelled / no_contest) — never
+ *      overridden. Preserves admin-ruled outcomes.
+ *   2. Fight.status === "completed" — result is in for this fight.
+ *   3. Event has completed — treat any remaining fight as completed
+ *      for display (event-lagging case: admin marked event done
+ *      before scoring every fight).
+ *   4. Fight started OR event flipped to live — "live".
+ *   5. Default — "upcoming".
+ */
+export type FightDisplayState =
+  | "upcoming"
+  | "live"
+  | "completed"
+  | "cancelled"
+  | "no_contest";
+
+export function deriveFightDisplayState(
+  fight: { status: FightStatus; start_time: string },
+  facts: EventUiFacts,
+  now: number,
+): FightDisplayState {
+  if (isFightTerminal(fight)) return fight.status as "cancelled" | "no_contest";
+  if (fight.status === "completed") return "completed";
+  if (facts.eventPhase === "completed") return "completed";
+  const hasStarted = new Date(fight.start_time).getTime() <= now;
+  if (hasStarted || facts.eventPhase === "live") return "live";
+  return "upcoming";
+}

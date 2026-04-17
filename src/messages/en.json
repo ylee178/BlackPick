@@ -240,6 +240,7 @@
     "closesIn": "Predictions close in",
     "eventStartsIn": "Event starts in",
     "eventInProgress": "Event in Progress",
+    "eventStartingSoon": "Starting Soon",
     "locked": "Predictions locked",
     "lockedHint": "Predictions lock when time's up",
     "daysShort": "Days",
