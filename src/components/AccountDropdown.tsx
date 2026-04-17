@@ -136,7 +136,7 @@ export default function AccountDropdown({
             {isAdmin ? (
               <div className="border-t border-[var(--bp-line)] py-1">
                 <Link
-                  href="/fighters/manage"
+                  href="/admin"
                   onClick={() => setOpen(false)}
                   className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition-colors duration-150 hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
                 >
