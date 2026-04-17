@@ -1,10 +1,14 @@
 # BlackPick — Task Manifest (durable, survives `/clear`)
 
-> **Purpose**: Claude's in-session `TaskList` tool is volatile — `/clear` wipes it. This file is the git-tracked source of truth for the full Phase 0–7 roadmap. Session-start protocol lives in [CLAUDE.md](CLAUDE.md). Update on every task transition (immediately, not at session end).
+> **Purpose**: Claude's in-session `TaskList` tool is volatile — `/clear` wipes it. This file is the git-tracked source of truth for the **forward-looking plan** (queue, backlog, blocked). Session-start protocol lives in [CLAUDE.md](CLAUDE.md).
+>
+> **Scope boundary** (enforced 2026-04-17 after repeat merge conflicts):
+> - ✅ **Include**: queue, backlog, blocked items, phase roadmap, process notes
+> - ❌ **Exclude**: "Last updated" timestamps (git log has them) · "Recently shipped" tables (`git log --oneline develop` + Wiki_Sean session logs are authoritative) · any per-PR narrative that conflicts every branch
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
-
-_Last updated: 2026-04-17 (session 5) — 3 PRs shipped to develop: #39 (`db/integrity-atomicity-followup`, Tier C review APPROVE 0.87) + #40 (`a11y/pt-br-activation-followup`, Storybook 4→7 flags + 20 pt-BR accent drops) + #41 (`chore/store-hook-perf-dedupe`, notification/timezone store perf + 13 new tests). PROD apply of #39's migration gated on Sean's cross-family dispatch decision._
+>
+> **Shipped-history**: `git log --oneline develop` for a quick scan. Per-PR narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/<YYYY-MM-DD>-<slug>.md` session logs.
 
 ---
 
@@ -65,41 +69,6 @@ When two agents (Codex CLI + Claude Code) are active on the same repo:
 Full per-branch narrative + review trails live in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`.
 
 ---
-
-## Recently shipped
-
-| PR | Branch | Commit (squash) | Phase | Summary |
-|---|---|---|---|---|
-| #41 | `chore/store-hook-perf-dedupe` | pending | **Chore ✅** | `use-notifications` snapshot dedupe before emit (skip no-change polls) + `use-timezone` `oldValue === newValue` short-circuit on cross-tab storage events. `snapshotsEqual` + `subscribe` exported `@internal` for tests. 260/260 tests (+13 new). Tier A blackpick profile APPROVE_WITH_CHANGES 0.88. |
-| #40 | `a11y/pt-br-activation-followup` | pending | **P5 prep ✅** | Storybook `LanguagePicker.stories.tsx` mock expanded from 4 → 7 flags (added inline SVGs for ES, CN, MN to match EN/KR/JP/BR style). pt-BR.json quality spot-check fixed 20 accent drops across `event`, `account`, `onboarding`, `myRecord`, `discussion`, `notification` sections (Visão, faça, possível, Não, Método×3, Precisão, Tendência, Pontuação×3, previsão, Discussão×2, Notificações, começando, disponíveis, Votação). Manual `?lang=pt-BR` smoke on 5–10 pages deferred to Sean. 7/7 locales still 378 keys. |
-| #39 | `db/integrity-atomicity-followup` | pending | **P4 followup ✅** | Migration `202604180001_integrity_atomicity_followup.sql` closes 6 Codex-deferred items from PR #30 + folds in round-1 reviewer findings. Hardens `reset_user_record` (5-table LOCK TABLE, not 1), `process_fight_result` (REVOKE from PUBLIC + search_path pin), `recalculate_all_scores` (same hardening — NEW in fold, round-1 oracle + forensic caught the gap). Documents dual-guard invariant + completed_at semantic split + comment_likes UPDATE-policy absence. `manual-remote-rollout.sql` marked `[DEPRECATED]` to prevent future silent search_path clear. 248/248 tests pass (+1 mvp-vote-window invalid-date case). Tier C review: 3 parallel round-1 framings (red-team 0.82, forensic 0.90, oracle 0.87) + round-2 fold-verify 0.87, all APPROVE_WITH_CHANGES no blockers. Dialog at `reviews/BlackPick/2026-04-17_integrity-followup_dialog/` (gitignored). PROD apply gated on Sean's cross-family dispatch decision per round-2 recommendation. |
-| #37 | `feature/fight-scorecard-ui` | `c59fdb5` | **P4 PR B ✅** | `FightScoreCard` server component (5-col judge-as-row, draw-preserving `winnerSide: "A" \| "B" \| "draw"`) + 6 state-matrix tests + FightCard `scoreCard?` prop + 3 call sites wiring `resolveScoreCardsByDbFightId` with `.catch` empty-Map fallback + 5 i18n keys × 7 locales (373 → 378). Also unbroke develop CI (pre-existing `winnerSourceId` tsc failure landed in PR #35, visible on Vercel CI/CD runs for #34 + #36). Second-opinion-reviewer APPROVE 0.88 (no blockers; 2 minors deferred). Wiki: `2026-04-17-session-4-scorecard-ui-pr-b.md` |
-| #35 | `feature/fight-scorecard-display` | `ff6fe87` | **P4 PR A ✅** | BC scorecard plumbing: `fetchBcScoreCard` (3s timeout + split-TTL cache + Sentry), `resolveScoreCardsByDbFightId` strict 2-sided matcher keyed by dbFight.id, 23 unit tests. Dormant in prod until PR B wires up. Spec v3 survived subagent BLOCK v1→v2 + Codex BLOCK v2→v3. Codex lite tiebreaker caught inflight-stampede + null-seq first-match gaps subagent missed. Wiki: `2026-04-17-session-3-scorecard-plumbing.md` |
-| #34 | `feature/crawler-result-sync` | `971ca12` | **P4 chore ✅** | BC winner-label parser + `sync-bc-event-results.ts` script + admin preselect. No auto-run — `npm run sync:bc-results` on demand. Addresses Sean's 2026-04-17 "crawler is wrong" theory — crawler wasn't parsing results AT ALL, now it does for winner; method/round still admin. |
-| #33 | `fix/devpanel-intl-provider-scope` | `7f3f8e8` | Hotfix | DevPanel `useRouter` from `@/i18n/navigation` needs to be descendant of `NextIntlClientProvider`. One-line move in `[locale]/layout.tsx`. Unblocked local dev after PR #31. |
-| #32 | `fix/pre-exodus-discovery-hide` | `4d8aede` | **P2 fix ✅** | `EXODUS_ANCHOR_DATE = '2026-01-31'` constant; pre-Exodus events hidden from home featured + event lists + ranking By-Event selector + DevPanel picker. Direct URLs + my-record + dashboard + fighter records + share pages all untouched. 10 new unit tests. |
-| #31 | `fix/event-state-foundation` | `63d69cd` | **P2 fix ✅** | Unified event UI state helpers `deriveEventUiFacts` (L1 facts) + `deriveStickyHeaderSlot` / `derivePostLockTimerState` / `deriveFightDisplayState` (L2 UI derivations). Fixes Sean's 2026-04-17 screenshot — 4 UI signals (UPCOMING badge + 00:00:00 timer + "EVENT IN PROGRESS" + "Predictions locked") now share one authoritative source. Also fixes DevPanel `?dev_event=` locale-aware routing. 39 new unit tests. |
-| #30 | `db/codex-integrity-atomicity` | `2202e23` | **P4 Codex ✅** | Codex CLI 11/11 review remediation in single commit. Migrations `202604170001` + `170002` + `170003` applied to DEV + PROD. `admin_process_fight_result` atomic RPC + `reset_user_record` + `comment_likes` drift recovery + `user_events` RLS lock + `MvpVoteSection` UTC sync + events stats cache scope. Tier C review passed APPROVE_WITH_CHANGES 0.82 (no blockers); 6 follow-on hardening items tracked. |
-| #29 | `feature/admin-surface-consolidation` | `45b3a2e` | **P2 ✅** | Admin UI 6/6 slices: `/admin/layout` + `/admin/page` retro tokens + new `AdminNav` client; `/admin/fighters` FighterImageManager port; `/admin/events` + `/admin/events/[id]` retro; `/admin/results` retro; `AccountDropdown` admin link flip; legacy `/fighters/manage` deleted. second-opinion-reviewer APPROVE_WITH_CHANGES 0.88. Fixed pre-existing i18n-key leak in Series dropdown via `getSeriesLabelEn`. Wiki: `2026-04-17-session-2-admin-consolidation-complete.md` |
-| #28 | `feature/streak-ux` | `8ad4ac7` | **P1 branch 8 ✅** | Profile streak tiles + `StreakPrToast` (baseline + strict-increase) + share CTA wire-up + DevPanel v3 sandbox. 372×7 i18n, 166/166 tests. First spec-phase review round in BlackPick. Wiki: `2026-04-14-branch8-iterations-and-devpanel-v3.md` |
-| — | main direct | `20ffbd6` | Hotfix | `bp-logo-email.png` cherry-pick to unblock Supabase test-email |
-| #27 | `feature/onboarding-first-time-flow` | `cc7bbc7` | **P1 branch 7 ✅** | 3 dismissible prompts (ring-name modal opt-in, anon CTA, first-pick hint) via `useOnboardingDismissal`. Wiki: `2026-04-13-branch7-onboarding-first-time-flow.md` |
-| #26 | `fix/hardcoded-korean-leaks` | `b24057a` | **P1 branch 6 ✅** | i18n leak sweep + caps-lock chips → `t()`. First 3-round file-based dialogue. Wiki: `2026-04-13-branch6-korean-leaks-plus-dialogue-pattern.md` |
-| #25 | `feature/supabase-email-templates` | `992fb9e` | **P3 partial ✅** | Dark-theme confirm + reset HTML, WCAG AA, lucide icon ImageResponse routes. `magic_link` + `invite` still pending. Wiki: `2026-04-13-email-templates-pivot.md` |
-| #24 | `feature/title-fight-badge` | `b2a9dea` | **P1 branch 5p2 ✅** | TITLE FIGHT + MAIN CARD chips + DevPanel Content Flags preview. Wiki: `2026-04-13-title-fight-flag-migration.md` |
-| #23 | `db/title-fight-flag` | `84857f1` | **P1 branch 5p1 ✅** | Migration: `is_title_fight` + `is_main_card` BOOLEAN NOT NULL DEFAULT false |
-| #22 | `fix/prediction-pick-label-consistency` | `f8f9016` | P1 hotfix ✅ | FightCard "Your Pick" chip aligned with picker |
-| #21 | `feature/fighter-page-sort` | `08582ef` | **P1 branch 4 ✅** | `/fighters` sort + country filter, URL state + localStorage persist, 39 new unit tests |
-| #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` | Chore | Session logs moved to `~/Desktop/Wiki_Sean/BlackPick/` external |
-| #19 | `fix/ui-polish-batch` | `d5d03b2` | **P1 branch 3 ✅** | Avatar glow drop, placeholder contrast, name+flag wrap |
-| #18 | `fix/share-cta-visibility` | `5ee064d` | **P1 branch 2 ✅** | `EventShareCta` 6-variant state machine |
-| #17 | `fix/prediction-lock-state` | `93b2d9e` | **P1 branch 1 ✅** | `LockTransitionWatcher` + live state "Your Pick" chip. Added Quality-Maximizing Path meta-rule |
-| #16 | `chore/tasks-manifest-session-structure` | — | Planning | Two-level roadmap model |
-| #15 | `chore/gpt-api-review-fallback` | `ac5b6e4` | Tooling | `gpt-review.sh` fallback |
-| #14 | `dev-ui/panel-v2-switches` | `304920e` | **P0 ✅** | DevPanel v2 switches + server actions |
-| #13 | `chore/plan-reconcile` | `9952dd3` | Planning | 7-phase manifest |
-| #12 | `release/2026-04-12` | `5b51afc` (main) | **Launch #1** | `develop → main` bundled PRs #3–#11 |
-| #9–#11 | various | in #12 | Prior | Signup focus trap + ring_name unique index + `useSyncExternalStore` migration |
 
 ## Phase 0 completion record (closed 2026-04-12 · PR #14)
 
@@ -378,7 +347,12 @@ _No phase assigned — pull when a related area is already being touched._
 ## Process notes (do not delete — they anchor the workflow)
 
 - **Review gate** — primary + rubric in [CLAUDE.md](CLAUDE.md) and [`Docs/review-tier-rubric.md`](Docs/review-tier-rubric.md). Docs-only PRs (TASKS.md, wiki, Docs/) exempt
-- **Every PR updates TASKS.md in the same commit** that ships its code. When a branch lands, its row moves to Recently shipped and the next branch's sub-tasks restore into the in-session TaskList
-- **Session-end ritual**: update [CURRENT_STATE.md](CURRENT_STATE.md) (in-repo, `chore(docs):`) + write new session log to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/<YYYY-MM-DD>-<slug>.md` (outside repo — see `.gitignore`). Sweep TASKS.md for stale items
+- **TASKS.md updates — forward-looking only** (policy tightened 2026-04-17 after repeat conflicts):
+  - ✅ Update the queue when ACTIVE NEXT changes (claiming a new branch, or reshuffling priority)
+  - ✅ Update backlog / blocked sections when items enter/leave those states
+  - ❌ Do NOT add "Recently shipped" rows — use `git log --oneline develop` + session wiki instead
+  - ❌ Do NOT touch "Last updated:" timestamps — git log is authoritative
+  - `.gitattributes` uses `merge=union` on TASKS.md so any remaining concurrent edits produce both-sides content (cleaned up in PR) rather than blocking merge markers
+- **Session-end ritual**: write session log to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/<YYYY-MM-DD>-<slug>.md` (outside repo — see `.gitignore`). Update [CURRENT_STATE.md](CURRENT_STATE.md) (in-repo, `chore(docs):`) only when PROD state changes. Sweep TASKS.md for stale queue items
 - **Lead engineer mode**: make best-practice decisions autonomously. Don't present 2–3 option menus on every step. Warn before destructive operations
 - **Branch discipline**: every phase task = new branch. Naming: `feature/` / `fix/` / `refactor/` / `db/` / `a11y/` / `i18n/` / `chore/` / `dev-ui/`. One PR per branch against `develop`. No stacking
