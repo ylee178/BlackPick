@@ -43,10 +43,18 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           {children}
+          {/* DevPanel must live inside NextIntlClientProvider because
+              it uses `useRouter` from `@/i18n/navigation` (next-intl
+              wrapper) for the locale-aware `?dev_event=` push. Outside
+              the provider, `useRouter()` throws "No intl context
+              found" at mount (fix/devpanel-intl-provider-scope
+              2026-04-17 hotfix). DevPanel itself is dev-only and
+              Korean-hardcoded, so the extra provider wrapping adds no
+              translation cost. */}
+          <DevPanel />
         </NextIntlClientProvider>
         <AnalyticsProvider />
         <Analytics />
-        <DevPanel />
       </body>
     </html>
   );
