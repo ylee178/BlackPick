@@ -4,7 +4,7 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 (session 2) — Claude wrapped `feature/admin-surface-consolidation` 6/6 slices (tip `8a3417e`); awaiting review-gate + PR. Codex CLI still token-blocked on `db/codex-integrity-atomicity`._
+_Last updated: 2026-04-17 (session 2 wrap) — Both 2026-04-17 branches PR-open and ready for develop merge. Codex `db/codex-integrity-atomicity` (PR #30): 11/11 remediation + migrations applied to DEV + PROD, Tier C review APPROVE_WITH_CHANGES 0.82 (no blockers). Claude `feature/admin-surface-consolidation` (PR #29): 6/6 admin slices + second-opinion review fixes, APPROVE_WITH_CHANGES 0.88._
 
 ---
 
@@ -13,18 +13,19 @@ _Last updated: 2026-04-17 (session 2) — Claude wrapped `feature/admin-surface-
 **Two agents working in parallel, non-overlapping file sets.** See [§Parallel-agent discipline](#parallel-agent-discipline) for the coordination rule.
 
 ### 🤖 Codex CLI (owner) — `db/codex-integrity-atomicity`
-**Status**: 6/11 items shipped in worktree (uncommitted + unapplied). Token-blocked 2026-04-17. Full details in [Phase 4 → Branch `db/codex-integrity-atomicity`](#branch-dbcodex-integrity-atomicity--owned-by-codex-cli-token-blocked-as-of-2026-04-17). **Hands-off files listed there.**
+**Status**: 11/11 items completed (single commit `ff96f93`), migrations applied to DEV + PROD, PR #30 open awaiting merge. Tier C review passed (APPROVE_WITH_CHANGES 0.82, no blockers, 2 [major] + 4 [minor] findings deferred to follow-on migration). Full details in [Phase 4 → Branch `db/codex-integrity-atomicity`](#branch-dbcodex-integrity-atomicity--owned-by-codex-cli-approved--applied-2026-04-17-pr-30).
 
 ### 🟣 Claude — parallel work queue (priority order)
 
-1. **READY FOR REVIEW — `feature/admin-surface-consolidation`** (Phase 2, independent) · branch tip `8a3417e` · **6/6 slices done**, 2026-04-17 session 2
+1. **PR #29 OPEN — `feature/admin-surface-consolidation`** (Phase 2, independent) · branch tip `98756b2` · **6/6 slices + review fixes done**, 2026-04-17 session 2
    - [x] Slice 1 — `/admin/layout.tsx` + `/admin/page.tsx` retro tokens + new `AdminNav.tsx` client component. Commit `00d2387`.
    - [x] Slice 2 — `/admin/fighters/page.tsx` port of `FighterImageManager` + retro tokens. Commit `39b180e`.
    - [x] Slice 3 — `/admin/events/page.tsx` + `/admin/events/[id]/page.tsx` retro tokens. Commit `8aebcaa`.
    - [x] Slice 4 — `/admin/results/page.tsx` retro tokens. Commit `9b55037`.
    - [x] Slice 5 — `AccountDropdown.tsx:139` admin-link flip `/fighters/manage` → `/admin`. Commit `64a1b6e`.
    - [x] Slice 6 — deleted legacy `/[locale]/(main)/fighters/manage/page.tsx`. Commit `8a3417e`.
-   - **Next gate**: `second-opinion-reviewer` sweep → address findings → open PR against `develop`. Tier A routine per review rubric (pure UI token work, no auth/money-path).
+   - [x] Review fixes (second-opinion-reviewer APPROVE_WITH_CHANGES 0.88): `AdminNav` hardcoded rgba → `--bp-accent-border` token; `getSeriesLabelEn` helper in `constants.ts` + both admin event pages using English labels (fixes pre-existing i18n-key leak in Series dropdown/column). Commit `98756b2`.
+   - **Status**: PR #29 open against `develop`, awaiting merge. Docs conflict with PR #30 pre-resolved on this branch (see `CURRENT_STATE.md` combined view).
 2. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
 3. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
 4. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
@@ -192,32 +193,34 @@ _Goal: ship Supabase auth email templates for BlackPick's active auth paths (ema
 
 _Goal: close remaining feature gaps before launch. Facebook OAuth, comment edit/delete, MVP timer replaces Sean's manual workflow. Plus absorb the 2026-04-11 Codex review P0/P1 findings via a dedicated branch owned by Codex CLI._
 
-### Branch: `db/codex-integrity-atomicity` — **OWNED BY CODEX CLI** (token-blocked as of 2026-04-17)
+### Branch: `db/codex-integrity-atomicity` — **OWNED BY CODEX CLI** (approved + applied 2026-04-17, PR #30)
 
-Codex CLI has an uncommitted worktree implementing 6 of 11 items from the 2026-04-11 + 2026-04-17 review rounds. **Do not touch these files in parallel branches** — merge conflict risk high, and Codex owns the mental model. Original guide: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-11-codex-review-remediation-guide.md`.
+Codex CLI shipped all 11 items from the 2026-04-11 + 2026-04-17 review rounds in a single commit `ff96f93` ("fix: harden integrity and post-event workflows"). Migrations applied to DEV + PROD and recorded in `supabase_migrations.schema_migrations`. **Do not touch these files in parallel branches until PR #30 merges.** Original guide: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-11-codex-review-remediation-guide.md`.
 
-**Codex-owned files (hands off)**:
-- `supabase/migrations/202604170001_integrity_atomicity.sql` (206 lines, unapplied)
-- `src/lib/mvp-vote-window.{ts,test.ts}`
-- `src/types/database.ts`
-- `src/app/api/{admin/results,comments,fighter-comments,mvp-vote,profile/delete-account,profile/reset-record}/route.ts`
-
-**Completed in Codex WIP (uncommitted, tests pass)**:
+**Completed in Codex branch** (all applied to DEV + PROD):
 - [x] Account deletion cascade ordering (auth user delete → public.users CASCADE, not reverse)
 - [x] `reset_user_record()` atomic RPC replacing multi-step client orchestration
 - [x] `admin_process_fight_result()` atomic RPC with `FOR UPDATE` row lock — prevents duplicate scoring under concurrent admin submits
 - [x] `fight_comments` parent-thread validation (API check + DB trigger `enforce_fight_comment_parent_match`)
 - [x] `fighter_comments` parent-thread validation (API check + DB trigger `enforce_fighter_comment_parent_match`)
-- [x] MVP vote deadline anchored to `events.completed_at` + `trg_events_completed_at` auto-sync trigger + legacy KST fallback in helper
+- [x] MVP vote deadline anchored to `events.completed_at` + `trg_events_completed_at` auto-sync trigger + legacy KST fallback in `src/lib/mvp-vote-window.ts` helper
+- [x] `comment_likes` schema drift repaired via `202604170002_comment_likes.sql` + drift-check broadened to 14 tables
+- [x] `src/app/api/fighter-avatar/ref/[id]/route.ts` locked to admin auth + UUID gate; filesystem helper now has containment checks
+- [x] `user_events` open-insert policy removed via `202604170003_user_events_api_only.sql`; analytics writes flow through service role
+- [x] `src/components/MvpVoteSection.tsx` synced to `completed_at`-anchored deadline
+- [x] `src/app/api/events/[id]/stats/route.ts` switched to public anon client so shared caching doesn't depend on caller cookies
 
-**Pending in Codex queue (5 new issues surfaced 2026-04-17)**:
-- [ ] `comment_likes` schema drift — DEV (`lqyzivuxznybmlnlexmq`) missing the table, PROD (`nxjwthpydynoecrvggih`) has it. `scripts/check-schema-drift.mjs:30` returns green despite divergence. Recovery migration + drift-check broadening required; affects `src/app/api/comments/like/route.ts:23` + `src/app/api/comments/route.ts:72`
-- [ ] `src/app/api/fighter-avatar/ref/[id]/route.ts:6` — admin-only reference images currently public-accessible; conflicts with `src/lib/fighter-avatar.ts:15` intent. Lock to admin auth
-- [ ] `supabase/migrations/202604100001_create_user_events.sql:34` — `user_events` RLS too permissive; DB-direct inserts bypass rate-limit in `src/app/api/analytics/event/route.ts:55`. Tighten policy
-- [ ] `src/components/MvpVoteSection.tsx:50` — client still computes deadline in UTC; API (`src/app/api/mvp-vote/route.ts:64`) already moved to `completed_at` anchor. Screen drifts from server truth. Sync client
-- [ ] `src/app/api/events/[id]/stats/route.ts:8` — RLS-scoped result cached with `public` cache-control; cache can cross-bleed pre-prediction data. Scope cache to session or strip caching
+**Gate outcome**: Tier C review path completed. Second-opinion-reviewer verdict `APPROVE_WITH_CHANGES` confidence 0.82, **no blockers** — 2 [major] + 4 [minor] findings deferred to follow-on migration. Cross-family (GPT/Gemini) review on `process_fight_result` scoring arithmetic recommended before Phase 6 production launch.
 
-**Gate**: DB functions + columns are in the migration file only. **Not yet applied to DEV/PROD**. Tier C rubric applies (money-path + irreversible) — `second-opinion-reviewer` + external cross-family review before `supabase db push` to DEV, then again before PROD.
+**Follow-on hardening (new branch after PR #30 merges)** — `db/integrity-atomicity-followup`:
+- [ ] [major] `reset_user_record` race: concurrent prediction insert between DELETE and UPDATE can leave `users` aggregate inconsistent with `predictions` table (READ COMMITTED isolation). Fix: add `LOCK TABLE predictions IN SHARE ROW EXCLUSIVE MODE` at function start. Follow-on `CREATE OR REPLACE FUNCTION`, no data migration.
+- [ ] [major] `admin_process_fight_result` doesn't set `result_processed_at` before delegating to `process_fight_result` — currently safe via dual-guard but implicit dependency is brittle. Fix: explicit `UPDATE fights SET result_processed_at = now()` inside the wrapper, OR add inline comments on both functions documenting the invariant.
+- [ ] [minor] `process_fight_result` (pre-existing) missing `SET search_path = public, pg_temp` on its `SECURITY DEFINER`. Now called by `admin_process_fight_result` which correctly pins search_path. Low-risk but CVE-adjacent. Follow-on signature amendment.
+- [ ] [minor] `comment_likes` migration: document intentional UPDATE-policy absence via SQL comment so future contributors don't silently add a no-op update path.
+- [ ] [minor] `completed_at` semantic inconsistency: backfill uses `MAX(fight.start_time)` while trigger uses `now()`. Document the split or unify.
+- [ ] [minor] `src/lib/mvp-vote-window.test.ts` missing test for invalid non-null `completed_at` string path.
+
+**Cross-family Tier C review TODO** (before Phase 6 launch): run GPT-4o / Gemini review on `process_fight_result` (scoring arithmetic, streak multiplier, perfect-card detection) — Claude reviewer shares training weights with Codex author and did not re-audit the ~180-line scoring function.
 
 ### Branch: `docs/facebook-oauth-setup`
 - [ ] `Docs/facebook-oauth-setup.md` — Meta App creation, App Review lite, redirect URIs for dev + prod, Supabase provider setup. Sean runs these steps.
