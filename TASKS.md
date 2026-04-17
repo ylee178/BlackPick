@@ -141,18 +141,20 @@ Blocked by: Sentry account + project created, `SENTRY_DSN` in Vercel env.
 
 ---
 
-## Phase 3 — Supabase email templates (HTML only)
+## Phase 3 — Supabase email templates (HTML only) — ✅ **CLOSED 2026-04-17**
 
-_Goal: finish the remaining 2 Supabase auth email templates. Email infrastructure (`docs/email-setup`) moved to Phase 2._
+_Goal: ship Supabase auth email templates for BlackPick's active auth paths (email/password signup + password reset). `magic_link` + `invite` dropped as confusion-only — no `signInWithOtp` / `inviteUserByEmail` call exists in `src/`, so those templates would never render._
 
-### Branch: `feature/supabase-email-templates` (lite review) — ⚠️ **partially shipped in PR #25**
-- [x] `confirm-signup.html` — shipped (dark + WCAG AA + MSO bulletproof + 24h expiry)
-- [x] `reset-password.html` — shipped (same base + `{{ .Email }}` + 1h expiry + keyhole `currentColor` fix)
+### Branch: `feature/supabase-email-templates` — ✅ **shipped PR #25**
+- [x] `confirm-signup.html` — dark + WCAG AA + MSO bulletproof + 24h expiry
+- [x] `reset-password.html` — same base + `{{ .Email }}` + 1h expiry + keyhole `currentColor` fix
 - [x] `README.md` — asset map, WCAG audit, email-client compatibility, Supabase deploy guide
 - [x] `src/types/lucide-icons.d.ts` + `bp-logo-email.png` + `package.json` lucide pin `~1.7.0`
-- [ ] `magic_link.html` — not shipped. Same design, swap icon (lucide `Link` / `Wand`). ~10 min
-- [ ] `invite.html` — not shipped. Same design, swap icon (lucide `UserPlus`). ~10 min
-- [ ] **Sean's post-merge deploy** — preview URLs 200 → Supabase Dashboard → Auth → URL Config (Site URL = blackpick.io) → Email Templates → paste + test
+- [ ] **Sean's post-merge deploy** — preview URLs 200 → Supabase Dashboard → Auth → URL Config (Site URL = blackpick.io) → Email Templates → paste + test (Gmail / iOS Mail / Outlook rendering validation)
+
+**Not shipping** (verified unused 2026-04-17, grep `signInWithOtp|magic_?link|inviteUserByEmail` → 0 hits):
+- ~~`magic_link.html`~~ — BlackPick uses email+password, not OTP/magic-link auth
+- ~~`invite.html`~~ — no programmatic invite flow exists
 
 ---
 
