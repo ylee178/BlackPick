@@ -3,15 +3,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import LoadingButtonContent from '@/components/ui/LoadingButtonContent'
+import {
+  RetroEmptyState,
+  RetroStatusBadge,
+  retroButtonClassName,
+  retroFieldClassName,
+  retroPanelClassName,
+} from '@/components/ui/retro'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import { getSeriesLabel } from '@/lib/constants'
 import type { Database } from '@/types/database'
 
 type EventRow = Database['public']['Tables']['events']['Row']
 type EventInsert = Database['public']['Tables']['events']['Insert']
+type EventStatus = EventRow['status']
 
 const seriesOptions: EventInsert['series_type'][] = ['black_cup', 'numbering', 'rise', 'other']
 const statusOptions: EventInsert['status'][] = ['upcoming', 'live', 'completed']
+
+function statusTone(status: EventStatus): 'accent' | 'success' | 'info' | 'neutral' {
+  if (status === 'live') return 'info'
+  if (status === 'completed') return 'success'
+  if (status === 'upcoming') return 'accent'
+  return 'neutral'
+}
 
 export default function AdminEventsPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
@@ -93,27 +108,27 @@ export default function AdminEventsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">Events</h1>
-        <p className="mt-2 text-sm text-gray-400">Create and manage fight events.</p>
+        <h1 className="text-2xl font-bold text-[var(--bp-ink)] sm:text-3xl">Events</h1>
+        <p className="mt-2 text-sm text-[var(--bp-muted)]">Create and manage fight events.</p>
       </div>
 
-      <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-xl font-semibold text-white">Create Event</h2>
+      <section className={retroPanelClassName({ className: 'p-5' })}>
+        <h2 className="text-xl font-semibold text-[var(--bp-ink)]">Create Event</h2>
 
         <form onSubmit={handleCreateEvent} className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm text-gray-300">Event Name</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Event Name</label>
             <input
               value={form.name}
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
               required
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none ring-0 placeholder:text-gray-400 focus:border-amber-400"
+              className={retroFieldClassName()}
               placeholder="Black Cup 01"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Series Type</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Series Type</label>
             <select
               value={form.series_type}
               onChange={(e) =>
@@ -122,7 +137,7 @@ export default function AdminEventsPage() {
                   series_type: e.target.value as EventInsert['series_type'],
                 }))
               }
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
             >
               {seriesOptions.map((option) => (
                 <option key={option} value={option}>
@@ -133,18 +148,18 @@ export default function AdminEventsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Date</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Date</label>
             <input
               type="date"
               value={form.date}
               onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
               required
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Status</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Status</label>
             <select
               value={form.status}
               onChange={(e) =>
@@ -153,7 +168,7 @@ export default function AdminEventsPage() {
                   status: e.target.value as EventInsert['status'],
                 }))
               }
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
             >
               {statusOptions.map((option) => (
                 <option key={option} value={option}>
@@ -164,11 +179,11 @@ export default function AdminEventsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">MVP Video URL</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">MVP Video URL</label>
             <input
               value={form.mvp_video_url ?? ''}
               onChange={(e) => setForm((prev) => ({ ...prev, mvp_video_url: e.target.value }))}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white placeholder:text-gray-400 focus:border-amber-400"
+              className={retroFieldClassName()}
               placeholder="https://..."
             />
           </div>
@@ -178,7 +193,7 @@ export default function AdminEventsPage() {
               type="submit"
               disabled={submitting}
               aria-busy={submitting}
-              className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className={retroButtonClassName({ variant: 'primary' })}
             >
               <LoadingButtonContent loading={submitting} loadingLabel="Creating...">
                 Create Event
@@ -187,15 +202,15 @@ export default function AdminEventsPage() {
           </div>
         </form>
 
-        {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+        {error ? <p className="mt-4 text-sm text-[var(--bp-danger)]">{error}</p> : null}
       </section>
 
-      <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+      <section className={retroPanelClassName({ className: 'p-5' })}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">All Events</h2>
+          <h2 className="text-xl font-semibold text-[var(--bp-ink)]">All Events</h2>
           <button
             onClick={loadEvents}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-200 hover:border-amber-400 hover:text-amber-400"
+            className={retroButtonClassName({ variant: 'soft', size: 'sm' })}
           >
             Refresh
           </button>
@@ -203,33 +218,33 @@ export default function AdminEventsPage() {
 
         <div className="mt-4 overflow-x-auto">
           {loading ? (
-            <p className="text-sm text-gray-400">Loading events...</p>
+            <p className="text-sm text-[var(--bp-muted)]">Loading events...</p>
           ) : events.length ? (
             <table className="min-w-full text-left text-sm">
-              <thead className="text-gray-400">
-                <tr className="border-b border-gray-800">
-                  <th className="px-3 py-3">Name</th>
-                  <th className="px-3 py-3">Series</th>
-                  <th className="px-3 py-3">Date</th>
-                  <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Action</th>
+              <thead className="text-[var(--bp-muted)]">
+                <tr className="border-b border-[var(--bp-line)]">
+                  <th className="px-3 py-3 font-medium">Name</th>
+                  <th className="px-3 py-3 font-medium">Series</th>
+                  <th className="px-3 py-3 font-medium">Date</th>
+                  <th className="px-3 py-3 font-medium">Status</th>
+                  <th className="px-3 py-3 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {events.map((event) => (
-                  <tr key={event.id} className="border-b border-gray-800/70">
-                    <td className="px-3 py-3 text-white">{event.name}</td>
-                    <td className="px-3 py-3 text-gray-300">{getSeriesLabel(event.series_type)}</td>
-                    <td className="px-3 py-3 text-gray-300">{event.date}</td>
+                  <tr key={event.id} className="border-b border-[var(--bp-line)]/70">
+                    <td className="px-3 py-3 text-[var(--bp-ink)]">{event.name}</td>
+                    <td className="px-3 py-3 text-[var(--bp-muted)]">{getSeriesLabel(event.series_type)}</td>
+                    <td className="px-3 py-3 text-[var(--bp-muted)]">{event.date}</td>
                     <td className="px-3 py-3">
-                      <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-wide text-amber-400">
+                      <RetroStatusBadge tone={statusTone(event.status)}>
                         {event.status}
-                      </span>
+                      </RetroStatusBadge>
                     </td>
                     <td className="px-3 py-3">
                       <Link
                         href={`/admin/events/${event.id}`}
-                        className="text-amber-400 hover:text-amber-300"
+                        className="font-semibold text-[var(--bp-accent)] transition hover:opacity-80"
                       >
                         Manage
                       </Link>
@@ -239,7 +254,10 @@ export default function AdminEventsPage() {
               </tbody>
             </table>
           ) : (
-            <p className="text-sm text-gray-400">No events created yet.</p>
+            <RetroEmptyState
+              title="No events yet"
+              description="Create one above to start scheduling fights."
+            />
           )}
         </div>
       </section>
