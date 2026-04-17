@@ -1,3 +1,18 @@
+-- [DEPRECATED — do not use after 202604090002]
+--
+-- This script was the one-shot manual rollout for the 004/202604090001/202604090002
+-- migration window. It is retained for historical audit only.
+--
+-- DO NOT RE-RUN against any environment. Its embedded CREATE OR REPLACE FUNCTION
+-- definitions for `process_fight_result` and `recalculate_all_scores` DO NOT
+-- include `SET search_path = public, pg_temp`. Running this script again would
+-- silently clear the hardening applied in migration 202604180001_integrity_atomicity_followup
+-- (PostgreSQL replaces pg_proc.proconfig on CREATE OR REPLACE that omits SET).
+--
+-- For any future manual rollout, use `scripts/apply-remote-migrations.sh` which
+-- applies individual migration files (idempotent + preserves per-file SET clauses).
+--
+-- ORIGINAL HEADER (retained for audit):
 -- Manual remote rollout for environments where `supabase db push` cannot connect.
 -- Run this in the Supabase SQL Editor against the production project.
 -- After it succeeds, verify with:

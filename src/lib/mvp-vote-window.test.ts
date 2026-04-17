@@ -23,4 +23,10 @@ describe("getMvpVotingDeadline", () => {
   it("throws on invalid fallback event dates", () => {
     expect(() => getMvpVotingDeadline("2026/04/17", null)).toThrow();
   });
+
+  it("throws when completed_at is a non-null but unparseable date string", () => {
+    expect(() => getMvpVotingDeadline("2026-04-17", "not-a-timestamp")).toThrow(
+      /Invalid completed_at timestamp/,
+    );
+  });
 });
