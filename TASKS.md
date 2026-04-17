@@ -1,133 +1,58 @@
 # BlackPick — Task Manifest (durable, survives `/clear`)
 
-> **WHY THIS FILE EXISTS**: Claude's in-session `TaskList` tool is volatile — `/clear` wipes it. This file is the canonical, git-tracked source of truth. At session start (or after `/clear`), Claude must read this file and restore context from it before touching any task.
+> **Purpose**: Claude's in-session `TaskList` tool is volatile — `/clear` wipes it. This file is the git-tracked source of truth for the full Phase 0–7 roadmap. Session-start protocol lives in [CLAUDE.md](CLAUDE.md). Update on every task transition (immediately, not at session end).
 >
-> **OWNER**: Sean + Claude. Update on **every task transition** (create, start, complete, delete, defer) — immediately, not at session end. Ending a session with a stale manifest is a process failure.
->
-> **Two-level model** — this file carries the **full durable roadmap** (all phases 0–7). The in-session `TaskList` tool only carries **actionable-this-session** items (the sub-tasks of the current branch). Loading the full roadmap into the tool drowns current work.
+> **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-13 (Branch 8 `feature/streak-ux` shipped, Phase 1 now 9/9; only remaining Phase 1 item: Branch 9 `fix/verify-all-predicted-toast`, a verification-only task)_
-
----
-
-## Session start protocol (MANDATORY — run before any task work, including post-`/clear`)
-
-1. **Read this file end-to-end.** You need the full phase map, not just the current item.
-2. **Read `CURRENT_STATE.md`** — production snapshot. Flags schema state, branch status, launch blockers.
-3. **Review gate** — primary path is the user-level `second-opinion-reviewer` subagent. Invoke via "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. Historical fallback (deprioritized for cost): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see [`Docs/codex-review.md`](Docs/codex-review.md).
-4. **Read the latest wiki entry** in `Wiki_Sean/BlackPick/` — session-by-session decisions, context behind choices.
-5. **Restore the TaskList tool** from §Current-focus actionable sub-tasks below via `TaskCreate` with stored `subject` / `description` / `activeForm`. Only restore the **current** branch's sub-tasks — not the full roadmap.
-6. **Sanity check**: if `CURRENT_STATE.md` disagrees with this manifest (something marked done in one place, pending in the other), **flag to Sean**. Do not silently trust either side.
-7. **Update this manifest immediately on every task transition** — not at session end. A trailing stale manifest is a process failure.
+_Last updated: 2026-04-14 — PR #28 `feature/streak-ux` squash-merged; Phase 1 at 9/9 with only Branch 9 (verification-only) remaining._
 
 ---
 
 ## Current focus
 
-**Phase 1 — UX bugs + onboarding + streak**.
+**Phase 1 — 9/9 done.** Only Branch 9 (`fix/verify-all-predicted-toast`) remaining — verification-only, Sean runs DevPanel test. After Phase 1 closes → Phase 2 (email infra + Gmail feedback relay + Sentry + admin consolidation).
 
-**Active branch**: none. **This session shipped Branch 8 (`feature/streak-ux`)** on top of the earlier in-session shipments of PR #25 (`feature/supabase-email-templates`, `992fb9e`) + PR #26 (`fix/hardcoded-korean-leaks`, `b24057a`) + PR #27 (`feature/onboarding-first-time-flow`). Phase 1 advances 6/9 → 7/9 → 8/9 → **9/9**. Only remaining Phase 1 item: **Branch 9 (`fix/verify-all-predicted-toast`)** — a verification-only task (no new code), Sean runs a manual DevPanel test and confirms.
+### Next session resume
 
-### Next session resume brief
+1. `git checkout develop && git pull` — main tip `20ffbd6`
+2. **Sean manual TODO**: Supabase Dashboard → Email Templates → Send Test Email for `confirm_signup` + `reset_password`; validate rendering in Gmail / iOS Mail / Outlook
+3. **Branch 9 test flow** — DevPanel → Actions → `Reset "all predicted" toast lock` → save picks on every fight in an event with `has_saved_picks=false` → verify toast fires on transition + no re-fire on reload. If broken: investigate `AllPredictedToast.tsx` transition detection (`previousCountRef` L55, `reachedAllThisTick` L66–67); may need `router.refresh()` post-save
+4. **Review gate** — blackpick profile via `second-opinion-reviewer` subagent + file-based dialogue. Transcripts under `reviews/BlackPick/<YYYY-MM-DD>_<topic>_dialog/`. Pattern + rubric in [`Docs/review-tier-rubric.md`](Docs/review-tier-rubric.md)
+5. **Phase 2 starts** after Branch 9. First active branch: `feature/feedback-email-relay` — blocked by Sean executing `Docs/email-setup.md` (Cloudflare + Resend + Gmail Send As, ~30 min manual)
 
-1. **Start on develop**: `git checkout develop && git pull`. Main tip is `20ffbd6` (logo PNG cherry-pick).
+### Reference lessons (from shipped branches)
 
-2. ~~**PROD migration still pending**~~ **DONE 2026-04-13** — `supabase/migrations/202604130001_title_fight_and_main_card_flags.sql` applied to PROD via `supabase db query --linked --file`. 384 rows × 0 NULLs on both new columns. `check:schema-drift` clean on both DEV and PROD (14 cols each).
+- **Spec-phase review is cheaper than impl-phase re-review** (Branch 8 validation): catching state-machine design flaws at spec cost ~0 rework vs. ~60-line rewrite post-HEAD. Use for non-trivial detection logic or new localStorage schemas.
+- **Multi-round file-based dialogue catches what single-round misses** (Branch 6 validation): 3 blockers + 1 pre-existing bug only surfaced across rounds 2–3 via systemic sweep. Use for branches with potential defect-class patterns.
+- **Drop unverifiable external-tool claims from permanent docs** (Branch 5 Part 1): when two reviewers contradict on external behavior, the canonical approach is not making the claim — keep only SQL-engine-level truths.
 
-3. **Supabase email templates — final verification step**: ~~Sean opens the preview asset URLs and verifies 200~~ **DONE** — all 3 assets live on PROD: `https://blackpick.io/email/{bp-logo-email.png, icon-shield, icon-key}` → 200. Templates SAVED in Supabase dashboard (confirm_signup + reset_password slots). **Remaining manual step (Sean-only)**: Supabase Dashboard → Authentication → Email Templates → **Send Test Email** for at least `confirm_signup` and `reset_password`, verify real Gmail/iOS Mail/Outlook rendering. Once test emails render cleanly, the PR #25 follow-up is fully closed.
-
-4. ~~**Branch 8 (`feature/streak-ux`)**~~ **DONE this session** — profile page streak tiles + streak-PR toast + share CTA wire-up. 2-round file-based dialogue review (first round was on the spec itself, caught 2 blockers + 2 majors before any code was written; second round verified all folds + 9 edge cases simulated clean). See Branch 8 section below for full sub-task detail.
-
-5. **Branch 9 (`fix/verify-all-predicted-toast`)** — verification-only. After Branch 8 shipped, the DevPanel now has:
-   - `Reset "all predicted" toast lock` (pre-existing from Phase 0)
-   - `Reset streak PR toast lock` (new from Branch 8)
-   - `set-streak` action (new from Branch 8)
-   - `Has saved picks` toggle (pre-existing)
-
-   Sean's manual test flow for Branch 9:
-   - Open DevPanel → Actions → click `Reset "all predicted" toast lock`
-   - Navigate to an event with `has_saved_picks = false`, save picks on every fight
-   - Verify `AllPredictedToast` fires on the transition
-   - Verify toast does NOT re-fire on reload (lock held)
-   - If broken: investigate `AllPredictedToast.tsx` transition detection (ref-based `previousCountRef` on L55 + `reachedAllThisTick` at L66–67). Might need a `router.refresh()` call after save to re-hydrate the count server-side. Already-built component, no new code expected unless bug found.
-
-6. **Review gate**: blackpick profile. Use `second-opinion-reviewer` subagent via file-based dialogue pattern at `Docs/review-tier-rubric.md § File-based dialogue pattern`. Save transcripts under `BlackPick/reviews/BlackPick/<YYYY-MM-DD>_<topic>_dialog/`. Pattern validated across Branches 6 + 7 + 8.
-
-7. **After Phase 1 completes** → Phase 2 (feedback widget + ticket system).
-
-### Branch 8 review trail — first spec-phase dialogue round in BlackPick
-
-2 rounds, each fresh-context. The novelty: **round 1 was on the spec document itself**, not on code. Sean + Claude agreed to this pivot on Branch 8 after Branch 7's round 1 caught a design-level issue (OAuth from fight page regression) that should have been caught at spec time — the Quality-Maximizing Path meta-rule says catch design flaws as early + cheaply as possible.
-
-- **Round 1 (spec)** — APPROVE_WITH_CHANGES 0.88. 2 [blocker] (i18n key miscount + PR detection tie-rebuild false positive) + 2 [major] (DevPanel set-streak claim false, layout-wide null-userId contamination) + 4 [minor]. Both blockers were caught via the reviewer's Python-simulated state machine walk — case `old_current=4, old_best=5 → win → new_current=5, new_best=5` fires `current===best` without `best` actually increasing, which would produce a false "신기록!" celebration for any Korean user who ever rebuilds to their old best. Fix selected: **Option B** (client-side baseline `bp.streakBest.v1:{userId}`, silent first-sync on null, strict-increase gate `serverBest > storedBest`). Spec v2 also added a `set-streak` DevPanel action for self-contained manual testing.
-
-- **Round 2 (implementation)** — APPROVE 0.93. All 6 round-1 folds marked `fold_verified` with grounded evidence. 9 edge cases hand-simulated by the reviewer including the original round-1 false-positive (case 7: `storedBest=5, serverBest=5, current=5 → bestStreak > storedBest is false → no fire`). Zero new blockers. 3 non-blocking minors all intentional or deferred: (a) `t` referential instability is a pre-existing project-wide pattern that affects `AllPredictedToast` and others equally, not Branch 8 scope; (b) DevPanel streak sub-section uses `text-[10px]/[11px]` but DevPanel `Section` labels already use `text-[9px]`, internally consistent with the dev-only convention; (c) `setStreak` server action has no upper-bound validation for Postgres INTEGER max, but surfaces as a DevPanel error message (not a crash).
-
-**Lesson — spec-phase review was cheaper than impl-phase re-review on Branch 8**. If I had implemented straight and round 1 was on HEAD, the tie-rebuild bug would have cost a full re-write of `StreakPrToast` (from the naive `current === best` check to the baseline-plus-strict-increase design). Catching it at spec time was a ~10-line code delta. The spec-first pattern is now validated for non-trivial state-machine work; added to the session-start playbook for future branches with novel detection logic or new localStorage schemas.
-
-### Branch 6 review trail (reference — first 3-round file-based dialogue in BlackPick)
-
-- **Round 1** APPROVE_WITH_CHANGES 0.87 — 2 [blocker] (Perfect Prediction + WIN suffix in PredictionsList that I missed on initial grep) + 1 [major] (pre-existing `ranking.perfectCard` raw-key-string bug at 5 sites) + 3 [minor]. All addressed.
-- **Round 2** APPROVE_WITH_CHANGES 0.91 — verified round 1 folds + found 1 NEW [blocker] (`WIN/LOSS/PTS` stat labels in a file already touched by round 1 fixes, same defect class) + 1 [major] (Oracle/Sniper/Sharp Call product decision) + 3 [minor]. **Flagged `hardcoded-english-chip-label` as systemic defect class** across 3+ files — the dialogue pattern's headline cross-round detection feature.
-- **Round 3** APPROVE 0.94 — verified round 2 folds + full systemic sweep across `src/**/*.tsx`. `hardcoded-english-chip-label` class now **bounded**; 5 remaining grep hits all intentional (brand wordmark, IMG fallback, NEW rank chip), none i18n leaks. Ship clean.
-
-**Lesson**: single-round review would have shipped Branch 6 with 3 missed blockers + 1 pre-existing bug. Multi-round dialogue + systemic sweep caught all of them. The file-based dialogue pattern now has a validated end-to-end workflow in BlackPick; dispatch recipe lives at `Docs/review-tier-rubric.md § File-based dialogue pattern`.
-
-### Branch 5 Part 1 review trail (for future reference)
-
-The migration went through an unusual 3-round review path. Documenting because the disagreement is load-bearing context for anyone touching this file later:
-
-- **Round 1** (prior session, APPROVE_WITH_CHANGES 0.82): 1 [major] flagging header prose claim about atomicity + 1 [minor] missing post-convergence assertion + 1 [minor] dead prop (deferred to Part 2).
-- **Round 2** (this session, on my first fix): subagent PUSHED BACK on my round-1 fix, arguing the round-1 [major] concern was itself a false positive — neither round could verify the Supabase CLI transaction-wrapping behavior without a live test. Both are shared-training assessments.
-- **Resolution**: step back from the contested external-tool claim entirely. Final prose asserts only always-true Postgres atomicity plus a **tool-agnostic** "do NOT add statements after COMMIT" warning.
-- **Round 3** (on the final fix): APPROVE 0.88, zero blockers, single [minor] nit suggesting `ILIKE` over `LIKE` for case-insensitivity, applied inline.
-
-**Lesson for future migrations**: when two subagent reviews contradict each other on an external-tool behavioral claim, the safer answer is usually to **drop the claim entirely** rather than pick a side — SQL-engine-level truths are verifiable, external-tool behavior without live test access is not. The Quality-Maximizing Path meta-rule applies: "canonical approach" wins, and the canonical approach is not making unverifiable claims in permanent documentation.
-
-### Prior subagent review — verified properties (0.82 confidence, APPROVE_WITH_CHANGES)
-
-1. **Convergence matrix** — symbolic state-machine walker across 5 starting states (clean, half-migrated-no-default, half-migrated-wrong-default, half-migrated-default-false, converged). All terminate at `exists=True nullable=False default=false null_rows=False`.
-2. **Race-window closure** — `ADD COLUMN` inside transaction acquires `ACCESS EXCLUSIVE` on `public.fights` and holds until COMMIT; independently, `DEFAULT false` pre-set on ADD makes concurrent inserts pick up false automatically. Belt-and-suspenders.
-3. **TypeScript type shape match** — `Row.is_title_fight: boolean` / `Row.is_main_card: boolean` required (non-null). `Insert`/`Update.is_title_fight?: boolean` / `Insert`/`Update.is_main_card?: boolean` optional. Matches `is_cup_match` precedent and `NOT NULL DEFAULT false` Postgres shape.
-4. **`is_main_card` naming non-collision** — repo grep scoped outside `node_modules`, no existing column/symbol/translation key collision.
-5. **No mutual-exclusion assumption with `is_cup_match`** — grep of `is_cup_match` usages (`src/app/[locale]/(main)/page.tsx:171`, `my-record/page.tsx:124`) shows only single-flag filters, no mutual-exclusion invariant.
-6. **RLS policies unaffected** — `fights` table has one policy (`CREATE POLICY fights_select FOR SELECT USING (true)` at `001_schema.sql:149`). New columns surface identically to existing flags. No security regression.
-
-**Branches already shipped in Phase 1**: #17 (branch 1), #18 (branch 2), #19 (branch 3), #21 (branch 4), #22 (hotfix), **#23 (branch 5 part 1)**, **#24 (branch 5 part 2, this session)**. Docs switch committed on develop as `0e16e33` (2026-04-13 review-path switch to subagent). 3-tier review rubric at `5658b8f`.
-
-**Review gate**: primary path is the user-level `second-opinion-reviewer` subagent — "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. 3-tier rubric: `Docs/review-tier-rubric.md`. Historical fallback only (deprioritized): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. Cumulative OpenAI spend reached **~$8.93** before the 2026-04-13 switch — external review is now reserved for high-stakes calls (auth, RLS, money/score migrations, share-page enumeration) where a cross-family opinion is worth the spend. The subagent SUPPLEMENTS external review, not REPLACES it — every subagent output includes a mandatory `## What this review cannot catch` section declaring its shared-training blind spot.
-
-**Wiki log location**: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/` — **outside** the repo. PR #20 (`chore/move-wiki-out-of-repo`, merged as `9bb0da2`) moved the pre-2026-04-13 in-repo session logs to the external path and added a `.gitignore` block on `Wiki_Sean/`. The memory entry `feedback_wiki_log_location` documents the rule.
-
-**Phase 0 done. Phase 1 in progress (8/9 branches shipped after PR #27 Branch 7).** PR #25 (this session) was an out-of-phase pivot that partially completes a Phase 3 branch (`feature/supabase-email-templates` — 2 of 4 templates done, docs/email-setup still pending). Do not start Phase 2 until every Phase 1 item lands.
+Full per-branch narrative + review trails live in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`.
 
 ---
 
-## Recently shipped (chronological, newest first)
+## Recently shipped
 
-| PR | Branch | Commit | Phase | What shipped |
+| PR | Branch | Commit | Phase | Summary |
 |---|---|---|---|---|
-| #28 | `feature/streak-ux` | pending merge | **Phase 1 branch 8 ✅** | Streak UX surface. **Profile page** gets a hero-like 2-col grid of `RetroStatTile` just above `ProfileSettings`: current streak (muted Flame icon + `profile.currentStreak` label + `streakInARow` caption) and best streak (gold Flame + `profile.bestStreak` + `streakPersonalBest`). Grid is hidden when both streaks === 0 (fresh-account rule, consistent with `BadgeList` hide-when-empty pattern). `RetroStatTile` extended with an optional `icon?: ReactNode` prop rendered inline with the label (backwards-compatible for all existing callers). **Streak-PR toast** (`StreakPrToast.tsx`) — new client component mounted in `(main)/layout.tsx` alongside `RingNameOnboarding`, only when `authUser && publicUser` so anonymous visits never register. Layout-wide mount means a user sees the celebration on their next page load after an admin settles a fight that pushed their `best_streak` up. Two localStorage keys: `bp.streakBest.v1:{userId}` (last-observed baseline, silent first-sync on null so Branch-8-deploy-day rebuild cases don't fire a false celebration) + `bp.streakPR.v1:{userId}:{bestStreakValue}` (dismissal lock keyed on PR value so each distinct PR fires at most once per device). Fire condition: `serverBest > storedBest && currentStreak >= STREAK_PR_MIN && currentStreak === bestStreak` — the strict-increase gate `>` (not `>=`) is what closes the round-1 blocker 2 (tie-rebuild false positive: `current=4, best=5 → win → current=5, best=5` now correctly evaluates to `bestStreak > storedBest = false` and does not fire). `STREAK_PR_MIN = 2` (first meaningful milestone — skip first-win noise at 1). `firedThisMountRef` prevents double-fire within a single mount; try/catch around localStorage gracefully handles private-browsing. **Toast primitive** (`Toast.tsx`) gains a fourth ToastType `"streak"` with the Flame lucide icon in gold — backwards-compatible since the three existing types preserve their exact icon + color. **Share CTA** (`events/[id]/page.tsx`) extends the `dbUser` select from `ring_name` → `ring_name, current_streak`, replacing the `userCurrentStreak: null` placeholder from Branch 2 (PR #18) with the real value. The `streak_badge` variant in `EventShareCta.computeVariant()` (threshold `>= 3`, already shipped in PR #18) now fires correctly when the viewer's current streak meets the threshold. State machine otherwise unchanged. **Layout** (`(main)/layout.tsx`) extends `publicUser` select to include `current_streak, best_streak` alongside the existing `ring_name, score, wins, losses` — one extra select query change, no new DB round-trip. **DevPanel** gets two additions: a new "Streak" sub-block in the User State section (two `<input type="number">` for current + best with client-side `current <= best` validation + Set button + server-action `set-streak` call) and a new "Reset streak PR toast lock" Actions row that prefix-wipes BOTH `bp.streakPR.*` AND `bp.streakBest.*` (must clear both — otherwise the baseline survives and blocks future fires). Server action `setStreak` in `api/dev/seed/route.ts` validates `isFinite`, non-negative, `current <= best`, and writes both columns in a single update. `getUserState` extended to return `{ current_streak, best_streak }`. **i18n**: 3 new keys × 7 locales = 21 new entries (corrected from the spec's original miscount of 5 × 7 that had double-counted pre-existing `currentStreak`/`bestStreak` keys). Final `check:i18n` **368 × 7 aligned** (up from 365 after Branch 7). New keys: `profile.streakInARow`, `profile.streakPersonalBest`, `profile.streakPrToast` (with `{streak}` interpolation via the existing `{var}` handler at `i18n-provider.tsx:26-32`). Korean `"{streak}연승 신기록!"` is only semantically correct because of the strict-increase fix (Option B) — the baseline approach guarantees we only claim "신기록" when `best_streak` has actually increased. **Review trail — 2 rounds file-based dialogue, first time in BlackPick where round 1 was on the SPEC before any code was written**: Round 1 APPROVE_WITH_CHANGES 0.88 on `reviews/BlackPick/2026-04-13_branch8_streak-ux_dialog/00-spec.md` — 2 [blocker] (pre-existing i18n key miscount + PR detection tie-rebuild false positive) + 2 [major] (DevPanel set-streak action claim false, layout-wide null-userId key contamination) + 4 [minor]. Blocker 2 was the load-bearing find — the reviewer ran a Python state-machine walk and surfaced the `old_current + 1 == old_best` case that the spec's corner analysis had missed. Selected fix: **Option B (client-side baseline)** over Option A (neutralize the Korean copy) because Quality-Maximizing Path favors making the feature do what its name says ("personal record" toast fires on genuine records only) over softening the copy to mask the bug. Round 2 APPROVE 0.93 on the implementation HEAD — all 6 round 1 findings marked `fold_verified` with grounded evidence, 9 edge cases hand-simulated by the reviewer including the original case 7 (`storedBest=5, serverBest=5, current=5 → bestStreak > storedBest = false → no fire`), zero new blockers. 3 non-blocking minors all explicitly OK: (a) `t` referential instability is a project-wide pre-existing pattern that `AllPredictedToast` shares, not Branch 8 scope; (b) DevPanel `text-[10px]/[11px]` is internally consistent with the existing dev-only `text-[9px]` Section labels; (c) `setStreak` lacks Postgres INTEGER upper-bound validation but surfaces errors as DevPanel messages, not crashes. **Verification**: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 368 × 7, `npx eslint` 0 errors / 0 warnings on touched files (pre-existing `<img>` warning on `layout.tsx:46` logo line untouched by Branch 8). Phase 1 advances **8/9 → 9/9**; only remaining Phase 1 item is Branch 9 (verification-only, no new code). **Lesson — spec-phase review economics**: catching the tie-rebuild blocker at spec-review time cost ~0 rework (the fix was designed into v2 spec, then implemented straight). Had it been caught in a round 1 on HEAD, it would have required rewriting `StreakPrToast` from the naive `current === best` check to the baseline + strict-increase design — a ~60-line delta plus re-testing all the edge cases. Spec-first review is now validated as a pattern for non-trivial state-machine branches or anything introducing a new localStorage schema. |
-| — | `main` direct commit | `20ffbd6` | Hotfix to PROD (Phase 3 follow-up) | Single-file cherry-pick of `public/email/bp-logo-email.png` (20KB) from develop (originally added in PR #25 commit `992fb9e`) directly to `main` to unblock Sean's Supabase test-email verification without waiting for the full Phase 1 release bundle. **Why direct-to-main (not a PR)**: PR #25 templates were already SAVED in the Supabase dashboard earlier in this session, but the real-client verification step was blocked because the logo PNG resolved to a 404 on PROD (only the icon routes were already on main from an earlier release; the PNG was develop-only). Email rendering is notoriously client-specific (Gmail/Outlook/iOS Mail) and the subagent review only validated HTML structure + WCAG + MSO comments, not actual-client rendering. Validating the template end-to-end NOW is a stronger quality gate than hoping it works at launch. **Why safe as a direct commit**: static binary asset, zero code change, zero runtime risk. The file content is byte-identical to develop's version, so when Phase 1 develop→main merges later, git sees both sides agree — no merge conflict. **Verification**: Vercel CI/CD completed ~1min after push, `curl -I https://blackpick.io/email/bp-logo-email.png` returns `HTTP/2 200`. All 3 PROD email assets now live (`bp-logo-email.png`, `icon-shield`, `icon-key`). Sean can now run Supabase Dashboard → Email Templates → Send Test Email for real-client rendering check. **Process note**: this is a narrowly-scoped hotfix pattern for when a static asset on develop is blocking a PROD manual verification step that can't wait for the release bundle. Not a general "ship Phase 1 piecemeal" precedent. |
-| #27 | `feature/onboarding-first-time-flow` | `cc7bbc7` (squashed) | **Phase 1 branch 7 ✅** | First-time user onboarding flow with 3 dismissible prompts. **Ring-name prompt** (`RingNameOnboarding.tsx`) — was already a force-blocking modal in `layout.tsx` on every page; gets a new optional `userId` prop that opts it into dismissible mode with a "Skip for now" button. When `userId` is passed, the modal checks `bp.onboarding.ringName.v1:${userId}` in localStorage with a 30-day TTL and hides if set. Layout passes `userId={authUser.id}` so the modal is now dismissible everywhere while preserving the force-modal mode for any legacy caller that omits `userId`. **Anon first-pick CTA** (`AnonFirstPickCta.tsx`) — new dismissible banner rendered above the fight list on `/` when the viewer is anonymous and `featured !== null`. Links to `/events/{featured.id}`. 30-day localStorage TTL. **First-pick hint card** (`FirstPickHintCard.tsx`) — dismissible card on fight detail (`events/[id]/fights/[fightId]/page.tsx`) for authed users with zero predictions across the entire app, gated on non-completed + not-yet-started fights. Server-side `count === 0` strict check (with explicit error guard — fails closed on Supabase error so transient DB issues don't flash the hint to established users). Per-user key (`bp.onboarding.firstPickHint.v1:${userId}`), so dismissing once suppresses on every fight. **Shared hook** `src/lib/onboarding-dismissal.ts` — 3-state `checking → show | hide` transition avoids flash of the prompt on previously-dismissed devices. Versioned `bp.onboarding.*` key scheme per `client-localstorage-schema` react-best-practices rule. Permanent-vs-TTL handled by optional `ttlMs` arg (omit for permanent; all 3 Branch 7 surfaces pass `ONBOARDING_TTL_30_DAYS`). **DevPanel** gets a new "Reset onboarding dismissals" action that prefix-wipes all `bp.onboarding.*` localStorage keys for manual re-testing (iterates backwards to avoid skipping entries after removal). **i18n**: 7 new keys × 7 locales = 49 new entries, final `check:i18n` **365 × 7 aligned** (up from 358). Keys: `onboarding.skipForNow`, `onboarding.dismiss`, `onboarding.anonCtaTitle/Description/Button`, `onboarding.firstPickHintTitle/Description`. All 7 locales get project-voice translations (ko retro-boxing tone, pt-BR Brazilian casual, etc. — consistent with the existing `onboarding.*` namespace register). **Review trail — 2 rounds with subagent (blackpick profile)**: Round 1 APPROVE_WITH_CHANGES 0.91 — 1 [blocker] (AnonFirstPickCta missing the 30-day TTL arg, silently permanent dismissal) + 2 [major] (OAuth signup regression from scoping modal to `/` only — users signing up from a fight page via Google OAuth land back on the fight page without ever seeing the prompt; duplicate `users` row fetch on `/` for authed users) + 2 [minor] (per-fight key on firstPickHint violated "single prompt per state" + `hasZeroPicks` `?? 0` treating DB error as zero picks). Round 1 folds (`c1e5631`): anon CTA TTL fixed; RingNameOnboarding moved back to layout (resolves both majors in one move — OAuth regression disappears + no duplicate fetch needed); firstPickHint key dropped fightId; hasZeroPicks switched to strict `count === 0` + error check. Round 2 APPROVE 0.93 — all 5 folds verified, no new blockers, cross-round systemic defect sweep clean (no new caps-lock chip labels, no Korean leaks, no i18n key-usage mismatches, no localStorage collisions with `allPredictedToast:v1:*`). 2 non-blocking minors noted but intentional (redundant TS narrowing guard; vanishingly-rare edge case where an authed ring-name-less user on `/login` sees the modal stacked on the login form — pre-existing middleware gap, not Branch 7 scope). **Verification**: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 365×7, grep clean on new files. Phase 1 advances **7/9 → 8/9**; remaining Phase 1 branches: 8 (streak UX) + 9 (verify all-predicted toast). |
-| #26 | `fix/hardcoded-korean-leaks` | `b24057a` (squashed) | **Phase 1 branch 6 ✅** | i18n leak sweep — every hardcoded Korean user-facing string in `src/components/**/*.tsx` and `src/app/[locale]/**/*.tsx` moved behind `t()`, plus hardcoded English caps-lock chip labels (PR #24 explicitly deferred the `MAIN EVENT` chip to this branch). Source changes: `FightCard.tsx:279` `MAIN EVENT` → `t("event.mainEvent")`; `page.tsx` `LIVE`/`Score`/`best` → `t()` (3 sites); `my-record/[eventId]/page.tsx` 6 Korean result chips (`승자/방법/라운드 맞춤/틀림`) → existing `t("myRecord.winnerCorrect")` etc. keys, plus 3 stat column labels (`WIN/LOSS/PTS`) → new `statWin/statLoss/statPts` keys; `PredictionsList.tsx` 5 edits including `${selectedEvents.size}개 대회` template literal → `t("myRecord.eventsSelected", {count})`, `Perfect Prediction` chip → reused `t("profile.perfectCard")`, `" WIN"` suffix → new `t("myRecord.blackCupWin")`, removed 4 dead `\|\| "전체"/"맞춤"/"틀림"` fallback patterns; `ranking/page.tsx` 5 call sites of `t("ranking.perfectCard")` (pre-existing raw-key-string bug — key does not exist) → `t("profile.perfectCard")`, plus Oracle/Sniper/Sharp Call HoF tier render block annotated with comment documenting intentional brand-fixed English proper nouns (match DB `hall_of_fame_entries.tier` enum). **8 new i18n keys × 7 locales = 56 additions**: `event.mainEvent`, `event.liveBadge`, `myRecord.eventsSelected`, `myRecord.blackCupWin`, `myRecord.statWin`, `myRecord.statLoss`, `myRecord.statPts`, `ranking.best`. Final `check:i18n` **358 × 7 aligned**. **Out of scope**: `privacy/page.tsx` + `terms/page.tsx` dual-language ternaries (Phase 5), admin surface (Korean-only by design, zero i18n imports), crawler scripts (intentional Korean parsing), `locales.ts`/`weight-class.ts` (canonical Korean data), Storybook demo stories, `profile.perfectCard` casing convention gap (cosmetic Phase 5), dead `event.live` key (zero usage, defer), `MvpVoteSection IMG` fallback + `ui/ranking.tsx NEW` chip (pre-existing minor leaks round 3 found via broader sweep, Phase 5). **Tooling addition**: `Docs/review-tier-rubric.md` new § File-based dialogue pattern section documenting BlackPick adoption of the generic pattern from `~/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md` — transcript location (`BlackPick/reviews/BlackPick/<date>_<topic>_dialog/` with inner project-name subfolder visual-guard per generic doc convention), profile routing (lite/default/max), when to dispatch round 2, concrete dispatch recipe. `.gitignore` adds `reviews/` entry so dialog transcripts stay local. **Review trail — first 3-round file-based dialogue in BlackPick, validating the pattern end-to-end**: Round 1 APPROVE_WITH_CHANGES 0.87 (2 blockers I missed on initial grep + 1 major pre-existing bug + 3 minors). Round 2 APPROVE_WITH_CHANGES 0.91 (delta review — verified round 1 folds + found 1 NEW blocker `WIN/LOSS/PTS` in a file already touched + 1 major Oracle/Sniper product decision + 3 minors; flagged `hardcoded-english-chip-label` as systemic defect class across 3+ files — cross-round detection feature working as designed). Round 3 APPROVE 0.94 (full-file verification + broader systemic sweep `grep -rn ">[ ]*[A-Z][A-Z ]*<" src/**/*.tsx` — class now bounded, 5 remaining hits all intentional). Lesson: single-round review would have shipped with 3 missed blockers + the pre-existing bug; multi-round dialogue caught all of them. Verification: `npm run build` clean, `npm run test:fast` 125/125, `npm run check:i18n` 358×7 aligned. Phase 1 advances **6/9 → 7/9**; remaining Phase 1 branches: 7/8/9. |
-| #25 | `feature/supabase-email-templates` | `992fb9e` (squashed) | **Phase 3 partial ✅** (out-of-phase pivot) | Branded dark-theme Supabase auth email templates for confirm-signup + reset-password — replaces the default plain-text Supabase emails. Full WCAG AA audit (all 12 text/bg pairs pass 1.4.3, lowest 6.25:1 for the copy-link label), 12px minimum font anywhere, `<meta name="color-scheme" content="dark">` + supported-color-schemes opt-out, `<table align="center">` HTML attribute on CTA + copy-link panel for MSO Outlook Desktop centering, MSO conditional Arial font override, preheader hide-bundle, 32px `<h1>` + 15px body + explicit expiry notes (24h confirm / 1h reset matching Supabase defaults). Reset-password shows `{{ .Email }}` as an account identification line (security practice). No gradients or glow effects per Sean's direction. `src/app/email/icon-shield/route.tsx` + `icon-key/route.tsx` refactored to import raw `__iconNode` data from `lucide-react/dist/esm/icons/<name>.js` instead of hardcoded SVG path strings — routes now actually consume the lucide-react package. Per-icon import is necessary because lucide-react 1.7.0 marks `Icon.js` as `'use client'`, which fails at prerender time in Next.js RSC server routes. Satori `currentColor` fix: set `color: BRAND_ACCENT` on the outer div so key-round's keyhole dot (which uses `fill="currentColor"` in lucide's iconNode) inherits the brand gold instead of resolving to black. **Visually verified** by inspecting `.next/server/app/email/icon-key.body` PNG — dot renders correctly in gold. `src/types/lucide-icons.d.ts` new type shim for the internal `lucide-react/dist/esm/icons/*.js` module pattern. `package.json` `lucide-react` pinned from `^1.7.0` → `~1.7.0` (patch-only) to reduce blast radius of internal API coupling. `public/email/bp-logo-email.png` (537×129 Codex-designed silver-gradient wordmark) committed as email-specific asset exception to BlackPick's "web uses SVG only" policy — email clients have poor SVG support. Cleanup: deleted `public/email/previews/*.html` Codex reference files + `.DS_Store`. `remove_background/` working-tree deletions explicitly not staged per the PR #24 "never git add -A" lesson. **Review trail**: 2 rounds with subagent (blackpick profile). Round 1 APPROVE_WITH_CHANGES 0.88 — 2 [major] + 2 [minor] all fixed (align=center on 4 tables, README WCAG claim qualified to text-only, footer-link row added to audit table, color-scheme meta reworded as best-effort). Round 2 APPROVE_WITH_CHANGES 0.82 — 1 [major] + 3 [minor] all fixed (currentColor bug + key spread warning + tag cast widened + lucide-react version pin). Build clean, 125/125 tests, check:i18n 350×7 clean. **Not yet applied to Supabase** — Sean's manual paste step is post-merge follow-up, documented in README + Current focus §3. This PR partially completes Phase 3's `feature/supabase-email-templates` branch (confirm_signup + reset_password done; magic_link + invite still pending). |
-| #24 | `feature/title-fight-badge` | `b2a9dea` (squashed) | **Phase 1 branch 5 part 2 ✅** | UI + DevPanel follow-up to PR #23. FightCard header gets two new RetroLabel chips — `TITLE FIGHT` (accent tone + Crown lucide icon, rendered when `fight.is_title_fight`) and `MAIN CARD` (neutral tone, rendered when `fight.is_main_card && !isMainEvent` to avoid double-chipping the headline). Both i18n'd via new `event.titleFight` + `event.mainCard` keys × 7 locales. Fighter career page (`fighters/[id]/page.tsx`) gets a Crown icon inline with the opponent name + subtle `bg-[var(--bp-accent-dim)]` row tint on title-fight rows so championship bouts stand out in the career retrospective. `is_main_card` intentionally NOT rendered on fighter pages — scope decision to keep main-card distinction on live event context only. 3 FightCard query sites (home, event detail, single-fight detail) and 1 fighter query site updated to select the new columns. DevPanel v2 gets a new "Content Flags" section with 2 dev-only action rows (`Preview title + main card` / `Clear title + main card`) backed by new server actions `set-content-flags-preview` + `clear-content-flags` in `api/dev/seed/route.ts`. Preview logic: reset all flags on latest event, then mark fight[0] (earliest start_time + deterministic id tiebreak) as both flags, mark first half of remaining fights as `is_main_card=true`, leave the rest as undercard. Clear: reset everything. Every supabase update destructures `{ error }` and forwards on failure (round-1 [minor] fix). Storybook MockFightCard extended with `isTitleFight` + `isMainCard` props + 3 new story variants (TitleFightMainEvent, MainCardTitleFight, MainCardOnly). Single subagent review round: APPROVE_WITH_CHANGES 0.87 — 1 [major] on unstaged `remove_background/` deletion risk (avoided by specific-file staging; Sean's intentional orthogonal cleanup) + 4 [minor] all addressed inline (redundant truncate class, supabase error hygiene, deterministic sort tiebreak, Storybook coverage gap). Pre-existing hardcoded-English `MAIN EVENT` chip left alone — Branch 6 scope. Local quality gates: tsc clean, test:fast 125/125, check:i18n 350×7, eslint 0 errors. |
-| #23 | `db/title-fight-flag` | `84857f1` (squashed) | **Phase 1 branch 5 part 1 ✅** | Migration adds `is_title_fight BOOLEAN NOT NULL DEFAULT false` and `is_main_card BOOLEAN NOT NULL DEFAULT false` to `public.fights`. Per-column 4-step convergent pattern (ADD with DEFAULT → SET DEFAULT → UPDATE NULL rows → SET NOT NULL) wrapped in `BEGIN;…COMMIT;`. Post-convergence DO \$\$ assertion iterates both columns checking exists / `data_type=boolean` / `is_nullable=NO` / `column_default ILIKE '%false%'` / 0 NULL rows — pattern lifted from `202604120001_ring_name_case_insensitive_unique.sql`. `src/types/database.ts` gets `Row.is_title_fight: boolean` / `Row.is_main_card: boolean` + optional Insert/Update shapes (matches `is_cup_match` precedent). TypeScript types carried over from the pre-rebase wip commit. **Review trail**: 3 rounds with subagent — round 1 flagged header prose (APPROVE_WITH_CHANGES 0.82), round 2 PUSHED BACK on my first fix arguing the round-1 concern was itself a false positive on Supabase CLI behavior, resolution was to drop the contested external-tool claim entirely and keep only always-true PG-engine-level atomicity prose plus a tool-agnostic "do NOT add statements after COMMIT" warning. Round 3 APPROVE 0.88 with one [minor] nit (`ILIKE` not `LIKE`) applied inline. Lesson documented in Current focus: when two subagent reviews contradict each other on external-tool behavior, drop the claim. DEV already migrated in prior session (384 rows × 0 NULLs). PROD still pending Sean's Management API run. Part 2 (`feature/title-fight-badge`) next — UI badge, DevPanel toggles, wire up dead `is_title_fight?: boolean` prop in `FightCard.tsx:50`. |
-| #22 | `fix/prediction-pick-label-consistency` | `f8f9016` (squashed) | **Phase 1 hotfix ✅** | Sean flagged mid-session: the FightCard post-lock "Your Pick" chip from PR #17 differed from the FightCardPicker voting-state chip (gold `tone="accent"` vs neutral green-check, and top-left vs top-right). Two fixes: (1) FightCard now uses `tone="neutral"` + green check icon (`text-[#4ade80]`) + `right-2 top-2` position — matches the picker exactly so upcoming → locked transition looks seamless. (2) FightCardPicker's hardcoded English `"My Pick"` replaced with `t("prediction.yourPick")`, closing a hardcoded-English leak bug. Scope-kept: card border differences (`var(--bp-accent)/40` vs `rgba(229,169,68,0.3)`) left for a later retro-tokens pass. gpt-review.sh lite CLEAN round 1, cost $0.0007. |
-| #21 | `feature/fighter-page-sort` | `08582ef` | **Phase 1 branch 4 ✅** | Adds `winrate_desc` (3-decided-fight minimum gate) + `weightclass_asc` (canonical weight ladder) sort options and country filter to `/fighters`, with URL state for shareability + localStorage persist. New `src/lib/fighter-grid-state.ts` pure helpers (parseStateFromParams with explicit status metadata, isEqualState, serializeStateToQuery, buildFightersHref, readPersistedState, writePersistedState) + 39 unit tests. Architecture: URL as committed source of truth, `useTransition`-wrapped navigation, `optimisticState` anchored to `searchParamsString` (auto-invalidates on URL moves — no render-time setState, no ref-read-in-render), `latestIntentRef` synchronous merge buffer resynced via `useLayoutEffect`, `pendingPersistRef` match-on-settle persistence (clears on supersede), `canonicalizedTargetQueryRef` deterministic shared-link handling, effect order persist → canonicalize → restore. Unrelated query params (utm, feature flags) preserved via baseSearch in buildFightersHref. Duplicated params (`?sort=a&sort=b`) detected via `getAll` + canonicalized. 7 new i18n keys × 7 locales. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT. 125/125 tests. Known trade-off: brief flash of defaults on first mount before localStorage restore commits (~50ms) — fix requires SSR cookie read / useSyncExternalStore, out of scope. Cost ~$0.50 (3 default + 8 lite per Sean's cost rule). |
-| #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` (squashed) | Chore | Moves 7 pre-2026-04-13 session wiki files out of the repo to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`, `.gitignore` blocks `Wiki_Sean/` entirely, CLAUDE.md session-start protocol updated to read from the external path. New memory entry `feedback_wiki_log_location` documents the rule. Docs-only, exempt from review gate. |
-| #19 | `fix/ui-polish-batch` | `d5d03b2` (squashed) | **Phase 1 branch 3 ✅** | Drops `avatar-glow` golden halo on picked fighter (solid 2px gold border replaces it, matches DESIGN.md "no radiating decorative layers"). `.retro-field::placeholder` opacity 0.2 → 0.5 for WCAG contrast. FightCardPicker + FightCard name+flag line wraps (`min-w-0 w-full text-center break-words`) so long Hangul/Cyrillic/accented names wrap instead of truncating on narrow mobile. Lite profile CLEAN round 1, cost $0.003. |
-| #18 | `fix/share-cta-visibility` | `5ee064d` (squashed) | **Phase 1 branch 2 ✅** | New `EventShareCta` client component with 6-variant state machine (disabled_no_ring_name / disabled_no_picks / streak_badge / record_badge / all_locked_in / default_has_picks). ShareMenu extended with optional triggerLabel/triggerVariant/triggerSize/hideIcon props. Event page mounts CTA inside both hero branches, gated on `user` truthy (anon viewers see no CTA). 7 new i18n keys across all 7 locales. shareUrl null-safe. Mobile sticky bottom bar deferred to Branch 2-extra (layout conflict with existing z-50 mobile nav). 3 review rounds, 5 findings fixed, final CLEAN. Cost ~$0.32. |
-| #17 | `fix/prediction-lock-state` | `93b2d9e` (squashed) | **Phase 1 branch 1 ✅** | `LockTransitionWatcher` client component (subscribes to `useClockTick`, calls `router.refresh()` when an upcoming fight's `start_time` crosses `now`, rate-limited to 1/10s with prop-driven reset). Event page FlipTimer condition widened to `!== "completed"` so the locked card stays mounted through upcoming → live. `FightCard` static mode: `isUserPick` / `myPickLabel` props + "Your Pick" accent chip + gold border for the viewer's saved pick in live state. Server-side lock guard verified at `api/predictions/route.ts:60-73`. Tooling: `blackpick_max` upgraded to `gpt-5.4-pro` + `high`, curl `--max-time` 300→600s, Quality-Maximizing Path meta-rule added to CLAUDE.md, `public/email/previews/` ignored. 3 review rounds, 5 findings fixed, final CLEAN. |
-| #16 | `chore/tasks-manifest-session-structure` | `...` | Planning | SETS_Stock session-continuity pattern lifted into BlackPick: mandatory session-start protocol in CLAUDE.md, two-level model (durable roadmap vs in-session TaskList subset), Current focus section, Recently shipped ledger, Phase completion records with commit SHAs, per-branch actionable sub-tasks. Every PR now updates TASKS.md in the same commit that ships its code. |
-| #15 | `chore/gpt-api-review-fallback` | `ac5b6e4` (squashed) | Tooling | `scripts/gpt-review.sh` + `codex-review.sh` auto-fallback wiring. 5 rounds of self-review hardened 19 issues (argv hygiene, nonce sentinels, prompt-injection defense, timeouts, env isolation, mutex selectors, etc). Untracks `tsconfig.tsbuildinfo` and adds `*.tsbuildinfo` to `.gitignore`. |
-| #14 | `dev-ui/panel-v2-switches` | `304920e` | **Phase 0 ✅** | DevPanel v2: switch-based UI (gold active), Event State / User State / Content State / Actions sections, new server actions (`set-event-status`, `get-user-state`, `set-ring-name`, `clear-my-predictions`), `Reset "all predicted" toast lock` action, `Show 404` action. Dev-only env guards on both client and server. |
-| #13 | `chore/plan-reconcile` | `9952dd3` | Planning | Full plan reconcile after GPT plan review: 7-phase manifest (Phase 0–7), wiki entry `2026-04-12-plan-review-and-reconcile.md` with decision log, scope-down of automation to Phase 7, `analytics_anomaly` enum slot reservation, onboarding + streak UX added to Phase 1, admin surface consolidation added to Phase 2, MVP timer changed to admin-trigger-primary + 8h lazy fallback. |
-| #12 | `release/2026-04-12` | `5b51afc` (main) | **Launch #1** | `develop → main` release bundling PRs #3–#11. Prediction flow UX (#3 / #5 / #6 / #7), hooks migration (#9), ring_name unique index (#10), signup-gate focus trap (#11), codex-review wrapper hardening. GitHub Actions auto-deployed to blackpick.io. Prod smoke 13/13. |
-| #11 | `a11y/signup-gate-modal-focus-trap` | included in #12 | Prior session | Signup gate Tab focus trap + codex-review wrapper hardening. |
-| #10 | `db/ring-name-case-insensitive-unique` | included in #12 | Prior session | `lower(ring_name)` unique index + `escapeIlikePattern()` for ILIKE wildcard safety. Applied to DEV + PROD via management API. |
-| #9 | `refactor/set-state-in-effect-migration` | included in #12 | Prior session | 7 components migrated to `useSyncExternalStore`, `react-hooks/set-state-in-effect` re-enabled globally. |
+| #28 | `feature/streak-ux` | `8ad4ac7` | **P1 branch 8 ✅** | Profile streak tiles + `StreakPrToast` (baseline + strict-increase) + share CTA wire-up + DevPanel v3 sandbox. 372×7 i18n, 166/166 tests. First spec-phase review round in BlackPick. Wiki: `2026-04-14-branch8-iterations-and-devpanel-v3.md` |
+| — | main direct | `20ffbd6` | Hotfix | `bp-logo-email.png` cherry-pick to unblock Supabase test-email |
+| #27 | `feature/onboarding-first-time-flow` | `cc7bbc7` | **P1 branch 7 ✅** | 3 dismissible prompts (ring-name modal opt-in, anon CTA, first-pick hint) via `useOnboardingDismissal`. Wiki: `2026-04-13-branch7-onboarding-first-time-flow.md` |
+| #26 | `fix/hardcoded-korean-leaks` | `b24057a` | **P1 branch 6 ✅** | i18n leak sweep + caps-lock chips → `t()`. First 3-round file-based dialogue. Wiki: `2026-04-13-branch6-korean-leaks-plus-dialogue-pattern.md` |
+| #25 | `feature/supabase-email-templates` | `992fb9e` | **P3 partial ✅** | Dark-theme confirm + reset HTML, WCAG AA, lucide icon ImageResponse routes. `magic_link` + `invite` still pending. Wiki: `2026-04-13-email-templates-pivot.md` |
+| #24 | `feature/title-fight-badge` | `b2a9dea` | **P1 branch 5p2 ✅** | TITLE FIGHT + MAIN CARD chips + DevPanel Content Flags preview. Wiki: `2026-04-13-title-fight-flag-migration.md` |
+| #23 | `db/title-fight-flag` | `84857f1` | **P1 branch 5p1 ✅** | Migration: `is_title_fight` + `is_main_card` BOOLEAN NOT NULL DEFAULT false |
+| #22 | `fix/prediction-pick-label-consistency` | `f8f9016` | P1 hotfix ✅ | FightCard "Your Pick" chip aligned with picker |
+| #21 | `feature/fighter-page-sort` | `08582ef` | **P1 branch 4 ✅** | `/fighters` sort + country filter, URL state + localStorage persist, 39 new unit tests |
+| #20 | `chore/move-wiki-out-of-repo` | `bf6f50e` | Chore | Session logs moved to `~/Desktop/Wiki_Sean/BlackPick/` external |
+| #19 | `fix/ui-polish-batch` | `d5d03b2` | **P1 branch 3 ✅** | Avatar glow drop, placeholder contrast, name+flag wrap |
+| #18 | `fix/share-cta-visibility` | `5ee064d` | **P1 branch 2 ✅** | `EventShareCta` 6-variant state machine |
+| #17 | `fix/prediction-lock-state` | `93b2d9e` | **P1 branch 1 ✅** | `LockTransitionWatcher` + live state "Your Pick" chip. Added Quality-Maximizing Path meta-rule |
+| #16 | `chore/tasks-manifest-session-structure` | — | Planning | Two-level roadmap model |
+| #15 | `chore/gpt-api-review-fallback` | `ac5b6e4` | Tooling | `gpt-review.sh` fallback |
+| #14 | `dev-ui/panel-v2-switches` | `304920e` | **P0 ✅** | DevPanel v2 switches + server actions |
+| #13 | `chore/plan-reconcile` | `9952dd3` | Planning | 7-phase manifest |
+| #12 | `release/2026-04-12` | `5b51afc` (main) | **Launch #1** | `develop → main` bundled PRs #3–#11 |
+| #9–#11 | various | in #12 | Prior | Signup focus trap + ring_name unique index + `useSyncExternalStore` migration |
 
 ## Phase 0 completion record (closed 2026-04-12 · PR #14)
 
@@ -137,253 +62,167 @@ The migration went through an unusual 3-round review path. Documenting because t
 | Build | `npm run build` clean |
 | Lint | 0 errors, 19 pre-existing warnings |
 | Key artifacts | `src/components/DevPanel.tsx` (rewritten), `src/app/api/dev/seed/route.ts` (+4 new actions), base-ui `Switch` primitive |
-| Review | Self-reviewed (dev-only code, Codex still blocked at the time, gpt-review.sh wrapper not yet built) |
-| Deferred to Phase 4 | MVP voting open switch, result_pending switch — these require schema columns landing in Phase 4 `db/mvp-voting-timer` branch. DevPanel will be extended there. |
+| Review | Self-reviewed (dev-only code) |
+| Deferred to Phase 4 | MVP voting open switch, result_pending switch — require schema columns landing in Phase 4 `db/mvp-voting-timer` |
 
 ---
 
 ## Phase 1 — UX bugs + onboarding + streak UX
 
-_Goal: fix every visible bug on the shipped feature set, add the missing first-time user flows, surface streak data. Heaviest phase._
+_Goal: fix every visible bug on the shipped feature set, add missing first-time user flows, surface streak data. Heaviest phase._
 
-### Branch 1: `fix/prediction-lock-state` ✅ shipped in PR #17 (commit `93b2d9e`)
-
-### Branch 2: `fix/share-cta-visibility` ✅ shipped in PR #18 (commit `5ee064d`)
-
-Scope: move the share CTA into the hero, add state-driven dynamic copy, gate on auth, handle disabled states with helpful hints.
-
-**Current-focus actionable sub-tasks**:
-
-| # | Subtask | Status |
-|---|---|---|
-| 2-1 | New `EventShareCta` client component with state machine: `disabled_no_ring_name` / `disabled_no_picks` / `all_locked_in` / `record_badge` / `streak_badge` / `default_has_picks`. First-match-wins ordering. Post-result variants take priority over pre-lock when `winsThisCard + lossesThisCard > 0`. | ✅ done |
-| 2-2 | `ShareMenu` gets optional `triggerLabel` / `triggerVariant` / `triggerSize` / `hideIcon` props (backward-compatible) so `EventShareCta` can pass custom CTA copy while reusing the share dialog logic. | ✅ done |
-| 2-3 | New i18n keys across 7 locales: `ctaDefault`, `ctaAllLocked`, `ctaCompleteRecord`, `ctaCompleteStreak`, `ctaDisabledNoRingName`, `ctaDisabledNoPicks`, `goToProfile`. Mechanical translations for now — Phase 5 comprehensive tone review will polish. | ✅ done |
-| 2-4 | Event page: remove old standalone share CTA block. Mount `EventShareCta` inside both hero branches (poster + no-poster). Gate entire mount on `user` truthy — anon viewers don't see any CTA (pre-diff behavior preserved). | ✅ done |
-| 2-5 | Compute `winsThisCard` / `lossesThisCard` from `pickedEntries` on the event page via `prediction.is_winner_correct === true/false`. `userCurrentStreak` plumbed as `null` placeholder — Branch 8 wires it. | ✅ done |
-| 2-6 | Domain fix (round 2 P2): `upcomingPickedCount` + `upcomingTotal` replace `pickedCount` + `predictableTotal` so the `all_locked_in` variant counts only upcoming picks, avoiding the impossible "3/2 locked in" state when completed-fight picks exceed upcoming-fight total. Separate `hasAnyPicks` boolean gates the disabled state. | ✅ done |
-| 2-7 | `shareUrl` prop changed to `string \| null`. Event page only calls `buildSharePath` when `userRingName` is truthy. `EventShareCta` falls through to `null` render in enabled states if `shareUrl` is missing (defense in depth). | ✅ done |
-| 2-8 | Mobile sticky bottom bar — **deferred** to a follow-up branch (see Branch 2-extra below). Layout-level change conflicts with existing `z-50` mobile nav at `bottom-0`. Clean stacking needs layout changes out of scope for this bugfix. | deferred |
-| 2-9 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 · `npm run check:i18n` 346 keys × 7 locales match | ✅ done |
-| 2-10 | `scripts/codex-review.sh review` — Round 1: 2 findings (P2 domain mismatch, P3 anon regression). Round 2: 3 findings (P1 malformed shareUrl, P2 mobile sticky overlap, P3 "ring name" English leak in es/pt-BR/mn). Round 3: **CLEAN**. Cumulative cost ~$0.32 for branch 2. | ✅ done |
-
-### Branch 2-extra (deferred): mobile sticky share CTA
-
-Scope: re-introduce the mobile-only sticky bottom bar variant of `EventShareCta`. Deferred because stacking cleanly above the existing fixed mobile nav at `bottom-0 z-50` requires layout work that didn't belong in a bugfix branch. Approach:
-- Position CTA at `bottom-[nav-height + env(safe-area-inset-bottom)]`
-- Bump the event page root `pb-24` to `pb-36` (or conditional on `hasAnyPicks`) to reserve space
-- Or use `IntersectionObserver` to only render the sticky bar when the inline hero CTA has scrolled off screen
-
-### Branch 3: `fix/ui-polish-batch` ✅ shipped in PR #19 (commit `d5d03b2`)
-
-| # | Subtask | Status |
-|---|---|---|
-| 3-1 | FightCardPicker: remove `avatar-glow` (golden radial-pulse halo) on picked fighter. Replace with solid 2px `var(--bp-accent)` border on the avatar. Card-level `fighter-card-selected` background + accent-colored name text still signal the selected state cleanly. Aligns with DESIGN.md "no glassmorphism, no radiating decorative layers". | ✅ done |
-| 3-2 | `.retro-field::placeholder` bumped from `rgba(255,255,255,0.2)` to `rgba(255,255,255,0.5)` in `globals.css`. Global — affects every retro input, not just fighter search. 0.2 was below WCAG placeholder-contrast guidance. | ✅ done |
-| 3-3 | Mobile fight card name+flag truncation: both FightCardPicker and FightCard FighterSideStatic wrap the name/flag line in `min-w-0 w-full text-center` + `break-words` so long Hangul/Cyrillic/accented names wrap instead of truncating below 380px. Flag stays inline so it flows with the last word. | ✅ done |
-| 3-4 | `npx eslint` clean · `npx tsc --noEmit` clean · `npm run test:fast` 84/84 | ✅ done |
-| 3-5 | `scripts/codex-review.sh review lite` — **CLEAN round 1**. Cost $0.003 (lite profile was the right call). | ✅ done |
-
-### Branch 4: `feature/fighter-page-sort` ✅ shipped in PR #21 (commit `08582ef`)
-
-Shipped via **Exit B** (URL-as-state kept) after a full architectural rewrite. 11 gpt-review rounds, all findings fixed, ship decision collaborative with GPT (round 11's remaining concern was defensive complexity for a scenario that doesn't occur with Next.js router dedup semantics). 125/125 tests, cost ~$0.50 session total.
-
-### Branch 4-extra: `fix/prediction-pick-label-consistency` ✅ shipped in PR #22 (commit `f8f9016`)
-
-FightCard post-lock chip aligned with FightCardPicker voting-state chip (same neutral tone + green check icon + top-right position). Picker's hardcoded English "My Pick" replaced with `t("prediction.yourPick")`. Lite profile CLEAN round 1.
-
-### Branch 5 Part 1: `db/title-fight-flag` ✅ shipped in PR #23 (commit `84857f1`)
-
-Migration adds two admin-managed boolean flags (`is_title_fight`, `is_main_card`) to `public.fights`, both `BOOLEAN NOT NULL DEFAULT false`. See Recently shipped row for the full 3-round review trail + lesson. DEV migrated; **PROD still pending Sean's Management API run**.
-
-### Branch 5 Part 2: `feature/title-fight-badge` ✅ shipped in PR #24 (commit `b2a9dea`)
-
-UI + DevPanel surfacing of the PR #23 schema flags. See Recently shipped row for full detail + review trail.
-
-### Branch 6: `fix/hardcoded-korean-leaks` ✅ shipped in PR #26 (commit `b24057a`)
-
-i18n leak sweep across all `src/components/**/*.tsx` and `src/app/[locale]/**/*.tsx`. 4 source files + 7 locale files modified, 8 new i18n keys added, 358 × 7 aligned. 3-round file-based dialogue review (first end-to-end validation of the pattern in BlackPick). Full details in Recently shipped row above.
-
-### Branch 7: `feature/onboarding-first-time-flow` ✅ shipped in PR #27
-
-Three dismissible onboarding prompts using a shared `useOnboardingDismissal` hook (`src/lib/onboarding-dismissal.ts`). See Recently shipped row for full detail + 2-round review trail.
-
-- [x] First-time authed users without a `ring_name`: dismissible modal (re-uses existing `RingNameOnboarding` with new `userId` prop opt-in). Renders from layout so OAuth signup from a fight page still sees the prompt.
-- [x] Empty state on events list for anonymous viewers: `AnonFirstPickCta` above fight list on `/`, links to featured event.
-- [x] Dismissible hint card on fight detail for authed users with zero saved picks: `FirstPickHintCard`, per-user key, strict `count === 0` server check.
-- [x] Single prompt per state, dismissible, no re-show for 30 days — all 3 surfaces use the same hook + 30-day TTL.
-
-### Branch 8: `feature/streak-ux` ✅ shipped this session
-
-Profile streak tiles (muted + gold Flame), layout-mounted `StreakPrToast` with `bp.streakBest.v1` baseline + `bp.streakPR.v1` lock (client-side Option B after round 1 blocker 2), share CTA wire-up filling the `userCurrentStreak: null` placeholder from Branch 2, DevPanel `set-streak` action + "Reset streak PR toast lock" action for self-contained manual testing. First spec-phase round 1 review in BlackPick caught the tie-rebuild false-positive before any code was written. See Recently shipped row above for full detail + review trail.
-
-- [x] Profile page: current + best streak displayed prominently with flame icon (reuses existing `profile.currentStreak` / `profile.bestStreak` keys)
-- [x] Streak toast: baseline-aware detection fires only on genuine `best_streak` increase (strict-increase gate, tie-rebuild safe)
-- [x] Share CTA: `userCurrentStreak` wired end-to-end
+- Branch 1: `fix/prediction-lock-state` ✅ PR #17
+- Branch 2: `fix/share-cta-visibility` ✅ PR #18 (mobile sticky bar deferred — approach in wiki)
+- Branch 3: `fix/ui-polish-batch` ✅ PR #19
+- Branch 4: `feature/fighter-page-sort` ✅ PR #21
+- Branch 4-extra: `fix/prediction-pick-label-consistency` ✅ PR #22
+- Branch 5 Part 1: `db/title-fight-flag` ✅ PR #23 (DEV + PROD both migrated)
+- Branch 5 Part 2: `feature/title-fight-badge` ✅ PR #24
+- Branch 6: `fix/hardcoded-korean-leaks` ✅ PR #26
+- Branch 7: `feature/onboarding-first-time-flow` ✅ PR #27
+- Branch 8: `feature/streak-ux` ✅ PR #28
 
 ### Branch 9: `fix/verify-all-predicted-toast` (blackpick review)
-- [ ] Verify AllPredictedToast actually fires for Sean. Current condition (transition detection + localStorage lock) means re-mounts with complete state don't fire. DevPanel v2 "Reset toast lock" action lets Sean test.
-- [ ] Sean confirms via manual test after using the DevPanel action.
+- [ ] Sean verifies `AllPredictedToast` fires on correct transition via DevPanel reset-toast-lock action
+- [ ] If broken: investigate transition detection in `AllPredictedToast.tsx` (`previousCountRef` + `reachedAllThisTick`); may need `router.refresh()` after save
 
 ---
 
-## Phase 2 — Email infrastructure + feedback relay + Sentry setup + admin consolidation
+## Phase 2 — Email infrastructure + feedback relay + Sentry + admin consolidation
 
-_Goal: ship a zero-cost, PIPA-compliant email stack; route user feedback through Gmail (not a custom DB ticket system); set up Sentry with native email alerts; consolidate admin surfaces._
+_Goal: zero-cost PIPA-compliant email stack; route user feedback through Gmail (not a custom DB ticket system); Sentry with native email alerts; consolidate admin surfaces._
 
-**2026-04-14 scope correction**: the original Phase 2 plan (5 branches, DB-based `feedback_tickets` table + custom admin dashboard + Sentry webhook bridge) was replaced after Sean's pushback during scope re-evaluation. Gmail + Sentry native email alerts achieve the same outcome with 200+ fewer lines of code, stronger PIPA defensibility (Gmail DPA > custom RLS), and zero DB migration risk. See `Docs/specs/2026-04-14-feedback-tickets.md` for the deferred DB spec preserved for future revival if BlackPick hits the scale where Gmail-based triage breaks down (~500+ active users / ~50+ tickets/week).
+**2026-04-14 scope correction**: original 5-branch plan (DB `feedback_tickets` + custom admin dashboard + Sentry webhook bridge) replaced with Gmail + Sentry native email alerts — 200+ fewer lines, stronger PIPA defensibility, zero DB migration risk. Deferred DB spec at `Docs/specs/2026-04-14-feedback-tickets.md` (revive threshold: ~500 users / ~50 tickets/week). **Monthly cost: $0**.
 
-**Current Phase 2 = 4 branches, all blackpick profile (max review eliminated)**. Monthly cost: **$0**.
-
-### Branch: `docs/email-setup` — **SHIPPED 2026-04-14 (this session)**
-- [x] `Docs/email-setup.md` — full Cloudflare Email Routing + Resend + Gmail Send As guide. 4 addresses: `noreply@`, `support@`, `admin@`, `privacy@` (privacy@ as alias for PIPA 제30조 개인정보보호책임자 contact). Architecture diagram, step-by-step (Resend domain add → Cloudflare routing → DNS records → API key → Vercel env → Gmail Send As → optional Supabase Custom SMTP), troubleshooting, PIPA 처리방침 language, $0 cost projection.
-- [ ] **Sean runs the guide async** (~30 min manual: Cloudflare + Resend + Gmail config). **Blocks `feature/feedback-email-relay`** — that branch cannot ship until Resend domain is verified and Vercel env vars are set.
+### Branch: `docs/email-setup` — **SHIPPED 2026-04-14**
+- [x] `Docs/email-setup.md` — full Cloudflare Email Routing + Resend + Gmail Send As guide. 4 addresses (`noreply@`, `support@`, `admin@`, `privacy@`). Architecture, step-by-step, troubleshooting, PIPA 처리방침 language, $0 cost projection
+- [ ] **Sean runs the guide async** (~30 min manual: Cloudflare + Resend + Gmail). **Blocks `feature/feedback-email-relay`**
 
 ### Branch: `feature/feedback-email-relay` (blackpick review) — **next session**
 Blocked by: `docs/email-setup` execution (Resend domain verified, `RESEND_API_KEY` + `FEEDBACK_RECIPIENT_EMAIL` in Vercel env).
 
 - [ ] `POST /api/feedback` route handler:
-  - **Auth-optional**: `getUser()` can return null. **Login-error users MUST be able to submit feedback** — Sean 2026-04-14 killer-point insight: "로그인 필수면 로그인 못 하는 에러 나는 유저가 피드백을 못 주자나". If feedback is gated on login, the most important bug reports are self-censored.
-  - Input validation: category from allowlist (Bug / UX / Question / Other), body 1-8000 chars, optional `contactEmail` field for anon users who want a reply
-  - Rate limit: in-memory Map keyed by `user_id` (authed) or SHA-256(IP + day-salt) (anon), 5-min TTL, max 5 submissions per window. **No persistence** — request-scope only, no PIPA implications
-  - Vercel BotID (free, edge-level) for anon spam mitigation
-  - For authed users: server reads `public.users` (ring_name, score, wins, losses, current_streak) + `auth.users.email` — enriches Slack/email payload, never returned to client
-  - Build email payload (structured HTML + plain text):
-    - Subject: `[BP Feedback] [{Category}] {ringname or 익명} — {first 40 chars of body}`
-    - From: `noreply@blackpick.io`
-    - To: `FEEDBACK_RECIPIENT_EMAIL` (probably `admin@blackpick.io`)
-    - **Reply-To: user's email** (authed user's auth.email, OR anon's provided contactEmail if given). **Critical UX trick** — Sean hits "Reply" in Gmail and it goes straight to the user; no copy-paste
-    - Body: category, ringname + stats, email, page URL, user-agent, timestamp, feedback body
-  - `resend` SDK call → 200 on success, 503 on Resend API failure (UI retries once then shows error)
-- [ ] `FeedbackButton` component — DevPanel bottom-right slot in `NODE_ENV === 'production'` (mutually exclusive with DevPanel). Always available regardless of auth state.
-- [ ] `FeedbackModal` component — retro-styled modal (`retroPanelClassName` + `retroButtonClassName`): category dropdown, body textarea (1-8000 char counter), conditional `contactEmail` field when `!authUser`, submit button with loading state + error state
-- [ ] Pure validator `src/lib/feedback-validation.ts` + `.test.ts` (~15 cases, Branch 8 pure-helper pattern — 166 → ~181 tests)
-- [ ] i18n: ~14 new keys × 7 locales (`feedback.button`, `feedback.modalTitle`, `feedback.categoryLabel`, 4 category options, `feedback.bodyLabel`, `feedback.contactEmailLabel` (optional-hint copy for anon), `feedback.submitCta`, `feedback.successToast`, `feedback.errorToast`, `feedback.rateLimitError`, `feedback.authOptionalHint`). Target: 372 → ~386 × 7.
-- [ ] Integration smoke (local dev): submit feedback → verify email lands in Sean's Gmail with correct Reply-To → reply via Gmail → confirm user receives. Both authed + anon paths.
-- [ ] Privacy policy update (`src/app/[locale]/privacy/page.tsx` or equivalent) — add PIPA 처리위탁 section listing Resend / Cloudflare / Gmail. Content pre-drafted in `Docs/email-setup.md § PIPA 처리방침`.
+  - **Auth-optional**: `getUser()` can return null. **Login-error users MUST be able to submit feedback** — Sean 2026-04-14 insight: "로그인 필수면 로그인 못 하는 에러 나는 유저가 피드백을 못 주자나"
+  - Input validation: category allowlist (Bug / UX / Question / Other), body 1–8000 chars, optional `contactEmail` for anon
+  - Rate limit: in-memory Map keyed by `user_id` (authed) or SHA-256(IP + day-salt) (anon), 5-min TTL, max 5/window. No persistence
+  - Vercel BotID for anon spam mitigation
+  - For authed users: server reads `public.users` (ring_name/score/wins/losses/current_streak) + `auth.users.email` — enriches payload, never returned to client
+  - Email payload (Resend SDK):
+    - Subject: `[BP Feedback] [{Category}] {ringname or 익명} — {first 40 chars}`
+    - From: `noreply@blackpick.io`, To: `FEEDBACK_RECIPIENT_EMAIL`
+    - **Reply-To: user's email** (authed auth.email OR anon's contactEmail). Gmail "Reply" → straight to user, no copy-paste
+    - Body: category, ringname + stats, email, page URL, user-agent, timestamp, feedback
+  - 200 on success, 503 on Resend failure (UI retries once then shows error)
+- [ ] `FeedbackButton` component — DevPanel bottom-right slot in `NODE_ENV === 'production'` (mutually exclusive with DevPanel). Always available regardless of auth state
+- [ ] `FeedbackModal` component — retro-styled: category dropdown, body textarea (1-8000 char counter), conditional `contactEmail` when `!authUser`, submit with loading/error state
+- [ ] Pure validator `src/lib/feedback-validation.ts` + `.test.ts` (~15 cases — 166 → ~181 tests)
+- [ ] i18n: ~14 new keys × 7 locales (`feedback.button`, `feedback.modalTitle`, category label + 4 options, body label, contactEmail label, submitCta, success/error/rate-limit toasts, authOptionalHint). Target: 372 → ~386 × 7
+- [ ] Integration smoke (local dev): submit → verify Gmail Reply-To → reply → confirm user receives. Both authed + anon paths
+- [ ] Privacy policy update — PIPA 처리위탁 section listing Resend / Cloudflare / Gmail. Content pre-drafted in `Docs/email-setup.md § PIPA 처리방침`
 
-### Branch: `feature/sentry-setup` (blackpick review) — **next session, parallel-safe with feedback relay**
+### Branch: `feature/sentry-setup` (blackpick review) — **next session, parallel-safe**
 Blocked by: Sentry account + project created, `SENTRY_DSN` in Vercel env.
 
-- [ ] `npm install @sentry/nextjs` + run the init wizard (`npx @sentry/wizard@latest -i nextjs`)
-- [ ] `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts` — enable `tracesSampleRate: 0.1` (10% sampling to stay within free tier), `replaysOnErrorSampleRate: 1.0`, scrub `ring_name` + `email` + `user_id` from error context by default (beforeSend hook)
-- [ ] `instrumentation.ts` — Next.js 16 server-side instrumentation hook
-- [ ] Source map upload in CI: `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` Vercel env vars
-- [ ] Sentry dashboard config (Sean manual, ~5 min post-merge):
-  - Project → Alerts → **Issue Alerts** → new rule: "When a new issue is created" → Action: "Send email to `admin@blackpick.io`"
-  - (optional) Separate rule for `level = fatal` → email + Slack (if Sean has Slack) + optional mobile push
-  - Configure data retention + PII scrubbing in project settings
-- [ ] Smoke test: temporary `/api/_sentry-test` route that throws → verify Sentry captures the error → verify email hits `admin@blackpick.io` within 2 min → **delete the test route before merging**
-- [ ] **No custom webhook bridge, no Notion integration, no DB writes** — Sentry dashboard IS the error ticket store. Sean triages directly in Sentry UI. Sentry native email alerts replace the removed `feature/sentry-webhook-ingest` branch entirely.
+- [ ] `npm install @sentry/nextjs` + `npx @sentry/wizard@latest -i nextjs`
+- [ ] `sentry.{client,server,edge}.config.ts` — `tracesSampleRate: 0.1`, `replaysOnErrorSampleRate: 1.0`, scrub `ring_name` / `email` / `user_id` via `beforeSend`
+- [ ] `instrumentation.ts` — Next.js 16 server-side hook
+- [ ] Source map upload in CI: `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` env vars
+- [ ] Dashboard config (Sean manual): Alerts → Issue Alerts → new rule "When a new issue is created" → Send email to `admin@blackpick.io`. Optional `level=fatal` → email + Slack. Configure retention + PII scrubbing
+- [ ] Smoke: `/api/_sentry-test` route that throws → Sentry captures → email lands within 2 min → **delete test route before merge**
+- [ ] **No custom webhook bridge, no Notion, no DB writes** — Sentry dashboard IS the error ticket store
 
-### Branch: `feature/admin-surface-consolidation` (blackpick review) — **independent, any session**
-- [ ] Port everything from `/[locale]/(main)/fighters/manage` into `/admin/fighters` (list, search, create/edit/delete, pixel avatar upload, country/weight/record edit).
-- [ ] Restyle all `/admin/*` pages with the retro CSS tokens; drop `gray-900` / `amber-400` Tailwind literals.
-- [ ] Unified `/admin` index with sidebar: Dashboard / Events / Fighters / Results. **No Tickets / Feedback tab** (removed from scope — feedback lives in Gmail, errors live in Sentry dashboard).
-- [ ] Flip `AccountDropdown` admin link from `/fighters/manage` to `/admin`.
-- [ ] Delete the old `/[locale]/(main)/fighters/manage` route after parity confirmed.
-- [ ] Admin UI stays English-only — intentional, note it in the admin layout header.
-
----
-
-### Phase 2 removed branches (were in the original plan, no longer needed)
-
-- **`db/feedback-tickets`** — DEFERRED. Spec preserved at `Docs/specs/2026-04-14-feedback-tickets.md` with DEFERRED header. Revive only if user count × feedback volume exceeds Gmail-based triage capacity (~500 users / ~50 tickets/week threshold).
-- **`feature/sentry-webhook-ingest`** — REMOVED. Sentry native email alerts replace the webhook → DB bridge entirely. Zero code for us to maintain.
-- **`feature/admin-tickets-dashboard`** — REMOVED. Gmail + Sentry dashboard replace the custom triage UI. Sean's workflow: Gmail for user feedback (labels/threads), Sentry UI for errors (native triage).
+### Branch: `feature/admin-surface-consolidation` (blackpick review) — **independent**
+- [ ] Port `/[locale]/(main)/fighters/manage` → `/admin/fighters` (list, search, CRUD, pixel avatar upload, country/weight/record edit)
+- [ ] Restyle all `/admin/*` pages with retro CSS tokens; drop `gray-900` / `amber-400` Tailwind literals
+- [ ] Unified `/admin` index with sidebar: Dashboard / Events / Fighters / Results. **No Tickets / Feedback tab** (Gmail + Sentry dashboard)
+- [ ] Flip `AccountDropdown` admin link from `/fighters/manage` to `/admin`
+- [ ] Delete old `/[locale]/(main)/fighters/manage` route after parity confirmed
+- [ ] Admin UI stays English-only — intentional, note in layout header
 
 ---
 
 ## Phase 3 — Supabase email templates (HTML only)
 
-_Goal: finish the remaining 2 Supabase auth email templates. **Email infrastructure (`docs/email-setup`) was moved to Phase 2** so it could unblock `feature/feedback-email-relay`. The Cloudflare + Resend + Gmail Send As setup now lives in `Docs/email-setup.md` (committed 2026-04-14, this session)._
+_Goal: finish the remaining 2 Supabase auth email templates. Email infrastructure (`docs/email-setup`) moved to Phase 2._
 
-### Branch: `feature/supabase-email-templates` (lite review — HTML only) — ⚠️ **partially shipped out-of-phase in PR #25 (`992fb9e`, this session)**
-- [x] `Docs/email-templates/confirm-signup.html` — shipped. Dark-theme + WCAG AA + `<meta color-scheme>` + MSO bulletproof + lucide shield icon via ImageResponse route + `<h1>` + 12px min + 24h expiry note. Review trail: 2 rounds, all findings fixed.
-- [x] `Docs/email-templates/reset-password.html` — shipped. Same base as confirm + `{{ .Email }}` account identification line + 1h expiry matching Supabase recovery default + lucide key-round icon (with `currentColor` fix for the keyhole dot).
-- [x] `Docs/email-templates/README.md` — asset dependency map, WCAG audit table (12 pairs), email-client compatibility matrix, step-by-step Supabase dashboard deploy guide, Site URL security note, brand token sync table.
-- [x] `src/types/lucide-icons.d.ts` + `public/email/bp-logo-email.png` + `package.json` lucide pin `^1.7.0` → `~1.7.0`. Route handlers now import raw `__iconNode` data from per-icon lucide-react modules (required because lucide-react `Icon.js` is `'use client'` — top-level components can't be invoked in RSC server routes).
-- [ ] `magic_link.html` — not shipped. Follows the same design as confirm + reset, swap icon (lucide `Link` or `Wand`). ~10 min if same session.
-- [ ] `invite.html` — not shipped. Same design, swap icon (lucide `UserPlus`). ~10 min if same session.
-- [ ] **Sean's post-merge manual deploy** — open `https://<preview>.vercel.app/email/{bp-logo-email.png, icon-shield, icon-key}` → all 200 → Supabase Dashboard → Authentication → URL Configuration (Site URL = blackpick.io) → Email Templates → paste + test-email. README has full checklist.
-- [ ] `Docs/email-setup.md` — "how to paste these into Supabase Dashboard → Auth → Email Templates" (manual, Supabase API doesn't expose templates). **Superseded** by `Docs/email-templates/README.md` at a practical level, but the Phase 3 docs setup (Cloudflare Email Routing + Resend DNS + Supabase Custom SMTP) is a separate concern and still pending in the `docs/email-setup` branch above.
+### Branch: `feature/supabase-email-templates` (lite review) — ⚠️ **partially shipped in PR #25**
+- [x] `confirm-signup.html` — shipped (dark + WCAG AA + MSO bulletproof + 24h expiry)
+- [x] `reset-password.html` — shipped (same base + `{{ .Email }}` + 1h expiry + keyhole `currentColor` fix)
+- [x] `README.md` — asset map, WCAG audit, email-client compatibility, Supabase deploy guide
+- [x] `src/types/lucide-icons.d.ts` + `bp-logo-email.png` + `package.json` lucide pin `~1.7.0`
+- [ ] `magic_link.html` — not shipped. Same design, swap icon (lucide `Link` / `Wand`). ~10 min
+- [ ] `invite.html` — not shipped. Same design, swap icon (lucide `UserPlus`). ~10 min
+- [ ] **Sean's post-merge deploy** — preview URLs 200 → Supabase Dashboard → Auth → URL Config (Site URL = blackpick.io) → Email Templates → paste + test
 
 ---
 
 ## Phase 4 — Auth, comments, MVP timer
 
-_Goal: close the remaining feature gaps before launch. Facebook OAuth, comment edit/delete, MVP timer replaces Sean's manual workflow._
+_Goal: close remaining feature gaps before launch. Facebook OAuth, comment edit/delete, MVP timer replaces Sean's manual workflow._
 
 ### Branch: `docs/facebook-oauth-setup`
 - [ ] `Docs/facebook-oauth-setup.md` — Meta App creation, App Review lite, redirect URIs for dev + prod, Supabase provider setup. Sean runs these steps.
 
 ### Branch: `feature/facebook-oauth-wire-in` (blackpick review, after docs steps)
-- [ ] Flip `NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN=true` in Vercel prod.
-- [ ] `SocialAuthButtons` already has Facebook gated — verify after flip.
-- [ ] Smoke from each locale.
+- [ ] Flip `NEXT_PUBLIC_ENABLE_FACEBOOK_LOGIN=true` in Vercel prod
+- [ ] `SocialAuthButtons` already has Facebook gated — verify after flip
+- [ ] Smoke from each locale
 
 ### Branch: `db/fighter-comments-edit-delete` + `feature/comment-edit-delete` (max review for migration)
-- [ ] Migration: `fighter_comments.edited_at timestamptz nullable`, `deleted_at timestamptz nullable`, `deleted_by uuid nullable references users(id)`, `deleted_body text nullable`.
-- [ ] UI: edit button on own comments (`edited` badge if `edited_at is not null`), delete renders as "[Deleted by {ring_name}]" so thread structure stays intact.
-- [ ] PUT / DELETE endpoints on `/api/fighter-comments/{id}` — owner or admin.
+- [ ] Migration: `fighter_comments.edited_at timestamptz nullable`, `deleted_at timestamptz nullable`, `deleted_by uuid nullable references users(id)`, `deleted_body text nullable`
+- [ ] UI: edit button on own comments (`edited` badge if `edited_at is not null`), delete renders as "[Deleted by {ring_name}]" so thread structure stays intact
+- [ ] PUT / DELETE endpoints on `/api/fighter-comments/{id}` — owner or admin
 
 ### Branch: `db/mvp-voting-timer` + `feature/mvp-timer-admin` (max review)
-- [ ] Migration: `events.mvp_voting_opens_at timestamptz nullable`, `fights.result_pending boolean not null default false`.
-- [ ] MVP vote insert CHECK: `fight.status = 'completed'` **AND** (`mvp_voting_opens_at is not null AND now() >= mvp_voting_opens_at`).
-- [ ] **Primary mechanism**: admin "Open MVP Voting" button on `/admin/events/{id}` → `mvp_voting_opens_at = now()`. Sean uses this when official results come in.
-- [ ] **Fallback mechanism**: any page load checking MVP status — if `mvp_voting_opens_at is null AND now() >= event.date + 8h`, lazily set it. **No cron**; first-read triggers the lazy set.
-- [ ] UI: `mvp_voting_opens_at is null` → "결과 집계 중 — MVP 투표는 곧 열립니다" banner with target time. Once opened, MVP voting UI as before.
-- [ ] DevPanel: add MVP Voting Opened + Result Pending switches (extends Phase 0 DevPanel).
+- [ ] Migration: `events.mvp_voting_opens_at timestamptz nullable`, `fights.result_pending boolean not null default false`
+- [ ] MVP vote insert CHECK: `fight.status = 'completed'` AND (`mvp_voting_opens_at is not null AND now() >= mvp_voting_opens_at`)
+- [ ] **Primary**: admin "Open MVP Voting" button on `/admin/events/{id}` → `mvp_voting_opens_at = now()`
+- [ ] **Fallback**: any page load — if `mvp_voting_opens_at is null AND now() >= event.date + 8h`, lazily set it. No cron; first-read triggers
+- [ ] UI: `mvp_voting_opens_at is null` → "결과 집계 중 — MVP 투표는 곧 열립니다" banner with target time
+- [ ] DevPanel: MVP Voting Opened + Result Pending switches
 
 ---
 
 ## Phase 5 — i18n comprehensive tone review
 
-_Goal: the "proper" pass Sean wanted. Comes last because it benefits from all copy in Phase 1–4 being finalized first. Final gate before launch._
+_Goal: the "proper" pass Sean wanted. Comes last — benefits from all Phase 1–4 copy being finalized first. Final gate before launch._
 
 ### Branch: `i18n/comprehensive-tone-review` (max review per locale)
-- [ ] Audit all 7 locales (en, ko, ja, zh-CN, mn, es, pt-BR) key-by-key against the English canonical.
-- [ ] Each locale gets a native-voice pass. Criteria:
-  - Natural phrasing (not Google Translate output)
-  - BlackPick tone: retro boxing, short + punchy, no corporate softeners
-  - Technical accuracy (e.g. "knockout" consistent)
-  - Length parity — no strings 3× longer than English (breaks mobile layouts)
-- [ ] First-pass via DeepL, then max-profile review per locale for tone, then patch + commit.
-- [ ] **pt-BR gets priority attention** per GPT review (Brazil is the early-growth market).
-- [ ] Cross-check: no hardcoded Korean leaks (Phase 1 already fixed the bugs — this double-checks).
+- [ ] Audit 7 locales (en, ko, ja, zh-CN, mn, es, pt-BR) key-by-key against English canonical
+- [ ] Each locale native-voice pass: natural phrasing (not Google Translate), BlackPick tone (retro boxing, short + punchy, no corporate softeners), technical accuracy ("knockout" consistent), length parity (no 3× English length)
+- [ ] First-pass via DeepL, then max-profile review per locale, patch + commit
+- [ ] **pt-BR priority** per GPT review (Brazil early-growth market)
+- [ ] Cross-check: no hardcoded Korean leaks (Phase 1 already fixed — double-check)
 
 #### Perspective + tone sweep — Sean 2026-04-14 additional criteria
 
-Sean surfaced a class of issues during Branch 8 DevPanel sandbox testing that the general tone review should systematically catch. Each locale must be swept for:
+Sean surfaced a class of issues during Branch 8 DevPanel sandbox testing. Each locale must be swept for:
 
-**(A) Perspective consistency**: every copy string has an implicit POV. Two patterns and they must not mix within the same surface:
-1. **1인칭 소유** (user's own label for their own thing) — e.g., fight card chip showing the user's saved pick. Korean uses "마이픽" (loanword) or "내 픽". English "My Pick". Applied to artifacts the user OWNS and labels for themselves.
-2. **2인칭 권유** (UI addressing the user, asking them to do something) — e.g., share CTA telling the user to share their picks. Korean "당신의 픽을 친구들에게 공유해보세요". English "Share your picks with friends". Applied to CTAs / banners / nudges.
+**(A) Perspective consistency** — every copy string has implicit POV. Two patterns must not mix within the same surface:
+1. **1인칭 소유** — user's own label for their own thing (fight card chip showing saved pick: "마이픽" / "내 픽" / "My Pick"). Applied to artifacts the user OWNS
+2. **2인칭 권유** — UI addressing the user ("당신의 픽을 친구들에게 공유해보세요" / "Share your picks with friends"). Applied to CTAs / banners / nudges
 
-Confusing 1인칭 with 2인칭 on the same surface produces copy that reads as "inside the user's head" vs "the app talking to the user" — jarring. Sweep every string and classify its POV explicitly.
+Sweep every string and classify POV explicitly.
 
 **(B) Politeness register per culture**:
-- **Korean**: default polite "해보세요" register for CTAs. Avoid "~자" / "~해" casual (반말) unless brand-intentional (e.g., retro-boxing chest-thump). Sean explicit ask 2026-04-14: "너무 반말보다 해보세요 이런거 권유".
-- **Japanese**: ですます form for CTAs, casual 動詞原形 only for intentional energy bursts. Consider keigo for confirmation moments.
-- **Chinese (zh-CN)**: avoid overly formal 您 unless addressing a recipient. Default 你 for user-facing copy. "吧" particle for soft suggestion.
-- **Spanish**: tú vs usted — BlackPick target audience is casual sports fan → tú. But Latin American Spanish vs Peninsular → prefer LatAm (tú, "ustedes" for plural). No "vosotros".
-- **Portuguese (pt-BR)**: você, NOT tu. Brazilian casual register. Avoid European PT forms.
-- **Mongolian**: та (polite) for CTAs, чи (familiar) only in intentional brand voice.
+- **ko**: default polite "해보세요" for CTAs. Avoid "~자" / "~해" 반말 unless brand-intentional. Sean 2026-04-14: "너무 반말보다 해보세요 이런거 권유"
+- **ja**: ですます for CTAs, casual 動詞原形 only for intentional energy
+- **zh-CN**: default 你 for user-facing (avoid overly formal 您); "吧" for soft suggestion
+- **es**: tú (LatAm, not Peninsular); "ustedes" for plural; no "vosotros"
+- **pt-BR**: você, NOT tu. Brazilian casual. Avoid European PT forms
+- **mn**: та polite, чи familiar only in intentional brand voice
 
-**(C) Em-dash (`—`) purge**: Sean 2026-04-14 "글도 emdash쓰지말고". Replace all `—` in share/CTA copy with period + new sentence OR comma + conjunction. em-dash makes copy feel dramatic-typographic in a way that doesn't fit BlackPick's direct voice.
+**(C) Em-dash (`—`) purge** — Sean 2026-04-14 "글도 emdash쓰지말고". Replace with period + new sentence OR comma + conjunction
 
-**(D) Emoji purge in i18n strings**: Per DESIGN.md §Icons ("no unicode symbols for icons"), i18n values should NOT contain `🔥`, `🎯`, `✨`, etc. Render the equivalent with a `lucide-react` icon component in the JSX callsite instead. Exceptions: country flags (intentional Unicode data), OS-level emoji inputs in user content (not translation strings).
+**(D) Emoji purge in i18n strings** — per DESIGN.md §Icons. No `🔥`, `🎯`, `✨`. Render via `lucide-react` at callsite. Exceptions: country flags, OS-level emoji user content
 
-**(E) Count interpolation presence**: any copy of the form "N items saved" should use `{count}` interpolation via the existing `i18n-provider.tsx:26-32` `{var}` handler, not split into "items saved" + rendered count separately. Sean asked for this specifically on `prediction.allPredictedToast` — a single string with count reads as one completion event instead of a fragmentary "X picks" + "saved" + "good luck".
+**(E) Count interpolation presence** — "N items saved" uses `{count}` via `i18n-provider.tsx:26-32` `{var}` handler, not fragment split
 
-**(F) CTA verb strength**: every CTA verb should be active + concrete. Replace:
-- "OK" / "Done" (weak acknowledgment) → action verb like "Save" / "Confirm"
-- "Continue" (directionless) → "Save your pick" / "See results"
-- Passive "~되었습니다" / "was saved" → active "saved" / "locked in"
+**(F) CTA verb strength** — active + concrete. "OK" / "Done" → action verb ("Save" / "Confirm"). "Continue" → specific ("Save your pick" / "See results"). Passive "~되었습니다" / "was saved" → active "saved" / "locked in"
 
-**Criteria deliverable**: 7-locale spreadsheet (or markdown table) keyed by i18n path, with columns: `current value` / `POV (1인칭/2인칭/3인칭/neutral)` / `register (formal/casual/brand)` / `has em-dash?` / `has emoji?` / `proposed rewrite`. Any row that changes POV or register requires per-locale native-speaker check before commit.
+**Deliverable**: 7-locale spreadsheet keyed by i18n path, columns: `current value` / `POV (1인칭/2인칭/3인칭/neutral)` / `register (formal/casual/brand)` / `has em-dash?` / `has emoji?` / `proposed rewrite`. Any row changing POV or register requires per-locale native-speaker check before commit.
 
-**Dependencies**: must run AFTER Phase 1–4 copy is finalized. Otherwise the sweep will be rewriting strings that are themselves about to change. Confirm with Sean before starting.
+**Dependencies**: run AFTER Phase 1–4 copy finalized. Confirm with Sean before starting.
 
 ---
 
@@ -391,41 +230,41 @@ Confusing 1인칭 with 2인칭 on the same surface produces copy that reads as "
 
 _Goal: ship what we have. No new features. Only polish bugs found in launch-eve verification._
 
-- [ ] Full end-to-end smoke on dev: every DevPanel state, OAuth via Google + Facebook, feedback submission, email receipt test.
-- [ ] `develop → main` PR, bundle all Phase 1–5 work.
-- [ ] `npm run deploy` (requires `vercel login` refreshed per the backlog).
-- [ ] Post-deploy prod smoke via `npm run smoke:prod`.
-- [ ] Soft launch: announce to the first wave of Korean users via existing channels.
-- [ ] Monitor `/admin/tickets` + Sentry for first 48h. Fix P0/P1 immediately on fix branches.
+- [ ] Full end-to-end smoke on dev: every DevPanel state, OAuth via Google + Facebook, feedback submission, email receipt test
+- [ ] `develop → main` PR, bundle all Phase 1–5 work
+- [ ] `npm run deploy` (requires `vercel login` refreshed per backlog)
+- [ ] Post-deploy prod smoke via `npm run smoke:prod`
+- [ ] Soft launch: announce to the first wave of Korean users via existing channels
+- [ ] Monitor Sentry + Gmail feedback for first 48h. Fix P0/P1 immediately on fix branches
 
 ---
 
 ## Phase 7 — Post-launch automation
 
-_Goal: add the cron / anomaly / clustering / hot-fight features that only make sense with real user data. **Do not touch until Phase 6 has real users for at least a week.**_
+_Goal: cron / anomaly / clustering / hot-fight features that only make sense with real user data. **Do not touch until Phase 6 has real users for at least a week.**_
 
 ### Branch: `feature/crawler-automation` + `docs/crawler-stability`
-- [ ] Document current crawler (`src/scripts/crawler*.ts`, `scripts/sync-bc-event-card.ts`) — every code path, every side effect, every edge case.
-- [ ] Anchor crawler on BC source fight ID — never reshuffle by position.
-- [ ] `status` transitions tracked in new `fight_state_events` table for audit.
-- [ ] GitHub Actions cron `*/30 * * * *` (NOT `*/10` per GPT review) → `/api/cron/fight-state-sync` → compares crawler output to DB → writes events + triggers live-transition notifications.
+- [ ] Document current crawler (`src/scripts/crawler*.ts`, `scripts/sync-bc-event-card.ts`) — every code path, side effect, edge case
+- [ ] Anchor crawler on BC source fight ID — never reshuffle by position
+- [ ] `status` transitions tracked in new `fight_state_events` table for audit
+- [ ] GitHub Actions cron `*/30 * * * *` → `/api/cron/fight-state-sync` → compares crawler output to DB → writes events + triggers live-transition notifications
 
 ### Branch: `feature/live-transition-notifications`
-- [ ] On `upcoming → live` transition, insert `fight_state_events` row + fire client toast (realtime subscribe) + email to opted-in subscribers via Resend.
-- [ ] New `user_notification_prefs` table.
+- [ ] On `upcoming → live` transition, insert `fight_state_events` row + fire client toast (realtime subscribe) + email to opted-in subscribers via Resend
+- [ ] New `user_notification_prefs` table
 
 ### Branch: `feature/mvp-open-email-notifications`
-- [ ] When `mvp_voting_opens_at` flips null → not null (admin or lazy fallback), email `mvp_open_email=true` subscribers.
+- [ ] When `mvp_voting_opens_at` flips null → not null, email `mvp_open_email=true` subscribers
 
 ### Branch: `feature/analytics-anomaly-detection`
-- [ ] Nightly cron inspects `user_events` for anomalies: `abandon_rate > 40%` on signup-gate modal, `prediction_save_error_rate > 5%`, day-over-day DAU drop > 20%.
-- [ ] Each anomaly → insert `feedback_tickets` with `source='analytics_anomaly'`, `priority='p1'`, metric in metadata. Auto-mirror to GH issues.
+- [ ] Nightly cron inspects `user_events` for anomalies: `abandon_rate > 40%` on signup-gate modal, `prediction_save_error_rate > 5%`, day-over-day DAU drop > 20%
+- [ ] Each anomaly → insert `feedback_tickets` with `source='analytics_anomaly'`, `priority='p1'`. Auto-mirror to GH issues
 
 ### Branch: `feature/feedback-clustering`
-- [ ] Nightly job groups open `user_feedback` tickets by `cluster_key` (substring match → embedding similarity if needed). Clusters ≥5 collapse into a parent; children get `metadata.parent_cluster_id`. Admin dashboard shows clusters as primary view.
+- [ ] Nightly job groups open `user_feedback` tickets by `cluster_key` (substring → embedding similarity). Clusters ≥5 collapse into a parent. Admin dashboard shows clusters as primary view
 
 ### Branch: `feature/hot-fight-detection`
-- [ ] Track prediction save rate per fight in a rolling 1h window. Fights with >3× the average of the same card get flagged (`fights.is_hot boolean`). UI: `🔥 Hot` badge.
+- [ ] Track prediction save rate per fight in rolling 1h window. Fights with >3× card average get flagged (`fights.is_hot boolean`). UI: `🔥 Hot` badge
 
 ---
 
@@ -433,29 +272,27 @@ _Goal: add the cron / anomaly / clustering / hot-fight features that only make s
 
 _No phase assigned — pull when a related area is already being touched._
 
-- [ ] Share page enumeration opt-out — `users.is_public` flag, gate `loadSharePageData`.
-- [ ] Notification store snapshot dedupe (`use-notifications.ts`).
-- [ ] Timezone storage event filter with `oldValue === newValue` short-circuit.
-- [ ] Storybook stories for `useIsMounted`, `useClockTick`, notification store.
-- [ ] CODEOWNERS + branch protection on main.
-- [ ] Replace GitHub Actions `push-to-main` deploy with manual approval gate (Vercel Deployment Protection).
-- [ ] Refresh local Vercel CLI auth (`vercel login`) so `npm run deploy` works locally.
-- [ ] Upgrade Vercel CLI (`npm i -g vercel@latest`, currently 50.42.0 → 50.44.0).
-- [ ] Agent-skills plugin install (`/plugin marketplace add addyosmani/agent-skills`, slash command, Sean runs).
-- [ ] Supabase migration history sync (cosmetic — missing rows for 202604090001/2/3).
-- [ ] OG image asset `public/og/default.png` (1200x630) still missing.
-- [ ] Sentry production DSN.
-- [ ] Phase 2 test infrastructure (BlackPick_Test Supabase project, real DB integration tests, lefthook pre-commit, coverage measurement).
-- [ ] Phase 3 test infrastructure (route handler unit tests, Playwright OAuth stub, coverage thresholds, BC scraper isolation).
+- [ ] Share page enumeration opt-out — `users.is_public` flag, gate `loadSharePageData`
+- [ ] Notification store snapshot dedupe (`use-notifications.ts`)
+- [ ] Timezone storage event filter with `oldValue === newValue` short-circuit
+- [ ] Storybook stories for `useIsMounted`, `useClockTick`, notification store
+- [ ] CODEOWNERS + branch protection on main
+- [ ] Replace GitHub Actions `push-to-main` deploy with manual approval gate (Vercel Deployment Protection)
+- [ ] Refresh local Vercel CLI auth (`vercel login`)
+- [ ] Upgrade Vercel CLI
+- [ ] Agent-skills plugin install (`/plugin marketplace add addyosmani/agent-skills`)
+- [ ] Supabase migration history sync (cosmetic — missing rows for 202604090001/2/3)
+- [ ] OG image asset `public/og/default.png` (1200×630)
+- [ ] Sentry production DSN
+- [ ] Phase 2 test infrastructure (BlackPick_Test Supabase project, real DB integration tests, lefthook pre-commit, coverage measurement)
+- [ ] Phase 3 test infrastructure (route handler unit tests, Playwright OAuth stub, coverage thresholds, BC scraper isolation)
 
 ---
 
 ## Process notes (do not delete — they anchor the workflow)
 
-- **Review gate**: primary path is the user-level `second-opinion-reviewer` subagent — invoke via "Use the second-opinion-reviewer subagent to review <artifact>". Sonnet 4.6 default, Opus 4.6 escalation on low-confidence BLOCK. Usage guide: `/Users/uxersean/Desktop/Wiki_Sean/Tech/second_opinion_reviewer_usage.md`. **3-tier Review rubric (Tier A routine / Tier B elevated with red-team / forensic / oracle framings / Tier C irreversible-high-stakes with 8 hard triggers + mandatory cross-family external review) lives in [`Docs/review-tier-rubric.md`](Docs/review-tier-rubric.md). Read that file before any review-gate judgment call.** Supplements — does NOT replace — cross-family external review; reach for external when stakes justify the cost. Historical fallback (deprioritized for cost): `scripts/codex-review.sh` → `scripts/gpt-review.sh`, see `Docs/codex-review.md`. Never call the OpenAI API from anywhere else. Docs-only PRs (TASKS.md, wiki, Docs/) exempt — self-review OK.
-- **Every PR updates TASKS.md in the same commit** that ships its code. When a branch lands, its row moves from the active section to Recently shipped, and the next branch's sub-tasks are restored to the in-session TaskList.
-- **Session-end ritual**: before wrapping, update `CURRENT_STATE.md` (in the repo, commit as `chore(docs):`) + write a new session log to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/<YYYY-MM-DD>-<slug>.md` (**outside** the repo — see `.gitignore` and the `feedback_wiki_log_location` memory entry). Sweep TASKS.md for stale items.
-- **Lead engineer mode**: make best-practice decisions autonomously. Don't present 2–3 option menus on every step. Warn before destructive operations (force-push, drop table, etc).
-- **Branch discipline**: every phase task = new branch, naming convention (`feature/`, `fix/`, `refactor/`, `db/`, `a11y/`, `i18n/`, `chore/`, `dev-ui/`). One PR per branch against `develop`. No stacking.
-- **Phase gates**: finish a phase completely before starting the next. Parallel work within a phase is fine, but a Phase N branch never depends on a Phase N+1 branch.
-- **GPT plan review reconcile**: the phase order and scope decisions live in `Wiki_Sean/BlackPick/2026-04-12-plan-review-and-reconcile.md`. Read it if you're about to reorder or rescope anything.
+- **Review gate** — primary + rubric in [CLAUDE.md](CLAUDE.md) and [`Docs/review-tier-rubric.md`](Docs/review-tier-rubric.md). Docs-only PRs (TASKS.md, wiki, Docs/) exempt
+- **Every PR updates TASKS.md in the same commit** that ships its code. When a branch lands, its row moves to Recently shipped and the next branch's sub-tasks restore into the in-session TaskList
+- **Session-end ritual**: update [CURRENT_STATE.md](CURRENT_STATE.md) (in-repo, `chore(docs):`) + write new session log to `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/<YYYY-MM-DD>-<slug>.md` (outside repo — see `.gitignore`). Sweep TASKS.md for stale items
+- **Lead engineer mode**: make best-practice decisions autonomously. Don't present 2–3 option menus on every step. Warn before destructive operations
+- **Branch discipline**: every phase task = new branch. Naming: `feature/` / `fix/` / `refactor/` / `db/` / `a11y/` / `i18n/` / `chore/` / `dev-ui/`. One PR per branch against `develop`. No stacking
