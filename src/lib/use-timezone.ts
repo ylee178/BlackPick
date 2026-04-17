@@ -70,7 +70,11 @@ function getServerSnapshot(): TimezoneSnapshot {
   return SERVER_SNAPSHOT;
 }
 
-function subscribe(listener: () => void): () => void {
+/**
+ * @internal — exported for unit tests. Same signature `useSyncExternalStore`
+ * expects. Safe to ignore in application code.
+ */
+export function subscribe(listener: () => void): () => void {
   if (typeof window === "undefined") return () => {};
 
   const handleLocalChange = () => {
@@ -86,6 +90,10 @@ function subscribe(listener: () => void): () => void {
     // localStorage value wins — otherwise this tab would keep showing
     // its own previous selection forever after one local `setTz` call.
     if (event.key !== null && event.key !== TIMEZONE_STORAGE_KEY) return;
+    // Short-circuit no-op writes. `localStorage.setItem(key, sameValue)`
+    // still fires a storage event in other tabs, and waking every
+    // subscriber just to recompute an identical snapshot is wasted work.
+    if (event.oldValue === event.newValue) return;
     sessionOverride = null;
     cachedSnapshot = null;
     listener();
