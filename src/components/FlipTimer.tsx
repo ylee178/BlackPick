@@ -37,8 +37,21 @@ export function DigitCard({ value, label }: { value: string; label?: string }) {
  * Pure countdown timer. The absolute date/time and the timezone picker
  * now live in the EventDateLine subtext under the event title, so this
  * component is intentionally just the LCD-style countdown digits.
+ *
+ * `postLockMessageKey` controls the i18n key rendered when the timer
+ * burns out to 00:00:00. Defaults to the canonical
+ * `countdown.eventInProgress` for the live-event case; upcoming-with-
+ * stale-seed-data callers should pass `countdown.eventStartingSoon`
+ * so the copy doesn't contradict the UPCOMING badge. See
+ * `derivePostLockTimerState` in `@/lib/event-ui-state`.
  */
-export default function FlipTimer({ targetTime }: { targetTime: string }) {
+export default function FlipTimer({
+  targetTime,
+  postLockMessageKey = "countdown.eventInProgress",
+}: {
+  targetTime: string;
+  postLockMessageKey?: "countdown.eventInProgress" | "countdown.eventStartingSoon";
+}) {
   const { t } = useI18n();
   // Shared 1Hz external store — returns 0 before hydration, then live
   // Date.now() values. See `src/lib/use-sync-store.ts` for the rationale.
@@ -58,7 +71,7 @@ export default function FlipTimer({ targetTime }: { targetTime: string }) {
       <div>
         <div className="rounded-[12px] bg-[#060606] px-6 py-6">
           <p className="gold-dim-pulse mb-2 text-center text-xs font-semibold uppercase tracking-[0.12em]">
-            {t("countdown.eventInProgress")}
+            {t(postLockMessageKey)}
           </p>
           {/* `lcd-dim` cascades to .lcd-digit span + .lcd-colon
               inside, turning the digits subtle gray instead of gold.

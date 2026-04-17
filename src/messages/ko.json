@@ -240,6 +240,7 @@
     "closesIn": "예측 마감까지",
     "eventStartsIn": "경기 시작까지",
     "eventInProgress": "이벤트 진행 중",
+    "eventStartingSoon": "곧 시작돼요",
     "locked": "예측 마감됨",
     "lockedHint": "시간이 끝나면 예측이 마감돼요",
     "daysShort": "일",

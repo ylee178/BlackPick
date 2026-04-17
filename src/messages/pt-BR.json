@@ -240,6 +240,7 @@
     "closesIn": "Palpites encerram em",
     "eventStartsIn": "O evento começa em",
     "eventInProgress": "Evento em andamento",
+    "eventStartingSoon": "Começa em breve",
     "locked": "Palpites encerrados",
     "lockedHint": "Os palpites encerram quando o tempo acabar",
     "daysShort": "Dias",

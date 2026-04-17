@@ -240,6 +240,7 @@
     "closesIn": "予想締切まで",
     "eventStartsIn": "イベント開始まで",
     "eventInProgress": "イベント進行中",
+    "eventStartingSoon": "まもなく開始",
     "locked": "予想受付終了",
     "lockedHint": "時間切れで予想は締め切られます",
     "daysShort": "日",

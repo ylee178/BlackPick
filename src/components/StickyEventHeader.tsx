@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-provider";
 import { RetroLabel } from "@/components/ui/retro";
 import { Clock, Flame } from "lucide-react";
+import { deriveStickyHeaderSlot } from "@/lib/event-ui-state";
+import { useClockTick } from "@/lib/use-sync-store";
 
 type Props = {
   eventName: string;
@@ -12,10 +14,13 @@ type Props = {
   countdownTargetTime?: string | null;
   watchElementId: string;
   /**
-   * Current user's `users.current_streak`. When the sub-header
-   * countdown timer has expired (or was never set, e.g., completed
-   * events) and this is >= 1, the right slot renders a Flame + streak
-   * indicator instead of an empty slot. Null for anonymous viewers.
+   * Current user's `users.current_streak`. When the right slot is in
+   * `streak` mode (per `deriveStickyHeaderSlot`), this value is
+   * rendered next to a Flame icon. Null for anonymous viewers.
+   *
+   * Streak shows only during the timer-active or prediction-locked
+   * states, never after the event completes. The gating is handled
+   * by the shared helper — do not special-case it here.
    */
   currentStreak?: number | null;
 };
@@ -87,6 +92,20 @@ export default function StickyEventHeader({
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  // Shared 1Hz ticker — returns 0 during SSR and first client render,
+  // then live `Date.now()` values. Using this (rather than a raw
+  // `Date.now()` call in the render body) satisfies react-hooks/purity
+  // and avoids hydration mismatches. On the initial render (tick=0),
+  // `deriveStickyHeaderSlot` will treat any non-null `firstLockAt > 0`
+  // as a future timer — which matches our SSR pessimism (show
+  // countdown frame even before the clock has synced client-side).
+  const clockTick = useClockTick();
+  const slot = deriveStickyHeaderSlot(
+    { eventPhase: eventStatus, firstLockAt: countdownTargetTime ?? null },
+    currentStreak,
+    clockTick,
+  );
+
   return (
     <div
       className={cn(
@@ -106,7 +125,7 @@ export default function StickyEventHeader({
             {t(`status.${eventStatus}`)}
           </RetroLabel>
         </div>
-        {tl ? (
+        {slot.kind === "countdown" && tl ? (
           <div className="flex shrink-0 items-center gap-0.5" suppressHydrationWarning>
             <Clock className="mr-1 h-4 w-4 shrink-0 text-[var(--bp-accent)]" strokeWidth={2} />
             <MiniDigit value={pad(tl.d)} />
@@ -117,20 +136,14 @@ export default function StickyEventHeader({
             <span className="lcd-colon-mini">:</span>
             <MiniDigit value={pad(tl.s)} />
           </div>
-        ) : currentStreak != null && currentStreak > 0 ? (
-          // Timer expired (or never set for completed events) — the
-          // right slot surfaces the viewer's correct-pick streak as a
-          // quiet reminder. Sean's 2026-04-13 refinement: "히어로에
-          // 잇던게 서브헤더에 타이머 대신 들어가면돼 스틱키로". Only
-          // renders when streak >= 1 so fresh accounts get an empty
-          // slot instead of a "0" tile.
+        ) : slot.kind === "streak" ? (
           <div className="flex shrink-0 items-center gap-1.5" suppressHydrationWarning>
             <Flame
               className="h-4 w-4 shrink-0 text-[var(--bp-accent)]"
               strokeWidth={2}
               aria-hidden="true"
             />
-            <span className="text-sm font-bold text-[var(--bp-ink)]">{currentStreak}</span>
+            <span className="text-sm font-bold text-[var(--bp-ink)]">{slot.value}</span>
           </div>
         ) : null}
       </div>

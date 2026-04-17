@@ -240,6 +240,7 @@
     "closesIn": "预测截止倒计时",
     "eventStartsIn": "比赛开始倒计时",
     "eventInProgress": "比赛进行中",
+    "eventStartingSoon": "即将开始",
     "locked": "预测已锁定",
     "lockedHint": "时间结束时预测锁定",
     "daysShort": "天",

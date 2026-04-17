@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Settings, Loader2, X, Undo2 } from "lucide-react";
 // Note: ChevronRight removed with v3 — ActionRow was deleted in favor
 // of PresetButton + CompactActionButton grids.
