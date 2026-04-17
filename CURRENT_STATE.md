@@ -2,20 +2,21 @@
 
 _Snapshot only. Durable roadmap lives in [`TASKS.md`](TASKS.md). Per-branch narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Commit history: `git log`._
 
-_Last refreshed: 2026-04-17 (Codex integrity branch applied to DEV + PROD; predeploy green)._
+_Last refreshed: 2026-04-17 session 2 — Claude admin-consolidation 6/6 shipped (PR #29) + Codex integrity branch applied to DEV + PROD (PR #30). Both PRs open, awaiting merge to develop._
 
 ## Branch
-`develop` tip `1c11e30` — cleanup commit (`5f7ad41`) + Codex branch registration (`22297cf`) + parallel-queue split (`1c11e30`) shipped 2026-04-17. PR #28 `feature/streak-ux` squash-merged as `8ad4ac7` on 2026-04-14. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel). Codex remediation branch `db/codex-integrity-atomicity` is approved/applied but not merged yet.
+`develop` tip `cc73854` — cleanup commit (`5f7ad41`) + Codex branch registration (`22297cf`) + parallel-queue split (`1c11e30`) shipped 2026-04-17. PR #28 `feature/streak-ux` squash-merged as `8ad4ac7` on 2026-04-14. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel). Two 2026-04-17 PRs open against develop: PR #29 admin-consolidation, PR #30 Codex integrity/atomicity (migrations already on DEV + PROD).
 
 ### Two agents active — parallel, non-overlapping file sets
-- **Codex CLI** owns branch `db/codex-integrity-atomicity` (11/11 review findings folded, 3-round Claude review approved). Migrations `202604170001_integrity_atomicity.sql`, `202604170002_comment_likes.sql`, and `202604170003_user_events_api_only.sql` are applied to **DEV + PROD** and recorded in `supabase_migrations.schema_migrations`. Branch still needs final commit/PR merge.
-- **Claude Code** active on `feature/admin-surface-consolidation` (Phase 2). UI-only scope, zero overlap with Codex file set.
+- **Codex CLI** — `db/codex-integrity-atomicity` tip `ff96f93`, **PR #30 open**. 11/11 review findings folded in one commit. Migrations `202604170001_integrity_atomicity.sql`, `202604170002_comment_likes.sql`, and `202604170003_user_events_api_only.sql` applied to **DEV + PROD** and recorded in `supabase_migrations.schema_migrations`. Awaiting final PR merge.
+- **Claude Code** — `feature/admin-surface-consolidation` tip `98756b2`, **PR #29 open**. Admin surface consolidation 6/6 slices + second-opinion-reviewer findings addressed. UI-only scope, zero code overlap with Codex file set. Docs conflict pre-resolved on this branch (combined view below).
 - Coordination protocol + hands-off file list in [TASKS.md §Parallel-agent discipline](TASKS.md#parallel-agent-discipline).
+- **⚠ Known incident this session**: main worktree's `HEAD` silently reverted from `feature/admin-surface-consolidation` → `db/codex-integrity-atomicity` at least three times during Claude's admin work (confirmed via git reflog). No custom hooks in `.git/hooks/`. Cause: background Codex CLI daemon owning the main worktree's `HEAD`. **Mitigation adopted**: every `git commit` chains `git branch --show-current` guard. Future sessions should either use `git worktree add` for Claude's branch or pause Codex daemons before Claude work.
 
 ## Production
 - **URL**: https://blackpick.io
 - **main tip**: `20ffbd6` (bp-logo-email.png cherry-pick, 2026-04-13). Prior baseline `5b51afc` bundled PRs #3–#11.
-- **Develop → main release pending**: PRs #17–#28 (Phase 1) + PR #25 (Phase 3 partial) bundle at Phase 6 launch gate.
+- **Develop → main release pending**: PRs #17–#28 (Phase 1) + PR #25 (Phase 3 partial) + PR #29 (admin-consolidation) + PR #30 (Codex integrity) bundle at Phase 6 launch gate.
 - **Scoring v3**: applied on DEV (`202604140001_scoring_v3_winner_only_2pts.sql`, winner-only returns 2). PROD still on v2; applied with Phase 6 bundle.
 - **Integrity/atomicity bundle**: `202604170001` + `170002` + `170003` applied on DEV + PROD. `check:schema-drift` clean on DEV + PROD, `verify-remote-schema` OK, and `npm run predeploy` passes with `SUPABASE_ACCESS_TOKEN` present.
 - **Email assets on PROD**: `/email/{bp-logo-email.png, icon-shield, icon-key}` → all 200.
@@ -27,7 +28,7 @@ _Last refreshed: 2026-04-17 (Codex integrity branch applied to DEV + PROD; prede
 |---|---|---|
 | `users` | 11 | index `users_ring_name_lower_unique` on `lower(ring_name)` |
 | `admin_users` | 2 | |
-| `events` | 10 | includes `completed_at` |
+| `events` | 10 | includes `completed_at` (MVP window anchor) |
 | `fights` | 14 | `is_title_fight` + `is_main_card` both `BOOLEAN NOT NULL DEFAULT false` |
 | `predictions` | 12 | |
 | `fighters` | 10 | |

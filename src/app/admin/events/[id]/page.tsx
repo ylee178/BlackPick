@@ -1,11 +1,27 @@
 import { requireAdminPage } from '@/lib/admin-auth'
 import PendingSubmitButton from '@/components/ui/PendingSubmitButton'
+import {
+  RetroEmptyState,
+  RetroStatusBadge,
+  retroButtonClassName,
+  retroFieldClassName,
+  retroPanelClassName,
+} from '@/components/ui/retro'
+import { getSeriesLabelEn } from '@/lib/constants'
 import { createSupabaseAdmin } from '@/lib/supabase-admin'
 import type { Database } from '@/types/database'
 
 type Params = Promise<{ id: string }>
 type EventStatus = Database['public']['Tables']['events']['Row']['status']
+type FightStatus = Database['public']['Tables']['fights']['Row']['status']
 type Fighter = Database['public']['Tables']['fighters']['Row']
+
+function fightStatusTone(status: FightStatus): 'accent' | 'success' | 'danger' | 'neutral' {
+  if (status === 'completed') return 'success'
+  if (status === 'upcoming') return 'accent'
+  if (status === 'cancelled') return 'danger'
+  return 'neutral'
+}
 
 async function EventStatusForm({
   eventId,
@@ -34,12 +50,12 @@ async function EventStatusForm({
 
   return (
     <form action={updateStatus} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-      <div>
-        <label className="mb-2 block text-sm text-gray-300">Event Status</label>
+      <div className="flex-1">
+        <label className="mb-2 block text-sm text-[var(--bp-muted)]">Event Status</label>
         <select
           name="status"
           defaultValue={currentStatus}
-          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+          className={retroFieldClassName()}
         >
           {statuses.map((status) => (
             <option key={status} value={status}>
@@ -49,7 +65,7 @@ async function EventStatusForm({
         </select>
       </div>
       <PendingSubmitButton
-        className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+        className={retroButtonClassName({ variant: 'primary' })}
         loadingLabel="Updating..."
       >
         Update Status
@@ -103,12 +119,8 @@ async function AddFightForm({
   return (
     <form action={createFight} className="grid gap-4 md:grid-cols-2">
       <div>
-        <label className="mb-2 block text-sm text-gray-300">Fighter A</label>
-        <select
-          name="fighter_a_id"
-          required
-          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
-        >
+        <label className="mb-2 block text-sm text-[var(--bp-muted)]">Fighter A</label>
+        <select name="fighter_a_id" required className={retroFieldClassName()}>
           <option value="">Select fighter</option>
           {fighters.map((fighter) => (
             <option key={fighter.id} value={fighter.id}>
@@ -119,12 +131,8 @@ async function AddFightForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-gray-300">Fighter B</label>
-        <select
-          name="fighter_b_id"
-          required
-          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
-        >
+        <label className="mb-2 block text-sm text-[var(--bp-muted)]">Fighter B</label>
+        <select name="fighter_b_id" required className={retroFieldClassName()}>
           <option value="">Select fighter</option>
           {fighters.map((fighter) => (
             <option key={fighter.id} value={fighter.id}>
@@ -135,16 +143,16 @@ async function AddFightForm({
       </div>
 
       <div className="md:col-span-2">
-        <label className="mb-2 block text-sm text-gray-300">
+        <label className="mb-2 block text-sm text-[var(--bp-muted)]">
           Start Time (KST — 한국 표준시, Asia/Seoul)
         </label>
         <input
           type="datetime-local"
           name="start_time"
           required
-          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+          className={retroFieldClassName()}
         />
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="mt-2 text-xs text-[var(--bp-muted)]">
           Enter the fight start time in Korea Standard Time. The server stores it as UTC
           and the app converts to each viewer&apos;s timezone at render time.
         </p>
@@ -152,7 +160,7 @@ async function AddFightForm({
 
       <div className="md:col-span-2">
         <PendingSubmitButton
-          className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className={retroButtonClassName({ variant: 'primary' })}
           loadingLabel="Adding..."
         >
           Add Fight
@@ -182,17 +190,17 @@ export default async function AdminEventDetailPage({
   ])
 
   if (!event) {
-    return <div className="text-sm text-red-400">Event not found.</div>
+    return <div className="text-sm text-[var(--bp-danger)]">Event not found.</div>
   }
 
   const fighterMap = new Map((fighters ?? []).map((fighter) => [fighter.id, fighter.name]))
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">{event.name}</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          {event.series_type === 'other' ? 'Champions League' : event.series_type === 'black_cup' ? 'Black Cup' : event.series_type === 'numbering' ? 'Numbering' : 'Rise'} • {event.date}
+      <div className={retroPanelClassName({ className: 'p-5' })}>
+        <h1 className="text-2xl font-bold text-[var(--bp-ink)] sm:text-3xl">{event.name}</h1>
+        <p className="mt-2 text-sm text-[var(--bp-muted)]">
+          {getSeriesLabelEn(event.series_type)} • {event.date}
         </p>
 
         <div className="mt-6">
@@ -200,33 +208,36 @@ export default async function AdminEventDetailPage({
         </div>
       </div>
 
-      <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-xl font-semibold text-white">Fights</h2>
+      <section className={retroPanelClassName({ className: 'p-5' })}>
+        <h2 className="text-xl font-semibold text-[var(--bp-ink)]">Fights</h2>
         <div className="mt-4 space-y-3">
           {fights?.length ? (
             fights.map((fight) => (
               <div
                 key={fight.id}
-                className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-4"
+                className={retroPanelClassName({ tone: 'flat', className: 'px-4 py-4' })}
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-medium text-white">
+                    <p className="font-medium text-[var(--bp-ink)]">
                       {fighterMap.get(fight.fighter_a_id) ?? 'Unknown'} vs{' '}
                       {fighterMap.get(fight.fighter_b_id) ?? 'Unknown'}
                     </p>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-[var(--bp-muted)]">
                       {new Date(fight.start_time).toLocaleString()}
                     </p>
                   </div>
-                  <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-wide text-amber-400">
+                  <RetroStatusBadge tone={fightStatusTone(fight.status)}>
                     {fight.status}
-                  </span>
+                  </RetroStatusBadge>
                 </div>
 
                 {fight.status === 'completed' && fight.winner_id ? (
-                  <p className="mt-3 text-sm text-gray-300">
-                    Winner: <span className="text-amber-400">{fighterMap.get(fight.winner_id)}</span>
+                  <p className="mt-3 text-sm text-[var(--bp-muted)]">
+                    Winner:{' '}
+                    <span className="text-[var(--bp-accent)]">
+                      {fighterMap.get(fight.winner_id)}
+                    </span>
                     {fight.method ? ` • ${fight.method}` : ''}
                     {fight.round ? ` • Round ${fight.round}` : ''}
                   </p>
@@ -234,13 +245,16 @@ export default async function AdminEventDetailPage({
               </div>
             ))
           ) : (
-            <p className="text-sm text-gray-400">No fights added yet.</p>
+            <RetroEmptyState
+              title="No fights scheduled"
+              description="Add the first fight using the form below."
+            />
           )}
         </div>
       </section>
 
-      <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-xl font-semibold text-white">Add Fight</h2>
+      <section className={retroPanelClassName({ className: 'p-5' })}>
+        <h2 className="text-xl font-semibold text-[var(--bp-ink)]">Add Fight</h2>
         <div className="mt-4">
           <AddFightForm eventId={event.id} fighters={fighters ?? []} />
         </div>
