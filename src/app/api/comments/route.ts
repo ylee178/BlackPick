@@ -10,6 +10,35 @@ type CommentPayload = {
   parent_id?: string | null;
 };
 
+async function validateParentComment(
+  supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
+  parentId: string,
+  fightId: string,
+) {
+  const { data, error } = await supabase
+    .from("fight_comments")
+    .select("id, fight_id")
+    .eq("id", parentId)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: "Parent comment not found" }, { status: 400 });
+  }
+
+  if (data.fight_id !== fightId) {
+    return NextResponse.json(
+      { error: "Parent comment must belong to the same fight" },
+      { status: 400 },
+    );
+  }
+
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServer();
   const user = await getUser();
@@ -81,14 +110,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { fight_id, body, parent_id } = payload;
+  const fight_id = payload.fight_id?.trim();
+  const parent_id = payload.parent_id?.trim() || null;
+  const trimmedBody = payload.body?.trim() ?? "";
 
-  if (!fight_id || !body || body.trim().length === 0) {
+  if (!fight_id || trimmedBody.length === 0) {
     return NextResponse.json({ error: "fight_id and body are required" }, { status: 400 });
   }
 
-  if (body.length > 500) {
+  if (trimmedBody.length > 500) {
     return NextResponse.json({ error: "Comment must be 500 characters or less" }, { status: 400 });
+  }
+
+  if (parent_id) {
+    const parentError = await validateParentComment(supabase, parent_id, fight_id);
+    if (parentError) return parentError;
   }
 
   const { data, error } = await supabase
@@ -96,8 +132,8 @@ export async function POST(req: NextRequest) {
     .insert({
       fight_id,
       user_id: user.id,
-      parent_id: parent_id ?? null,
-      body: body.trim(),
+      parent_id,
+      body: trimmedBody,
     })
     .select(`
       id, fight_id, user_id, parent_id, body, created_at,

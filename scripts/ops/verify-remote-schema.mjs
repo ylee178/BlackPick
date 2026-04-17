@@ -41,6 +41,8 @@ async function main() {
   const checks = [
     ["users.preferred_language", () => supabase.from("users").select("preferred_language").limit(1)],
     ["admin_users", () => supabase.from("admin_users").select("user_id").limit(1)],
+    ["events.completed_at", () => supabase.from("events").select("completed_at").limit(1)],
+    ["comment_likes", () => supabase.from("comment_likes").select("comment_id").limit(1)],
     [
       "fights.result_processed_at",
       () => supabase.from("fights").select("result_processed_at").limit(1),

@@ -4,7 +4,7 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-17 — Codex CLI owns in-flight `db/codex-integrity-atomicity` P0/P1 remediation (token-blocked). Claude picks up parallel non-overlapping tracks in priority order below._
+_Last updated: 2026-04-17 — Codex CLI completed `db/codex-integrity-atomicity` P0/P1 remediation (11/11) and applied migrations to DEV + PROD. Claude picks up parallel non-overlapping tracks in priority order below._
 
 ---
 
@@ -13,7 +13,7 @@ _Last updated: 2026-04-17 — Codex CLI owns in-flight `db/codex-integrity-atomi
 **Two agents working in parallel, non-overlapping file sets.** See [§Parallel-agent discipline](#parallel-agent-discipline) for the coordination rule.
 
 ### 🤖 Codex CLI (owner) — `db/codex-integrity-atomicity`
-**Status**: 6/11 items shipped in worktree (uncommitted + unapplied). Token-blocked 2026-04-17. Full details in [Phase 4 → Branch `db/codex-integrity-atomicity`](#branch-dbcodex-integrity-atomicity--owned-by-codex-cli-token-blocked-as-of-2026-04-17). **Hands-off files listed there.**
+**Status**: 11/11 items completed, 3-round Claude review approved, migrations applied to DEV + PROD, final branch commit/PR still pending. Full details in [Phase 4 → Branch `db/codex-integrity-atomicity`](#branch-dbcodex-integrity-atomicity--owned-by-codex-cli-approved--applied-2026-04-17). **Hands-off files listed there until merge.**
 
 ### 🟣 Claude — parallel work queue (priority order)
 
@@ -185,9 +185,9 @@ _Goal: ship Supabase auth email templates for BlackPick's active auth paths (ema
 
 _Goal: close remaining feature gaps before launch. Facebook OAuth, comment edit/delete, MVP timer replaces Sean's manual workflow. Plus absorb the 2026-04-11 Codex review P0/P1 findings via a dedicated branch owned by Codex CLI._
 
-### Branch: `db/codex-integrity-atomicity` — **OWNED BY CODEX CLI** (token-blocked as of 2026-04-17)
+### Branch: `db/codex-integrity-atomicity` — **OWNED BY CODEX CLI** (approved + applied 2026-04-17)
 
-Codex CLI has an uncommitted worktree implementing 6 of 11 items from the 2026-04-11 + 2026-04-17 review rounds. **Do not touch these files in parallel branches** — merge conflict risk high, and Codex owns the mental model. Original guide: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-11-codex-review-remediation-guide.md`.
+Codex CLI completed all 11 items from the 2026-04-11 + 2026-04-17 review rounds, passed 3 review rounds with Claude, and applied the required migrations to both DEV + PROD on 2026-04-17. **Do not touch these files in parallel branches until the branch is committed and merged** — merge conflict risk remains high, and Codex owns the mental model. Original guide: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-11-codex-review-remediation-guide.md`.
 
 **Codex-owned files (hands off)**:
 - `supabase/migrations/202604170001_integrity_atomicity.sql` (206 lines, unapplied)
@@ -195,22 +195,20 @@ Codex CLI has an uncommitted worktree implementing 6 of 11 items from the 2026-0
 - `src/types/database.ts`
 - `src/app/api/{admin/results,comments,fighter-comments,mvp-vote,profile/delete-account,profile/reset-record}/route.ts`
 
-**Completed in Codex WIP (uncommitted, tests pass)**:
+**Completed in Codex branch**:
 - [x] Account deletion cascade ordering (auth user delete → public.users CASCADE, not reverse)
 - [x] `reset_user_record()` atomic RPC replacing multi-step client orchestration
 - [x] `admin_process_fight_result()` atomic RPC with `FOR UPDATE` row lock — prevents duplicate scoring under concurrent admin submits
 - [x] `fight_comments` parent-thread validation (API check + DB trigger `enforce_fight_comment_parent_match`)
 - [x] `fighter_comments` parent-thread validation (API check + DB trigger `enforce_fighter_comment_parent_match`)
 - [x] MVP vote deadline anchored to `events.completed_at` + `trg_events_completed_at` auto-sync trigger + legacy KST fallback in helper
+- [x] `comment_likes` schema drift repaired via `202604170002_comment_likes.sql` + drift-check broadening
+- [x] `src/app/api/fighter-avatar/ref/[id]/route.ts:6` locked to admin auth + UUID gate; filesystem helper now has containment checks
+- [x] `supabase/migrations/202604100001_create_user_events.sql:34` open insert policy removed via `202604170003_user_events_api_only.sql`; analytics writes now flow through API + service role
+- [x] `src/components/MvpVoteSection.tsx:50` synced to `completed_at`-anchored deadline logic
+- [x] `src/app/api/events/[id]/stats/route.ts:8` switched to public anon client so shared caching no longer depends on caller cookies
 
-**Pending in Codex queue (5 new issues surfaced 2026-04-17)**:
-- [ ] `comment_likes` schema drift — DEV (`lqyzivuxznybmlnlexmq`) missing the table, PROD (`nxjwthpydynoecrvggih`) has it. `scripts/check-schema-drift.mjs:30` returns green despite divergence. Recovery migration + drift-check broadening required; affects `src/app/api/comments/like/route.ts:23` + `src/app/api/comments/route.ts:72`
-- [ ] `src/app/api/fighter-avatar/ref/[id]/route.ts:6` — admin-only reference images currently public-accessible; conflicts with `src/lib/fighter-avatar.ts:15` intent. Lock to admin auth
-- [ ] `supabase/migrations/202604100001_create_user_events.sql:34` — `user_events` RLS too permissive; DB-direct inserts bypass rate-limit in `src/app/api/analytics/event/route.ts:55`. Tighten policy
-- [ ] `src/components/MvpVoteSection.tsx:50` — client still computes deadline in UTC; API (`src/app/api/mvp-vote/route.ts:64`) already moved to `completed_at` anchor. Screen drifts from server truth. Sync client
-- [ ] `src/app/api/events/[id]/stats/route.ts:8` — RLS-scoped result cached with `public` cache-control; cache can cross-bleed pre-prediction data. Scope cache to session or strip caching
-
-**Gate**: DB functions + columns are in the migration file only. **Not yet applied to DEV/PROD**. Tier C rubric applies (money-path + irreversible) — `second-opinion-reviewer` + external cross-family review before `supabase db push` to DEV, then again before PROD.
+**Gate outcome**: Tier C review path completed (`Codex` author + 3 Claude review rounds). Migrations `202604170001` / `170002` / `170003` applied to DEV + PROD, remote schema markers repaired, `check:schema-drift` clean, `npm run predeploy` passes with `SUPABASE_ACCESS_TOKEN` set.
 
 ### Branch: `docs/facebook-oauth-setup`
 - [ ] `Docs/facebook-oauth-setup.md` — Meta App creation, App Review lite, redirect URIs for dev + prod, Supabase provider setup. Sean runs these steps.

@@ -3,6 +3,7 @@ import path from "path";
 import { getFighterPixelFilepath } from "@/lib/pixel-files";
 
 const REF_DIR = path.join(process.cwd(), "Fighter_Images", "refs");
+const REF_DIR_RESOLVED = path.resolve(REF_DIR);
 
 const REF_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"] as const;
 
@@ -19,6 +20,11 @@ function getReferenceBasenames(fighterId: string) {
   return Array.from(new Set([fighterId, fighterId.slice(0, 8)].filter(Boolean)));
 }
 
+function resolveReferencePath(filename: string) {
+  const filepath = path.resolve(REF_DIR_RESOLVED, filename);
+  return filepath.startsWith(`${REF_DIR_RESOLVED}${path.sep}`) ? filepath : null;
+}
+
 export function findFighterReferenceFile(fighterId: string): {
   filepath: string;
   filename: string;
@@ -29,9 +35,9 @@ export function findFighterReferenceFile(fighterId: string): {
   for (const basename of getReferenceBasenames(fighterId)) {
     for (const extension of REF_EXTENSIONS) {
       const filename = `${basename}${extension}`;
-      const filepath = path.join(REF_DIR, filename);
+      const filepath = resolveReferencePath(filename);
 
-      if (fs.existsSync(filepath)) {
+      if (filepath && fs.existsSync(filepath)) {
         return {
           filepath,
           filename,
@@ -66,8 +72,8 @@ export function removeFighterReferenceFiles(fighterId: string) {
 
   for (const basename of getReferenceBasenames(fighterId)) {
     for (const extension of REF_EXTENSIONS) {
-      const filepath = path.join(REF_DIR, `${basename}${extension}`);
-      if (fs.existsSync(filepath)) {
+      const filepath = resolveReferencePath(`${basename}${extension}`);
+      if (filepath && fs.existsSync(filepath)) {
         fs.unlinkSync(filepath);
       }
     }
@@ -79,7 +85,10 @@ export function writeFighterReferenceFile(fighterId: string, buffer: Buffer, ext
   removeFighterReferenceFiles(fighterId);
 
   const normalizedExtension = extension.startsWith(".") ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
-  const filepath = path.join(REF_DIR, `${fighterId}${normalizedExtension}`);
+  const filepath = resolveReferencePath(`${fighterId}${normalizedExtension}`);
+  if (!filepath) {
+    throw new Error("Invalid fighter reference path");
+  }
   fs.writeFileSync(filepath, buffer);
   return filepath;
 }
@@ -91,5 +100,9 @@ export function backupPixelAvatarAsReference(fighterId: string) {
   if (!pixelFilepath || !fs.existsSync(pixelFilepath)) return;
 
   ensureFighterReferenceDir();
-  fs.copyFileSync(pixelFilepath, path.join(REF_DIR, `${fighterId}.png`));
+  const filepath = resolveReferencePath(`${fighterId}.png`);
+  if (!filepath) {
+    throw new Error("Invalid fighter reference path");
+  }
+  fs.copyFileSync(pixelFilepath, filepath);
 }

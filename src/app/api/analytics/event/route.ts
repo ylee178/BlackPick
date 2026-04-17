@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { createRateLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { EVENT_TYPES } from "@/lib/analytics";
@@ -112,9 +113,12 @@ export async function POST(request: Request) {
     : null;
   const safeSessionId = sessionId.slice(0, 128);
 
-  // Insert event. Errors are swallowed — analytics must never cause 5xx.
+  // Insert via service role so the only public ingest path is this API route.
+  // That keeps rate limiting and field normalization enforceable even if the
+  // caller knows the anon key.
   try {
-    await supabase.from("user_events").insert({
+    const admin = createSupabaseAdmin();
+    await admin.from("user_events").insert({
       user_id: userId,
       session_id: safeSessionId,
       event_type: eventType,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer, getUser } from "@/lib/supabase-server";
+import { getMvpVotingDeadline } from "@/lib/mvp-vote-window";
 
 type VotePayload = {
   event_id?: string;
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, status, date")
+    .select("id, status, date, completed_at")
     .eq("id", event_id)
     .single();
 
@@ -60,8 +61,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const eventDate = new Date(`${event.date}T00:00:00Z`);
-  const votingDeadline = new Date(eventDate.getTime() + 24 * 60 * 60 * 1000);
+  let votingDeadline: Date;
+  try {
+    votingDeadline = getMvpVotingDeadline(event.date, event.completed_at);
+  } catch (deadlineError) {
+    console.error("Failed to derive MVP voting deadline", deadlineError);
+    return NextResponse.json({ error: "Invalid event completion time" }, { status: 500 });
+  }
 
   if (Date.now() > votingDeadline.getTime()) {
     return NextResponse.json(
