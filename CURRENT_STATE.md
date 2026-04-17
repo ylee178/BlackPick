@@ -2,25 +2,25 @@
 
 _Snapshot only. Durable roadmap lives in [`TASKS.md`](TASKS.md). Per-branch narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Commit history: `git log`._
 
-_Last refreshed: 2026-04-17 session 2 — Claude admin-consolidation 6/6 shipped (PR #29) + Codex integrity branch applied to DEV + PROD (PR #30). Both PRs open, awaiting merge to develop._
+_Last refreshed: 2026-04-17 session 3 wrap — 7 PRs merged today (#29/#30/#31/#32/#33/#34/#35). Codex parallel-agent era closed; next up: PR B scorecard UI on top of PR #35 plumbing._
 
 ## Branch
-`develop` tip `cc73854` — cleanup commit (`5f7ad41`) + Codex branch registration (`22297cf`) + parallel-queue split (`1c11e30`) shipped 2026-04-17. PR #28 `feature/streak-ux` squash-merged as `8ad4ac7` on 2026-04-14. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel). Two 2026-04-17 PRs open against develop: PR #29 admin-consolidation, PR #30 Codex integrity/atomicity (migrations already on DEV + PROD).
+`develop` tip `971ca12` (PR #34 squash-merge) — 7 session-3 merges land the full Phase 2 admin surface, Codex integrity bundle, event state unification, pre-Exodus visibility filter, DevPanel intl hotfix, crawler result-sync, and BC scorecard plumbing.
 
-### Two agents active — parallel, non-overlapping file sets
-- **Codex CLI** — `db/codex-integrity-atomicity` tip `ff96f93`, **PR #30 open**. 11/11 review findings folded in one commit. Migrations `202604170001_integrity_atomicity.sql`, `202604170002_comment_likes.sql`, and `202604170003_user_events_api_only.sql` applied to **DEV + PROD** and recorded in `supabase_migrations.schema_migrations`. Awaiting final PR merge.
-- **Claude Code** — `feature/admin-surface-consolidation` tip `98756b2`, **PR #29 open**. Admin surface consolidation 6/6 slices + second-opinion-reviewer findings addressed. UI-only scope, zero code overlap with Codex file set. Docs conflict pre-resolved on this branch (combined view below).
-- Coordination protocol + hands-off file list in [TASKS.md §Parallel-agent discipline](TASKS.md#parallel-agent-discipline).
-- **⚠ Known incident this session**: main worktree's `HEAD` silently reverted from `feature/admin-surface-consolidation` → `db/codex-integrity-atomicity` at least three times during Claude's admin work (confirmed via git reflog). No custom hooks in `.git/hooks/`. Cause: background Codex CLI daemon owning the main worktree's `HEAD`. **Mitigation adopted**: every `git commit` chains `git branch --show-current` guard. Future sessions should either use `git worktree add` for Claude's branch or pause Codex daemons before Claude work.
+### Solo-agent era
+Codex CLI branch `db/codex-integrity-atomicity` landed as PR #30. No active parallel Codex work. Codex CLI remains on call for **Tier C cross-family review** per the discipline memory (`feedback_review_tier_discipline.md`) but isn't owning files.
+
+- **⚠ Known incident log (2026-04-17)**: main worktree's `HEAD` silently reverted from `feature/admin-surface-consolidation` → `db/codex-integrity-atomicity` three times mid-session (confirmed via git reflog). No custom hooks in `.git/hooks/` — cause was the background Codex CLI daemon competing for the main worktree's `HEAD`. **Mitigation adopted**: every `git commit` chains a `git branch --show-current` guard. Now that Codex daemon isn't running (integrity branch merged), this is dormant — but future parallel-agent sessions should either use `git worktree add` or pause the Codex daemon first.
 
 ## Production
 - **URL**: https://blackpick.io
 - **main tip**: `20ffbd6` (bp-logo-email.png cherry-pick, 2026-04-13). Prior baseline `5b51afc` bundled PRs #3–#11.
-- **Develop → main release pending**: PRs #17–#28 (Phase 1) + PR #25 (Phase 3 partial) + PR #29 (admin-consolidation) + PR #30 (Codex integrity) bundle at Phase 6 launch gate.
-- **Scoring v3**: applied on DEV (`202604140001_scoring_v3_winner_only_2pts.sql`, winner-only returns 2). PROD still on v2; applied with Phase 6 bundle.
+- **Develop → main release pending**: PRs #17–#35 (Phase 1 + 2 + admin + Codex + event-state + pre-Exodus + hotfix + crawler + scorecard plumbing) bundle at Phase 6 launch gate.
+- **Scoring v3**: applied on DEV. PROD still on v2; applied with Phase 6 bundle.
 - **Integrity/atomicity bundle**: `202604170001` + `170002` + `170003` applied on DEV + PROD. `check:schema-drift` clean on DEV + PROD, `verify-remote-schema` OK, and `npm run predeploy` passes with `SUPABASE_ACCESS_TOKEN` present.
 - **Email assets on PROD**: `/email/{bp-logo-email.png, icon-shield, icon-key}` → all 200.
 - **Supabase email templates**: saved in dashboard for `confirm_signup` + `reset_password`. **Sean TODO**: Send Test Email + validate rendering in Gmail / iOS Mail / Outlook.
+- **Pre-Exodus hide**: `EXODUS_ANCHOR_DATE = '2026-01-31'` — events dated earlier hidden from home featured / event lists / ranking By-Event / DevPanel picker. Direct URLs + my-record + dashboard + fighter records + share pages unaffected (data integrity preserved).
 
 ## Schema (PROD)
 
@@ -48,12 +48,19 @@ Redirect URI pattern: `https://<project>.supabase.co/auth/v1/callback`.
 
 | Layer | Files | Cases | Runtime |
 |---|---|---|---|
-| vitest (unit + component) | 11 | 168 | ~1.5s |
+| vitest (unit + component) | 14 | 231 | ~1.5s |
 | schema drift (`scripts/check-schema-drift.mjs`) | — | 14 tables | ~2s |
-| i18n integrity (`scripts/check-i18n-keys.mjs`) | — | 7 locales × 372 keys | <1s |
+| i18n integrity (`scripts/check-i18n-keys.mjs`) | — | 7 locales × 373 keys | <1s |
 | prod smoke (`scripts/smoke-prod.mjs`) | — | 13 checks | ~5s |
 
-`npm run test:fast` 168/168 · `SUPABASE_ACCESS_TOKEN=... npm run predeploy` (i18n + drift + tests + build) · `npm run deploy` = predeploy + `vercel --prod` + smoke (requires fresh `vercel login`; currently stale — use GitHub Actions push-to-main instead).
+`npm run test:fast` 231/231 · `SUPABASE_ACCESS_TOKEN=... npm run predeploy` (i18n + drift + tests + build) · `npm run deploy` = predeploy + `vercel --prod` + smoke (requires fresh `vercel login`; currently stale — use GitHub Actions push-to-main instead).
+
+### New surfaces added session 3
+- `src/lib/event-ui-state.ts` — single-source event facts + thin UI derivations (PR #31, 39 tests)
+- `src/lib/event-visibility.ts` — `EXODUS_ANCHOR_DATE` gating (PR #32, 10 tests)
+- `src/lib/bc-official.ts` — scorecard parser + cached fetch (PR #35, 11 tests)
+- `src/lib/bc-scorecards.ts` — strict matcher + resolver (PR #35, 12 tests)
+- `src/scripts/sync-bc-event-results.ts` — winner-staging script (PR #34). Usage: `npm run sync:bc-results [-- --apply] [-- --event-id=<uuid>]`.
 
 ## Dev tools
 DevPanel (우하단 톱니, dev-only):
