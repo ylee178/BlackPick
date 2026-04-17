@@ -2,14 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingButtonContent from '@/components/ui/LoadingButtonContent'
+import {
+  RetroEmptyState,
+  RetroStatusBadge,
+  retroButtonClassName,
+  retroFieldClassName,
+  retroPanelClassName,
+} from '@/components/ui/retro'
 import { createBrowserSupabaseClient } from '@/lib/supabase'
 import type { Database } from '@/types/database'
 
 type FightMethod = Database['public']['Tables']['fights']['Row']['method']
+type FightStatus = Database['public']['Tables']['fights']['Row']['status']
 
 type FightOption = {
   id: string
-  status: Database['public']['Tables']['fights']['Row']['status']
+  status: FightStatus
   result_processed_at: string | null
   fighter_a_id: string
   fighter_b_id: string
@@ -20,6 +28,13 @@ type FightOption = {
 }
 
 const methodOptions: NonNullable<FightMethod>[] = ['KO/TKO', 'Submission', 'Decision']
+
+function fightStatusTone(status: FightStatus): 'accent' | 'success' | 'danger' | 'neutral' {
+  if (status === 'completed') return 'success'
+  if (status === 'upcoming') return 'accent'
+  if (status === 'cancelled') return 'danger'
+  return 'neutral'
+}
 
 export default function AdminResultsPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
@@ -110,18 +125,18 @@ export default function AdminResultsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">Results</h1>
-        <p className="mt-2 text-sm text-gray-400">
+        <h1 className="text-2xl font-bold text-[var(--bp-ink)] sm:text-3xl">Results</h1>
+        <p className="mt-2 text-sm text-[var(--bp-muted)]">
           Select a fight, enter the official result, and process prediction scoring.
         </p>
       </div>
 
-      <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <h2 className="text-xl font-semibold text-white">Input Fight Result</h2>
+      <section className={retroPanelClassName({ className: 'p-5' })}>
+        <h2 className="text-xl font-semibold text-[var(--bp-ink)]">Input Fight Result</h2>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm text-gray-300">Fight</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Fight</label>
             <select
               value={fightId}
               onChange={(e) => {
@@ -130,7 +145,7 @@ export default function AdminResultsPage() {
                 const nextFight = fights.find((fight) => fight.id === nextFightId)
                 setWinnerId(nextFight?.fighter_a_id ?? '')
               }}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
               required
             >
               <option value="">Select fight</option>
@@ -144,11 +159,11 @@ export default function AdminResultsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Winner</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Winner</label>
             <select
               value={winnerId}
               onChange={(e) => setWinnerId(e.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
               required
               disabled={!selectedFight}
             >
@@ -167,11 +182,11 @@ export default function AdminResultsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Method</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Method</label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as NonNullable<FightMethod>)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
               required
             >
               {methodOptions.map((option) => (
@@ -183,11 +198,11 @@ export default function AdminResultsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Round</label>
+            <label className="mb-2 block text-sm text-[var(--bp-muted)]">Round</label>
             <select
               value={round}
               onChange={(e) => setRound(e.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white focus:border-amber-400"
+              className={retroFieldClassName()}
               required
             >
               {[1, 2, 3, 4].map((value) => (
@@ -203,7 +218,7 @@ export default function AdminResultsPage() {
               type="submit"
               disabled={submitting}
               aria-busy={submitting}
-              className="rounded-lg bg-amber-400 px-5 py-3 font-semibold text-gray-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className={retroButtonClassName({ variant: 'primary' })}
             >
               <LoadingButtonContent loading={submitting} loadingLabel="Processing...">
                 Submit Result
@@ -212,16 +227,16 @@ export default function AdminResultsPage() {
           </div>
         </form>
 
-        {message ? <p className="mt-4 text-sm text-green-400">{message}</p> : null}
-        {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+        {message ? <p className="mt-4 text-sm text-[var(--bp-success)]">{message}</p> : null}
+        {error ? <p className="mt-4 text-sm text-[var(--bp-danger)]">{error}</p> : null}
       </section>
 
-      <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+      <section className={retroPanelClassName({ className: 'p-5' })}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Fight Queue</h2>
+          <h2 className="text-xl font-semibold text-[var(--bp-ink)]">Fight Queue</h2>
           <button
             onClick={loadFights}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-200 hover:border-amber-400 hover:text-amber-400"
+            className={retroButtonClassName({ variant: 'soft', size: 'sm' })}
           >
             Refresh
           </button>
@@ -229,31 +244,34 @@ export default function AdminResultsPage() {
 
         <div className="mt-4 space-y-3">
           {loading ? (
-            <p className="text-sm text-gray-400">Loading fights...</p>
+            <p className="text-sm text-[var(--bp-muted)]">Loading fights...</p>
           ) : fights.length ? (
             fights.map((fight) => (
               <div
                 key={fight.id}
-                className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-4"
+                className={retroPanelClassName({ tone: 'flat', className: 'px-4 py-4' })}
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-medium text-white">
+                    <p className="font-medium text-[var(--bp-ink)]">
                       {fight.fighter_a?.name ?? 'Unknown'} vs {fight.fighter_b?.name ?? 'Unknown'}
                     </p>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-[var(--bp-muted)]">
                       {fight.event?.name ?? 'Unknown Event'} •{' '}
                       {new Date(fight.start_time).toLocaleString()}
                     </p>
                   </div>
-                  <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-wide text-amber-400">
+                  <RetroStatusBadge tone={fightStatusTone(fight.status)}>
                     {fight.status}
-                  </span>
+                  </RetroStatusBadge>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-sm text-gray-400">No fights found.</p>
+            <RetroEmptyState
+              title="Queue clear"
+              description="No unprocessed fights waiting for results."
+            />
           )}
         </div>
       </section>
