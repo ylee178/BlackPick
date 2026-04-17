@@ -164,7 +164,7 @@ export type StickyHeaderSlot =
   | { kind: "none" };
 
 export function deriveStickyHeaderSlot(
-  facts: EventUiFacts,
+  facts: Pick<EventUiFacts, "eventPhase" | "firstLockAt">,
   currentStreak: number | null,
   now: number,
 ): StickyHeaderSlot {

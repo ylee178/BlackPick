@@ -5,6 +5,10 @@ import { buildSharePath } from "@/lib/share-url";
 import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import FlipTimer from "@/components/FlipTimer";
+import {
+  deriveEventUiFacts,
+  derivePostLockTimerState,
+} from "@/lib/event-ui-state";
 import LockTransitionWatcher from "@/components/LockTransitionWatcher";
 import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
@@ -147,6 +151,17 @@ export default async function EventPage({
 
   // eslint-disable-next-line react-hooks/purity -- request-time lock state needs the current server timestamp.
   const nowTimestamp = Date.now();
+
+  // Single source of truth for event display state. See page.tsx for
+  // the rationale. FlipTimer below derives its burned-out message
+  // from the same facts object.
+  const eventFacts = deriveEventUiFacts(event, typedFights, nowTimestamp);
+  const postLockState = derivePostLockTimerState(eventFacts);
+  const flipTimerMessageKey: "countdown.eventInProgress" | "countdown.eventStartingSoon" =
+    postLockState.kind === "burnedOut" && postLockState.messageKey === "eventStartingSoon"
+      ? "countdown.eventStartingSoon"
+      : "countdown.eventInProgress";
+
   const localizedEventName = getLocalizedEventName(event, locale, event.name);
   const fightEntries: FightEntry[] = typedFights.map((fight, index) => {
     const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
@@ -328,7 +343,10 @@ export default async function EventPage({
                   regressed this by showing locked for bad rows. */}
               {event.status !== "completed" && earliestStart ? (
                 <div className="mt-4">
-                  <FlipTimer targetTime={earliestStart} />
+                  <FlipTimer
+                    targetTime={earliestStart}
+                    postLockMessageKey={flipTimerMessageKey}
+                  />
                 </div>
               ) : null}
 

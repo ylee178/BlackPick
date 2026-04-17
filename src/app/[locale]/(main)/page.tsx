@@ -7,6 +7,10 @@ import { getLocalizedEventName } from "@/lib/localized-name";
 import FightCard from "@/components/FightCard";
 import EventDateLine from "@/components/EventDateLine";
 import FlipTimer from "@/components/FlipTimer";
+import {
+  deriveEventUiFacts,
+  derivePostLockTimerState,
+} from "@/lib/event-ui-state";
 import { Ticket, Play, Trophy } from "lucide-react";
 import LeagueRankingCard from "@/components/LeagueRankingCard";
 import AnonFirstPickCta from "@/components/AnonFirstPickCta";
@@ -199,6 +203,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const eventStatus = featured?.status as "upcoming" | "live" | "completed" | undefined;
   const nowTimestamp = new Date().getTime();
   const pickedCount = fights.filter((f) => predictionMap.has(f.id)).length;
+
+  // Single source of truth for event display state. Consumers below
+  // (FlipTimer messageKey, StickyEventHeader slot) derive from this
+  // rather than re-reconciling event.status + fight.start_time +
+  // fight.status independently. Prevents the "four contradictory UI
+  // signals" bug (2026-04-17 Sean screenshot).
+  const eventFacts = featured
+    ? deriveEventUiFacts(featured, fights, nowTimestamp)
+    : null;
+  const postLockState = eventFacts
+    ? derivePostLockTimerState(eventFacts)
+    : null;
+  const flipTimerMessageKey: "countdown.eventInProgress" | "countdown.eventStartingSoon" =
+    postLockState?.kind === "burnedOut" && postLockState.messageKey === "eventStartingSoon"
+      ? "countdown.eventStartingSoon"
+      : "countdown.eventInProgress";
 
   // AllPredictedToast props — counts only upcoming (pickable) fights
   // on the featured event. Matches the displayState derivation on the
@@ -405,11 +425,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {(eventStatus === "upcoming" || eventStatus === "live") && earliestStart ? (
                 <div id="home-timer" className="shrink-0">
                   {/* FlipTimer's internal tl.total <= 0 branch renders
-                      the burned-out "Event in Progress" + Lock state
-                      when start_time is past. setEventStatus("live")
-                      pushes start_time to past so Sean sees the
-                      locked state immediately. */}
-                  <FlipTimer targetTime={earliestStart} />
+                      the burned-out message + Lock state when
+                      start_time is past. The message key is derived
+                      from `derivePostLockTimerState(eventFacts)` so an
+                      UPCOMING event with stale start_time shows the
+                      softer "Starting Soon" copy rather than
+                      contradicting its own UPCOMING badge. */}
+                  <FlipTimer
+                    targetTime={earliestStart}
+                    postLockMessageKey={flipTimerMessageKey}
+                  />
                 </div>
               ) : cupScores ? (
                 <div className="shrink-0 rounded-[12px] bg-[#060606] px-6 py-5">
