@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy, Shield } from "lucide-react";
+import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy, Shield, Loader2 } from "lucide-react";
 import {
   retroButtonClassName,
   retroPanelClassName,
@@ -190,6 +190,18 @@ export default function AccountDropdown({
           </div>
         ) : null}
       </div>
+
+      {loggingOut ? (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-[var(--bp-bg)]"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--bp-accent)]" strokeWidth={2} />
+          <span className="text-sm text-[var(--bp-muted)]">{t("auth.loggingOut")}</span>
+        </div>
+      ) : null}
 
       {/* Reset record confirmation modal */}
       <ConfirmModal
