@@ -186,6 +186,40 @@ describe("resolveScoreCardsByDbFightId — strict match + resolution kinds", () 
     expect(mockGet).toHaveBeenCalledTimes(1);
   });
 
+  it("[name-match via BC ringName fallback] if BC.name doesn't align but BC.ringName does, still matches", async () => {
+    // Defensive path — if a future BC event card puts the ring name
+    // into the primary name slot (or the legal name into the ring
+    // name row), the matcher must still recover.
+    const mockGet = getMockClientGet();
+    mockGet.mockResolvedValueOnce({ data: HAPPY_RAW });
+
+    const db = [
+      makeDbFight({
+        id: "f1",
+        // DB knows these via ring_name
+        fighter_a: { name: "John Doe", name_en: null, name_ko: null, ring_name: "Mammoth" },
+        fighter_b: { name: "Jane Roe", name_en: null, name_ko: null, ring_name: "Jackpot" },
+      }),
+    ];
+    const official = [
+      makeOfficialFight({
+        fightSeq: "308",
+        // BC's .name here is a fictional legal name that DB doesn't
+        // know. Match must fall through to BC.ringName.
+        fighterA: {
+          sourceId: "x", name: "Unknown Person A", ringName: "Mammoth",
+          nationality: null, record: null, division: null, weightClass: null,
+        },
+        fighterB: {
+          sourceId: "y", name: "Unknown Person B", ringName: "Jackpot",
+          nationality: null, record: null, division: null, weightClass: null,
+        },
+      }),
+    ];
+    const out = await resolveScoreCardsByDbFightId(db, official);
+    expect(out.get("f1")?.kind).toBe("scored");
+  });
+
   it("[name-match via name_ko] Korean fighter name matches even when BC uses different casing", async () => {
     const mockGet = getMockClientGet();
     mockGet.mockResolvedValueOnce({ data: HAPPY_RAW });

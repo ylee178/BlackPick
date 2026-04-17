@@ -77,29 +77,40 @@ function fighterCandidateKeys(fighter: DbFighterForScoreCard): string[] {
     .filter((key) => key.length > 0);
 }
 
-function officialCandidateKey(name: string | null): string {
-  return normalizeName(name);
+function officialCandidateKeys(fighter: BcOfficialFight["fighterA"]): string[] {
+  // BC populates `.name` from the `font-size:1.5rem` headline div
+  // and `.ringName` from the separate "RING NAME" row. Both are
+  // viable match keys — if BC ever flips the layout (or an event's
+  // card hides the legal name behind the ring name), falling back
+  // onto `.ringName` keeps the match working rather than silently
+  // dropping to `suppressed-no-match`.
+  return [fighter.name, fighter.ringName]
+    .map((v) => normalizeName(v))
+    .filter((key) => key.length > 0);
 }
 
 /**
- * Returns `'A'` / `'B'` / `null`. Strict rule:
- * - `target` normalized must equal AT LEAST ONE of the DB fighter's
- *   candidate keys
- * - If it matches both DB sides → ambiguous → return null
- * - If it matches neither → return null
+ * Tries each BC-side candidate (`.name` then `.ringName`) against
+ * the DB fighter keys. Returns `'A'` / `'B'` / `null`.
+ *
+ * Strict rule preserved even with multiple candidates:
+ *   - Any candidate matching BOTH DB sides is ambiguous → null
+ *   - At least one candidate must uniquely match ONE side
  */
 function matchSide(
-  target: string,
+  candidates: readonly string[],
   dbFight: DbFightForScoreCard,
 ): "A" | "B" | null {
-  if (!target) return null;
+  if (candidates.length === 0) return null;
   const aKeys = fighterCandidateKeys(dbFight.fighter_a);
   const bKeys = fighterCandidateKeys(dbFight.fighter_b);
-  const hitA = aKeys.includes(target);
-  const hitB = bKeys.includes(target);
-  if (hitA && hitB) return null; // ambiguous — same normalized name on both sides
-  if (hitA) return "A";
-  if (hitB) return "B";
+  for (const candidate of candidates) {
+    const hitA = aKeys.includes(candidate);
+    const hitB = bKeys.includes(candidate);
+    if (hitA && hitB) return null; // ambiguous — same normalized name on both DB sides
+    if (hitA) return "A";
+    if (hitB) return "B";
+  }
   return null;
 }
 
@@ -107,7 +118,7 @@ function matchSide(
  * Given a DB fight and an official BC fight, decide whether the
  * two describe the same bout with both sides uniquely identifiable.
  * Returns true only when:
- *   - BC fighter A uniquely resolves to ONE DB side
+ *   - BC fighter A uniquely resolves to ONE DB side (by name or ring name)
  *   - BC fighter B uniquely resolves to the OTHER DB side
  *   - (They resolve to different sides — not both to "A".)
  */
@@ -115,8 +126,8 @@ function isStrictPairMatch(
   dbFight: DbFightForScoreCard,
   official: BcOfficialFight,
 ): boolean {
-  const sideForA = matchSide(officialCandidateKey(official.fighterA.name), dbFight);
-  const sideForB = matchSide(officialCandidateKey(official.fighterB.name), dbFight);
+  const sideForA = matchSide(officialCandidateKeys(official.fighterA), dbFight);
+  const sideForB = matchSide(officialCandidateKeys(official.fighterB), dbFight);
   if (!sideForA || !sideForB) return false;
   return sideForA !== sideForB;
 }
@@ -142,6 +153,16 @@ export async function resolveScoreCardsByDbFightId(
   const result = new Map<string, ScoreCardResolution>();
   const pendingFetches: Array<{ dbId: string; seq: string }> = [];
 
+  // Caller contract: `dbFights[*].id` is unique (Postgres PK). If a
+  // caller passes duplicates, the later entry silently overwrites the
+  // earlier one in the result Map — documented rather than asserted
+  // because the PK constraint makes this unreachable in practice.
+  //
+  // Two DB fights legitimately matching the SAME BC official fight
+  // (e.g., accidental duplicate data-sync rows) would both queue a
+  // fetch for the same `fightSeq`. The L1 cache deduplicates the HTTP,
+  // but both DB fights would display the same scorecard — also a data-
+  // integrity issue, not a logic bug.
   for (const dbFight of dbFights) {
     if (dbFight.method === null || dbFight.method === undefined) {
       result.set(dbFight.id, { kind: "suppressed-no-method" });
@@ -174,11 +195,10 @@ export async function resolveScoreCardsByDbFightId(
     if (outcome.status === "fulfilled") {
       result.set(dbId, { kind: "scored", scoreCard: outcome.value });
     } else {
-      // `fetchBcScoreCard` already swallows to null — reaching
-      // the rejected branch means something upstream broke before
-      // the fetch entered its catch block (e.g., invalid arg).
-      // Render as "no scorecard available" rather than
-      // "suppressed-no-match" to keep the distinction useful.
+      // Theoretically unreachable: `fetchBcScoreCard` has an
+      // unconditional try/catch that swallows to null. Kept as a
+      // belt-and-braces safety net so a future refactor that
+      // removes the catch doesn't crash the whole resolver.
       result.set(dbId, { kind: "scored", scoreCard: null });
     }
   });
