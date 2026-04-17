@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n-provider";
 import { RetroLabel } from "@/components/ui/retro";
 import { Clock, Flame } from "lucide-react";
 import { deriveStickyHeaderSlot } from "@/lib/event-ui-state";
+import { useClockTick } from "@/lib/use-sync-store";
 
 type Props = {
   eventName: string;
@@ -91,18 +92,18 @@ export default function StickyEventHeader({
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
-  // Derive the right-slot state each render. The slot helper is pure
-  // and deterministic — identical facts + streak + now produce the
-  // same slot. Using it here (not inline if/else) keeps the sub-header
-  // visually consistent with wherever else we render event state.
+  // Shared 1Hz ticker — returns 0 during SSR and first client render,
+  // then live `Date.now()` values. Using this (rather than a raw
+  // `Date.now()` call in the render body) satisfies react-hooks/purity
+  // and avoids hydration mismatches. On the initial render (tick=0),
+  // `deriveStickyHeaderSlot` will treat any non-null `firstLockAt > 0`
+  // as a future timer — which matches our SSR pessimism (show
+  // countdown frame even before the clock has synced client-side).
+  const clockTick = useClockTick();
   const slot = deriveStickyHeaderSlot(
     { eventPhase: eventStatus, firstLockAt: countdownTargetTime ?? null },
     currentStreak,
-    // tl is null when the timer has burned out; Date.now() is the
-    // right clock there. When tl is non-null we still pass Date.now()
-    // for the derivation (the countdown branch is keyed on
-    // firstLockAt > now, which this matches).
-    Date.now(),
+    clockTick,
   );
 
   return (
