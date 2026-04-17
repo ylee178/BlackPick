@@ -2,10 +2,15 @@
 
 _Snapshot only. Durable roadmap lives in [`TASKS.md`](TASKS.md). Per-branch narrative lives in `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/`. Commit history: `git log`._
 
-_Last refreshed: 2026-04-14 (post PR #28 squash-merge)._
+_Last refreshed: 2026-04-17 (Codex parallel-agent coordination + cleanup)._
 
 ## Branch
-`develop` — PR #28 `feature/streak-ux` squash-merged as `8ad4ac7`. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel).
+`develop` tip `1c11e30` — cleanup commit (`5f7ad41`) + Codex branch registration (`22297cf`) + parallel-queue split (`1c11e30`) shipped 2026-04-17. PR #28 `feature/streak-ux` squash-merged as `8ad4ac7` on 2026-04-14. Phase 1 = 9/9; only Branch 9 `fix/verify-all-predicted-toast` remaining (verification-only, Sean runs via DevPanel).
+
+### Two agents active — parallel, non-overlapping file sets
+- **Codex CLI** owns uncommitted worktree on branch `db/codex-integrity-atomicity` (11 items: 6 shipped in worktree, 5 pending). **Token-blocked as of 2026-04-17.** Codex-owned files listed in TASKS.md Phase 4 — Claude treats them as read-only. Migration `202604170001_integrity_atomicity.sql` present in worktree but **unapplied to DEV/PROD**.
+- **Claude Code** active on `feature/admin-surface-consolidation` (Phase 2). UI-only scope, zero overlap with Codex file set.
+- Coordination protocol + hands-off file list in [TASKS.md §Parallel-agent discipline](TASKS.md#parallel-agent-discipline).
 
 ## Production
 - **URL**: https://blackpick.io
