@@ -18,7 +18,11 @@ import AnonFirstPickCta from "@/components/AnonFirstPickCta";
 import AllPredictedToast from "@/components/AllPredictedToast";
 import HomeShareBar from "@/components/HomeShareBar";
 import { buildSharePath } from "@/lib/share-url";
-import { fetchBcOfficialEventCard } from "@/lib/bc-official";
+import { fetchBcOfficialEventCard, type BcOfficialFight } from "@/lib/bc-official";
+import {
+  resolveScoreCardsByDbFightId,
+  type ScoreCardResolution,
+} from "@/lib/bc-scorecards";
 import { fetchBcEventDataFull, type BcFightData } from "@/lib/bc-predictions";
 import { fetchBcTicketInfo } from "@/lib/bc-ticket";
 import { getEarliestFightStart, sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
@@ -156,6 +160,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const initialLeagueUsers: { id: string; ring_name: string | null; score: number | null }[] = [];
   let bcFightData: BcFightData[] = [];
   let posterUrl: string | null = null;
+  let scoreCardResolutions = new Map<string, ScoreCardResolution>();
 
   if (featured) {
     // Stage 2: Fetch fights + BC data in parallel (BC is external & slow)
@@ -176,12 +181,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       })),
     ]);
 
-    const officialCard =
+    const officialCard: BcOfficialFight[] =
       bcFull.sourceEventId ? await fetchBcOfficialEventCard(bcFull.sourceEventId).catch(() => []) : [];
     fights = sortFightsByOfficialCardOrder((fightData ?? []) as FightWithFighters[], officialCard);
     earliestStart = getEarliestFightStart(fights);
     bcFightData = bcFull.fights.slice(0, fights.length);
     posterUrl = bcFull.posterUrl;
+
+    // Resolve BC scorecards per DB fight (keyed by DB fight id, not
+    // positional index — spec v3 §L2). Non-decision / no-method /
+    // no-match fights land as suppressed variants and surface nothing.
+    // Failed resolution (defensive — `resolveScoreCardsByDbFightId`
+    // swallows fetch errors internally) falls back to an empty Map so
+    // page rendering never depends on BC reachability.
+    scoreCardResolutions = await resolveScoreCardsByDbFightId(
+      fights,
+      officialCard,
+    ).catch(() => new Map<string, ScoreCardResolution>());
 
     // Stage 3: Predictions + stats in parallel
     const fightIds = fights.map((f) => f.id);
@@ -520,6 +536,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {fights.map((fight, index) => {
                 const hasStarted = new Date(fight.start_time).getTime() <= nowTimestamp;
                 const bc = bcFightData[index];
+                const scResolution = scoreCardResolutions.get(fight.id);
+                const scoreCard =
+                  scResolution?.kind === "scored" ? scResolution.scoreCard : null;
                 return (
                   <FightCard
                     key={fight.id}
@@ -536,6 +555,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     bcFighterBDivision={bc?.fighterB_division ?? null}
                     seriesLabel={featured?.series_type === "black_cup" ? getSeriesLabel(featured.series_type, t) : null}
                     isAuthenticated={!!authUser}
+                    scoreCard={scoreCard}
                   />
                 );
               })}

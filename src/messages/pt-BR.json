@@ -385,6 +385,13 @@
     "goToProfile": "Ir para o perfil",
     "stickyPrompt": "Seus palpites estão prontos. Compartilhe com os amigos."
   },
+  "scorecard": {
+    "title": "Placar",
+    "judge": "Juiz",
+    "total": "Total",
+    "roundLabel": "R{round}",
+    "overtime": "Prorrogação"
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Algo deu errado",

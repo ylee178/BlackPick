@@ -14,6 +14,10 @@ import MvpVoteSection from "@/components/MvpVoteSection";
 import StickyEventHeader from "@/components/StickyEventHeader";
 import { RetroStatusBadge, retroChipClassName, retroPanelClassName } from "@/components/ui/retro";
 import { fetchBcOfficialEventCard } from "@/lib/bc-official";
+import {
+  resolveScoreCardsByDbFightId,
+  type ScoreCardResolution,
+} from "@/lib/bc-scorecards";
 import { fetchBcEventDataFull } from "@/lib/bc-predictions";
 import { getSeriesLabel } from "@/lib/constants";
 import { getEarliestFightStart, sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
@@ -47,6 +51,7 @@ type FightEntry = {
   bcIsMainEvent: boolean;
   bcFighterADivision: { weightClass: string; rank: number | null } | null;
   bcFighterBDivision: { weightClass: string; rank: number | null } | null;
+  scoreCard: import("@/lib/bc-official").BcScoreCard | null;
 };
 
 function getStatusTone(status: FightDisplayState | "cancelled") {
@@ -149,6 +154,15 @@ export default async function EventPage({
   // Direct index alignment — trim BC data to match DB fight count.
   const bcFightData = bcRawData.slice(0, typedFights.length);
 
+  // Scorecards keyed by DB fight id (spec v3 §L2) — positional index
+  // would silently shift cards onto adjacent fights when BC returns
+  // a TBA placeholder. `.catch` collapses a resolver error into an
+  // empty Map so scorecard absence never blocks the page render.
+  const scoreCardResolutions = await resolveScoreCardsByDbFightId(
+    typedFights,
+    officialCard,
+  ).catch(() => new Map<string, ScoreCardResolution>());
+
   // eslint-disable-next-line react-hooks/purity -- request-time lock state needs the current server timestamp.
   const nowTimestamp = Date.now();
 
@@ -171,6 +185,9 @@ export default async function EventPage({
       : event.status === "live" || hasStarted
         ? "live"
         : "upcoming";
+    const scResolution = scoreCardResolutions.get(fight.id);
+    const scoreCard =
+      scResolution?.kind === "scored" ? scResolution.scoreCard : null;
 
     return {
       index: index + 1,
@@ -186,6 +203,7 @@ export default async function EventPage({
       bcIsMainEvent: bcFightData[index]?.isMainEvent ?? false,
       bcFighterADivision: bcFightData[index]?.fighterA_division ?? null,
       bcFighterBDivision: bcFightData[index]?.fighterB_division ?? null,
+      scoreCard,
     };
   });
 
@@ -258,6 +276,7 @@ export default async function EventPage({
               bcFighterBDivision={entry.bcFighterBDivision}
               seriesLabel={event?.series_type === "black_cup" ? getSeriesLabel(event.series_type, t) : null}
               isAuthenticated={!!user}
+              scoreCard={entry.scoreCard}
             />
           ))}
         </div>

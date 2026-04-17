@@ -385,6 +385,13 @@
     "goToProfile": "Ir al perfil",
     "stickyPrompt": "Tus pronósticos están listos. Compártelos con tus amigos."
   },
+  "scorecard": {
+    "title": "Tarjeta",
+    "judge": "Juez",
+    "total": "Total",
+    "roundLabel": "R{round}",
+    "overtime": "Prórroga"
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Algo salió mal",

@@ -385,6 +385,13 @@
     "goToProfile": "プロフィールへ",
     "stickyPrompt": "ピックが揃いました。友達にシェアしてみよう。"
   },
+  "scorecard": {
+    "title": "スコアカード",
+    "judge": "ジャッジ",
+    "total": "合計",
+    "roundLabel": "R{round}",
+    "overtime": "延長"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",

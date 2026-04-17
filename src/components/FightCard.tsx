@@ -1,11 +1,13 @@
 import { Link } from "@/i18n/navigation";
 import FightCardPicker from "@/components/FightCardPicker";
 import FighterAvatar from "@/components/FighterAvatar";
+import FightScoreCard from "@/components/FightScoreCard";
 import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
+import type { BcScoreCard } from "@/lib/bc-official";
 import { Check, Crown, MessageCircle, PartyPopper, Frown } from "lucide-react";
 import {
   getLocalizedFighterName,
@@ -81,6 +83,14 @@ type FightCardProps = {
    * the first fighter click; authed viewers get the normal pick flow.
    */
   isAuthenticated: boolean;
+  /**
+   * BC-published scorecard for decision fights. Caller resolves via
+   * `resolveScoreCardsByDbFightId` and passes the `scored` result's
+   * `scoreCard` field directly — `null` when BC returned no card or
+   * when the resolution was suppressed (non-decision / no-match /
+   * no-method). When null, the scorecard section renders nothing.
+   */
+  scoreCard?: BcScoreCard | null;
 };
 
 /** Static (non-interactive) fighter card for completed/live states */
@@ -260,6 +270,7 @@ export default async function FightCard({
   seriesLabel,
   hideDiscussion,
   isAuthenticated,
+  scoreCard,
 }: FightCardProps) {
   const { t, locale } = await getTranslations();
   const isCancelled = fight.status === "cancelled";
@@ -396,6 +407,27 @@ export default async function FightCard({
             <div className="mt-3 rounded-[10px] border border-[var(--bp-line)] bg-[var(--bp-card-inset)] px-3 py-2">
               <p className="text-xs text-[var(--bp-muted)]">{t("event.predictionLocked")}</p>
             </div>
+          ) : null}
+
+          {/* BC judges' scorecard — only for completed decision fights.
+              `scoreCard == null` covers every suppression reason (non-
+              decision method, BC returned no card, name-match ambiguous,
+              method not yet entered). `winnerSide` is DB-authoritative:
+              completed + no winner_id + not voided ⇒ draw (assumption 13). */}
+          {isCompleted && !isVoided && scoreCard ? (
+            <FightScoreCard
+              scoreCard={scoreCard}
+              fighterALabel={fighterALabel}
+              fighterBLabel={fighterBLabel}
+              winnerSide={winnerA ? "A" : winnerB ? "B" : "draw"}
+              labels={{
+                title: t("scorecard.title"),
+                judge: t("scorecard.judge"),
+                total: t("scorecard.total"),
+                roundLabel: (round: number) => t("scorecard.roundLabel", { round }),
+                overtime: t("scorecard.overtime"),
+              }}
+            />
           ) : null}
 
           {!hideDiscussion && (
