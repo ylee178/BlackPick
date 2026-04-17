@@ -56,9 +56,7 @@ export default function AccountDropdown({
     try {
       const supabase = createBrowserSupabaseClient();
       await supabase.auth.signOut();
-      setOpen(false);
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } catch {
       setLoggingOut(false);
     }
