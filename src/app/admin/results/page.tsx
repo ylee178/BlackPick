@@ -21,6 +21,13 @@ type FightOption = {
   result_processed_at: string | null
   fighter_a_id: string
   fighter_b_id: string
+  /**
+   * Pre-staged winner from `sync-bc-event-results` (BC crawler).
+   * May be null (no winner yet on BC side, or fight hasn't been
+   * synced) OR may be correct — admin confirms + adds method/round.
+   * See `src/scripts/sync-bc-event-results.ts` for the staging flow.
+   */
+  winner_id: string | null
   start_time: string
   event: { id: string; name: string } | null
   fighter_a: { id: string; name: string } | null
@@ -62,6 +69,7 @@ export default function AdminResultsPage() {
         result_processed_at,
         fighter_a_id,
         fighter_b_id,
+        winner_id,
         start_time,
         event:events!fights_event_id_fkey(id, name),
         fighter_a:fighters!fights_fighter_a_id_fkey(id, name),
@@ -143,7 +151,10 @@ export default function AdminResultsPage() {
                 const nextFightId = e.target.value
                 setFightId(nextFightId)
                 const nextFight = fights.find((fight) => fight.id === nextFightId)
-                setWinnerId(nextFight?.fighter_a_id ?? '')
+                // Prefer the crawler-staged winner (sync-bc-event-results)
+                // if present; fall back to fighter_a so the dropdown
+                // always has a valid selection.
+                setWinnerId(nextFight?.winner_id ?? nextFight?.fighter_a_id ?? '')
               }}
               className={retroFieldClassName()}
               required
