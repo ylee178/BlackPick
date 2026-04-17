@@ -342,8 +342,8 @@ _Goal: cron / anomaly / clustering / hot-fight features that only make sense wit
 _No phase assigned — pull when a related area is already being touched._
 
 - [ ] Share page enumeration opt-out — `users.is_public` flag, gate `loadSharePageData`
-- [ ] Notification store snapshot dedupe (`use-notifications.ts`)
-- [ ] Timezone storage event filter with `oldValue === newValue` short-circuit
+- [x] Notification store snapshot dedupe (`use-notifications.ts`) — shipped in `chore/store-hook-perf-dedupe` (session 5)
+- [x] Timezone storage event filter with `oldValue === newValue` short-circuit — shipped in same branch
 - [ ] Storybook stories for `useIsMounted`, `useClockTick`, notification store
 - [ ] CODEOWNERS + branch protection on main
 - [ ] Replace GitHub Actions `push-to-main` deploy with manual approval gate (Vercel Deployment Protection)
