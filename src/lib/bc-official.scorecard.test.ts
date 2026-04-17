@@ -222,6 +222,31 @@ describe("fetchBcScoreCard — fetch + cache", () => {
     expect(mockGet).toHaveBeenCalledTimes(1);
   });
 
+  it("in-flight stampede: two parallel callers share ONE BC request (Codex regression fix)", async () => {
+    const mockGet = getMockClientGet();
+    // Slow response — both callers initiate before either completes.
+    let resolveFn!: (v: unknown) => void;
+    mockGet.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFn = resolve;
+      }),
+    );
+
+    const first = fetchBcScoreCard("stampede-1");
+    const second = fetchBcScoreCard("stampede-1");
+
+    // Both callers have kicked off before the HTTP resolves. The
+    // inflight-dedup contract says they share one request.
+    expect(mockGet).toHaveBeenCalledTimes(1);
+
+    resolveFn({ data: happyRaw });
+    const [a, b] = await Promise.all([first, second]);
+    expect(a?.referees[0].name).toBe("VEGETABLE");
+    expect(b).toEqual(a);
+    // And still only one HTTP call after both settled.
+    expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
   it("error cache expires faster than success cache (separate TTLs)", async () => {
     vi.useFakeTimers();
     try {

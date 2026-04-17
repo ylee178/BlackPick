@@ -199,9 +199,13 @@ export function parseScoreCardJson(raw: unknown): BcScoreCard | null {
 }
 
 type ScoreCardCacheEntry = {
-  value: BcScoreCard | null;
+  /** Settled promise — callers reuse this so two concurrent renders
+   * for the same scoreSeq share ONE inflight BC request. Codex 2026-04-17
+   * "in-flight stampede" fix — pre-fix the cache only populated after
+   * `await`, so parallel callers all missed. */
+  promise: Promise<BcScoreCard | null>;
   expiresAt: number;
-  kind: "success" | "error";
+  kind: "success" | "error" | "pending";
 };
 
 const SCORECARD_SUCCESS_TTL_MS = 10 * 60 * 1000; // 10 min
@@ -223,10 +227,12 @@ export function _resetScoreCardCache(): void {
  *     no judges' card exists)
  *   - The fetch fails (timeout, network error, 5xx, malformed JSON)
  *
- * Caching: per-process `Map<scoreSeq, ...>` with separate TTLs —
- * 10 min for successful parses (including `null` for a confirmed
- * no-card state) and 1 min for thrown errors. This avoids a single
- * transient BC 5xx blanking a legitimate scorecard for 10 minutes.
+ * Caching: per-process `Map<scoreSeq, Entry>` storing the **inflight
+ * promise** so parallel callers dedupe onto a single BC request.
+ * Split TTLs — 10 min for successful parses (including `null` for a
+ * confirmed no-card state) and 1 min for thrown errors. TTL is set
+ * conservatively during flight and extended to the success value on
+ * successful resolution.
  *
  * Observability: exceptions (NOT `{success:false}` envelopes) are
  * captured as Sentry warnings in production so external dependency
@@ -237,46 +243,65 @@ export async function fetchBcScoreCard(
 ): Promise<BcScoreCard | null> {
   const now = Date.now();
   const hit = scoreCardCache.get(scoreSeq);
-  if (hit && hit.expiresAt > now) return hit.value;
+  if (hit && hit.expiresAt > now) return hit.promise;
 
-  try {
-    const res = await client.get<unknown>(
-      `/findScore.php?score_seq=${scoreSeq}`,
-      {
-        timeout: 3_000,
-        headers: {
-          Accept: "application/json, text/javascript, */*; q=0.01",
-          "X-Requested-With": "XMLHttpRequest",
+  let resolvedKind: "success" | "error" = "success";
+  const promise: Promise<BcScoreCard | null> = (async () => {
+    try {
+      const res = await client.get<unknown>(
+        `/findScore.php?score_seq=${scoreSeq}`,
+        {
+          timeout: 3_000,
+          headers: {
+            Accept: "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest",
+          },
         },
-      },
-    );
-    const parsed = parseScoreCardJson(res.data);
-    scoreCardCache.set(scoreSeq, {
-      value: parsed,
-      expiresAt: now + SCORECARD_SUCCESS_TTL_MS,
-      kind: "success",
-    });
-    return parsed;
-  } catch (err) {
-    if (process.env.NODE_ENV === "production") {
-      // Dynamic import — keeps tests free of Sentry init + guards
-      // against a broken Sentry build surfacing as a BC fetch failure.
-      void import("@sentry/nextjs")
-        .then(({ captureException }) =>
-          captureException(err, {
-            level: "warning",
-            tags: { scope: "bc-scorecard", scoreSeq },
-          }),
-        )
-        .catch(() => {});
+      );
+      return parseScoreCardJson(res.data);
+    } catch (err) {
+      resolvedKind = "error";
+      if (process.env.NODE_ENV === "production") {
+        // Dynamic import — keeps tests free of Sentry init + guards
+        // against a broken Sentry build surfacing as a BC fetch failure.
+        void import("@sentry/nextjs")
+          .then(({ captureException }) =>
+            captureException(err, {
+              level: "warning",
+              tags: { scope: "bc-scorecard", scoreSeq },
+            }),
+          )
+          .catch(() => {});
+      }
+      return null;
     }
-    scoreCardCache.set(scoreSeq, {
-      value: null,
-      expiresAt: now + SCORECARD_ERROR_TTL_MS,
-      kind: "error",
-    });
-    return null;
-  }
+  })();
+
+  // Seed the cache with the ERROR TTL as a conservative floor. If
+  // the fetch happens to error, this is already the right value.
+  // If it succeeds, the .finally extends it to the success TTL.
+  const entry: ScoreCardCacheEntry = {
+    promise,
+    expiresAt: now + SCORECARD_ERROR_TTL_MS,
+    kind: "pending",
+  };
+  scoreCardCache.set(scoreSeq, entry);
+
+  void promise.finally(() => {
+    // Only extend if we're still the canonical entry — prevents a
+    // stale .finally from clobbering a subsequent cache purge or
+    // fresh fetch initiated after reset.
+    if (scoreCardCache.get(scoreSeq) === entry) {
+      entry.kind = resolvedKind;
+      entry.expiresAt =
+        Date.now() +
+        (resolvedKind === "success"
+          ? SCORECARD_SUCCESS_TTL_MS
+          : SCORECARD_ERROR_TTL_MS);
+    }
+  });
+
+  return promise;
 }
 
 export async function fetchBcEventList(

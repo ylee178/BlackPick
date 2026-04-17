@@ -173,8 +173,14 @@ export async function resolveScoreCardsByDbFightId(
       continue;
     }
 
-    const matched = officialFights.find((official) =>
-      isStrictPairMatch(dbFight, official),
+    // Scan ALL matches, not just the first. If BC surfaces a
+    // placeholder row (same fighter names but `fightSeq = null` — e.g.
+    // the TBA slot for a future rematch) before the resulted row,
+    // `find()` on just `isStrictPairMatch` would stop at the null-seq
+    // entry and silently suppress the real scorecard.
+    const matched = officialFights.find(
+      (official) =>
+        isStrictPairMatch(dbFight, official) && official.fightSeq != null,
     );
     if (!matched || !matched.fightSeq) {
       result.set(dbFight.id, { kind: "suppressed-no-match" });

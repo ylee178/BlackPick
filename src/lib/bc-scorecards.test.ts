@@ -297,6 +297,39 @@ describe("resolveScoreCardsByDbFightId — strict match + resolution kinds", () 
     );
   });
 
+  it("[null fightSeq on first match — Codex regression fix] continues scanning to find a row with a usable fightSeq", async () => {
+    // BC sometimes shows a placeholder row for the same fighters
+    // with `fightSeq = null` (e.g., TBA future rematch) ahead of the
+    // actual resulted row in the array. Resolver must skip the null
+    // and keep scanning rather than suppressing the scorecard.
+    const mockGet = getMockClientGet();
+    mockGet.mockResolvedValueOnce({ data: HAPPY_RAW });
+
+    const db = [makeDbFight({ id: "f1" })];
+    const official = [
+      // Same fighters, no fightSeq — placeholder / scheduled row
+      makeOfficialFight({
+        fightSeq: null,
+        fighterA: {
+          sourceId: "p-a", name: "Mammoth", ringName: null, nationality: null,
+          record: null, division: null, weightClass: null,
+        },
+        fighterB: {
+          sourceId: "p-b", name: "Jackpot", ringName: null, nationality: null,
+          record: null, division: null, weightClass: null,
+        },
+      }),
+      // The actual resulted row — must be picked despite appearing second
+      makeOfficialFight({ fightSeq: "308" }),
+    ];
+    const out = await resolveScoreCardsByDbFightId(db, official);
+    expect(out.get("f1")?.kind).toBe("scored");
+    expect(mockGet).toHaveBeenCalledWith(
+      "/findScore.php?score_seq=308",
+      expect.any(Object),
+    );
+  });
+
   it("[match but no fightSeq] suppressed-no-match (can't fetch)", async () => {
     const db = [makeDbFight({ id: "f1" })];
     const official = [makeOfficialFight({ fightSeq: null })];
