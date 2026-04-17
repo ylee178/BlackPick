@@ -385,6 +385,13 @@
     "goToProfile": "前往个人资料",
     "stickyPrompt": "预测已就绪。把你的预测分享给朋友们。"
   },
+  "scorecard": {
+    "title": "计分卡",
+    "judge": "评委",
+    "total": "总分",
+    "roundLabel": "R{round}",
+    "overtime": "加时"
+  },
   "common": {
     "loading": "加载中...",
     "error": "出了点问题",

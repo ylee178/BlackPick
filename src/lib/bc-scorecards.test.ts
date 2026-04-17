@@ -60,6 +60,7 @@ function makeOfficialFight(
     },
     boutLabel: null,
     isMainEvent: false,
+    winnerSourceId: null,
     ...overrides,
   };
 }

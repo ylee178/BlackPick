@@ -385,6 +385,13 @@
     "goToProfile": "Go to profile",
     "stickyPrompt": "Your picks are ready. Share them with friends."
   },
+  "scorecard": {
+    "title": "Scorecard",
+    "judge": "Judge",
+    "total": "Total",
+    "roundLabel": "R{round}",
+    "overtime": "OT"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

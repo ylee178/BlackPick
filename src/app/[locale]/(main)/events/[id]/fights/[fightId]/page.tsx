@@ -3,6 +3,10 @@ import FightCard from "@/components/FightCard";
 import FightComments from "@/components/FightComments";
 import FirstPickHintCard from "@/components/FirstPickHintCard";
 import { fetchBcOfficialEventCard } from "@/lib/bc-official";
+import {
+  resolveScoreCardsByDbFightId,
+  type ScoreCardResolution,
+} from "@/lib/bc-scorecards";
 import { fetchBcEventData } from "@/lib/bc-predictions";
 import { sortFightsByOfficialCardOrder } from "@/lib/fight-alignment";
 import { getTranslations } from "@/lib/i18n-server";
@@ -106,6 +110,18 @@ export default async function FightDetailPage({
   const bcFightData = bcRaw.slice(0, typedFights.length);
   const bc = bcFightData[fightIndex] ?? null;
 
+  // Resolve scorecard only for the current fight. We still pass all
+  // typed fights + officialCard so the strict matcher has full context
+  // (dedupes when the BC card carries two rows with overlapping names).
+  // `.catch` keeps page render independent of BC reachability.
+  const scoreCardResolutions = await resolveScoreCardsByDbFightId(
+    typedFights,
+    officialCard,
+  ).catch(() => new Map<string, ScoreCardResolution>());
+  const scResolution = scoreCardResolutions.get(fightId);
+  const scoreCard =
+    scResolution?.kind === "scored" ? scResolution.scoreCard : null;
+
   const eventStatus = event.status as "upcoming" | "live" | "completed";
   // Date.now() is intentionally impure here — this server component runs once
   // per request and we need the request-time clock to compare against the
@@ -150,6 +166,7 @@ export default async function FightDetailPage({
         bcFighterBDivision={bc?.fighterB_division ?? null}
         hideDiscussion
         isAuthenticated={!!user}
+        scoreCard={scoreCard}
       />
 
 

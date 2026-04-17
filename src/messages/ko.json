@@ -385,6 +385,13 @@
     "goToProfile": "프로필로 이동",
     "stickyPrompt": "픽이 모두 준비됐어요. 당신의 픽을 친구들에게 공유해보세요."
   },
+  "scorecard": {
+    "title": "점수표",
+    "judge": "심판",
+    "total": "합계",
+    "roundLabel": "{round}R",
+    "overtime": "연장"
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",
