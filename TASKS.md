@@ -4,21 +4,44 @@
 >
 > **Two-level model** — full roadmap here; `TaskList` tool carries only actionable-this-session sub-tasks of the current branch.
 
-_Last updated: 2026-04-14 — PR #28 `feature/streak-ux` squash-merged; Phase 1 at 9/9 with only Branch 9 (verification-only) remaining._
+_Last updated: 2026-04-17 — Codex CLI owns in-flight `db/codex-integrity-atomicity` P0/P1 remediation (token-blocked). Claude picks up parallel non-overlapping tracks in priority order below._
 
 ---
 
 ## Current focus
 
-**Phase 1 — 9/9 done.** Only Branch 9 (`fix/verify-all-predicted-toast`) remaining — verification-only, Sean runs DevPanel test. After Phase 1 closes → Phase 2 (email infra + Gmail feedback relay + Sentry + admin consolidation).
+**Two agents working in parallel, non-overlapping file sets.** See [§Parallel-agent discipline](#parallel-agent-discipline) for the coordination rule.
 
-### Next session resume
+### 🤖 Codex CLI (owner) — `db/codex-integrity-atomicity`
+**Status**: 6/11 items shipped in worktree (uncommitted + unapplied). Token-blocked 2026-04-17. Full details in [Phase 4 → Branch `db/codex-integrity-atomicity`](#branch-dbcodex-integrity-atomicity--owned-by-codex-cli-token-blocked-as-of-2026-04-17). **Hands-off files listed there.**
 
-1. `git checkout develop && git pull` — main tip `20ffbd6`
-2. **Sean manual TODO**: Supabase Dashboard → Email Templates → Send Test Email for `confirm_signup` + `reset_password`; validate rendering in Gmail / iOS Mail / Outlook
-3. **Branch 9 test flow** — DevPanel → Actions → `Reset "all predicted" toast lock` → save picks on every fight in an event with `has_saved_picks=false` → verify toast fires on transition + no re-fire on reload. If broken: investigate `AllPredictedToast.tsx` transition detection (`previousCountRef` L55, `reachedAllThisTick` L66–67); may need `router.refresh()` post-save
-4. **Review gate** — blackpick profile via `second-opinion-reviewer` subagent + file-based dialogue. Transcripts under `reviews/BlackPick/<YYYY-MM-DD>_<topic>_dialog/`. Pattern + rubric in [`Docs/review-tier-rubric.md`](Docs/review-tier-rubric.md)
-5. **Phase 2 starts** after Branch 9. First active branch: `feature/feedback-email-relay` — blocked by Sean executing `Docs/email-setup.md` (Cloudflare + Resend + Gmail Send As, ~30 min manual)
+### 🟣 Claude — parallel work queue (priority order)
+
+1. **ACTIVE — `feature/admin-surface-consolidation`** (Phase 2, independent). Port `/fighters/manage` → `/admin/fighters`, retro token restyle, unified `/admin` sidebar, `AccountDropdown` link flip, delete legacy route. Zero overlap with Codex files.
+2. **Next — `a11y/pt-br-activation-followup`**. Storybook mock 4→7 languages (`LanguagePicker.stories.tsx:79-84`), spot-check `src/messages/pt-BR.json` quality, manual smoke 5–10 pages as `?lang=pt-BR`. Prep for Phase 5 pt-BR priority pass.
+3. **Next — `docs/facebook-oauth-setup-refresh`**. Verify `Docs/facebook-oauth-setup.md` accuracy + Meta App Review 2026 requirements. Docs-only; unblocks Sean's Facebook manual run.
+4. **Backlog-ready**: `chore/codeowners` (CODEOWNERS file only, branch protection is Sean's GH step), `public/og/default.png` OG asset generation.
+
+### ⏸ Claude — blocked-on-Codex queue (rebase after Codex merges)
+
+- `db/fighter-comments-edit-delete` + `feature/comment-edit-delete` — touches `src/app/api/fighter-comments/route.ts` which Codex is editing
+- `feature/mvp-timer-admin` — layers on Codex's `events.completed_at` column
+
+### ⏸ Blocked on Sean manual (can't make progress until Sean acts)
+
+- **Branch 9** `fix/verify-all-predicted-toast` — Sean DevPanel verification
+- **Supabase test email send** — Dashboard verify `confirm_signup` + `reset_password` in Gmail / iOS Mail / Outlook
+- **`feature/feedback-email-relay`** — blocked by `Docs/email-setup.md` execution (~30 min Cloudflare + Resend + Gmail Send As)
+- **`feature/sentry-setup`** — blocked by Sentry account + `SENTRY_DSN`
+- **`feature/facebook-oauth-wire-in`** — blocked by Meta App creation + Vercel env
+
+### Parallel-agent discipline
+
+When two agents (Codex CLI + Claude Code) are active on the same repo:
+1. **Each agent owns an explicit file set** declared in the branch header — no ambiguity
+2. **Claude never commits files in Codex's worktree**, even if they look abandoned — Codex may resume mid-session
+3. **Before starting any Claude branch**, cross-check the "Codex-owned files" list in `db/codex-integrity-atomicity` — if your branch needs to touch any, defer to `blocked-on-Codex queue`
+4. **Codex's 5 pending issues** are part of the same branch scope — do not preempt them as separate Claude branches
 
 ### Reference lessons (from shipped branches)
 
