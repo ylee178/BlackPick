@@ -1,6 +1,6 @@
 # Spec — Fight scorecard display
 
-_2026-04-17 · Branch: `feature/fight-scorecard-display` · v2 after second-opinion-reviewer BLOCK_
+_2026-04-17 · Branch: `feature/fight-scorecard-display` · **v3** after second-opinion-reviewer BLOCK (v1) + Codex CLI tiebreaker BLOCK (v2)_
 
 ## Objective
 
@@ -17,19 +17,21 @@ Fills the gap between "winner label" (already visible) and "I want to know why t
 - New DB columns (no migration). Scorecard fetched per-request from BC with caching.
 - Pre-Exodus events — already hidden via PR #32.
 
-## Assumptions (11 total — assumptions 9–11 added after spec review)
+## Assumptions (13 total — v3 revises 9–11 and adds 12–13 after Codex tiebreaker)
 
 1. **Placement**: scorecard lives inside `FightCard.tsx` below the result row. Same component works on home + detail + fight detail.
 2. **Visibility default**: expanded when present. No toggle.
-3. **Data fetch**: server-side parallel with existing `fetchBcOfficialEventCard` in `bc-predictions.ts`. Not client-side, not lazy.
-4. **Per-fight cost**: ≤ 1 extra HTTP to BC per decision-with-scorecard fight. **Bounded by per-fetch 3s timeout + shared scoreSeq cache (see §Caching)**, not the 20s global axios default.
+3. **Data fetch**: server-side. **NOT inside `fetchBcOfficialEventCard`** (that function has no DB-method visibility — see v3 §L2 redesign). Scorecards are fetched by a separate helper that the three pages call AFTER they already have both the official card and the DB fights in scope.
+4. **Per-fight cost**: ≤ 1 extra HTTP to BC per decision-with-scorecard fight, bounded by the per-fetch 3s timeout + scoreSeq cache.
 5. **Retro styling**: grid table inside `retroPanelClassName({ tone: 'flat' })`. No new additions to `ui/retro.tsx`.
 6. **Overtime column**: round 4 column shown only if any referee's `overtimeYn*` is `1`.
-7. **Fighter identity at render time**: BC's positional `score*1*` / `score*2*` reconciled to BlackPick DB fighters via the `normalizeName` + `chooseFightRow` pair-match utility already proven in `sync-bc-event-card.ts`.
-8. **Winner highlight**: drawn from `fight.winner_id` (DB-authoritative), not inferred from scorecard totals.
-9. **[new — name-match defensive failure]** If fuzzy name-match between BC positional fighters and DB fighter_a/fighter_b fails to produce a unique mapping for BOTH sides, the scorecard is **suppressed** (rendered as null). Never render columns that could display inverted scores under the wrong fighter name. Silent correctness > speculative display.
-10. **[new — caching + timeout contract]** Per-fetch timeout overridden to **3000ms** (not the global 20s). Successful + error-envelope responses cached in a module-level `Map<scoreSeq, Promise<BcScoreCard | null>>` with a **10-minute TTL** (matches the existing `bcCache` pattern in `bc-predictions.ts`). Parallel dispatch uses `Promise.allSettled` — one slow/failed scorecard cannot stall the rest.
-11. **[new — method filter]** Pre-filter on `fight.method === 'Decision'` before attempting the fetch. `KO/TKO` / `Submission` / `cancelled` / `no_contest` skip the fetch entirely (BC has no scorecard for those; wasted calls). `method === null` ALSO skips — the fight hasn't been finalized by admin yet, so rendering a stale scorecard would be premature. Scorecards appear on the next page render after admin enters the method via `/admin/results`.
+7. **Fighter identity at render time**: BC's positional `score*1*` / `score*2*` reconciled to BlackPick DB fighters — via a new **strict two-sided unique-match** helper, not the `chooseFightRow` highest-overlap fallback (which was designed for card-sync + tolerant by intent).
+8. **Winner highlight**: drawn from `fight.winner_id` (DB-authoritative). When `winner_id` is null and `status = completed`, treat as **draw** (see assumption 13).
+9. **[v3 revised — name-match defensive failure]** Strict match requires BOTH `official.fighterA` and `official.fighterB` to normalize-match exactly one DB fighter among `fight.fighter_a` / `fight.fighter_b` — and the two sides must resolve to DIFFERENT DB fighters. If any of those conditions fail, the scorecard is **suppressed for that fight only** (neighbours unaffected). Keyed by `dbFight.id`, not positional index — so one mismatch cannot shift scorecards onto adjacent fights.
+10. **[v3 revised — caching + timeout]** Per-fetch timeout overridden to **3000ms** (not 20s global). Separate TTLs by outcome: **success → 10 minutes**, **error (exception / non-JSON) → 60 seconds** — avoids 10-minute blanks after a single transient BC 5xx. `{success:false}` envelope is a legitimate "no scorecard" and uses the success TTL. Module-level `Map` is per-process (not cross-instance on Vercel); acceptable for dev + single-instance builds, limited reuse across Vercel edge replicas.
+11. **[v3 revised — method filter at consumer]** Pre-filter on `fight.method === 'Decision'` happens at the **consumer site** (page.tsx / events/[id] / fights/[fightId]) where DB method is available. `fetchBcOfficialEventCard` does NOT invoke `fetchBcScoreCard`. Non-decision / null-method / cancelled fights never trigger a scorecard fetch.
+12. **[new — parallel dispatch semantics]** `Promise.allSettled` bounds total batch time to `max(individual-fetch-times) ≤ 3s`. It is NOT a non-blocking render — the page still awaits the slowest fetch. The "doesn't stall siblings" claim is about rejection propagation, not response latency. Page render latency worst-case = 3s + existing BC card fetch time, not 20s+.
+13. **[new — draw rendering]** Completed fights with `winner_id = null` render with `winnerSide = "draw"`. FightScoreCard shows the full grid with **both columns neutral** (no accent). This is a valid state (rare but real — split decision draws, technical draws) and the codebase already handles it at `fighters/[id]/page.tsx:74`. Prior v2 language of "winnerSide: A | B | null" implicitly coerced draws into the null-suppression branch — a regression of existing behavior.
 
 ## User-visible acceptance criteria
 
@@ -64,12 +66,66 @@ Tests (6 cases):
 - Overtime flag propagation (any `overtimeYn=1` surfaces correctly)
 - All-zero referee (name present but all scores 0) → preserved in output (component layer decides suppression)
 
-### L2 — wiring into existing server-side BC pipeline
+### L2 — **v3 redesign** — consumer-side helper, NOT inside `fetchBcOfficialEventCard`
 
-- **NOT** `BcFightData` (that type has no `fightSeq` — reviewer blocker #1). Instead, attach `scoreCard?: BcScoreCard | null` to `BcOfficialFight`.
-- `fetchBcOfficialEventCard` is where `fightSeq` is already extracted, so the natural site is there.
-- For each parsed fight where `fightSeq != null`, kick off `fetchBcScoreCard(fightSeq)` via `Promise.allSettled`. On resolution, attach to the matching `BcOfficialFight`.
-- **Guard by method filter at consumer site** (`page.tsx`, `events/[id]`, `fights/[fightId]`): the consumer reads the DB fight row + decides whether to pass the BC scoreCard to `FightCard` based on `fight.method === 'Decision'`. (Alternative: filter inside `fetchBcOfficialEventCard`. Chose consumer-side because it needs DB context anyway.)
+`fetchBcOfficialEventCard` stays unchanged (doesn't know DB method, can't pre-filter, has too many other callers). Instead:
+
+New helper in `src/lib/bc-scorecards.ts` (NEW file — isolates the matching + fetch orchestration from the existing card parser):
+
+```ts
+import type { BcOfficialFight, BcScoreCard } from "./bc-official";
+import { fetchBcScoreCard } from "./bc-official";
+
+type DbFightRef = {
+  id: string;
+  method: string | null;
+  fighter_a: { name: string | null; name_en: string | null; name_ko: string | null; ring_name: string | null };
+  fighter_b: { name: string | null; name_en: string | null; name_ko: string | null; ring_name: string | null };
+};
+
+type ScoreCardResolution =
+  | { kind: "scored"; scoreCard: BcScoreCard | null /* null = BC returned no card */ }
+  | { kind: "suppressed-no-match" }
+  | { kind: "suppressed-non-decision" }
+  | { kind: "suppressed-no-method" };
+
+/**
+ * Keyed by DB fight id — not positional index — so one mismatched
+ * fight cannot shift scorecards onto neighbours (v3 blocker #2).
+ */
+export async function resolveScoreCardsByDbFightId(
+  dbFights: readonly DbFightRef[],
+  officialFights: readonly BcOfficialFight[],
+): Promise<Map<string, ScoreCardResolution>>;
+```
+
+Internals:
+1. For each `dbFight`, compute `kind` first:
+   - `method === null` → `suppressed-no-method`
+   - `method !== 'Decision'` → `suppressed-non-decision`
+2. For remaining fights, run **strict two-sided match** (v3 blocker #2). Each side must uniquely match one BC fighter via `normalizeName` across `{name, name_en, name_ko, ring_name}`. If ambiguous or not-found on either side → `suppressed-no-match`.
+3. For matched Decision fights, collect `fightSeq` values and call `fetchBcScoreCard` in parallel via `Promise.allSettled`. Each promise already has the 3s timeout + Sentry wrap from L1.
+4. Return `Map<dbFight.id, ScoreCardResolution>` so the consumer can render `scored` resolutions and surface nothing for suppressed ones.
+
+Consumer usage:
+
+```ts
+const scoreCardResolutions = await resolveScoreCardsByDbFightId(fights, officialCard);
+
+<FightCard
+  fight={fight}
+  scoreCard={
+    scoreCardResolutions.get(fight.id)?.kind === "scored"
+      ? (scoreCardResolutions.get(fight.id) as { scoreCard: BcScoreCard | null }).scoreCard
+      : null
+  }
+/>
+```
+
+**Why the redesign is mandatory** (Codex v2 blockers):
+
+- **B1 — method filter at the wrong site.** `fetchBcOfficialEventCard` has no DB handle, so previous v2 plan to filter there was a design contradiction. Moving the filter + fetch to a consumer-invoked helper keeps the existing card parser free of DB dependency.
+- **B2 — name-match enforcement.** `chooseFightRow` was built for `sync-bc-event-card` where tolerant fallbacks are appropriate (we WANT a best-guess match for card alignment). Rendering scorecards has the opposite risk profile — an ambiguous match silently displays inverted scores. The strict two-sided matcher is a different function for a different contract.
 
 ### L3 — `<FightScoreCard>` server component
 
@@ -82,7 +138,7 @@ Tests (6 cases):
     scoreCard: BcScoreCard;
     fighterALabel: string;    // localized display name
     fighterBLabel: string;
-    winnerSide: "A" | "B" | null;  // from DB winner_id — NOT computed from scores
+    winnerSide: "A" | "B" | "draw";  // v3: "draw" for completed+winner_id=null — render both neutral
     labels: {
       title: string;
       judge: string;
@@ -92,6 +148,7 @@ Tests (6 cases):
     };
   };
   ```
+  The component never receives `null` — suppression is the CALLER's job (v3 assumption 9). If scoreCard is null at the call site, `FightCard` skips rendering `<FightScoreCard>` entirely.
 - Layout (confirmed judge-as-row):
   ```
   ┌─────────────────────────────────────────────────┐
@@ -141,42 +198,54 @@ Per L1 above — 6 cases. Fetch tests mock axios via vitest `vi.mock`.
 
 **Integration:** no live BC call. L1 tests are fetch-mocked. Live-BC correctness is covered indirectly by the manual acceptance checklist below.
 
-## Caching and timeout (formal requirement)
+## Caching and timeout (formal requirement — v3 revised for Codex M1)
+
+Success vs error paths use **separate TTLs** so a transient BC 5xx doesn't blank a legitimate scorecard for 10 minutes.
 
 ```ts
-const scoreCardCache = new Map<string, { promise: Promise<BcScoreCard | null>; expiresAt: number }>();
-const SCORECARD_TTL_MS = 10 * 60 * 1000;
+const SUCCESS_TTL_MS = 10 * 60 * 1000;   // 10 min for a landed parse result (null envelope included)
+const ERROR_TTL_MS = 60 * 1000;          // 60 sec for exceptions — retry quickly after transient BC hiccups
+type CacheEntry = { value: BcScoreCard | null; expiresAt: number; kind: "success" | "error" };
+const scoreCardCache = new Map<string, CacheEntry>();
 
 export async function fetchBcScoreCard(scoreSeq: string): Promise<BcScoreCard | null> {
   const now = Date.now();
   const hit = scoreCardCache.get(scoreSeq);
-  if (hit && hit.expiresAt > now) return hit.promise;
+  if (hit && hit.expiresAt > now) return hit.value;
 
-  const promise = client
-    .get(`/findScore.php?score_seq=${scoreSeq}`, {
+  try {
+    const res = await client.get(`/findScore.php?score_seq=${scoreSeq}`, {
       timeout: 3_000,
       headers: {
         Accept: "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
       },
-    })
-    .then((res) => parseScoreCardJson(res.data))
-    .catch((err) => {
-      if (process.env.NODE_ENV === "production") {
-        // Dynamic import so tests don't require Sentry init.
-        import("@sentry/nextjs")
-          .then(({ captureException }) =>
-            captureException(err, { level: "warning", tags: { scope: "bc-scorecard" } }),
-          )
-          .catch(() => {});
-      }
-      return null;
     });
-
-  scoreCardCache.set(scoreSeq, { promise, expiresAt: now + SCORECARD_TTL_MS });
-  return promise;
+    const parsed = parseScoreCardJson(res.data);
+    scoreCardCache.set(scoreSeq, {
+      value: parsed,
+      expiresAt: now + SUCCESS_TTL_MS,
+      kind: "success",
+    });
+    return parsed;
+  } catch (err) {
+    if (process.env.NODE_ENV === "production") {
+      // Dynamic import — tests don't require Sentry init.
+      void import("@sentry/nextjs").then(({ captureException }) =>
+        captureException(err, { level: "warning", tags: { scope: "bc-scorecard" } }),
+      ).catch(() => {});
+    }
+    scoreCardCache.set(scoreSeq, {
+      value: null,
+      expiresAt: now + ERROR_TTL_MS,
+      kind: "error",
+    });
+    return null;
+  }
 }
 ```
+
+Note: the cache is **per-process**, not cross-instance. Vercel edge / serverless replicas will each have their own Map. Under Vercel fanout this reduces cache hit rate but never corrupts data — worst case is an extra fetch, never a stale scorecard bleeding across users.
 
 ## Boundaries
 
@@ -199,9 +268,23 @@ export async function fetchBcScoreCard(scoreSeq: string): Promise<BcScoreCard | 
 - Render without Sentry wire-up for exception paths
 - Ship without i18n parity across 7 locales
 
-## Rollout
+## Rollout — **v3 split into 2 PRs** (Codex recommendation)
 
-Single PR against `develop`. No feature flag (purely additive, hidden when scorecard absent).
+The risky external-data semantics (fetch + caching + strict matching) and the additive UI are cleanly separable. Splitting gives us a verification checkpoint before rendering.
+
+**PR A — `feature/bc-scorecard-plumbing`** (land first)
+- L1 types + `parseScoreCardJson` + `fetchBcScoreCard` with caching + Sentry
+- L2 `src/lib/bc-scorecards.ts` — `resolveScoreCardsByDbFightId` + strict two-sided matcher
+- Unit tests for L1 (6 cases) + L2 matcher (5-6 cases: unique match / ambiguous / non-decision / no-method / draw / name-missing)
+- **No UI changes. No i18n changes.** Fully dormant in production until PR B wires it up.
+
+**PR B — `feature/fight-scorecard-display` (rebased on A)**
+- L3 `FightScoreCard` component + state-matrix tests
+- L4 wire into `FightCard` + 3 page call sites (passing `scoreCardResolutions.get(fight.id)`)
+- L5 i18n (5 × 7)
+- Manual acceptance checks
+
+Both PRs against `develop`. No feature flag — PR A is pure lib addition with zero consumer, PR B is purely additive UI with graceful absence.
 
 ## Verification checklist
 
