@@ -147,6 +147,7 @@
     "authUnexpected": "Não foi possível concluir a autenticação agora.",
     "oauthCallbackFailed": "Não conseguimos concluir esse login social. Tente novamente.",
     "logout": "Sair",
+    "loggingOut": "Saindo...",
     "forgotPassword": "Esqueceu sua senha?",
     "resetPassword": "Redefinir Senha",
     "resetPasswordDescription": "Digite seu e-mail e enviaremos um link para redefinir sua senha.",
