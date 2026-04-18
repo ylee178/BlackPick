@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { isWeakPassword } from "@/lib/weak-passwords";
 import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
@@ -26,6 +27,12 @@ export default function UpdatePasswordPage() {
 
     if (password.length < 6) {
       setError(t("auth.passwordTooShort"));
+      setLoading(false);
+      return;
+    }
+
+    if (isWeakPassword(password)) {
+      setError(t("auth.passwordCompromised"));
       setLoading(false);
       return;
     }

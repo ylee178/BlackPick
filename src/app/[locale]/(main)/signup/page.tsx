@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
 import { logEvent } from "@/lib/analytics";
 import { mapAuthErrorCode } from "@/lib/auth-error";
+import { isWeakPassword } from "@/lib/weak-passwords";
 import { useI18n } from "@/lib/i18n-provider";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import CheckEmailCard from "@/components/auth/CheckEmailCard";
@@ -35,6 +36,12 @@ export default function SignupPage() {
     event.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (isWeakPassword(password)) {
+      setError(t("auth.passwordCompromised"));
+      setLoading(false);
+      return;
+    }
 
     const normalizedEmail = email.trim().toLowerCase();
     const signupResponse = await fetch("/api/auth/signup", {

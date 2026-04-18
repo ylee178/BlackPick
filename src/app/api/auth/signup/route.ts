@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { createRateLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { isWeakPassword } from "@/lib/weak-passwords";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const signupLimiter = createRateLimiter({ limit: 5, windowSeconds: 60 });
@@ -28,6 +29,13 @@ export async function POST(request: Request) {
 
   if (password.length < 6) {
     return NextResponse.json({ code: "password_too_short" }, { status: 400 });
+  }
+
+  // Pre-block the worst-of-the-worst regardless of Supabase leak-check state.
+  // Keeps UX consistent across DEV/PROD projects (whose leak toggle can
+  // diverge) and cuts the Supabase round-trip for obvious rejects.
+  if (isWeakPassword(password)) {
+    return NextResponse.json({ code: "password_compromised" }, { status: 400 });
   }
 
   const { allowed, resetInSeconds } = signupLimiter.check(
