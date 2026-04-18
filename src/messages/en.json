@@ -465,5 +465,8 @@
     "fighters": "Fighters",
     "latestResults": "Latest results",
     "close": "Close"
+  },
+  "division": {
+    "champion": "Champion"
   }
 }

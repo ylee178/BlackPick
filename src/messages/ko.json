@@ -465,5 +465,8 @@
     "fighters": "선수",
     "latestResults": "최신 결과",
     "close": "닫기"
+  },
+  "division": {
+    "champion": "챔피언"
   }
 }

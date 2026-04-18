@@ -7,6 +7,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
+import { resolveDivisionChip } from "@/lib/division-chip";
 import type { BcScoreCard } from "@/lib/bc-official";
 import { Check, Crown, MessageCircle, PartyPopper, Frown } from "lucide-react";
 import {
@@ -32,6 +33,12 @@ type FighterData = {
   record?: string | null;
   nationality?: string | null;
   weight_class?: string | null;
+  /** Persisted by `src/scripts/sync-bc-fighter-ranks.ts`. Fallback
+   *  source for the static-side portrait chip — live BC data from
+   *  `bcFighterADivision`/`bcFighterBDivision` takes priority on
+   *  event/fight surfaces while rank sync remains manual. */
+  is_champion?: boolean | null;
+  rank_position?: number | null;
 };
 
 type FightCardProps = {
@@ -105,6 +112,7 @@ function FighterSideStatic({
   winRound,
   winLabel,
   bcLabel,
+  championLabel,
   isCompleted,
   predictionResult,
   predictionScore,
@@ -123,6 +131,7 @@ function FighterSideStatic({
   winRound?: number | null;
   winLabel: string;
   bcLabel: string;
+  championLabel: string;
   isCompleted: boolean;
   predictionResult?: "correct" | "wrong" | null;
   predictionScore?: number | null;
@@ -141,6 +150,7 @@ function FighterSideStatic({
   const displayName = getLocalizedFighterName(fighter, locale, fighter.name);
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
+  const divisionChip = resolveDivisionChip(bcDivision, fighter, locale, championLabel);
   return (
     <div
       className={cn(
@@ -176,12 +186,33 @@ function FighterSideStatic({
           </RetroLabel>
         </span>
       )}
-      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
-        {avatarUrl ? (
-          <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
-        )}
+      {/* Avatar wrapper is `relative` so the division chip anchors to
+          its bottom edge. Extra `mb-2` reserves space for the chip's
+          `-bottom-2` overhang so it doesn't visually crash into the
+          fighter name row below. `pointer-events-none` on the chip
+          keeps the avatar's own pointer semantics (hover ring, etc.)
+          unaffected. */}
+      <div className="relative mb-2">
+        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
+          {avatarUrl ? (
+            <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
+          )}
+        </div>
+        {divisionChip ? (
+          <span
+            aria-label={divisionChip.label}
+            className={cn(
+              "pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-2 py-[2px] text-[11px] font-semibold uppercase tracking-[0.04em] backdrop-blur-sm",
+              divisionChip.tone === "champion"
+                ? "border-[var(--bp-accent)]/45 bg-[var(--bp-bg)]/90 text-[var(--bp-accent)]"
+                : "border-[var(--bp-line)] bg-[var(--bp-bg)]/85 text-[var(--bp-ink)]",
+            )}
+          >
+            {divisionChip.label}
+          </span>
+        ) : null}
       </div>
       <div className="min-w-0 w-full text-center">
         {/* `break-words` + min-w-0 so long names wrap instead of
@@ -207,11 +238,6 @@ function FighterSideStatic({
             return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
           })()}
         </p>
-        {bcDivision?.rank ? (
-          <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
-            #{bcDivision.rank} {translateWeightClass(bcDivision.weightClass, locale)}
-          </p>
-        ) : null}
       </div>
       {isWinner && (winMethod || winRound) ? (
         <p className="text-xs font-semibold text-[#4ade80]">
@@ -370,6 +396,7 @@ export default async function FightCard({
               winRound={winnerA ? fight.round : null}
               winLabel={t("event.win")}
               bcLabel={t("event.officialPrediction")}
+              championLabel={t("division.champion")}
               isCompleted={isCompleted}
               predictionResult={prediction && isCompleted && !isVoided && winnerA ? (prediction.is_winner_correct ? "correct" : prediction.is_winner_correct === false ? "wrong" : null) : null}
               predictionScore={prediction?.score}
@@ -392,6 +419,7 @@ export default async function FightCard({
               winRound={winnerB ? fight.round : null}
               winLabel={t("event.win")}
               bcLabel={t("event.officialPrediction")}
+              championLabel={t("division.champion")}
               isCompleted={isCompleted}
               predictionResult={prediction && isCompleted && !isVoided && winnerB ? (prediction.is_winner_correct ? "correct" : prediction.is_winner_correct === false ? "wrong" : null) : null}
               predictionScore={prediction?.score}

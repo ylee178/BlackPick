@@ -465,5 +465,8 @@
     "fighters": "Lutadores",
     "latestResults": "Últimos resultados",
     "close": "Fechar"
+  },
+  "division": {
+    "champion": "Campeão"
   }
 }
