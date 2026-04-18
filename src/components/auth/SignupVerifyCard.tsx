@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, ExternalLink, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ExternalLink, Info, Mail } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
 import {
   retroButtonClassName,
@@ -16,13 +16,28 @@ type Props = {
 
 type ResendState = "idle" | "sending" | "sent" | "error";
 
+// Client-side cooldowns. Belt-and-braces on top of the server route's
+// 3/5min per (IP, email) rate-limit — also mirrors Supabase's own
+// per-address cooldown so the UI doesn't surface 429s the user can't act on.
+const SUCCESS_COOLDOWN_SECONDS = 60;
+const ERROR_COOLDOWN_SECONDS = 30;
+
 export default function SignupVerifyCard({ email, onStartOver }: Props) {
   const { t } = useI18n();
   const provider = detectEmailProvider(email);
   const [resend, setResend] = useState<ResendState>("idle");
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const resendDisabled = resend === "sending" || cooldown > 0;
 
   const handleResend = async () => {
-    if (resend === "sending" || resend === "sent") return;
+    if (resendDisabled) return;
     setResend("sending");
     try {
       const resp = await fetch("/api/auth/resend-signup", {
@@ -30,20 +45,26 @@ export default function SignupVerifyCard({ email, onStartOver }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      setResend(resp.ok ? "sent" : "error");
+      if (resp.ok) {
+        setResend("sent");
+        setCooldown(SUCCESS_COOLDOWN_SECONDS);
+      } else {
+        setResend("error");
+        setCooldown(ERROR_COOLDOWN_SECONDS);
+      }
     } catch {
       setResend("error");
+      setCooldown(ERROR_COOLDOWN_SECONDS);
     }
   };
 
-  const resendLabel =
-    resend === "sending"
-      ? t("auth.verifyResending")
-      : resend === "sent"
-        ? t("auth.verifyResent")
-        : resend === "error"
-          ? t("auth.verifyResendError")
-          : t("auth.verifyResend");
+  const resendLabel = (() => {
+    if (cooldown > 0) return t("auth.verifyResendCooldown", { seconds: cooldown });
+    if (resend === "sending") return t("auth.verifyResending");
+    if (resend === "sent") return t("auth.verifyResent");
+    if (resend === "error") return t("auth.verifyResendError");
+    return t("auth.verifyResend");
+  })();
 
   return (
     <section
@@ -64,49 +85,46 @@ export default function SignupVerifyCard({ email, onStartOver }: Props) {
       <p className="mt-1 break-all text-base font-semibold text-[var(--bp-ink)]">
         {email}
       </p>
-      <p className="mt-4 text-sm leading-relaxed text-[var(--bp-muted)]">
-        {t("auth.verifyInstructions")}
-      </p>
 
-      {provider ? (
-        <a
-          href={provider.webmailUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-          className={retroButtonClassName({
-            variant: "primary",
-            size: "lg",
-            block: true,
-            className: "mt-5 gap-2",
-          })}
-        >
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          {t("auth.verifyOpenProvider", { name: provider.name })}
-        </a>
-      ) : null}
-
-      <div className="mt-4 flex flex-col items-center gap-2 text-xs sm:flex-row sm:justify-center sm:gap-5">
+      <p className="mt-3 text-xs text-[var(--bp-muted)]">
+        {t("auth.verifyNotReceivedPrefix")}{" "}
         <button
           type="button"
           onClick={handleResend}
-          disabled={resend === "sending" || resend === "sent"}
-          className="inline-flex cursor-pointer items-center font-semibold text-[var(--bp-accent)] transition hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={resendDisabled}
+          className="inline cursor-pointer font-semibold text-[var(--bp-accent)] transition hover:underline disabled:cursor-not-allowed disabled:opacity-60 disabled:no-underline"
         >
           {resendLabel}
         </button>
-        <button
-          type="button"
-          onClick={onStartOver}
-          className="inline-flex cursor-pointer items-center gap-1.5 font-semibold text-[var(--bp-muted)] transition hover:text-[var(--bp-ink)]"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-          {t("auth.verifyUseDifferentEmail")}
-        </button>
-      </div>
-
-      <p className="mt-6 text-xs leading-relaxed text-[var(--bp-muted)]">
-        {t("auth.verifySpamHint")}
       </p>
+
+      <a
+        href={provider?.webmailUrl ?? "mailto:"}
+        target="_blank"
+        rel="noreferrer noopener"
+        className={retroButtonClassName({
+          variant: "primary",
+          size: "lg",
+          block: true,
+          className: "mt-5 gap-2",
+        })}
+      >
+        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        {t("auth.verifyOpenInbox")}
+      </a>
+
+      <button
+        type="button"
+        onClick={onStartOver}
+        className="mt-3 inline-flex cursor-pointer items-center justify-center text-xs font-semibold text-[var(--bp-muted)] transition hover:text-[var(--bp-ink)]"
+      >
+        {t("auth.verifyUseDifferentEmail")}
+      </button>
+
+      <div className="mt-6 inline-flex items-start justify-center gap-1.5 text-xs leading-relaxed text-[var(--bp-muted)]">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span>{t("auth.verifySpamHint")}</span>
+      </div>
     </section>
   );
 }
