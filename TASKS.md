@@ -18,13 +18,11 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 ### 🟣 Claude — queue (priority order)
 
-The 7-branch queue agreed mid-session (see `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md` for full specs):
+Queue trimmed post session-9 merge train (PRs #44–#49 + #51 all merged to develop 2026-04-18). Original 7-branch plan spec: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md`.
 
-1. **ACTIVE NEXT — `chore/supabase-email-sender-docs`** (Docs). Tier-1 dashboard guide for "Black Pick" sender name swap (Sean runs ~5 min). Tier-2 custom SMTP via Resend bundles into `feature/feedback-email-relay`.
-2. **Next — `fix/legal-pages-redesign-and-disclaimer`** (Tier A). Add "fan-made community, NOT Black Combat official" banner × 7 locales + split Articles into per-panel cards. Leave `isKo` binary body prose for Phase 5 full i18n migration.
-3. **Next — `feature/comment-reply-threading`** (Tier B). 1-level flat replies + auto `@username` prepend (YouTube/Twitter pattern, not Reddit N-depth). No schema change — `parent_id` already exists on `fighter_comments` + `fight_comments`.
-4. **Next — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
-5. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
+1. **ACTIVE NEXT — `feature/comment-reply-threading`** (Tier B). 1-level flat replies + auto `@username` prepend (YouTube/Twitter pattern, not Reddit N-depth). No schema change — `parent_id` already exists on `fighter_comments` + `fight_comments`. For 2-depth inputs, lift to top-level parent (YouTube behavior) — confirm with Sean before commit.
+2. **Next — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
+3. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
 
 ### Blocked-on-Sean-manual (carried from session 5)
 
@@ -45,9 +43,10 @@ The 7-branch queue agreed mid-session (see `/Users/uxersean/Desktop/Wiki_Sean/Bl
 ### ⏸ Blocked on Sean manual (can't make progress until Sean acts)
 
 - **Branch 9** `fix/verify-all-predicted-toast` — Sean DevPanel verification
-- **Supabase test email send** — Dashboard verify `confirm_signup` + `reset_password` in Gmail / iOS Mail / Outlook
-- **`feature/feedback-email-relay`** — blocked by `Docs/email-setup.md` execution (~30 min Cloudflare + Resend + Gmail Send As)
-- **`feature/sentry-setup`** — blocked by Sentry account + `SENTRY_DSN`
+- **Supabase test email send** — Dashboard verify `confirm_signup` + `reset_password` in Gmail / iOS Mail / Outlook (PR #25 post-merge)
+- **PR #49 feedback relay smoke** — dev + prod feedback 버튼 submit → Gmail 수신 + Reply-To 동작 (authed + anon 두 경로). Custom SMTP 이미 live (session 8 mid)
+- **PR #51 legal pages visual spot-check** — `/en/terms`, `/ko/terms`, `/en/privacy`, `/ko/privacy` 대비 / 카드 spacing / 360px wrap (mn/pt-BR 긴 로케일 주의)
+- **`feature/sentry-setup`** — blocked by Sentry account; Vercel env (`SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN`) 이미 있음 (session 8 발견)
 - **`feature/facebook-oauth-wire-in`** — blocked by Meta App creation + Vercel env
 
 ### Parallel-agent discipline
@@ -110,29 +109,18 @@ _Goal: zero-cost PIPA-compliant email stack; route user feedback through Gmail (
 
 ### Branch: `docs/email-setup` — **SHIPPED 2026-04-14**
 - [x] `Docs/email-setup.md` — full Cloudflare Email Routing + Resend + Gmail Send As guide. 4 addresses (`noreply@`, `support@`, `admin@`, `privacy@`). Architecture, step-by-step, troubleshooting, PIPA 처리방침 language, $0 cost projection
-- [ ] **Sean runs the guide async** (~30 min manual: Cloudflare + Resend + Gmail). **Blocks `feature/feedback-email-relay`**
+- [x] **Sean ran the guide** — Cloudflare + Resend + Gmail Send As + Supabase Custom SMTP all live as of session 8 mid (2026-04-18). Unblocks `feature/feedback-email-relay`, which shipped PR #49 same session.
 
-### Branch: `feature/feedback-email-relay` (blackpick review) — **next session**
-Blocked by: `docs/email-setup` execution (Resend domain verified, `RESEND_API_KEY` + `FEEDBACK_RECIPIENT_EMAIL` in Vercel env).
+### Branch: `feature/feedback-email-relay` — ✅ **SHIPPED PR #49 (2026-04-18)**
 
-- [ ] `POST /api/feedback` route handler:
-  - **Auth-optional**: `getUser()` can return null. **Login-error users MUST be able to submit feedback** — Sean 2026-04-14 insight: "로그인 필수면 로그인 못 하는 에러 나는 유저가 피드백을 못 주자나"
-  - Input validation: category allowlist (Bug / UX / Question / Other), body 1–8000 chars, optional `contactEmail` for anon
-  - Rate limit: in-memory Map keyed by `user_id` (authed) or SHA-256(IP + day-salt) (anon), 5-min TTL, max 5/window. No persistence
-  - Vercel BotID for anon spam mitigation
-  - For authed users: server reads `public.users` (ring_name/score/wins/losses/current_streak) + `auth.users.email` — enriches payload, never returned to client
-  - Email payload (Resend SDK):
-    - Subject: `[BP Feedback] [{Category}] {ringname or 익명} — {first 40 chars}`
-    - From: `noreply@blackpick.io`, To: `FEEDBACK_RECIPIENT_EMAIL`
-    - **Reply-To: user's email** (authed auth.email OR anon's contactEmail). Gmail "Reply" → straight to user, no copy-paste
-    - Body: category, ringname + stats, email, page URL, user-agent, timestamp, feedback
-  - 200 on success, 503 on Resend failure (UI retries once then shows error)
-- [ ] `FeedbackButton` component — DevPanel bottom-right slot in `NODE_ENV === 'production'` (mutually exclusive with DevPanel). Always available regardless of auth state
-- [ ] `FeedbackModal` component — retro-styled: category dropdown, body textarea (1-8000 char counter), conditional `contactEmail` when `!authUser`, submit with loading/error state
-- [ ] Pure validator `src/lib/feedback-validation.ts` + `.test.ts` (~15 cases — 166 → ~181 tests)
-- [ ] i18n: ~14 new keys × 7 locales (`feedback.button`, `feedback.modalTitle`, category label + 4 options, body label, contactEmail label, submitCta, success/error/rate-limit toasts, authOptionalHint). Target: 372 → ~386 × 7
-- [ ] Integration smoke (local dev): submit → verify Gmail Reply-To → reply → confirm user receives. Both authed + anon paths
-- [ ] Privacy policy update — PIPA 처리위탁 section listing Resend / Cloudflare / Gmail. Content pre-drafted in `Docs/email-setup.md § PIPA 처리방침`
+Custom SMTP infra (Cloudflare + Resend + Gmail Send As + Supabase Custom SMTP) all live from session 8 mid. Implementation follows original spec. Post-merge smoke (real submit → Gmail + Reply-To) deferred to Blocked-on-Sean-manual.
+
+Shipped:
+- [x] `POST /api/feedback` route handler (auth-optional, rate-limited, Resend HTTP, Reply-To = authed email OR anon contactEmail, 200/400/429/503)
+- [x] `FeedbackButton` + `FeedbackModal` retro-styled components
+- [x] `src/lib/feedback-validation.ts` + 19 test cases
+- [x] i18n `feedback.*` namespace, 17 keys × 7 locales (397 → 414 base, +1 `legal` from PR #51 = 415)
+- [x] Privacy policy `/[locale]/privacy` — 처리위탁 section expanded (Resend + Cloudflare + Gmail 3 rows + 피드백 서브섹션)
 
 ### Branch: `feature/sentry-setup` (blackpick review) — **next session, parallel-safe**
 Blocked by: Sentry account + project created, `SENTRY_DSN` in Vercel env.
