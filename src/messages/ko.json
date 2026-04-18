@@ -432,6 +432,9 @@
     "errorGeneric": "보내지 못했어요. 잠시 후 다시 시도해주세요.",
     "errorRateLimit": "너무 많이 보냈어요. 잠시 후 다시 시도해주세요."
   },
+  "legal": {
+    "fanMadeDisclaimer": "BlackPick는 팬메이드 커뮤니티입니다. Black Combat의 공식 채널이 아닙니다."
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",

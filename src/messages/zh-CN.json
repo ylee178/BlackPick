@@ -432,6 +432,9 @@
     "errorGeneric": "发送失败，请稍后再试。",
     "errorRateLimit": "发送次数过多，请稍等再试。"
   },
+  "legal": {
+    "fanMadeDisclaimer": "BlackPick 是粉丝自发运营的社区。不是 Black Combat 的官方频道。"
+  },
   "common": {
     "loading": "加载中...",
     "error": "出了点问题",

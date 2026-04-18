@@ -432,6 +432,9 @@
     "errorGeneric": "Couldn't send. Please try again.",
     "errorRateLimit": "Too many messages. Please wait a moment and try again."
   },
+  "legal": {
+    "fanMadeDisclaimer": "BlackPick is a fan-made community. This is not an official Black Combat channel."
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

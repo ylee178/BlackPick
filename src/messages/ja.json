@@ -432,6 +432,9 @@
     "errorGeneric": "送信できませんでした。もう一度お試しください。",
     "errorRateLimit": "送信が多すぎます。少し待ってからお試しください。"
   },
+  "legal": {
+    "fanMadeDisclaimer": "BlackPickはファンメイドのコミュニティです。Black Combatの公式チャンネルではありません。"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",
