@@ -20,12 +20,11 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 The 7-branch queue agreed mid-session (see `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md` for full specs):
 
-1. **ACTIVE NEXT — `a11y/mobile-nav-icon-mapping`** (Tier A lite). `MainNav.tsx:31-37`: Picks `Home → Target`, My Record `CalendarDays → ClipboardList`. Dashboard/Ranking/Fighters unchanged.
-2. **Next — `chore/supabase-email-sender-docs`** (Docs). Tier-1 dashboard guide for "Black Pick" sender name swap (Sean runs ~5 min). Tier-2 custom SMTP via Resend bundles into `feature/feedback-email-relay`.
-3. **Next — `fix/legal-pages-redesign-and-disclaimer`** (Tier A). Add "fan-made community, NOT Black Combat official" banner × 7 locales + split Articles into per-panel cards. Leave `isKo` binary body prose for Phase 5 full i18n migration.
-4. **Next — `feature/comment-reply-threading`** (Tier B). 1-level flat replies + auto `@username` prepend (YouTube/Twitter pattern, not Reddit N-depth). No schema change — `parent_id` already exists on `fighter_comments` + `fight_comments`.
-5. **Next — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
-6. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
+1. **ACTIVE NEXT — `chore/supabase-email-sender-docs`** (Docs). Tier-1 dashboard guide for "Black Pick" sender name swap (Sean runs ~5 min). Tier-2 custom SMTP via Resend bundles into `feature/feedback-email-relay`.
+2. **Next — `fix/legal-pages-redesign-and-disclaimer`** (Tier A). Add "fan-made community, NOT Black Combat official" banner × 7 locales + split Articles into per-panel cards. Leave `isKo` binary body prose for Phase 5 full i18n migration.
+3. **Next — `feature/comment-reply-threading`** (Tier B). 1-level flat replies + auto `@username` prepend (YouTube/Twitter pattern, not Reddit N-depth). No schema change — `parent_id` already exists on `fighter_comments` + `fight_comments`.
+4. **Next — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
+5. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
 
 ### Blocked-on-Sean-manual (carried from session 5)
 
