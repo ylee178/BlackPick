@@ -163,6 +163,7 @@
     "loggingOut": "Saindo...",
     "forgotPassword": "Esqueceu sua senha?",
     "resetPassword": "Redefinir Senha",
+    "changePassword": "Alterar senha",
     "resetPasswordDescription": "Digite seu e-mail e enviaremos um link para redefinir sua senha.",
     "changePasswordDescription": "Enviaremos um link para este e-mail. Clique nele para definir uma nova senha.",
     "sendResetLink": "Enviar link",

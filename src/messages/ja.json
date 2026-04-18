@@ -163,6 +163,7 @@
     "loggingOut": "ログアウト中...",
     "forgotPassword": "パスワードをお忘れですか？",
     "resetPassword": "パスワード再設定",
+    "changePassword": "パスワードを変更",
     "resetPasswordDescription": "登録したメールアドレスを入力すると、再設定リンクをお送りします。",
     "changePasswordDescription": "このメールアドレス宛にリンクを送信します。リンクをクリックすると新しいパスワードを設定できます。",
     "sendResetLink": "再設定リンクを送信",

@@ -163,6 +163,7 @@
     "loggingOut": "Гарч байна...",
     "forgotPassword": "Нууц үгээ мартсан уу?",
     "resetPassword": "Нууц үг сэргээх",
+    "changePassword": "Нууц үг солих",
     "resetPasswordDescription": "Имэйлээ оруулна уу, бид танд нууц үгээ сэргээх холбоос илгээнэ.",
     "changePasswordDescription": "Энэ имэйл рүү холбоос илгээнэ. Холбоос дээр дарж шинэ нууц үг тохируулна уу.",
     "sendResetLink": "Сэргээх холбоос илгээх",

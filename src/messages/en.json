@@ -163,6 +163,7 @@
     "loggingOut": "Logging out...",
     "forgotPassword": "Forgot your password?",
     "resetPassword": "Reset Password",
+    "changePassword": "Change password",
     "resetPasswordDescription": "Enter your email and we'll send you a link to reset your password.",
     "changePasswordDescription": "We'll email a link to this address. Click it to set a new password.",
     "sendResetLink": "Send Reset Link",

@@ -163,6 +163,7 @@
     "loggingOut": "로그아웃 중...",
     "forgotPassword": "비밀번호를 잊으셨나요?",
     "resetPassword": "비밀번호 재설정",
+    "changePassword": "비밀번호 변경",
     "resetPasswordDescription": "가입한 이메일을 입력하면 비밀번호 재설정 링크를 보내드려요.",
     "changePasswordDescription": "이 이메일로 변경 링크를 보내드려요. 링크를 누르면 새 비밀번호를 설정할 수 있어요.",
     "sendResetLink": "재설정 링크 보내기",

@@ -163,6 +163,7 @@
     "loggingOut": "Cerrando sesión...",
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "resetPassword": "Restablecer contraseña",
+    "changePassword": "Cambiar contraseña",
     "resetPasswordDescription": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
     "changePasswordDescription": "Te enviaremos un enlace a este correo. Haz clic para establecer una nueva contraseña.",
     "sendResetLink": "Enviar enlace de restablecimiento",
