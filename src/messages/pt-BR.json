@@ -432,6 +432,9 @@
     "errorGeneric": "Não conseguimos enviar. Tente novamente.",
     "errorRateLimit": "Envios demais. Espere um momento e tente novamente."
   },
+  "legal": {
+    "fanMadeDisclaimer": "O BlackPick é uma comunidade feita por fãs. Não é um canal oficial do Black Combat."
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Algo deu errado",
