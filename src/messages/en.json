@@ -393,6 +393,28 @@
     "roundLabel": "R{round}",
     "overtime": "OT"
   },
+  "feedback": {
+    "button": "Send feedback",
+    "modalTitle": "Send feedback",
+    "modalDescription": "Bug, idea, or question — we read everything.",
+    "authOptionalHint": "No login needed. Add your email if you want a reply.",
+    "categoryLabel": "Category",
+    "categories": {
+      "bug": "Bug",
+      "ux": "UX",
+      "question": "Question",
+      "other": "Other"
+    },
+    "bodyLabel": "Message",
+    "bodyPlaceholder": "What happened, and what did you expect?",
+    "contactEmailLabel": "Email (optional)",
+    "contactEmailPlaceholder": "you@example.com",
+    "submit": "Send",
+    "submitting": "Sending",
+    "successToast": "Thanks — we got it.",
+    "errorGeneric": "Couldn't send. Please try again.",
+    "errorRateLimit": "Too many messages. Please wait a moment and try again."
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

@@ -8,6 +8,7 @@ import { getTranslations } from "@/lib/i18n-server";
 import RingNameOnboarding from "@/components/RingNameOnboarding";
 import StreakPrToast from "@/components/StreakPrToast";
 import { ToastProvider } from "@/components/Toast";
+import FeedbackButton from "@/components/FeedbackButton";
 import { isAdminUser } from "@/lib/admin-auth";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import {
@@ -139,6 +140,11 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
             <MainNav mobile />
           </div>
         </nav>
+
+        {/* Feedback button — prod-only (dev hides it in favor of DevPanel).
+            Rendered unconditionally by layout so auth-error users can still
+            reach us. */}
+        <FeedbackButton authed={!!authUser} />
       </div>
       </ToastProvider>
   );
