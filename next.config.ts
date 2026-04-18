@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -34,4 +35,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+// Wrap with Sentry last so webpack sees the final next-intl config.
+// Source maps / release tracking are driven by env vars injected by the
+// Sentry-Vercel Marketplace integration (SENTRY_AUTH_TOKEN / SENTRY_ORG /
+// SENTRY_PROJECT). Locally + on CI without those envs, the plugin no-ops
+// source-map upload but leaves the runtime SDK intact.
+export default withSentryConfig(withNextIntl(nextConfig), {
+  silent: !process.env.CI,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Expand source-map upload to include files outside /_next/static so the
+  // server bundle is covered too.
+  widenClientFileUpload: true,
+});
