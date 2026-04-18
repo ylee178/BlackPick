@@ -11,6 +11,16 @@ type ToastItem = {
   type: ToastType;
 };
 
+// Success = brief confirmation in a flow (pick saved, link copied) — keep short
+// so the toast doesn't linger while the user moves to the next action. Error
+// and streak stay longer: errors need reading time, streak toasts are celebratory.
+const DURATION_MS: Record<ToastType, number> = {
+  success: 1500,
+  error: 2500,
+  info: 2500,
+  streak: 2500,
+};
+
 type ToastContextValue = {
   toast: (message: string, type?: ToastType) => void;
 };
@@ -58,9 +68,9 @@ function ToastItem({ item, onDone }: { item: ToastItem; onDone: () => void }) {
     const timer = setTimeout(() => {
       setVisible(false);
       setTimeout(onDone, 200);
-    }, 2500);
+    }, DURATION_MS[item.type]);
     return () => clearTimeout(timer);
-  }, [onDone]);
+  }, [onDone, item.type]);
 
   const Icon =
     item.type === "success"
