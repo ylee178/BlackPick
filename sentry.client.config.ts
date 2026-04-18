@@ -3,6 +3,11 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { scrubEvent, scrubTransaction } from "@/lib/sentry-scrub";
+
+// NOTE: do not enable includeLocalVariables — sentry-scrub.ts does not cover
+// frames[].vars, so stack-frame locals would ship unredacted.
+// Session replay disabled until beforeSendReplay + maskAllText: true is wired.
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -10,5 +15,8 @@ Sentry.init({
   environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
   tracesSampleRate: 0.1,
   replaysSessionSampleRate: 0,
-  replaysOnErrorSampleRate: 0.1,
+  replaysOnErrorSampleRate: 0,
+  sendDefaultPii: false,
+  beforeSend: scrubEvent,
+  beforeSendTransaction: scrubTransaction,
 });
