@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
   const label = CATEGORY_LABELS[category];
   const identifier = ringName ?? "익명";
   const firstLine = body.split(/\r?\n/)[0]!.slice(0, 40);
-  const subject = `[BP Feedback] [${label}] ${identifier} — ${firstLine}`;
+  const subject = `[BP Feedback] [${label}] ${identifier}: ${firstLine}`;
 
   const statLine = stats
     ? `Score ${stats.score} · W-L ${stats.wins}-${stats.losses} · Streak ${stats.current_streak}`

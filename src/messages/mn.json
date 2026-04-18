@@ -428,7 +428,7 @@
     "contactEmailPlaceholder": "you@example.com",
     "submit": "Илгээх",
     "submitting": "Илгээж байна",
-    "successToast": "Баярлалаа, хүлээн авлаа.",
+    "successToast": "Маш их баярлалаа. Таны санал хүсэлтийг хүлээн авлаа.",
     "errorGeneric": "Илгээж чадсангүй. Дахин оролдоно уу.",
     "errorRateLimit": "Хэт олон удаа илгээлээ. Хэсэг хүлээгээд дахин оролдоно уу."
   },

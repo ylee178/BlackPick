@@ -428,7 +428,7 @@
     "contactEmailPlaceholder": "voce@example.com",
     "submit": "Enviar",
     "submitting": "Enviando",
-    "successToast": "Valeu, recebemos.",
+    "successToast": "Muito obrigado! Recebemos o seu comentário.",
     "errorGeneric": "Não conseguimos enviar. Tente novamente.",
     "errorRateLimit": "Envios demais. Espere um momento e tente novamente."
   },

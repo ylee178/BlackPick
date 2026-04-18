@@ -428,7 +428,7 @@
     "contactEmailPlaceholder": "you@example.com",
     "submit": "보내기",
     "submitting": "보내는 중",
-    "successToast": "고마워요. 잘 받았어요.",
+    "successToast": "정말 감사합니다. 피드백 잘 받았어요.",
     "errorGeneric": "보내지 못했어요. 잠시 후 다시 시도해주세요.",
     "errorRateLimit": "너무 많이 보냈어요. 잠시 후 다시 시도해주세요."
   },
