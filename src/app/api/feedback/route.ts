@@ -4,6 +4,19 @@ import { createSupabaseServer, getUser } from "@/lib/supabase-server";
 import { createRateLimiter, rateLimitResponse, getClientIp } from "@/lib/rate-limit";
 import { validateFeedback, type FeedbackCategory } from "@/lib/feedback-validation";
 
+// Accepts only canonical UUIDv4 shape. Rejects anything else so a malicious
+// caller can't stuff arbitrary header bytes into the Resend request.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// This route intentionally uses the Node.js runtime (default). Do NOT switch
+// to `export const runtime = 'edge'` — the IP_SALT below is evaluated at
+// module load, which on Edge is effectively per-request, and would
+// regenerate the salt on every request, making the anon rate-limit keys
+// non-deterministic and disabling anon IP rate-limiting entirely.
+
+// BotID intentionally deferred for MVP. Rate-limit below is the current spam
+// mitigation. Revisit if feedback volume or abuse signal warrants it — see
+// TASKS.md §feature/feedback-email-relay spec discussion and PR #49.
 const feedbackLimiter = createRateLimiter({ limit: 5, windowSeconds: 300 });
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
@@ -135,14 +148,26 @@ ${escapeHtml(body)}
   };
   if (replyTo) resendPayload.reply_to = replyTo;
 
+  // Idempotency key: the client retries once on 503 (see FeedbackModal).
+  // The key is generated CLIENT-SIDE before the first attempt and reused on
+  // retry, so Resend's upstream can dedupe if they accepted the first send
+  // but returned 5xx on response. Without client-side ownership of the key,
+  // a server-generated key would differ between the two requests and
+  // produce duplicate deliveries.
+  const clientKey = req.headers.get("x-feedback-idempotency-key")?.trim();
+  const idempotencyKey = clientKey && UUID_RE.test(clientKey) ? clientKey : null;
+
+  const resendHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${resendKey}`,
+  };
+  if (idempotencyKey) resendHeaders["Idempotency-Key"] = idempotencyKey;
+
   let resp: Response;
   try {
     resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resendKey}`,
-      },
+      headers: resendHeaders,
       body: JSON.stringify(resendPayload),
     });
   } catch (err) {

@@ -43,11 +43,20 @@ export default async function PrivacyPage() {
           <h3 className="text-[15px] font-semibold text-[var(--bp-ink)] mb-2">
             {isKo ? "다. 서비스 이용 중 자동 생성" : "c. Automatically Generated During Use"}
           </h3>
-          <ul className="list-disc pl-5 flex flex-col gap-1">
+          <ul className="list-disc pl-5 flex flex-col gap-1 mb-4">
             <li>{isKo ? "예측 기록 (경기 결과 예측, 포인트, 전적)" : "Prediction records (match forecasts, points, record)"}</li>
             <li>{isKo ? "댓글 및 좋아요 내역" : "Comments and likes"}</li>
             <li>{isKo ? "MVP 투표 기록" : "MVP vote history"}</li>
             <li>{isKo ? "알림 수신 기록" : "Notification receipts"}</li>
+          </ul>
+
+          <h3 className="text-[15px] font-semibold text-[var(--bp-ink)] mb-2">
+            {isKo ? "라. 피드백 제출 시 (선택)" : "d. Upon Feedback Submission (Optional)"}
+          </h3>
+          <ul className="list-disc pl-5 flex flex-col gap-1">
+            <li>{isKo ? "피드백 내용 및 카테고리" : "Feedback message and category"}</li>
+            <li>{isKo ? "연락받을 이메일 주소 (비로그인 사용자가 입력한 경우에 한함)" : "Contact email address (only if entered by a non-logged-in user)"}</li>
+            <li>{isKo ? "제출 시 페이지 URL 및 브라우저 User-Agent (운영자 문맥용)" : "Page URL and browser User-Agent at submission (for operator context)"}</li>
           </ul>
         </section>
 

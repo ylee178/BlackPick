@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useI18n } from "@/lib/i18n-provider";
 import { useToast } from "@/components/Toast";
@@ -35,6 +35,11 @@ export default function FeedbackModal({ authed, onClose }: Props) {
   const [contactEmail, setContactEmail] = useState("");
   const [submit, setSubmit] = useState<SubmitState>({ status: "idle" });
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -43,12 +48,60 @@ export default function FeedbackModal({ authed, onClose }: Props) {
     };
   }, []);
 
+  // Focus management + Escape + Tab focus trap. Mirrors SignupGateModal so
+  // keyboard + screen-reader users get consistent behavior across dialogs:
+  //  - On open: capture the previously focused element, move focus to the
+  //    close button (safest initial landing target).
+  //  - Escape closes (unless submitting).
+  //  - Tab / Shift+Tab cycle focus through the dialog's focusable
+  //    descendants. The focusable set is recomputed per keystroke because
+  //    the error panel + submit button's disabled state can change while
+  //    the modal is open.
+  //  - On unmount: restore focus to the previously focused element.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && submit.status !== "submitting") onClose();
+    previouslyFocusedRef.current =
+      (document.activeElement as HTMLElement | null) ?? null;
+    closeButtonRef.current?.focus();
+
+    function getFocusable(): HTMLElement[] {
+      const root = dialogRef.current;
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("aria-hidden"));
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (submit.status !== "submitting") onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (active === first || !dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last || !dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocusedRef.current?.focus?.();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, [onClose, submit.status]);
 
   const submitting = submit.status === "submitting";
@@ -69,11 +122,24 @@ export default function FeedbackModal({ authed, onClose }: Props) {
       contactEmail: authed ? undefined : contactEmail || undefined,
     });
 
+    // Generated once per submission attempt and reused across the retry, so
+    // Resend (via our route) dedupes if it accepted the first send but
+    // returned 5xx on response. Modern browsers expose crypto.randomUUID;
+    // fall back gracefully if it isn't available.
+    const idempotencyKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : null;
+
     const tryOnce = async (): Promise<Response | null> => {
       try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (idempotencyKey) headers["x-feedback-idempotency-key"] = idempotencyKey;
         return await fetch("/api/feedback", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: payload,
         });
       } catch {
@@ -111,13 +177,21 @@ export default function FeedbackModal({ authed, onClose }: Props) {
 
   return (
     <div
+      ref={overlayRef}
+      onClick={(e) => {
+        if (e.target === overlayRef.current && !submitting) onClose();
+      }}
       className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(15,17,21,0.85)] px-4 py-10 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="feedback-modal-title"
     >
-      <div className={retroPanelClassName({ className: "relative w-full max-w-md p-5 sm:p-6" })}>
+      <div
+        ref={dialogRef}
+        className={retroPanelClassName({ className: "relative w-full max-w-md p-5 sm:p-6" })}
+      >
         <button
+          ref={closeButtonRef}
           type="button"
           aria-label={t("common.close")}
           onClick={() => !submitting && onClose()}
@@ -160,7 +234,7 @@ export default function FeedbackModal({ authed, onClose }: Props) {
               </label>
               <span
                 className={
-                  charCount > FEEDBACK_BODY_MAX
+                  charCount >= FEEDBACK_BODY_MAX
                     ? "text-xs text-[var(--bp-danger)]"
                     : "text-xs text-[var(--bp-muted)]"
                 }
@@ -201,7 +275,10 @@ export default function FeedbackModal({ authed, onClose }: Props) {
           ) : null}
 
           {errorMessage ? (
-            <div className="rounded-[10px] border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3.5 py-2.5 text-sm text-[var(--bp-danger)]">
+            <div
+              role="alert"
+              className="rounded-[10px] border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.08)] px-3.5 py-2.5 text-sm text-[var(--bp-danger)]"
+            >
               {errorMessage}
             </div>
           ) : null}
