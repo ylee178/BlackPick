@@ -35,9 +35,9 @@ describe("isWeakPassword", () => {
   it("is safe for non-string input at runtime", () => {
     // @ts-expect-error deliberately exercising runtime safety
     expect(isWeakPassword(null)).toBe(false);
-    // @ts-expect-error
+    // @ts-expect-error deliberately exercising runtime safety
     expect(isWeakPassword(undefined)).toBe(false);
-    // @ts-expect-error
+    // @ts-expect-error deliberately exercising runtime safety
     expect(isWeakPassword(12345)).toBe(false);
   });
 });
