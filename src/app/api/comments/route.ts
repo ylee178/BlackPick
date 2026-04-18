@@ -17,7 +17,7 @@ async function validateParentComment(
 ) {
   const { data, error } = await supabase
     .from("fight_comments")
-    .select("id, fight_id")
+    .select("id, fight_id, parent_id")
     .eq("id", parentId)
     .maybeSingle();
 
@@ -32,6 +32,13 @@ async function validateParentComment(
   if (data.fight_id !== fightId) {
     return NextResponse.json(
       { error: "Parent comment must belong to the same fight" },
+      { status: 400 },
+    );
+  }
+
+  if (data.parent_id !== null) {
+    return NextResponse.json(
+      { error: "Cannot reply to a reply. Reply to the original comment." },
       { status: 400 },
     );
   }
@@ -142,6 +149,9 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
+    if (error.code === "23503") {
+      return NextResponse.json({ error: "Parent comment no longer exists" }, { status: 400 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
