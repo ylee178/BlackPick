@@ -39,12 +39,16 @@ export default function FeedbackModal({ authed, onClose }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const activeControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
+      // Abort any in-flight submission on unmount so a hung fetch does
+      // not keep the tab spinning after the modal closes.
+      activeControllerRef.current?.abort();
     };
   }, []);
 
@@ -131,7 +135,14 @@ export default function FeedbackModal({ authed, onClose }: Props) {
         ? crypto.randomUUID()
         : null;
 
+    // 30s timeout per attempt so a hung fetch (DNS stall, upstream Resend
+    // not responding) cannot pin `submit.status = "submitting"` forever
+    // and trap the user inside the modal (Escape/backdrop/close are all
+    // gated on !submitting).
     const tryOnce = async (): Promise<Response | null> => {
+      const controller = new AbortController();
+      activeControllerRef.current = controller;
+      const timeout = setTimeout(() => controller.abort(), 30_000);
       try {
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
@@ -141,9 +152,15 @@ export default function FeedbackModal({ authed, onClose }: Props) {
           method: "POST",
           headers,
           body: payload,
+          signal: controller.signal,
         });
       } catch {
         return null;
+      } finally {
+        clearTimeout(timeout);
+        if (activeControllerRef.current === controller) {
+          activeControllerRef.current = null;
+        }
       }
     };
 

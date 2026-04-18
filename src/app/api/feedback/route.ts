@@ -70,11 +70,16 @@ export async function POST(req: NextRequest) {
   }
   const { category, body, contactEmail } = validation.data;
 
-  const user = await getUser();
-
-  const rateKey = user ? `u:${user.id}` : `ip:${hashIp(getClientIp(req))}`;
+  // Rate-limit BEFORE `getUser()` so abuse traffic does not spend a
+  // Supabase auth round-trip per rejected request. Single IP-scoped
+  // budget for authed + anon callers — simpler than maintaining parallel
+  // buckets, and the 5/5min ceiling is generous enough that shared-IP
+  // households / offices are not realistically impacted at MVP scale.
+  const rateKey = `ip:${hashIp(getClientIp(req))}`;
   const { allowed, resetInSeconds } = feedbackLimiter.check(rateKey);
   if (!allowed) return rateLimitResponse(resetInSeconds);
+
+  const user = await getUser();
 
   let ringName: string | null = null;
   let stats: { score: number; wins: number; losses: number; current_streak: number } | null = null;
