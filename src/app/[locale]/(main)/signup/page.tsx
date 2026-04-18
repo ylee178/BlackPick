@@ -6,14 +6,20 @@ import { Link } from "@/i18n/navigation";
 import { buildLocalizedAuthPath, getSafeAuthNext } from "@/lib/auth-next";
 import { logEvent } from "@/lib/analytics";
 import { mapAuthErrorCode } from "@/lib/auth-error";
+import { isWeakPassword } from "@/lib/weak-passwords";
 import { useI18n } from "@/lib/i18n-provider";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import CheckEmailCard from "@/components/auth/CheckEmailCard";
 import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
   retroFieldClassName,
   retroPanelClassName,
 } from "@/components/ui/retro";
+
+type Stage =
+  | { kind: "form" }
+  | { kind: "check-email"; email: string };
 
 export default function SignupPage() {
   const searchParams = useSearchParams();
@@ -24,13 +30,18 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>({ kind: "form" });
 
   const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setError(null);
-    setMessage(null);
+
+    if (isWeakPassword(password)) {
+      setError(t("auth.passwordCompromised"));
+      setLoading(false);
+      return;
+    }
 
     const normalizedEmail = email.trim().toLowerCase();
     const signupResponse = await fetch("/api/auth/signup", {
@@ -65,12 +76,30 @@ export default function SignupPage() {
     if (signupPayload?.mode === "check_email") {
       logEvent("signup_completed", { method: "email", auto_signed_in: false });
       setPassword("");
-      setMessage(t("auth.signupCheckEmail"));
+      setStage({ kind: "check-email", email: normalizedEmail });
       return;
     }
 
     setError(t("auth.authUnexpected"));
   };
+
+  const handleStartOver = () => {
+    setStage({ kind: "form" });
+    setError(null);
+  };
+
+  if (stage.kind === "check-email") {
+    return (
+      <div className="flex w-full flex-1 items-center justify-center">
+        <CheckEmailCard
+          email={stage.email}
+          variant="signup"
+          onStartOver={handleStartOver}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full flex-1 items-center justify-center">
       <section className={retroPanelClassName({ className: "w-full max-w-md p-5 sm:p-6" })}>
@@ -115,12 +144,6 @@ export default function SignupPage() {
             </div>
           ) : null}
 
-          {message ? (
-            <div className="rounded-[10px] border border-[rgba(59,130,246,0.18)] bg-[rgba(59,130,246,0.10)] px-3.5 py-2.5 text-sm text-[var(--bp-accent)]">
-              {message}
-            </div>
-          ) : null}
-
           <button
             type="submit"
             disabled={loading}
@@ -143,7 +166,6 @@ export default function SignupPage() {
             onError={setError}
             onStart={() => {
               setError(null);
-              setMessage(null);
             }}
           />
 

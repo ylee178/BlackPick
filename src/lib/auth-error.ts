@@ -26,6 +26,8 @@ export function mapAuthErrorCode(code: string | undefined, t: (key: string) => s
       return t("auth.invalidEmail");
     case "password_too_short":
       return t("auth.passwordTooShort");
+    case "password_compromised":
+      return t("auth.passwordCompromised");
     case "user_exists":
       return t("auth.userExists");
     default:

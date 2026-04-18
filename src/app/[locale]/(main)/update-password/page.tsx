@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { isWeakPassword } from "@/lib/weak-passwords";
 import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
@@ -30,13 +31,37 @@ export default function UpdatePasswordPage() {
       return;
     }
 
+    if (isWeakPassword(password)) {
+      setError(t("auth.passwordCompromised"));
+      setLoading(false);
+      return;
+    }
+
     const { error: updateError } = await supabase.auth.updateUser({
       password,
     });
 
     if (updateError) {
       setLoading(false);
-      setError(t("auth.passwordUpdateFailed"));
+      // Supabase's server-side password policy is stricter than our
+      // 6-char client check — in particular, the HIBP breach check can
+      // reject very common passwords ("123456", "password", etc). Surface
+      // the actual reason so the user knows what to change. Map the
+      // breach case to a friendlier i18n message; fall back to the raw
+      // Supabase message for everything else (length, complexity rules,
+      // same-as-old, etc).
+      const rawMessage = updateError.message ?? "";
+      const lower = rawMessage.toLowerCase();
+      const isBreached =
+        lower.includes("pwned") ||
+        lower.includes("compromis") ||
+        lower.includes("leaked") ||
+        lower.includes("breach");
+      setError(
+        isBreached
+          ? t("auth.passwordCompromised")
+          : rawMessage || t("auth.passwordUpdateFailed"),
+      );
       return;
     }
 
