@@ -428,7 +428,7 @@
     "contactEmailPlaceholder": "you@example.com",
     "submit": "Send",
     "submitting": "Sending",
-    "successToast": "Thanks — we got it.",
+    "successToast": "Thanks so much. We got your feedback.",
     "errorGeneric": "Couldn't send. Please try again.",
     "errorRateLimit": "Too many messages. Please wait a moment and try again."
   },

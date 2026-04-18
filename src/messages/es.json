@@ -428,7 +428,7 @@
     "contactEmailPlaceholder": "tu@example.com",
     "submit": "Enviar",
     "submitting": "Enviando",
-    "successToast": "Gracias, lo recibimos.",
+    "successToast": "¡Muchísimas gracias! Recibimos tu comentario.",
     "errorGeneric": "No se pudo enviar. Inténtalo de nuevo.",
     "errorRateLimit": "Demasiados envíos. Espera un momento e inténtalo de nuevo."
   },

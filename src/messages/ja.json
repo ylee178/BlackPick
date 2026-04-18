@@ -428,7 +428,7 @@
     "contactEmailPlaceholder": "you@example.com",
     "submit": "送信",
     "submitting": "送信中",
-    "successToast": "ありがとうございます。受け取りました。",
+    "successToast": "本当にありがとうございます。フィードバックを受け取りました。",
     "errorGeneric": "送信できませんでした。もう一度お試しください。",
     "errorRateLimit": "送信が多すぎます。少し待ってからお試しください。"
   },
