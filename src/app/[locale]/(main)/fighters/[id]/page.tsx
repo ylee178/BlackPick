@@ -185,31 +185,36 @@ export default async function FighterDetailPage({ params }: PageProps) {
               {ringName}
             </h1>
 
-            {/* Meta row — single chip matches the fight-card pattern
-                `{weight} · {#rank}` so the ranking signal reads the
-                same way everywhere a fighter info card appears. */}
+            {/* Meta row layouts:
+                - Champion: weight chip + separate gold-gradient CHAMPION chip
+                - Ranked: single chip `{weight} #N` (`#N` in ink)
+                - Unranked: plain weight chip */}
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span className="text-xl">{flag}</span>
-              {divisionChip ? (
+              {divisionChip?.tone === "champion" ? (
+                <>
+                  {divisionChip.weightLabel ? (
+                    <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
+                      {divisionChip.weightLabel}
+                    </span>
+                  ) : null}
+                  <span className="rounded-xl border border-[var(--bp-accent)]/45 bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em]">
+                    <span className="bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text text-transparent">
+                      {divisionChip.rankLabel}
+                    </span>
+                  </span>
+                </>
+              ) : divisionChip?.tone === "ranked" ? (
                 <span
                   aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
                     .filter(Boolean)
                     .join(" ")}
-                  className="inline-flex items-center gap-1 rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em]"
                 >
                   {divisionChip.weightLabel ? (
-                    <span className="uppercase tracking-[0.06em] text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+                    <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
                   ) : null}
-                  <span className="text-[var(--bp-muted)]">·</span>
-                  <span
-                    className={
-                      divisionChip.tone === "champion"
-                        ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text uppercase tracking-[0.06em] text-transparent"
-                        : "uppercase tracking-[0.06em] text-[var(--bp-ink)]"
-                    }
-                  >
-                    {divisionChip.rankLabel}
-                  </span>
+                  <span className="text-[var(--bp-ink)]">{divisionChip.rankLabel}</span>
                 </span>
               ) : weightClass ? (
                 <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
