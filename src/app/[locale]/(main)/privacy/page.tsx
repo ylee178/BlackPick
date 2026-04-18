@@ -113,6 +113,14 @@ export default async function PrivacyPage() {
                   <td className="py-2 pr-4">Google LLC</td>
                   <td className="py-2">{isKo ? "소셜 로그인 (OAuth)" : "Social login (OAuth)"}</td>
                 </tr>
+                <tr className="border-b border-[var(--bp-line)]">
+                  <td className="py-2 pr-4">Resend, Inc.</td>
+                  <td className="py-2">{isKo ? "피드백 이메일 발송" : "Feedback email delivery"}</td>
+                </tr>
+                <tr className="border-b border-[var(--bp-line)]">
+                  <td className="py-2 pr-4">Cloudflare, Inc.</td>
+                  <td className="py-2">{isKo ? "이메일 라우팅 (피드백 수신함)" : "Email routing (feedback inbox)"}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -179,7 +187,7 @@ export default async function PrivacyPage() {
         </section>
 
         <p className="text-sm text-[var(--bp-muted)]">
-          {isKo ? "시행일: 2026년 4월 8일" : "Effective: April 8, 2026"}
+          {isKo ? "시행일: 2026년 4월 18일" : "Effective: April 18, 2026"}
         </p>
       </div>
     </div>
