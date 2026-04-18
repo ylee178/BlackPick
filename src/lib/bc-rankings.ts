@@ -142,3 +142,71 @@ export async function fetchBcRankings(): Promise<BcRankingResult> {
   });
   return parseBcRankingsHtml(res.data);
 }
+
+/**
+ * Minimal BC fighter profile — just enough to reconcile a BC seq with
+ * one of our `fighters` rows by name when `sync-bc-event-card.ts`
+ * never touched them.
+ *
+ * BC profile markup shape (from `/fighter/{seq}`):
+ *
+ *     <div class="data_name">
+ *         <span class="fi fi-kr"></span> 김재웅<br />
+ *         <span class="data_ringname">"투신"</span>
+ *         <span class="data_age">AGE : 33</span>
+ *     </div>
+ *
+ *   - `displayName` is the top-level text inside `.data_name` after
+ *     stripping the flag, ring name, and age sub-elements. This is
+ *     usually the Korean real name (김재웅), or the romanized name for
+ *     international fighters.
+ *   - `ringName` is `.data_ringname` text with the surrounding double
+ *     quotes stripped.
+ */
+export type BcFighterProfile = {
+  displayName: string | null;
+  ringName: string | null;
+};
+
+export function parseBcFighterProfileHtml(html: string): BcFighterProfile {
+  const $ = cheerio.load(html);
+  const $dataName = $(".data_name").first();
+  if (!$dataName.length) {
+    return { displayName: null, ringName: null };
+  }
+  const rawRing = cleanText($dataName.find(".data_ringname").first().text());
+  const ringName = rawRing ? rawRing.replace(/^["'“”]+|["'“”]+$/g, "").trim() || null : null;
+
+  // Clone the node and drop all child elements that aren't the real
+  // name text. What's left is the bare text node (김재웅 / "Gabriel
+  // Rodrigues" / etc.).
+  const $clone = $dataName.clone();
+  $clone.find(".fi, .data_ringname, .data_age, .sns_link, br").remove();
+  const displayName = cleanText($clone.text());
+
+  return { displayName, ringName };
+}
+
+/**
+ * Fetches + parses BC fighter profile HTML. Used by
+ * `sync-bc-fighter-ranks.ts` tier-3 fallback to resolve a BC seq to a
+ * DB fighter when neither `source_fighter_id` nor the strict
+ * weight-class-scoped name match hit. Rate limiting is the caller's
+ * responsibility.
+ */
+export async function fetchBcFighterProfile(
+  sourceFighterId: string,
+): Promise<BcFighterProfile> {
+  const res = await axios.get<string>(
+    `https://blackcombat-official.com/fighter/${encodeURIComponent(sourceFighterId)}`,
+    {
+      timeout: 15_000,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; BlackPickCrawler/3.0; +https://blackcombat-official.com)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    },
+  );
+  return parseBcFighterProfileHtml(res.data);
+}

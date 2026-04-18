@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBcRankingsHtml } from "./bc-rankings";
+import { parseBcFighterProfileHtml, parseBcRankingsHtml } from "./bc-rankings";
 
 /**
  * Fixture matches the exact markup shape observed on
@@ -194,5 +194,46 @@ describe("parseBcRankingsHtml", () => {
     const result = parseBcRankingsHtml("");
     expect(result.entries).toEqual([]);
     expect(result.divisionsSeen).toEqual([]);
+  });
+});
+
+describe("parseBcFighterProfileHtml", () => {
+  it("extracts real name + ring name from canonical markup", () => {
+    // Shape from /fighter/98660587 (투신) observed 2026-04-19.
+    const html = `
+      <div class="data_name">
+        <span class="fi fi-kr"></span> 김재웅<br />
+        <span class="data_ringname">"투신"</span>
+        <span class="data_age">AGE : 33</span>
+      </div>`;
+    const result = parseBcFighterProfileHtml(html);
+    expect(result.displayName).toBe("김재웅");
+    expect(result.ringName).toBe("투신");
+  });
+
+  it("strips curly/typographic quotes from ring name", () => {
+    const html = `
+      <div class="data_name">
+        <span class="fi fi-br"></span> Gabriel Rodrigues<br />
+        <span class="data_ringname">“인디언킹”</span>
+      </div>`;
+    const result = parseBcFighterProfileHtml(html);
+    expect(result.displayName).toBe("Gabriel Rodrigues");
+    expect(result.ringName).toBe("인디언킹");
+  });
+
+  it("returns nulls when data_name is absent (defensive)", () => {
+    const result = parseBcFighterProfileHtml("<html><body>empty</body></html>");
+    expect(result).toEqual({ displayName: null, ringName: null });
+  });
+
+  it("handles missing ring name (rookie profile) without error", () => {
+    const html = `
+      <div class="data_name">
+        <span class="fi fi-kr"></span> 이유하
+      </div>`;
+    const result = parseBcFighterProfileHtml(html);
+    expect(result.displayName).toBe("이유하");
+    expect(result.ringName).toBeNull();
   });
 });

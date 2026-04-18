@@ -48,7 +48,11 @@
  */
 import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { fetchBcRankings, type BcRankingEntry } from "../lib/bc-rankings";
+import {
+  fetchBcFighterProfile,
+  fetchBcRankings,
+  type BcRankingEntry,
+} from "../lib/bc-rankings";
 
 loadEnv({ path: ".env" });
 
@@ -97,10 +101,16 @@ async function loadAllFighters(): Promise<FighterRow[]> {
 type MatchResult =
   | { kind: "by-source-id"; fighter: FighterRow }
   | { kind: "by-name"; fighter: FighterRow; backfillSourceId: string }
+  | { kind: "by-profile"; fighter: FighterRow; backfillSourceId: string }
   | { kind: "ambiguous"; candidates: FighterRow[] }
   | { kind: "unmatched" };
 
-function matchFighter(entry: BcRankingEntry, fighters: FighterRow[]): MatchResult {
+/**
+ * Tier-1 (source_fighter_id) + tier-2 (name + weight class) match.
+ * Synchronous — no network. Tier-3 (BC profile fetch) runs as a
+ * separate pass for entries this returns `unmatched` on.
+ */
+function matchFighterLocal(entry: BcRankingEntry, fighters: FighterRow[]): MatchResult {
   // Tier 1: strict source_fighter_id match (post-backfill happy path).
   const bySourceId = fighters.filter(
     (f) => f.source_fighter_id === entry.sourceFighterId,
@@ -109,8 +119,8 @@ function matchFighter(entry: BcRankingEntry, fighters: FighterRow[]): MatchResul
   if (bySourceId.length > 1) return { kind: "ambiguous", candidates: bySourceId };
 
   // Tier 2: normalized-name match scoped to the same weight class.
-  // We intentionally restrict to the announced weight class so a fighter
-  // who moved divisions doesn't get tagged with a stale rank from their
+  // Restricting to the announced weight class prevents a fighter who
+  // moved divisions from getting tagged with a stale rank from their
   // old class.
   const target = normalizeName(entry.displayName);
   if (!target) return { kind: "unmatched" };
@@ -132,6 +142,49 @@ function matchFighter(entry: BcRankingEntry, fighters: FighterRow[]): MatchResul
   if (byName.length > 1) return { kind: "ambiguous", candidates: byName };
   return { kind: "unmatched" };
 }
+
+/**
+ * Tier-3: resolve by BC fighter-profile name after tier-1 + tier-2
+ * have both missed. No weight-class scope, because the ranking entry's
+ * weight class may differ from our stored `fighters.weight_class` for
+ * fighters that existed pre-rank-sync. Still strict: requires exactly
+ * one DB candidate matching on name / name_en / name_ko / ring_name.
+ * Never overwrites `weight_class` — that's outside this job's write
+ * authority per Codex 2026-04-19.
+ */
+function matchFighterByProfile(
+  profile: { displayName: string | null; ringName: string | null },
+  sourceFighterId: string,
+  fighters: FighterRow[],
+): MatchResult {
+  const targets = [
+    normalizeName(profile.displayName),
+    normalizeName(profile.ringName),
+  ].filter((t): t is string => Boolean(t));
+  if (targets.length === 0) return { kind: "unmatched" };
+
+  const candidates = fighters.filter((f) => {
+    const keys = [f.name, f.name_en, f.name_ko, f.ring_name]
+      .map(normalizeName)
+      .filter(Boolean);
+    return keys.some((key) => targets.includes(key));
+  });
+  if (candidates.length === 1) {
+    return {
+      kind: "by-profile",
+      fighter: candidates[0],
+      backfillSourceId: sourceFighterId,
+    };
+  }
+  if (candidates.length > 1) return { kind: "ambiguous", candidates };
+  return { kind: "unmatched" };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const TIER3_RATE_LIMIT_MS = 1200;
 
 type ApplyAction =
   | { kind: "update"; fighterId: string; patch: Partial<FighterRow>; prev: FighterRow; entry: BcRankingEntry }
@@ -166,9 +219,75 @@ async function main() {
   // Track fighter IDs we've already handled so stale-reset doesn't
   // clobber a row we just wrote in this run.
   const matchedIds = new Set<string>();
+  // Entries that need the tier-3 BC profile fetch fallback.
+  const tier3Queue: BcRankingEntry[] = [];
 
+  const recordMatch = (
+    match: Extract<MatchResult, { kind: "by-source-id" | "by-name" | "by-profile" }>,
+    entry: BcRankingEntry,
+  ) => {
+    const fighter = match.fighter;
+    matchedIds.add(fighter.id);
+
+    const newIsChampion = entry.kind === "champion";
+    const newRankPosition = entry.kind === "ranked" ? entry.position : null;
+    const patch: Partial<FighterRow> = {};
+    if (fighter.is_champion !== newIsChampion) patch.is_champion = newIsChampion;
+    if (fighter.rank_position !== newRankPosition) patch.rank_position = newRankPosition;
+    if (
+      (match.kind === "by-name" || match.kind === "by-profile") &&
+      fighter.source_fighter_id !== match.backfillSourceId
+    ) {
+      patch.source_fighter_id = match.backfillSourceId;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      actions.push({ kind: "same", fighterId: fighter.id });
+    } else {
+      actions.push({ kind: "update", fighterId: fighter.id, patch, prev: fighter, entry });
+    }
+  };
+
+  // Pass 1: tier-1 + tier-2 sync matches. Unmatched entries queue for
+  // pass 2, the rate-limited BC profile fallback.
   for (const entry of result.entries) {
-    const match = matchFighter(entry, fighters);
+    const match = matchFighterLocal(entry, fighters);
+    if (match.kind === "ambiguous") {
+      actions.push({
+        kind: "skip-ambiguous",
+        entry,
+        candidateIds: match.candidates.map((c) => c.id),
+      });
+      continue;
+    }
+    if (match.kind === "unmatched") {
+      tier3Queue.push(entry);
+      continue;
+    }
+    recordMatch(match, entry);
+  }
+
+  // Pass 2: tier-3. For each queued entry, fetch the BC fighter
+  // profile and look up our DB fighter by name. Rate-limited per
+  // Codex 2026-04-19 — tier-3 only runs for the gap the local match
+  // couldn't close, so the BC request budget is proportional to
+  // coverage debt.
+  if (tier3Queue.length > 0) {
+    console.log(`   Tier-3 fallback: fetching ${tier3Queue.length} BC fighter profile(s)…`);
+  }
+  for (const entry of tier3Queue) {
+    await sleep(TIER3_RATE_LIMIT_MS);
+    let profile: { displayName: string | null; ringName: string | null };
+    try {
+      profile = await fetchBcFighterProfile(entry.sourceFighterId);
+    } catch (err) {
+      console.log(
+        `  [tier-3-fail] ${entry.displayName} (${entry.weightClass}) source_id=${entry.sourceFighterId} — BC fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      actions.push({ kind: "skip-unmatched", entry });
+      continue;
+    }
+    const match = matchFighterByProfile(profile, entry.sourceFighterId, fighters);
     if (match.kind === "ambiguous") {
       actions.push({
         kind: "skip-ambiguous",
@@ -181,27 +300,7 @@ async function main() {
       actions.push({ kind: "skip-unmatched", entry });
       continue;
     }
-
-    const fighter = match.fighter;
-    matchedIds.add(fighter.id);
-
-    const newIsChampion = entry.kind === "champion";
-    const newRankPosition = entry.kind === "ranked" ? entry.position : null;
-    const patch: Partial<FighterRow> = {};
-    if (fighter.is_champion !== newIsChampion) patch.is_champion = newIsChampion;
-    if (fighter.rank_position !== newRankPosition) patch.rank_position = newRankPosition;
-    if (
-      match.kind === "by-name" &&
-      fighter.source_fighter_id !== match.backfillSourceId
-    ) {
-      patch.source_fighter_id = match.backfillSourceId;
-    }
-
-    if (Object.keys(patch).length === 0) {
-      actions.push({ kind: "same", fighterId: fighter.id });
-    } else {
-      actions.push({ kind: "update", fighterId: fighter.id, patch, prev: fighter, entry });
-    }
+    recordMatch(match, entry);
   }
 
   // Stale-reset: fighters whose weight_class matches one of the divisions
