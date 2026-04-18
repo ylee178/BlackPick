@@ -10,6 +10,7 @@ import FighterComments from "@/components/FighterComments";
 import FighterAvatar from "@/components/FighterAvatar";
 import ShareMenu from "@/components/ShareMenu";
 import { parseRecord } from "@/lib/parse-record";
+import { resolveDivisionChip } from "@/lib/division-chip";
 import { Crown, Flame } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +25,30 @@ export default async function FighterDetailPage({ params }: PageProps) {
   const authUser = await getUser();
   const { t, locale } = await getTranslations();
 
+  // Wildcard select matches the pattern used by home / event / fight-
+  // detail pages (e.g. `src/app/[locale]/(main)/page.tsx:172`) and
+  // keeps the query resilient when new fighter columns land before
+  // Supabase codegen is rerun. `is_champion` / `rank_position` from
+  // migration 202604190001 are consumed via `resolveDivisionChip`
+  // below — wildcard ensures they're returned even while generated
+  // types are stale.
   const { data: fighter } = await supabase
     .from("fighters")
-    .select("id, name, ring_name, name_en, name_ko, record, nationality, weight_class, image_url")
+    .select("*")
     .eq("id", id)
-    .single();
+    .single<{
+      id: string;
+      name: string;
+      ring_name: string | null;
+      name_en: string | null;
+      name_ko: string | null;
+      record: string | null;
+      nationality: string | null;
+      weight_class: string | null;
+      image_url: string | null;
+      is_champion: boolean | null;
+      rank_position: number | null;
+    }>();
 
   if (!fighter) {
     return <RetroEmptyState title="Fighter not found" />;
@@ -64,6 +84,11 @@ export default async function FighterDetailPage({ params }: PageProps) {
   const flag = countryCodeToFlag(fighter.nationality);
   const weightClass = fighter.weight_class ? translateWeightClass(fighter.weight_class, locale) : null;
   const { wins, losses, draws } = parseRecord(fighter.record);
+
+  // Detail page has no event context — DB rank is the sole source. The
+  // resolver's fallback path handles champion / ranked / unranked states
+  // per the same logic used on fight cards (`src/lib/division-chip.ts`).
+  const divisionChip = resolveDivisionChip(null, fighter, locale, t("division.champion"));
 
   const fightHistory = (fights ?? []).map((f) => {
     const fa = f.fighter_a as Record<string, string | null> | null;
@@ -166,6 +191,18 @@ export default async function FighterDetailPage({ params }: PageProps) {
               {weightClass && (
                 <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
                   {weightClass}
+                </span>
+              )}
+              {divisionChip && (
+                <span
+                  aria-label={divisionChip.label}
+                  className={
+                    divisionChip.tone === "champion"
+                      ? "rounded-xl border border-[var(--bp-accent)]/45 bg-[var(--bp-accent)]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-accent)]"
+                      : "rounded-xl border border-[var(--bp-line)] bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-ink)]"
+                  }
+                >
+                  {divisionChip.label}
                 </span>
               )}
             </div>

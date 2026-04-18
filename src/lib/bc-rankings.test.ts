@@ -91,6 +91,21 @@ const FIXTURE_RANKING_HTML = `
     </div>
   </div>
 
+  <!-- Defensive: champion block with a non-fighter href (e.g. event link
+       mistakenly placed on the champ card). extractFighterSeq regex
+       /\/fighter\/(\d+)/ must miss, resulting in no emitted entry. -->
+  <div class="ranking_list_part feather">
+    <div class="ranking_list_part_champ" onclick="location.href='https://blackcombat-official.com/event/123';">
+      <h3>
+        <span class="weight">페더급</span>
+        <span class="champ">CHAMPION</span>
+      </h3>
+      <div class="ranking_champ_name">
+        <span class="fighter_name">비정규href</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 </body>
 </html>
@@ -155,7 +170,18 @@ describe("parseBcRankingsHtml", () => {
 
   it("reports every division seen, in DOM order", () => {
     const result = parseBcRankingsHtml(FIXTURE_RANKING_HTML);
-    expect(result.divisionsSeen).toEqual(["플라이급", "웰터급", "밴텀급"]);
+    expect(result.divisionsSeen).toEqual(["플라이급", "웰터급", "밴텀급", "페더급"]);
+  });
+
+  it("drops champion blocks whose onclick points to a non-fighter URL", () => {
+    const result = parseBcRankingsHtml(FIXTURE_RANKING_HTML);
+    const irregularHref = result.entries.find(
+      (e) => e.displayName === "비정규href",
+    );
+    expect(irregularHref).toBeUndefined();
+    // But the 페더급 division is still listed as seen, so its other
+    // entries (had any parsed) would still be processed normally.
+    expect(result.divisionsSeen).toContain("페더급");
   });
 
   it("returns empty result without throwing on malformed HTML", () => {

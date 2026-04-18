@@ -30,6 +30,15 @@
  *   npx tsx src/scripts/sync-bc-fighter-ranks.ts          # dry-run
  *   npx tsx src/scripts/sync-bc-fighter-ranks.ts --apply  # write
  *
+ * Run-order: run `sync-bc-event-card.ts` first when a fighter has
+ * moved divisions. This script's tier-1 matcher finds the row by BC
+ * seq without re-checking `weight_class`, so a division move is
+ * written correctly — but the chip label still renders with the
+ * stale `fighters.weight_class` value until the event-card sync
+ * refreshes it. Not a correctness issue; a visual staleness one. The
+ * upcoming `feature/crawler-automation-cadence` cron runner is the
+ * right place to enforce this ordering.
+ *
  * Read-path contract (for downstream consumers):
  *   These columns are the FALLBACK source on event/fight surfaces —
  *   live `bcFighterADivision` from `src/lib/bc-predictions.ts` remains
