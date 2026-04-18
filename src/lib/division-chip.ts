@@ -34,6 +34,13 @@ export type DivisionChipFighter = {
 export type DivisionChipLive = {
   weightClass: string;
   rank: number | null;
+  /** BC event-detail `division-info` marks champions with `#C`
+   *  (captured by `bc-predictions.ts`). When true, the live source is
+   *  authoritative for champion status AT EVENT TIME — preferred over
+   *  DB `is_champion` which reflects CURRENT state. Letting the live
+   *  path carry champion state fixes the "Fighting God was champion
+   *  at Exodus but lost the title since" display gap. */
+  isChampion?: boolean;
 };
 
 export function resolveDivisionChip(
@@ -42,6 +49,15 @@ export function resolveDivisionChip(
   locale: AppLocale,
   championLabel: string,
 ): DivisionChipData | null {
+  // Live champion signal wins — snapshots "was champion at event
+  // time" for completed events even after the fighter lost the title.
+  if (liveDiv?.isChampion) {
+    return {
+      weightLabel: translateWeightClass(liveDiv.weightClass, locale),
+      rankLabel: championLabel,
+      tone: "champion",
+    };
+  }
   if (liveDiv?.rank) {
     return {
       weightLabel: translateWeightClass(liveDiv.weightClass, locale),

@@ -4,6 +4,23 @@ import { resolveDivisionChip } from "./division-chip";
 const CHAMPION = "Champion";
 
 describe("resolveDivisionChip — priority + state matrix", () => {
+  it("live isChampion wins over DB champion + DB rank", () => {
+    // Live champion snapshot (BC `#C` marker in division-info) takes
+    // priority — captures "was champion at event time" even when DB
+    // currently has is_champion=false (fighter has since lost title).
+    const chip = resolveDivisionChip(
+      { weightClass: "헤비급", rank: null, isChampion: true },
+      { weight_class: "헤비급", is_champion: false, rank_position: null },
+      "en",
+      CHAMPION,
+    );
+    expect(chip).toEqual({
+      weightLabel: "Heavyweight",
+      rankLabel: "Champion",
+      tone: "champion",
+    });
+  });
+
   it("live rank wins over every other signal", () => {
     const chip = resolveDivisionChip(
       { weightClass: "라이트급", rank: 3 },

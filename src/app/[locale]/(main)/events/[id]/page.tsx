@@ -49,8 +49,8 @@ type FightEntry = {
   bcPrediction: { fighterA_pct: number; fighterB_pct: number } | null;
   bcWeightClass: string | null;
   bcIsMainEvent: boolean;
-  bcFighterADivision: { weightClass: string; rank: number | null } | null;
-  bcFighterBDivision: { weightClass: string; rank: number | null } | null;
+  bcFighterADivision: { weightClass: string; rank: number | null; isChampion: boolean } | null;
+  bcFighterBDivision: { weightClass: string; rank: number | null; isChampion: boolean } | null;
   scoreCard: import("@/lib/bc-official").BcScoreCard | null;
 };
 

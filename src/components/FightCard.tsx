@@ -82,8 +82,8 @@ type FightCardProps = {
     fighterB_pct: number;
   } | null;
   bcWeightClass?: string | null;
-  bcFighterADivision?: { weightClass: string; rank: number | null } | null;
-  bcFighterBDivision?: { weightClass: string; rank: number | null } | null;
+  bcFighterADivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
+  bcFighterBDivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
   hideDiscussion?: boolean;
   /**
    * Forwarded to FightCardPicker. Anonymous viewers hit a signup gate on
@@ -124,7 +124,7 @@ function FighterSideStatic({
   fighter: FighterData;
   locale: AppLocale;
   bcPct: number | undefined;
-  bcDivision?: { weightClass: string; rank: number | null } | null;
+  bcDivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
   isWinner: boolean;
   isLoser: boolean;
   winMethod?: string | null;
@@ -225,7 +225,7 @@ function FighterSideStatic({
               <span
                 className={
                   divisionChip.tone === "champion"
-                    ? "text-[var(--bp-accent)]"
+                    ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text font-semibold text-transparent"
                     : "text-[var(--bp-ink)]"
                 }
               >

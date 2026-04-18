@@ -55,8 +55,8 @@ type Props = {
     fighterA_pct: number;
     fighterB_pct: number;
   } | null;
-  bcFighterADivision?: { weightClass: string; rank: number | null } | null;
-  bcFighterBDivision?: { weightClass: string; rank: number | null } | null;
+  bcFighterADivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
+  bcFighterBDivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
   initialPrediction: {
     winner_id: string;
     method?: string | null;
@@ -466,7 +466,7 @@ export default function FightCardPicker({
                   <span
                     className={
                       divisionChip.tone === "champion"
-                        ? "text-[var(--bp-accent)]"
+                        ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text font-semibold text-transparent"
                         : "text-[var(--bp-ink)]"
                     }
                   >

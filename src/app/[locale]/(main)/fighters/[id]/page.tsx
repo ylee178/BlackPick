@@ -202,9 +202,17 @@ export default async function FighterDetailPage({ params }: PageProps) {
                   aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
                     .filter(Boolean)
                     .join(" ")}
-                  className="rounded-xl border border-[var(--bp-line)] bg-white/[0.06] px-3 py-1 text-xs font-semibold text-[var(--bp-accent)]"
+                  className="rounded-xl border border-[var(--bp-line)] bg-white/[0.06] px-3 py-1 text-xs font-semibold"
                 >
-                  {divisionChip.rankLabel}
+                  <span
+                    className={
+                      divisionChip.tone === "champion"
+                        ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text text-transparent"
+                        : "text-[var(--bp-accent)]"
+                    }
+                  >
+                    {divisionChip.rankLabel}
+                  </span>
                 </span>
               )}
             </div>
