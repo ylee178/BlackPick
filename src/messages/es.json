@@ -410,6 +410,28 @@
     "roundLabel": "R{round}",
     "overtime": "Prórroga"
   },
+  "feedback": {
+    "button": "Enviar comentario",
+    "modalTitle": "Enviar comentario",
+    "modalDescription": "Bug, idea o pregunta. Leemos todo.",
+    "authOptionalHint": "No necesitas iniciar sesión. Deja tu correo si quieres respuesta.",
+    "categoryLabel": "Categoría",
+    "categories": {
+      "bug": "Error",
+      "ux": "UX",
+      "question": "Pregunta",
+      "other": "Otro"
+    },
+    "bodyLabel": "Mensaje",
+    "bodyPlaceholder": "¿Qué pasó y qué esperabas?",
+    "contactEmailLabel": "Correo (opcional)",
+    "contactEmailPlaceholder": "tu@example.com",
+    "submit": "Enviar",
+    "submitting": "Enviando",
+    "successToast": "Gracias, lo recibimos.",
+    "errorGeneric": "No se pudo enviar. Inténtalo de nuevo.",
+    "errorRateLimit": "Demasiados envíos. Espera un momento e inténtalo de nuevo."
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Algo salió mal",

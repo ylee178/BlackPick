@@ -410,6 +410,28 @@
     "roundLabel": "R{round}",
     "overtime": "加时"
   },
+  "feedback": {
+    "button": "发送反馈",
+    "modalTitle": "发送反馈",
+    "modalDescription": "Bug、想法、问题都可以。我们会认真看。",
+    "authOptionalHint": "无需登录。如果想收到回复，请留下邮箱。",
+    "categoryLabel": "分类",
+    "categories": {
+      "bug": "Bug",
+      "ux": "体验",
+      "question": "问题",
+      "other": "其他"
+    },
+    "bodyLabel": "内容",
+    "bodyPlaceholder": "发生了什么？你预期的是什么？",
+    "contactEmailLabel": "邮箱（可选）",
+    "contactEmailPlaceholder": "you@example.com",
+    "submit": "发送",
+    "submitting": "发送中",
+    "successToast": "谢谢，已收到。",
+    "errorGeneric": "发送失败，请稍后再试。",
+    "errorRateLimit": "发送次数过多，请稍等再试。"
+  },
   "common": {
     "loading": "加载中...",
     "error": "出了点问题",

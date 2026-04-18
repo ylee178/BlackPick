@@ -410,6 +410,28 @@
     "roundLabel": "R{round}",
     "overtime": "Нэмэлт"
   },
+  "feedback": {
+    "button": "Санал илгээх",
+    "modalTitle": "Санал илгээх",
+    "modalDescription": "Алдаа, санаа, асуулт. Бид бүгдийг уншдаг.",
+    "authOptionalHint": "Нэвтрэх шаардлагагүй. Хариу авахыг хүсвэл имэйлээ үлдээнэ үү.",
+    "categoryLabel": "Ангилал",
+    "categories": {
+      "bug": "Алдаа",
+      "ux": "Хэрэглээ",
+      "question": "Асуулт",
+      "other": "Бусад"
+    },
+    "bodyLabel": "Мессеж",
+    "bodyPlaceholder": "Юу тохиолдсон бэ, та юу хүлээж байсан бэ?",
+    "contactEmailLabel": "Имэйл (сонголттой)",
+    "contactEmailPlaceholder": "you@example.com",
+    "submit": "Илгээх",
+    "submitting": "Илгээж байна",
+    "successToast": "Баярлалаа, хүлээн авлаа.",
+    "errorGeneric": "Илгээж чадсангүй. Дахин оролдоно уу.",
+    "errorRateLimit": "Хэт олон удаа илгээлээ. Хэсэг хүлээгээд дахин оролдоно уу."
+  },
   "common": {
     "loading": "Ачаалж байна...",
     "error": "Ямар нэг зүйл буруу боллоо",

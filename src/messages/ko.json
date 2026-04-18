@@ -410,6 +410,28 @@
     "roundLabel": "{round}R",
     "overtime": "연장"
   },
+  "feedback": {
+    "button": "피드백 보내기",
+    "modalTitle": "피드백 보내기",
+    "modalDescription": "버그, 아이디어, 질문 뭐든 좋아요. 전부 읽어봅니다.",
+    "authOptionalHint": "로그인 없이 보낼 수 있어요. 답장받고 싶다면 이메일을 남겨주세요.",
+    "categoryLabel": "카테고리",
+    "categories": {
+      "bug": "버그",
+      "ux": "사용성",
+      "question": "질문",
+      "other": "기타"
+    },
+    "bodyLabel": "내용",
+    "bodyPlaceholder": "어떤 일이 있었고, 어떻게 되길 기대했나요?",
+    "contactEmailLabel": "이메일 (선택)",
+    "contactEmailPlaceholder": "you@example.com",
+    "submit": "보내기",
+    "submitting": "보내는 중",
+    "successToast": "고마워요. 잘 받았어요.",
+    "errorGeneric": "보내지 못했어요. 잠시 후 다시 시도해주세요.",
+    "errorRateLimit": "너무 많이 보냈어요. 잠시 후 다시 시도해주세요."
+  },
   "common": {
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",

@@ -410,6 +410,28 @@
     "roundLabel": "R{round}",
     "overtime": "延長"
   },
+  "feedback": {
+    "button": "フィードバックを送る",
+    "modalTitle": "フィードバックを送る",
+    "modalDescription": "バグ、アイデア、質問。すべて読んでいます。",
+    "authOptionalHint": "ログイン不要です。返信がほしい場合はメールを入力してください。",
+    "categoryLabel": "カテゴリ",
+    "categories": {
+      "bug": "バグ",
+      "ux": "使い勝手",
+      "question": "質問",
+      "other": "その他"
+    },
+    "bodyLabel": "内容",
+    "bodyPlaceholder": "何が起きて、何を期待していましたか？",
+    "contactEmailLabel": "メール（任意）",
+    "contactEmailPlaceholder": "you@example.com",
+    "submit": "送信",
+    "submitting": "送信中",
+    "successToast": "ありがとうございます。受け取りました。",
+    "errorGeneric": "送信できませんでした。もう一度お試しください。",
+    "errorRateLimit": "送信が多すぎます。少し待ってからお試しください。"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "問題が発生しました",
