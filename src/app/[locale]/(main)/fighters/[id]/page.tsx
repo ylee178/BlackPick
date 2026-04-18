@@ -195,14 +195,16 @@ export default async function FighterDetailPage({ params }: PageProps) {
               )}
               {divisionChip && (
                 <span
-                  aria-label={divisionChip.label}
-                  className={
-                    divisionChip.tone === "champion"
-                      ? "rounded-xl border border-[var(--bp-accent)]/45 bg-[var(--bp-accent)]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-accent)]"
-                      : "rounded-xl border border-[var(--bp-line)] bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-ink)]"
-                  }
+                  // Weight class is already shown in the adjacent chip,
+                  // so the hero badge shows only the rank/champion
+                  // accent to avoid duplication. aria-label still names
+                  // the full context for screen readers.
+                  aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
+                    .filter(Boolean)
+                    .join(" ")}
+                  className="rounded-xl border border-[var(--bp-line)] bg-white/[0.06] px-3 py-1 text-xs font-semibold text-[var(--bp-accent)]"
                 >
-                  {divisionChip.label}
+                  {divisionChip.rankLabel}
                 </span>
               )}
             </div>

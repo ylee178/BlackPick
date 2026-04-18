@@ -202,15 +202,15 @@ function FighterSideStatic({
         </div>
         {divisionChip ? (
           <span
-            aria-label={divisionChip.label}
-            className={cn(
-              "pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-2 py-[2px] text-[11px] font-semibold uppercase tracking-[0.04em] backdrop-blur-sm",
-              divisionChip.tone === "champion"
-                ? "border-[var(--bp-accent)]/45 bg-[var(--bp-bg)]/90 text-[var(--bp-accent)]"
-                : "border-[var(--bp-line)] bg-[var(--bp-bg)]/85 text-[var(--bp-ink)]",
-            )}
+            aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
+              .filter(Boolean)
+              .join(" ")}
+            className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 whitespace-nowrap rounded-full border border-[var(--bp-line)] bg-[var(--bp-bg)]/90 px-1.5 py-[1px] text-[11px] font-semibold backdrop-blur-sm"
           >
-            {divisionChip.label}
+            {divisionChip.weightLabel ? (
+              <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+            ) : null}
+            <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
           </span>
         ) : null}
       </div>

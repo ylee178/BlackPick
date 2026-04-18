@@ -11,9 +11,13 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       "en",
       CHAMPION,
     );
-    // Live rank: "Lightweight · #3" — champion boolean + rank_position
-    // on the fighter row are suppressed, not even considered.
-    expect(chip).toEqual({ label: "Lightweight · #3", tone: "ranked" });
+    // Live rank → weight "Lightweight", rank "#3". Champion boolean +
+    // rank_position on the fighter row are suppressed.
+    expect(chip).toEqual({
+      weightLabel: "Lightweight",
+      rankLabel: "#3",
+      tone: "ranked",
+    });
   });
 
   it("falls back to DB champion when live has no rank", () => {
@@ -23,7 +27,11 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       "en",
       CHAMPION,
     );
-    expect(chip).toEqual({ label: "Lightweight · Champion", tone: "champion" });
+    expect(chip).toEqual({
+      weightLabel: "Lightweight",
+      rankLabel: "Champion",
+      tone: "champion",
+    });
   });
 
   it("falls back to DB rank_position when not champion and live is unavailable", () => {
@@ -33,7 +41,11 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       "en",
       CHAMPION,
     );
-    expect(chip).toEqual({ label: "Lightweight · #5", tone: "ranked" });
+    expect(chip).toEqual({
+      weightLabel: "Lightweight",
+      rankLabel: "#5",
+      tone: "ranked",
+    });
   });
 
   it("returns null when no ranking signal exists on any source", () => {
@@ -63,7 +75,8 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       "en",
       CHAMPION,
     );
-    expect(chip?.label).toBe("Lightweight · Champion");
+    expect(chip?.weightLabel).toBe("Lightweight");
+    expect(chip?.rankLabel).toBe("Champion");
   });
 
   it("uses live weight class when live has division but no rank (DB fallback for rank)", () => {
@@ -75,27 +88,36 @@ describe("resolveDivisionChip — priority + state matrix", () => {
     );
     // Live's weight class is preferred (more current) even though its
     // rank was null and we fell through to DB for the title.
-    expect(chip?.label).toBe("Lightweight · Champion");
+    expect(chip?.weightLabel).toBe("Lightweight");
+    expect(chip?.rankLabel).toBe("Champion");
   });
 
-  it("champion with no weight class anywhere shows bare championLabel", () => {
+  it("champion with no weight class anywhere emits null weightLabel + championLabel", () => {
     const chip = resolveDivisionChip(
       null,
       { is_champion: true },
       "en",
       CHAMPION,
     );
-    expect(chip).toEqual({ label: "Champion", tone: "champion" });
+    expect(chip).toEqual({
+      weightLabel: null,
+      rankLabel: "Champion",
+      tone: "champion",
+    });
   });
 
-  it("DB rank with no weight class anywhere shows bare rank", () => {
+  it("DB rank with no weight class anywhere emits null weightLabel + bare rank", () => {
     const chip = resolveDivisionChip(
       null,
       { is_champion: false, rank_position: 7 },
       "en",
       CHAMPION,
     );
-    expect(chip).toEqual({ label: "#7", tone: "ranked" });
+    expect(chip).toEqual({
+      weightLabel: null,
+      rankLabel: "#7",
+      tone: "ranked",
+    });
   });
 
   it("translates weight class per locale", () => {
@@ -105,7 +127,8 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       "ko",
       "챔피언",
     );
-    expect(ko?.label).toBe("라이트급 · #2");
+    expect(ko?.weightLabel).toBe("라이트급");
+    expect(ko?.rankLabel).toBe("#2");
   });
 
   it("honors passed-in championLabel (driven by caller's i18n)", () => {
@@ -115,7 +138,8 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       "ko",
       "챔피언",
     );
-    expect(chip?.label).toBe("라이트급 · 챔피언");
+    expect(chip?.weightLabel).toBe("라이트급");
+    expect(chip?.rankLabel).toBe("챔피언");
   });
 
   it("invariant: champion tone never carries a rank number", () => {
@@ -131,7 +155,7 @@ describe("resolveDivisionChip — priority + state matrix", () => {
       CHAMPION,
     );
     expect(chip?.tone).toBe("champion");
-    expect(chip?.label).toBe("Lightweight · Champion");
-    expect(chip?.label).not.toContain("#");
+    expect(chip?.rankLabel).toBe("Champion");
+    expect(chip?.rankLabel).not.toContain("#");
   });
 });

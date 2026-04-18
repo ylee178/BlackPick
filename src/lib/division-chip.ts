@@ -14,9 +14,14 @@ import type { AppLocale } from "./localized-name";
  * Returns `null` when no ranking signal is available — callers hide
  * the chip entirely rather than rendering a bare weight class (the
  * fight-card header already displays the weight class).
+ *
+ * Shape: `weightLabel` + `rankLabel` emitted as separate fields so the
+ * renderer can color each span independently (weight class muted, rank
+ * number / CHAMPION label accent-colored — Sean 2026-04-19 redesign).
  */
 export type DivisionChipData = {
-  label: string;
+  weightLabel: string | null;
+  rankLabel: string;
   tone: "champion" | "ranked";
 };
 
@@ -38,9 +43,9 @@ export function resolveDivisionChip(
   championLabel: string,
 ): DivisionChipData | null {
   if (liveDiv?.rank) {
-    const weightLabel = translateWeightClass(liveDiv.weightClass, locale);
     return {
-      label: `${weightLabel} · #${liveDiv.rank}`,
+      weightLabel: translateWeightClass(liveDiv.weightClass, locale),
+      rankLabel: `#${liveDiv.rank}`,
       tone: "ranked",
     };
   }
@@ -48,15 +53,15 @@ export function resolveDivisionChip(
   const weightLabel = weight ? translateWeightClass(weight, locale) : null;
   if (fighter.is_champion) {
     return {
-      label: weightLabel ? `${weightLabel} · ${championLabel}` : championLabel,
+      weightLabel,
+      rankLabel: championLabel,
       tone: "champion",
     };
   }
   if (fighter.rank_position) {
     return {
-      label: weightLabel
-        ? `${weightLabel} · #${fighter.rank_position}`
-        : `#${fighter.rank_position}`,
+      weightLabel,
+      rankLabel: `#${fighter.rank_position}`,
       tone: "ranked",
     };
   }

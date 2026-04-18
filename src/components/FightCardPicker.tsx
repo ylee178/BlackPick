@@ -13,7 +13,7 @@ import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import FighterAvatar from "@/components/FighterAvatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { cn } from "@/lib/utils";
-import { translateWeightClass } from "@/lib/weight-class";
+import { resolveDivisionChip } from "@/lib/division-chip";
 import { Check, Pencil } from "lucide-react";
 import { RetroLabel } from "@/components/ui/retro";
 import SignupGateModal from "@/components/SignupGateModal";
@@ -33,6 +33,11 @@ type FighterData = {
   record?: string | null;
   nationality?: string | null;
   weight_class?: string | null;
+  /** Persisted by `src/scripts/sync-bc-fighter-ranks.ts`. Used as
+   *  fallback by `resolveDivisionChip` when the live BC division
+   *  has no rank. */
+  is_champion?: boolean | null;
+  rank_position?: number | null;
 };
 
 type Props = {
@@ -351,10 +356,7 @@ export default function FightCardPicker({
     const bcPct = side === "left" ? bcPrediction?.fighterA_pct : bcPrediction?.fighterB_pct;
     const isPicked = winnerId === fighterId;
     const bcDiv = side === "left" ? bcFighterADivision : bcFighterBDivision;
-    const divRank = bcDiv?.rank ?? null;
-    const divWeight = bcDiv?.weightClass
-      ? translateWeightClass(bcDiv.weightClass, locale)
-      : null;
+    const divisionChip = resolveDivisionChip(bcDiv, fighter, locale, t("division.champion"));
 
     const pickFighter = () =>
       selectWinner(fighterId, side === "left" ? "a" : "b");
@@ -409,23 +411,43 @@ export default function FightCardPicker({
             ) : null}
           </div>
 
-          <div className={cn(
-            "flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 bg-[#2a2a2a] sm:h-16 sm:w-16",
-            // Selected state: solid 2px gold border instead of the
-            // animated radial halo. Picked fighters still read as
-            // "picked" via the card-level `fighter-card-selected`
-            // background + accent-colored name text; the halo was a
-            // design overage per DESIGN.md "no glassmorphism, no
-            // radiating decorative layers".
-            isPicked
-              ? "border-[var(--bp-accent)]"
-              : "border-[var(--bp-line)]",
-          )}>
-            {avatarUrl ? (
-              <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-            ) : (
-              <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
-            )}
+          {/* Avatar wrapper is `relative mb-2` to host the division
+              chip overlay anchored at the avatar's bottom edge. The
+              chip is `pointer-events-none`, so all click routing still
+              flows to the radio overlay covering the card (defined
+              near the top of this component). */}
+          <div className="relative mb-2">
+            <div className={cn(
+              "flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 bg-[#2a2a2a] sm:h-16 sm:w-16",
+              // Selected state: solid 2px gold border instead of the
+              // animated radial halo. Picked fighters still read as
+              // "picked" via the card-level `fighter-card-selected`
+              // background + accent-colored name text; the halo was a
+              // design overage per DESIGN.md "no glassmorphism, no
+              // radiating decorative layers".
+              isPicked
+                ? "border-[var(--bp-accent)]"
+                : "border-[var(--bp-line)]",
+            )}>
+              {avatarUrl ? (
+                <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
+              )}
+            </div>
+            {divisionChip ? (
+              <span
+                aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
+                  .filter(Boolean)
+                  .join(" ")}
+                className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 whitespace-nowrap rounded-full border border-[var(--bp-line)] bg-[var(--bp-bg)]/90 px-1.5 py-[1px] text-[11px] font-semibold backdrop-blur-sm"
+              >
+                {divisionChip.weightLabel ? (
+                  <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+                ) : null}
+                <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
+              </span>
+            ) : null}
           </div>
 
           <div className="min-w-0 w-full text-center">
@@ -457,11 +479,6 @@ export default function FightCardPicker({
               const parts = r.split("-");
               return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
             })()}</p>
-            {divRank ? (
-              <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
-                #{divRank} {divWeight}
-              </p>
-            ) : null}
           </div>
 
           {!isPicked && typeof bcPct === "number" ? (
