@@ -31,7 +31,7 @@ export default function FeedbackButton({ authed }: Props) {
         type="button"
         aria-label={t("feedback.button")}
         onClick={() => setOpen(true)}
-        className="bottom-safe fixed bottom-20 right-4 z-[70] inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-[var(--bp-line-strong)] bg-[var(--bp-card)] text-[var(--bp-ink)] shadow-lg transition hover:border-[var(--bp-accent)] hover:text-[var(--bp-accent)] md:bottom-6"
+        className="fixed bottom-20 right-4 z-[70] inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-[var(--bp-line-strong)] bg-[var(--bp-card)] text-[var(--bp-ink)] shadow-lg transition hover:border-[var(--bp-accent)] hover:text-[var(--bp-accent)] md:bottom-6"
       >
         <MessageSquare className="h-5 w-5" aria-hidden="true" />
       </button>
