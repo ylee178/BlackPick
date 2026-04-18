@@ -163,7 +163,9 @@
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "resetPassword": "Restablecer contraseña",
     "resetPasswordDescription": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+    "changePasswordDescription": "Te enviaremos un enlace a este correo. Haz clic para establecer una nueva contraseña.",
     "sendResetLink": "Enviar enlace de restablecimiento",
+    "sendChangeLink": "Enviar enlace de cambio",
     "sending": "Enviando...",
     "resetLinkSent": "¡Revisa tu correo! Te enviamos un enlace para restablecer tu contraseña.",
     "resetLinkFailed": "No se pudo enviar el enlace de restablecimiento.",
@@ -186,6 +188,7 @@
   "account": {
     "editProfile": "Editar perfil",
     "notificationSettings": "Configuración de notificaciones",
+    "changePassword": "Cambiar contraseña",
     "resetRecord": "Restablecer historial",
     "resetRecordConfirm": "¿Seguro que quieres restablecer tu historial? Se eliminarán todas las predicciones, puntuaciones e insignias. Esto no se puede deshacer.",
     "resetRecordFailed": "No pudimos restablecer tu historial en este momento.",

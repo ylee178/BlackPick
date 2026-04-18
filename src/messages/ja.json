@@ -163,7 +163,9 @@
     "forgotPassword": "パスワードをお忘れですか？",
     "resetPassword": "パスワード再設定",
     "resetPasswordDescription": "登録したメールアドレスを入力すると、再設定リンクをお送りします。",
+    "changePasswordDescription": "このメールアドレス宛にリンクを送信します。リンクをクリックすると新しいパスワードを設定できます。",
     "sendResetLink": "再設定リンクを送信",
+    "sendChangeLink": "変更リンクを送信",
     "sending": "送信中...",
     "resetLinkSent": "メールをご確認ください！再設定リンクを送信しました。",
     "resetLinkFailed": "再設定リンクの送信に失敗しました。",
@@ -186,6 +188,7 @@
   "account": {
     "editProfile": "プロフィール編集",
     "notificationSettings": "通知設定",
+    "changePassword": "パスワードを変更",
     "resetRecord": "戦績リセット",
     "resetRecordConfirm": "本当に戦績をリセットしますか？すべての予想記録、スコア、バッジが削除されます。",
     "resetRecordFailed": "現在、戦績をリセットできませんでした。",

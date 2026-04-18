@@ -37,6 +37,14 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
     : { data: null };
   const isAdmin = authUser ? await isAdminUser(authUser) : false;
 
+  // OAuth-only accounts (Google / Facebook) have no password to rotate.
+  // Supabase exposes the provider list via `identities` — the "email"
+  // identity is present iff the user registered with email+password or
+  // later linked one. Used to gate the "Change password" menu item.
+  const hasPassword = Boolean(
+    authUser?.identities?.some((i) => i.provider === "email"),
+  );
+
   const needsRingNameOnboarding = Boolean(authUser && !publicUser?.ring_name?.trim());
 
   return (
@@ -73,6 +81,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
                   wins={publicUser.wins ?? 0}
                   losses={publicUser.losses ?? 0}
                   isAdmin={isAdmin}
+                  hasPassword={hasPassword}
                 />
               ) : (
                 <>

@@ -163,7 +163,9 @@
     "forgotPassword": "Forgot your password?",
     "resetPassword": "Reset Password",
     "resetPasswordDescription": "Enter your email and we'll send you a link to reset your password.",
+    "changePasswordDescription": "We'll email a link to this address. Click it to set a new password.",
     "sendResetLink": "Send Reset Link",
+    "sendChangeLink": "Send change link",
     "sending": "Sending...",
     "resetLinkSent": "Check your email! We sent you a password reset link.",
     "resetLinkFailed": "Failed to send reset link.",
@@ -186,6 +188,7 @@
   "account": {
     "editProfile": "Edit Profile",
     "notificationSettings": "Notification Settings",
+    "changePassword": "Change password",
     "resetRecord": "Reset Record",
     "resetRecordConfirm": "Are you sure you want to reset your record? All predictions, scores, and badges will be deleted. This cannot be undone.",
     "resetRecordFailed": "We couldn't reset your record right now.",

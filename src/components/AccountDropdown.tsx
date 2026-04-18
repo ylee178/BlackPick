@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useI18n } from "@/lib/i18n-provider";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
-import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy, Shield } from "lucide-react";
+import { ChevronDown, User, Bell, RotateCw, LogOut, Trophy, Shield, KeyRound } from "lucide-react";
 import {
   retroButtonClassName,
   retroPanelClassName,
@@ -18,6 +18,9 @@ type Props = {
   wins: number;
   losses: number;
   isAdmin?: boolean;
+  /** True for accounts with an email+password identity. OAuth-only accounts
+   *  (Google / Facebook) have no password to rotate — the menu hides. */
+  hasPassword?: boolean;
 };
 
 export default function AccountDropdown({
@@ -26,6 +29,7 @@ export default function AccountDropdown({
   wins,
   losses,
   isAdmin = false,
+  hasPassword = false,
 }: Props) {
   const { t } = useI18n();
   const router = useRouter();
@@ -139,6 +143,16 @@ export default function AccountDropdown({
                 <Bell className="h-4 w-4" strokeWidth={1.8} />
                 {t("account.notificationSettings")}
               </Link>
+              {hasPassword ? (
+                <Link
+                  href="/reset-password"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-[var(--bp-muted)] transition-colors duration-150 hover:bg-[var(--bp-card-inset)] hover:text-[var(--bp-ink)]"
+                >
+                  <KeyRound className="h-4 w-4" strokeWidth={1.8} />
+                  {t("account.changePassword")}
+                </Link>
+              ) : null}
             </div>
 
             {isAdmin ? (

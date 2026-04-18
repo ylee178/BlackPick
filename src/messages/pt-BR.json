@@ -163,7 +163,9 @@
     "forgotPassword": "Esqueceu sua senha?",
     "resetPassword": "Redefinir Senha",
     "resetPasswordDescription": "Digite seu e-mail e enviaremos um link para redefinir sua senha.",
+    "changePasswordDescription": "Enviaremos um link para este e-mail. Clique nele para definir uma nova senha.",
     "sendResetLink": "Enviar link",
+    "sendChangeLink": "Enviar link de alteração",
     "sending": "Enviando...",
     "resetLinkSent": "Verifique seu e-mail! Enviamos um link de redefinição.",
     "resetLinkFailed": "Falha ao enviar link de redefinição.",
@@ -186,6 +188,7 @@
   "account": {
     "editProfile": "Editar Perfil",
     "notificationSettings": "Configurações de Notificação",
+    "changePassword": "Alterar senha",
     "resetRecord": "Resetar Cartel",
     "resetRecordConfirm": "Tem certeza que deseja resetar seu cartel? Todos os palpites, pontos e conquistas serão apagados.",
     "resetRecordFailed": "Não foi possível resetar seu cartel agora.",
