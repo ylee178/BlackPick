@@ -41,11 +41,9 @@ Queue trimmed post session-10 PR #53 merge (comment reply depth guard). Session-
 
 ### ⏸ Blocked on Sean manual (can't make progress until Sean acts)
 
-- **Branch 9** `fix/verify-all-predicted-toast` — Sean DevPanel verification
-- **Supabase test email send** — Dashboard verify `confirm_signup` + `reset_password` in Gmail / iOS Mail / Outlook (PR #25 post-merge)
-- **PR #49 feedback relay smoke** — dev + prod feedback 버튼 submit → Gmail 수신 + Reply-To 동작 (authed + anon 두 경로). Custom SMTP 이미 live (session 8 mid)
-- **PR #51 legal pages visual spot-check** — `/en/terms`, `/ko/terms`, `/en/privacy`, `/ko/privacy` 대비 / 카드 spacing / 360px wrap (mn/pt-BR 긴 로케일 주의)
-- **`feature/sentry-setup`** — blocked by Sentry account; Vercel env (`SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN`) 이미 있음 (session 8 발견)
+- **PR #49 feedback relay smoke** — dev + prod feedback 버튼 submit → Gmail 수신 + Reply-To 동작 (authed + anon 두 경로). Custom SMTP live from session 8 mid. Vercel Preview env scope 세션 10에 Sean이 추가 완료 — PR #57 merge 시 auto redeploy로 Preview build가 새 env 잡아 dev.blackpick.io에서 submit 가능
+- **PR #57 legal visual spot-check** — `/en/terms`, `/ko/terms`, `/en/privacy`, `/ko/privacy` 세 가지 확인: (a) 카드 없는 document 흐름 + subtle border 구분, (b) Article 번호 11개씩 (Terms +개인정보 보호조항, Privacy +국외 이전조항), (c) `privacy@blackpick.io` contact. 360px wrap도 같이
+- **`feature/sentry-setup` 잔여** — `sentry.{client,server,edge}.config.ts` + Vercel prod `SENTRY_DSN` 세팅은 2026-04-13 완료 (session 10 확인). 남은 건 Sentry Dashboard → Alerts → Issue Alerts → "new issue → email `admin@blackpick.io`" 1줄 설정. Phase 6 launch 직전에 한 번에 하면 됨
 - **`feature/facebook-oauth-wire-in`** — blocked by Meta App creation + Vercel env
 
 ### Parallel-agent discipline
@@ -94,9 +92,8 @@ _Goal: fix every visible bug on the shipped feature set, add missing first-time 
 - Branch 7: `feature/onboarding-first-time-flow` ✅ PR #27
 - Branch 8: `feature/streak-ux` ✅ PR #28
 
-### Branch 9: `fix/verify-all-predicted-toast` (blackpick review)
-- [ ] Sean verifies `AllPredictedToast` fires on correct transition via DevPanel reset-toast-lock action
-- [ ] If broken: investigate transition detection in `AllPredictedToast.tsx` (`previousCountRef` + `reachedAllThisTick`); may need `router.refresh()` after save
+### Branch 9: `fix/verify-all-predicted-toast` ✅ **VERIFIED (Sean 2026-04-18, session 10)**
+- [x] Sean confirmed toast fires on full-pick completion via DevPanel — no code change needed
 
 ---
 
@@ -151,7 +148,7 @@ _Goal: ship Supabase auth email templates for BlackPick's active auth paths (ema
 - [x] `reset-password.html` — same base + `{{ .Email }}` + 1h expiry + keyhole `currentColor` fix
 - [x] `README.md` — asset map, WCAG audit, email-client compatibility, Supabase deploy guide
 - [x] `src/types/lucide-icons.d.ts` + `bp-logo-email.png` + `package.json` lucide pin `~1.7.0`
-- [ ] **Sean's post-merge deploy** — preview URLs 200 → Supabase Dashboard → Auth → URL Config (Site URL = blackpick.io) → Email Templates → paste + test (Gmail / iOS Mail / Outlook rendering validation)
+- [x] **Sean's post-merge deploy** — Sean confirmed `confirm_signup` + `reset_password` emails arrive + render correctly (session 10, 2026-04-18). Cross-client matrix (iOS Mail / Outlook) not exhaustively verified but the base delivery path is proven
 
 **Not shipping** (verified unused 2026-04-17, grep `signInWithOtp|magic_?link|inviteUserByEmail` → 0 hits):
 - ~~`magic_link.html`~~ — BlackPick uses email+password, not OTP/magic-link auth
