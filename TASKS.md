@@ -18,11 +18,10 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 ### 🟣 Claude — queue (priority order)
 
-Queue trimmed post session-9 merge train (PRs #44–#49 + #51 all merged to develop 2026-04-18). Original 7-branch plan spec: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md`.
+Queue trimmed post session-10 PR #53 merge (comment reply depth guard). Session-9 merge train (PRs #44–#49 + #51) + session-10 PR #53 all on develop 2026-04-18. Original 7-branch plan spec: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md`.
 
-1. **ACTIVE NEXT — `feature/comment-reply-threading`** (Tier B). 1-level flat replies + auto `@username` prepend (YouTube/Twitter pattern, not Reddit N-depth). No schema change — `parent_id` already exists on `fighter_comments` + `fight_comments`. For 2-depth inputs, lift to top-level parent (YouTube behavior) — confirm with Sean before commit.
-2. **Next — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
-3. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
+1. **ACTIVE NEXT — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
+2. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
 
 ### Blocked-on-Sean-manual (carried from session 5)
 
