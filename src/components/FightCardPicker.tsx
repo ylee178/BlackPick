@@ -399,6 +399,24 @@ export default function FightCardPicker({
           "pointer-events-none relative flex flex-1 flex-col items-center gap-2 p-3 pt-4",
           isPicked && "justify-center",
         )}>
+          {/* Division chip sits at the card's top-left corner. The
+              YOUR PICK badge claims top-right on the same row, so the
+              two never collide. Positioned inside the content wrapper
+              (pointer-events-none) so it never intercepts the radio
+              overlay's click routing. */}
+          {divisionChip ? (
+            <span
+              aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
+                .filter(Boolean)
+                .join(" ")}
+              className="absolute left-3 top-3 flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold"
+            >
+              {divisionChip.weightLabel ? (
+                <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+              ) : null}
+              <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
+            </span>
+          ) : null}
           <div className="absolute right-3 top-3">
             {isPicked ? (
               <RetroLabel
@@ -411,43 +429,23 @@ export default function FightCardPicker({
             ) : null}
           </div>
 
-          {/* Avatar wrapper is `relative mb-2` to host the division
-              chip overlay anchored at the avatar's bottom edge. The
-              chip is `pointer-events-none`, so all click routing still
-              flows to the radio overlay covering the card (defined
-              near the top of this component). */}
-          <div className="relative mb-2">
-            <div className={cn(
-              "flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 bg-[#2a2a2a] sm:h-16 sm:w-16",
-              // Selected state: solid 2px gold border instead of the
-              // animated radial halo. Picked fighters still read as
-              // "picked" via the card-level `fighter-card-selected`
-              // background + accent-colored name text; the halo was a
-              // design overage per DESIGN.md "no glassmorphism, no
-              // radiating decorative layers".
-              isPicked
-                ? "border-[var(--bp-accent)]"
-                : "border-[var(--bp-line)]",
-            )}>
-              {avatarUrl ? (
-                <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
-              )}
-            </div>
-            {divisionChip ? (
-              <span
-                aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
-                  .filter(Boolean)
-                  .join(" ")}
-                className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 whitespace-nowrap rounded-full border border-[var(--bp-line)] bg-[var(--bp-bg)]/90 px-1.5 py-[1px] text-[11px] font-semibold backdrop-blur-sm"
-              >
-                {divisionChip.weightLabel ? (
-                  <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
-                ) : null}
-                <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
-              </span>
-            ) : null}
+          <div className={cn(
+            "flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 bg-[#2a2a2a] sm:h-16 sm:w-16",
+            // Selected state: solid 2px gold border instead of the
+            // animated radial halo. Picked fighters still read as
+            // "picked" via the card-level `fighter-card-selected`
+            // background + accent-colored name text; the halo was a
+            // design overage per DESIGN.md "no glassmorphism, no
+            // radiating decorative layers".
+            isPicked
+              ? "border-[var(--bp-accent)]"
+              : "border-[var(--bp-line)]",
+          )}>
+            {avatarUrl ? (
+              <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
+            )}
           </div>
 
           <div className="min-w-0 w-full text-center">

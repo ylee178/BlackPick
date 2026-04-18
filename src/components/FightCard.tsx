@@ -186,33 +186,30 @@ function FighterSideStatic({
           </RetroLabel>
         </span>
       )}
-      {/* Avatar wrapper is `relative` so the division chip anchors to
-          its bottom edge. Extra `mb-2` reserves space for the chip's
-          `-bottom-2` overhang so it doesn't visually crash into the
-          fighter name row below. `pointer-events-none` on the chip
-          keeps the avatar's own pointer semantics (hover ring, etc.)
-          unaffected. */}
-      <div className="relative mb-2">
-        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
-          {avatarUrl ? (
-            <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
-          )}
-        </div>
-        {divisionChip ? (
-          <span
-            aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
-              .filter(Boolean)
-              .join(" ")}
-            className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 whitespace-nowrap rounded-full border border-[var(--bp-line)] bg-[var(--bp-bg)]/90 px-1.5 py-[1px] text-[11px] font-semibold backdrop-blur-sm"
-          >
-            {divisionChip.weightLabel ? (
-              <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
-            ) : null}
-            <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
-          </span>
-        ) : null}
+      {/* Division chip anchors to the card's top-left corner. Outer
+          card container is already `relative` so absolute positioning
+          resolves against it. `pointer-events-none` keeps the chip
+          non-interactive; the right-side WIN / MY PICK badges sit on
+          the opposite corner so they never collide. */}
+      {divisionChip ? (
+        <span
+          aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
+            .filter(Boolean)
+            .join(" ")}
+          className="pointer-events-none absolute left-2 top-2 flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold"
+        >
+          {divisionChip.weightLabel ? (
+            <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+          ) : null}
+          <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
+        </span>
+      ) : null}
+      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bp-line)] bg-[#2a2a2a] sm:h-16 sm:w-16">
+        {avatarUrl ? (
+          <FighterAvatar src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-base font-bold text-[var(--bp-muted)]">{fighter.name.charAt(0)}</span>
+        )}
       </div>
       <div className="min-w-0 w-full text-center">
         {/* `break-words` + min-w-0 so long names wrap instead of
