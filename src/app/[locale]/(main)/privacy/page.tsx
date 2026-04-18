@@ -2,16 +2,17 @@ import { Info } from "lucide-react";
 import { retroPanelClassName } from "@/components/ui/retro";
 import { getTranslations } from "@/lib/i18n-server";
 
-const sectionClassName = retroPanelClassName({
-  className:
-    "flex flex-col gap-3 p-5 sm:p-6 text-[var(--bp-muted)] text-[15px] leading-relaxed",
-});
+const sectionClassName =
+  "flex flex-col gap-3 text-[var(--bp-muted)] text-[15px] leading-relaxed";
 
-const sectionHeadingClassName = "text-lg font-semibold text-[var(--bp-ink)]";
+const sectionHeadingClassName = "text-base font-semibold text-[var(--bp-ink)]";
 
 const subHeadingClassName = "text-[15px] font-semibold text-[var(--bp-ink)] mt-1";
 
 const sectionListClassName = "list-disc pl-5 flex flex-col gap-1";
+
+const articleClassName =
+  "mt-4 flex flex-col [&>section~section]:mt-10 [&>section~section]:border-t [&>section~section]:border-[var(--bp-line)] [&>section~section]:pt-10";
 
 export default async function PrivacyPage() {
   const { locale, t } = await getTranslations();
@@ -38,6 +39,7 @@ export default async function PrivacyPage() {
         <p>{t("legal.fanMadeDisclaimer")}</p>
       </div>
 
+      <article className={articleClassName}>
       <section className={sectionClassName}>
         <p>
           {isKo
@@ -48,7 +50,7 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "1. 수집하는 개인정보 항목" : "1. Personal Information Collected"}
+          {isKo ? "제1조 (수집하는 개인정보 항목)" : "Article 1 (Personal Information Collected)"}
         </h2>
 
         <h3 className={subHeadingClassName}>
@@ -83,6 +85,11 @@ export default async function PrivacyPage() {
           <li>{isKo ? "댓글 및 좋아요 내역" : "Comments and likes"}</li>
           <li>{isKo ? "MVP 투표 기록" : "MVP vote history"}</li>
           <li>{isKo ? "알림 수신 기록" : "Notification receipts"}</li>
+          <li>
+            {isKo
+              ? "IP 주소 및 접속 로그 (보안 및 부정 이용 방지 목적)"
+              : "IP address and access logs (for security and abuse prevention)"}
+          </li>
         </ul>
 
         <h3 className={subHeadingClassName}>
@@ -105,8 +112,13 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "2. 개인정보의 수집·이용 목적" : "2. Purpose of Collection and Use"}
+          {isKo ? "제2조 (개인정보의 수집·이용 목적)" : "Article 2 (Purpose of Collection and Use)"}
         </h2>
+        <p>
+          {isKo
+            ? "서비스는 이용자의 동의 및 서비스 이용계약의 이행을 법적 근거로 하여 다음 목적에 한정하여 개인정보를 처리합니다."
+            : "The Service processes personal information based on user consent and for the performance of the service contract, limited to the following purposes."}
+        </p>
         <ul className="list-disc pl-5 flex flex-col gap-2">
           <li>
             {isKo
@@ -133,7 +145,7 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "3. 개인정보의 보유 및 이용 기간" : "3. Retention Period"}
+          {isKo ? "제3조 (개인정보의 보유 및 이용 기간)" : "Article 3 (Retention Period)"}
         </h2>
         <ul className="list-disc pl-5 flex flex-col gap-2">
           <li>
@@ -146,12 +158,22 @@ export default async function PrivacyPage() {
               ? "부정 이용 방지를 위해 탈퇴 후 30일간 이메일 주소를 보관할 수 있습니다."
               : "Email addresses may be retained for 30 days after account deletion to prevent abuse."}
           </li>
+          <li>
+            {isKo
+              ? "탈퇴 이후에도 예측 기록, 댓글 등 서비스 무결성 유지에 필요한 비식별 데이터는 이용자를 식별할 수 없도록 익명화된 형태로 계속 보관될 수 있습니다."
+              : "After account deletion, non-identifiable data such as prediction records and comments may be retained in anonymized form to preserve service integrity."}
+          </li>
+          <li>
+            {isKo
+              ? "구체적 보관 기간은 법령상 의무 및 서비스 운영 필요에 따라 달라질 수 있습니다."
+              : "Retention periods may vary depending on legal obligations and operational needs."}
+          </li>
         </ul>
       </section>
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "4. 개인정보의 제3자 제공" : "4. Disclosure to Third Parties"}
+          {isKo ? "제4조 (개인정보의 제3자 제공)" : "Article 4 (Disclosure to Third Parties)"}
         </h2>
         <p>
           {isKo
@@ -162,7 +184,7 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "5. 개인정보 처리 위탁" : "5. Outsourced Processing"}
+          {isKo ? "제5조 (개인정보 처리 위탁)" : "Article 5 (Outsourced Processing)"}
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
@@ -214,18 +236,29 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "6. 쿠키 사용" : "6. Cookies"}
+          {isKo ? "제6조 (개인정보의 국외 이전)" : "Article 6 (International Data Transfer)"}
         </h2>
         <p>
           {isKo
-            ? "서비스는 로그인 세션 유지를 위해 Supabase 인증 쿠키를 사용합니다. 광고·추적 목적의 쿠키는 사용하지 않습니다. 브라우저 설정에서 쿠키를 차단할 수 있으나, 이 경우 로그인 기능이 제한됩니다."
-            : "The Service uses Supabase authentication cookies solely for session management. No advertising or tracking cookies are used. You may block cookies in your browser settings, but this may restrict login functionality."}
+            ? "서비스의 일부 위탁업체(Supabase, Google, Cloudflare, Resend 등)는 해외에 소재하므로, 이용자의 개인정보가 미국 등 이용자 관할 외 국가로 이전되어 처리될 수 있습니다. 이전되는 정보 항목, 이전 목적, 보유·이용 기간은 제5조 처리 위탁 표와 동일하며, 이용자의 개인정보는 동일한 수준의 안전성 확보 조치 하에 처리됩니다."
+            : "Some service providers (Supabase, Google, Cloudflare, Resend) are located outside the user's jurisdiction, so personal information may be transferred to and processed in countries including the United States. The items transferred, the purpose, and the retention period match Article 5 above, and personal information is handled with equivalent security safeguards."}
         </p>
       </section>
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "7. 이용자의 권리" : "7. User Rights"}
+          {isKo ? "제7조 (쿠키 사용)" : "Article 7 (Cookies)"}
+        </h2>
+        <p>
+          {isKo
+            ? "서비스는 로그인 세션 유지 및 보안을 위해 필수적인 Supabase 인증 쿠키를 사용합니다. 광고·추적 목적의 쿠키는 사용하지 않습니다. 브라우저 설정에서 쿠키를 차단할 수 있으나, 이 경우 로그인 기능이 제한됩니다."
+            : "The Service uses Supabase authentication cookies that are essential for session management and security. No advertising or tracking cookies are used. You may block cookies in your browser settings, but this may restrict login functionality."}
+        </p>
+      </section>
+
+      <section className={sectionClassName}>
+        <h2 className={sectionHeadingClassName}>
+          {isKo ? "제8조 (이용자의 권리)" : "Article 8 (User Rights)"}
         </h2>
         <ul className="list-disc pl-5 flex flex-col gap-2">
           <li>
@@ -240,6 +273,11 @@ export default async function PrivacyPage() {
           </li>
           <li>
             {isKo
+              ? "관련 법령이 정한 범위 내에서 본인 개인정보의 사본 제공을 요청할 수 있는 권리"
+              : "Where applicable, the right to request a copy (data export) of personal information"}
+          </li>
+          <li>
+            {isKo
               ? "프로필 페이지에서 링네임을 직접 수정할 수 있습니다."
               : "You can edit your ring name directly on your profile page."}
           </li>
@@ -248,7 +286,7 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "8. 개인정보의 안전성 확보 조치" : "8. Security Measures"}
+          {isKo ? "제9조 (개인정보의 안전성 확보 조치)" : "Article 9 (Security Measures)"}
         </h2>
         <ul className="list-disc pl-5 flex flex-col gap-2">
           <li>
@@ -267,19 +305,19 @@ export default async function PrivacyPage() {
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "9. 개인정보 보호책임자" : "9. Data Protection Officer"}
+          {isKo ? "제10조 (개인정보 보호책임자)" : "Article 10 (Data Protection Officer)"}
         </h2>
         <p>
           {isKo
             ? "개인정보 관련 문의사항은 아래 이메일로 연락해 주시기 바랍니다."
             : "For inquiries regarding personal information, please contact us at the email below."}
         </p>
-        <p className="text-[var(--bp-ink)]">blackpick.official@gmail.com</p>
+        <p className="text-[var(--bp-ink)]">privacy@blackpick.io</p>
       </section>
 
       <section className={sectionClassName}>
         <h2 className={sectionHeadingClassName}>
-          {isKo ? "10. 방침 변경" : "10. Policy Changes"}
+          {isKo ? "제11조 (방침 변경)" : "Article 11 (Policy Changes)"}
         </h2>
         <p>
           {isKo
@@ -287,8 +325,9 @@ export default async function PrivacyPage() {
             : "Any changes to this Policy will be announced within the Service at least 7 days before the effective date."}
         </p>
       </section>
+      </article>
 
-      <p className="text-sm text-[var(--bp-muted)] mt-2">
+      <p className="text-sm text-[var(--bp-muted)] mt-6">
         {isKo ? "시행일: 2026년 4월 18일" : "Effective: April 18, 2026"}
       </p>
     </div>
