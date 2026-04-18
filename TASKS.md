@@ -20,8 +20,7 @@ Codex parallel-agent era closed for now — Codex branch merged as PR #30 on 202
 
 Queue trimmed post session-10 PR #53 merge (comment reply depth guard). Session-9 merge train (PRs #44–#49 + #51) + session-10 PR #53 all on develop 2026-04-18. Original 7-branch plan spec: `/Users/uxersean/Desktop/Wiki_Sean/BlackPick/2026-04-17-session-5-three-prs-plus-7-branch-plan.md`.
 
-1. **ACTIVE NEXT — `feature/crawler-ranking-and-scorecard-extend`** (Tier B). Add `fighters.rank` column + BC rank scraper + FightCard `{weight_class} · #{rank}` label overlapping portrait + scorecard auto-prefetch on fight completion.
-2. **Next — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier).
+1. **ACTIVE NEXT — `feature/crawler-automation-cadence`** (Tier B). GitHub Actions cron `0 */4 * * *` + runner early-exit unless T+1 to T+7 event has missing winners. ~90 min/month GH Actions budget (free tier). **Scope expansion**: also owns scorecard persistence (`fights.bc_scorecard JSONB` + `checked_at` freshness metadata + proper BC-correction handling) — deferred from session-11 branch per Codex spec-review 2026-04-19. Must introduce a stable fight-level BC key rather than reusing `sync-bc-event-results.ts`'s tolerant matcher, and must NOT couple persistence to `result_processed_at` freeze lifecycle. Also enforce `sync-bc-event-card.ts` → `sync-bc-fighter-ranks.ts` run order (weight_class precedes rank sync so chip labels don't show stale division after a fighter moves).
 
 ### Blocked-on-Sean-manual (carried from session 5)
 
@@ -33,6 +32,12 @@ Queue trimmed post session-10 PR #53 merge (comment reply depth guard). Session-
 - Event 286 manual acceptance: run `npm run sync:bc-results -- --apply`, then admin method/round via `/admin/results` on 3 decision fights; verify scorecards render inline on `/events/286` + `/events/286/fights/[fightId]` + home-featured when 286 is surfaced.
 - Mobile 360px visual check — 5-col density confirmation on a real device.
 - (Optional post-launch) Spanish `scorecard.title` narrow note: "Tarjeta" vs sport-conventional "Tarjetas" — Tier A reviewer [minor], deferred.
+
+### Blocked-on-Sean-manual (fighter-rank follow-ups from PR e4c3bb0)
+
+- **Apply migration `202604190001_fighters_rank_and_source_id.sql` to DEV** via Supabase Dashboard SQL Editor. Then run `npx tsx src/scripts/sync-bc-event-card.ts --apply` (backfills `source_fighter_id` on fighters in scope) followed by `npx tsx src/scripts/sync-bc-fighter-ranks.ts --apply` (writes `is_champion` / `rank_position`). Verify chip renders on `/events/{id}` fight cards + `/fighters/{id}` hero for ranked fighters (탱크 / 투신 / 시라소니 / 캡틴 코리아 / etc. per `/ranking.php`).
+- **PROD apply deferred to Phase 6 bundle** (bundled with 202604180001 + 202604180002 per release cadence).
+- **Promote `source_fighter_id` to UNIQUE** after DEV audit confirms no duplicates from name-backfill (`SELECT source_fighter_id, count(*) FROM fighters WHERE source_fighter_id IS NOT NULL GROUP BY 1 HAVING count(*) > 1`). Migration scope: small follow-up branch.
 
 ### ⏸ Claude — blocked-on-Codex queue (rebase after Codex merges)
 
