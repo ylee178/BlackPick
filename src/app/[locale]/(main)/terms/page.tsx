@@ -22,6 +22,7 @@ export default async function TermsPage() {
       </h1>
 
       <div
+        role="note"
         className={retroPanelClassName({
           tone: "accent",
           className:
