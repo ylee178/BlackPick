@@ -7,7 +7,11 @@ import FighterGrid from "@/components/FighterGrid";
 import { getFighterPixelPublicUrl, getPixelFiles, hasFighterPixelFile } from "@/lib/pixel-files";
 import { resolveDivisionChip } from "@/lib/division-chip";
 
-export const revalidate = 300; // ISR: 5 minutes
+// Force dynamic while rank sync is still manual — ISR cache would
+// hold stale null `is_champion` / `rank_position` after a
+// `sync-bc-fighter-ranks --apply` run for up to 5 minutes. Revisit
+// when the automation-cadence cron branch lands.
+export const dynamic = "force-dynamic";
 
 export default async function FightersPage() {
   const supabase = await createSupabaseServer();
