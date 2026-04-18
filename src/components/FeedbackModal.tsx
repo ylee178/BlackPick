@@ -63,18 +63,34 @@ export default function FeedbackModal({ authed, onClose }: Props) {
 
     setSubmit({ status: "submitting" });
 
-    let resp: Response;
-    try {
-      resp = await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category,
-          body,
-          contactEmail: authed ? undefined : contactEmail || undefined,
-        }),
-      });
-    } catch {
+    const payload = JSON.stringify({
+      category,
+      body,
+      contactEmail: authed ? undefined : contactEmail || undefined,
+    });
+
+    const tryOnce = async (): Promise<Response | null> => {
+      try {
+        return await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+        });
+      } catch {
+        return null;
+      }
+    };
+
+    let resp = await tryOnce();
+
+    // Per spec: retry once on transport failure or 503 (Resend upstream
+    // failure). 4xx errors — including 400 validation and 429 rate-limit —
+    // are terminal; retrying would just waste the user's window.
+    if (resp === null || resp.status === 503) {
+      resp = await tryOnce();
+    }
+
+    if (resp === null) {
       setSubmit({ status: "error", message: t("feedback.errorGeneric") });
       return;
     }

@@ -121,6 +121,10 @@ export default async function PrivacyPage() {
                   <td className="py-2 pr-4">Cloudflare, Inc.</td>
                   <td className="py-2">{isKo ? "이메일 라우팅 (피드백 수신함)" : "Email routing (feedback inbox)"}</td>
                 </tr>
+                <tr className="border-b border-[var(--bp-line)]">
+                  <td className="py-2 pr-4">Google LLC (Gmail)</td>
+                  <td className="py-2">{isKo ? "피드백 이메일 보관함" : "Feedback email inbox storage"}</td>
+                </tr>
               </tbody>
             </table>
           </div>
