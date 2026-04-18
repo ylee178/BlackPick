@@ -185,36 +185,37 @@ export default async function FighterDetailPage({ params }: PageProps) {
               {ringName}
             </h1>
 
-            {/* Meta row */}
+            {/* Meta row — single chip matches the fight-card pattern
+                `{weight} · {#rank}` so the ranking signal reads the
+                same way everywhere a fighter info card appears. */}
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span className="text-xl">{flag}</span>
-              {weightClass && (
-                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
-                  {weightClass}
-                </span>
-              )}
-              {divisionChip && (
+              {divisionChip ? (
                 <span
-                  // Weight class is already shown in the adjacent chip,
-                  // so the hero badge shows only the rank/champion
-                  // accent to avoid duplication. aria-label still names
-                  // the full context for screen readers.
                   aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
                     .filter(Boolean)
                     .join(" ")}
-                  className="rounded-xl border border-[var(--bp-line)] bg-white/[0.06] px-3 py-1 text-xs font-semibold"
+                  className="inline-flex items-center gap-1 rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold"
                 >
+                  {divisionChip.weightLabel ? (
+                    <span className="uppercase tracking-[0.06em] text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+                  ) : null}
+                  <span className="text-[var(--bp-muted)]">·</span>
                   <span
                     className={
                       divisionChip.tone === "champion"
-                        ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text text-transparent"
-                        : "text-[var(--bp-accent)]"
+                        ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text uppercase tracking-[0.06em] text-transparent"
+                        : "uppercase tracking-[0.06em] text-[var(--bp-ink)]"
                     }
                   >
                     {divisionChip.rankLabel}
                   </span>
                 </span>
-              )}
+              ) : weightClass ? (
+                <span className="rounded-xl bg-white/[0.06] px-3 py-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--bp-muted)]">
+                  {weightClass}
+                </span>
+              ) : null}
             </div>
 
             {/* Record — large */}

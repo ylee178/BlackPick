@@ -5,6 +5,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import FighterGrid from "@/components/FighterGrid";
 import { getFighterPixelPublicUrl, getPixelFiles, hasFighterPixelFile } from "@/lib/pixel-files";
+import { resolveDivisionChip } from "@/lib/division-chip";
 
 export const revalidate = 300; // ISR: 5 minutes
 
@@ -12,15 +13,33 @@ export default async function FightersPage() {
   const supabase = await createSupabaseServer();
   const { t, locale } = await getTranslations();
 
-  const { data: fighters } = await supabase
+  // Wildcard select so new fighter columns (is_champion / rank_position
+  // from migration 202604190001) are picked up without waiting for
+  // Supabase codegen to refresh. Inline type assertion locks the fields
+  // we actually read.
+  const { data: fightersRaw } = await supabase
     .from("fighters")
-    .select("id, name, ring_name, name_en, name_ko, record, nationality, weight_class, image_url")
+    .select("*")
     .order("name", { ascending: true })
     .limit(500);
+  const fighters = (fightersRaw ?? []) as unknown as Array<{
+    id: string;
+    name: string;
+    ring_name: string | null;
+    name_en: string | null;
+    name_ko: string | null;
+    record: string | null;
+    nationality: string | null;
+    weight_class: string | null;
+    image_url: string | null;
+    is_champion: boolean | null;
+    rank_position: number | null;
+  }>;
 
   const pixelFiles = getPixelFiles();
+  const championLabel = t("division.champion");
 
-  const items = (fighters ?? []).map((f) => ({
+  const items = fighters.map((f) => ({
     id: f.id,
     name: getLocalizedFighterName(f, locale, f.name),
     record: f.record || "0-0",
@@ -29,6 +48,10 @@ export default async function FightersPage() {
     avatarUrl: getFighterPixelPublicUrl(f.id, pixelFiles) ?? "/fighters/default.png",
     weightClass: f.weight_class ? translateWeightClass(f.weight_class, locale) : null,
     hasPixelArt: hasFighterPixelFile(f.id, pixelFiles),
+    // Precomputed server-side so FighterGrid (client component) doesn't
+    // need the resolver or weight-class translation map. `null` when the
+    // fighter has no rank/champion signal — grid hides the slot.
+    divisionChip: resolveDivisionChip(null, f, locale, championLabel),
   }));
 
   // Default order matches FighterGrid's name_asc client sort:

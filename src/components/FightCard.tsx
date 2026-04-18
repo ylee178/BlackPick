@@ -21,7 +21,8 @@ import {
   retroChipClassName,
   retroButtonClassName,
 } from "@/components/ui/retro";
-import { PointsBadge } from "@/components/ui/ranking";
+import { PointsBadge, WLRecord } from "@/components/ui/ranking";
+import { parseRecord } from "@/lib/parse-record";
 
 type FighterData = {
   id: string;
@@ -151,6 +152,7 @@ function FighterSideStatic({
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
   const divisionChip = resolveDivisionChip(bcDivision, fighter, locale, championLabel);
+  const { wins, losses } = parseRecord(fighter.record);
   return (
     <div
       className={cn(
@@ -210,23 +212,19 @@ function FighterSideStatic({
         {subLabel ? (
           <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
         ) : null}
-        <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
-          {(() => {
-            const r = fighter.record || "0-0";
-            const parts = r.split("-");
-            return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
-          })()}
+        <p className="mt-0.5 flex flex-wrap items-center justify-center gap-x-1 text-xs">
+          <WLRecord wins={Number(wins) || 0} losses={Number(losses) || 0} size="xs" />
           {divisionChip ? (
             <>
-              {" · "}
+              <span className="text-[var(--bp-muted)]">·</span>
               {divisionChip.weightLabel ? (
-                <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel} </span>
+                <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
               ) : null}
               <span
                 className={
                   divisionChip.tone === "champion"
                     ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text font-semibold text-transparent"
-                    : "text-[var(--bp-ink)]"
+                    : "font-semibold text-[var(--bp-ink)]"
                 }
               >
                 {divisionChip.rankLabel}
