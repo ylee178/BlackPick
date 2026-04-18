@@ -136,6 +136,7 @@
     "signupCheckEmail": "이메일을 확인해 주세요. 해당 주소로 가입이 가능하면 곧 확인 링크가 도착해요.",
     "verifyTitle": "이메일을 확인해주세요",
     "verifySentTo": "확인 링크를 보냈어요",
+    "verifyResetSentTo": "비밀번호 재설정 링크를 보냈어요",
     "verifyNotReceivedPrefix": "이메일이 안 왔어요?",
     "verifyResendCooldown": "{seconds}초 후 재시도",
     "verifyOpenInbox": "이메일 열기",

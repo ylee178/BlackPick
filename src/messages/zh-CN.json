@@ -136,6 +136,7 @@
     "signupCheckEmail": "请检查你的邮箱以确认账户。如果该地址可以注册，确认链接很快就会发送到你的邮箱。",
     "verifyTitle": "请查看你的邮箱",
     "verifySentTo": "验证链接已发送至",
+    "verifyResetSentTo": "已向以下邮箱发送重置密码的链接",
     "verifyNotReceivedPrefix": "没收到？",
     "verifyResendCooldown": "{seconds}秒后重试",
     "verifyOpenInbox": "打开邮箱",

@@ -8,22 +8,28 @@ import {
   retroPanelClassName,
 } from "@/components/ui/retro";
 import { detectEmailProvider } from "@/lib/email-provider";
+import { buildAuthRedirectUrl } from "@/lib/auth-redirect";
+import { createBrowserSupabaseClient } from "@/lib/supabase";
+import type { Locale } from "@/i18n/locales";
+
+type Variant = "signup" | "reset";
 
 type Props = {
   email: string;
+  variant: Variant;
   onStartOver: () => void;
 };
 
 type ResendState = "idle" | "sending" | "sent" | "error";
 
-// Client-side cooldowns. Belt-and-braces on top of the server route's
-// 3/5min per (IP, email) rate-limit — also mirrors Supabase's own
-// per-address cooldown so the UI doesn't surface 429s the user can't act on.
+// Client-side cooldowns. Belt-and-braces on top of Supabase's per-address
+// cooldown (~60s) and, for the signup variant, the server route's
+// 3/5min per (IP, email) rate-limit.
 const SUCCESS_COOLDOWN_SECONDS = 60;
 const ERROR_COOLDOWN_SECONDS = 30;
 
-export default function SignupVerifyCard({ email, onStartOver }: Props) {
-  const { t } = useI18n();
+export default function CheckEmailCard({ email, variant, onStartOver }: Props) {
+  const { t, locale } = useI18n();
   const provider = detectEmailProvider(email);
   const [resend, setResend] = useState<ResendState>("idle");
   const [cooldown, setCooldown] = useState(0);
@@ -40,12 +46,11 @@ export default function SignupVerifyCard({ email, onStartOver }: Props) {
     if (resendDisabled) return;
     setResend("sending");
     try {
-      const resp = await fetch("/api/auth/resend-signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (resp.ok) {
+      const ok =
+        variant === "signup"
+          ? await resendSignup(email)
+          : await resendReset(email, locale);
+      if (ok) {
         setResend("sent");
         setCooldown(SUCCESS_COOLDOWN_SECONDS);
       } else {
@@ -66,6 +71,9 @@ export default function SignupVerifyCard({ email, onStartOver }: Props) {
     return t("auth.verifyResend");
   })();
 
+  const sentToLabel =
+    variant === "reset" ? t("auth.verifyResetSentTo") : t("auth.verifySentTo");
+
   return (
     <section
       className={retroPanelClassName({
@@ -79,9 +87,7 @@ export default function SignupVerifyCard({ email, onStartOver }: Props) {
       <h1 className="mt-5 text-xl font-bold text-[var(--bp-ink)]">
         {t("auth.verifyTitle")}
       </h1>
-      <p className="mt-2 text-sm text-[var(--bp-muted)]">
-        {t("auth.verifySentTo")}
-      </p>
+      <p className="mt-2 text-sm text-[var(--bp-muted)]">{sentToLabel}</p>
       <p className="mt-1 break-all text-base font-semibold text-[var(--bp-ink)]">
         {email}
       </p>
@@ -127,4 +133,30 @@ export default function SignupVerifyCard({ email, onStartOver }: Props) {
       </div>
     </section>
   );
+}
+
+async function resendSignup(email: string): Promise<boolean> {
+  const resp = await fetch("/api/auth/resend-signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return resp.ok;
+}
+
+// Reset-password resend goes directly through the browser Supabase client,
+// mirroring the initial send in reset-password/page.tsx. Supabase's own
+// per-address cooldown (~60s) is the primary rate-limit, with the component's
+// cooldown above as the UI-level guard.
+async function resendReset(email: string, locale: Locale): Promise<boolean> {
+  const supabase = createBrowserSupabaseClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: buildAuthRedirectUrl("/update-password", {
+      locale,
+      fallbackOrigin:
+        typeof window !== "undefined" ? window.location.origin : null,
+      preferFallbackOrigin: true,
+    }),
+  });
+  return !error;
 }

@@ -136,6 +136,7 @@
     "signupCheckEmail": "Revisa tu correo para confirmar tu cuenta. Si esa dirección puede registrarse, recibirás un enlace de confirmación en breve.",
     "verifyTitle": "Revisa tu correo",
     "verifySentTo": "Enviamos un enlace de verificación a",
+    "verifyResetSentTo": "Enviamos un enlace para restablecer la contraseña a",
     "verifyNotReceivedPrefix": "¿No llegó?",
     "verifyResendCooldown": "Reintenta en {seconds}s",
     "verifyOpenInbox": "Abrir correo",

@@ -136,6 +136,7 @@
     "signupCheckEmail": "Check your email to confirm your account. If that address can sign up, a confirmation link will arrive shortly.",
     "verifyTitle": "Check your email",
     "verifySentTo": "We sent a verification link to",
+    "verifyResetSentTo": "We sent a password reset link to",
     "verifyNotReceivedPrefix": "Didn't get it?",
     "verifyResendCooldown": "Resend in {seconds}s",
     "verifyOpenInbox": "Open email",

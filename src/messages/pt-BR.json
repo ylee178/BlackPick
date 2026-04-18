@@ -136,6 +136,7 @@
     "signupCheckEmail": "Verifique seu e-mail para confirmar sua conta. Se esse endereço puder se cadastrar, um link de confirmação chegará em breve.",
     "verifyTitle": "Confira seu e-mail",
     "verifySentTo": "Enviamos um link de verificação para",
+    "verifyResetSentTo": "Enviamos um link para redefinir a senha para",
     "verifyNotReceivedPrefix": "Não chegou?",
     "verifyResendCooldown": "Reenviar em {seconds}s",
     "verifyOpenInbox": "Abrir e-mail",

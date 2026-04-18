@@ -136,6 +136,7 @@
     "signupCheckEmail": "メールを確認してアカウントを認証してください。そのアドレスで登録できる場合、確認リンクがまもなく届きます。",
     "verifyTitle": "メールを確認してください",
     "verifySentTo": "認証リンクを送信しました",
+    "verifyResetSentTo": "パスワード再設定リンクを送信しました",
     "verifyNotReceivedPrefix": "届きませんでしたか？",
     "verifyResendCooldown": "{seconds}秒後に再送信",
     "verifyOpenInbox": "メールを開く",

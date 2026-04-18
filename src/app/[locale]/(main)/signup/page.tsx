@@ -8,7 +8,7 @@ import { logEvent } from "@/lib/analytics";
 import { mapAuthErrorCode } from "@/lib/auth-error";
 import { useI18n } from "@/lib/i18n-provider";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
-import SignupVerifyCard from "@/components/auth/SignupVerifyCard";
+import CheckEmailCard from "@/components/auth/CheckEmailCard";
 import LoadingButtonContent from "@/components/ui/LoadingButtonContent";
 import {
   retroButtonClassName,
@@ -84,7 +84,11 @@ export default function SignupPage() {
   if (stage.kind === "check-email") {
     return (
       <div className="flex w-full flex-1 items-center justify-center">
-        <SignupVerifyCard email={stage.email} onStartOver={handleStartOver} />
+        <CheckEmailCard
+          email={stage.email}
+          variant="signup"
+          onStartOver={handleStartOver}
+        />
       </div>
     );
   }
