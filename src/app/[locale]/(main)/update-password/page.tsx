@@ -36,7 +36,25 @@ export default function UpdatePasswordPage() {
 
     if (updateError) {
       setLoading(false);
-      setError(t("auth.passwordUpdateFailed"));
+      // Supabase's server-side password policy is stricter than our
+      // 6-char client check — in particular, the HIBP breach check can
+      // reject very common passwords ("123456", "password", etc). Surface
+      // the actual reason so the user knows what to change. Map the
+      // breach case to a friendlier i18n message; fall back to the raw
+      // Supabase message for everything else (length, complexity rules,
+      // same-as-old, etc).
+      const rawMessage = updateError.message ?? "";
+      const lower = rawMessage.toLowerCase();
+      const isBreached =
+        lower.includes("pwned") ||
+        lower.includes("compromis") ||
+        lower.includes("leaked") ||
+        lower.includes("breach");
+      setError(
+        isBreached
+          ? t("auth.passwordCompromised")
+          : rawMessage || t("auth.passwordUpdateFailed"),
+      );
       return;
     }
 

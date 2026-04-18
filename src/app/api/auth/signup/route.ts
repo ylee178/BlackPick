@@ -59,6 +59,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ mode: "check_email" });
       }
 
+      // Surface Supabase's HIBP / strength check as a specific error so
+      // the UI can show "this password has been found in breaches" instead
+      // of a generic "something went wrong" that leaves the user stuck.
+      if (
+        message.includes("pwned") ||
+        message.includes("compromis") ||
+        message.includes("leaked") ||
+        message.includes("breach")
+      ) {
+        return NextResponse.json({ code: "password_compromised" }, { status: 400 });
+      }
+
       console.error("Failed to create signup", error);
       return NextResponse.json({ code: "unexpected_error" }, { status: 500 });
     }
