@@ -399,30 +399,12 @@ export default function FightCardPicker({
           "pointer-events-none relative flex flex-1 flex-col items-center gap-2 p-3 pt-4",
           isPicked && "justify-center",
         )}>
-          {/* Division chip sits at the card's top-left corner. The
-              YOUR PICK badge claims top-right on the same row, so the
-              two never collide. Positioned inside the content wrapper
-              (pointer-events-none) so it never intercepts the radio
-              overlay's click routing. */}
-          {divisionChip ? (
-            <span
-              aria-label={[divisionChip.weightLabel, divisionChip.rankLabel]
-                .filter(Boolean)
-                .join(" ")}
-              className="absolute left-3 top-3 flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold"
-            >
-              {divisionChip.weightLabel ? (
-                <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
-              ) : null}
-              <span className="text-[var(--bp-accent)]">{divisionChip.rankLabel}</span>
-            </span>
-          ) : null}
           <div className="absolute right-3 top-3">
             {isPicked ? (
               <RetroLabel
                 size="sm"
                 tone="neutral"
-                icon={<CheckIcon className="h-3.5 w-3.5 text-[#4ade80]" />}
+                icon={<CheckIcon className="h-3.5 w-3.5 text-[var(--bp-accent)]" />}
               >
                 {t("prediction.yourPick")}
               </RetroLabel>
@@ -457,13 +439,10 @@ export default function FightCardPicker({
                 fighter detail page with `stopPropagation` so clicking
                 the name navigates to the profile without firing the
                 parent radio's pick handler. */}
-            <p className={cn("text-sm font-bold break-words", isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]")}>
+            <p className="text-sm font-bold break-words text-[var(--bp-ink)]">
               <Link
                 href={`/fighters/${fighter.id}`}
-                className={cn(
-                  "pointer-events-auto transition-colors hover:text-[var(--bp-accent)]",
-                  isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]",
-                )}
+                className="pointer-events-auto text-[var(--bp-ink)] transition-colors hover:text-[var(--bp-accent)]"
               >
                 {displayName}
               </Link>{" "}
@@ -472,11 +451,30 @@ export default function FightCardPicker({
             {subLabel ? (
               <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
             ) : null}
-            <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{(() => {
-              const r = fighter.record || "0-0";
-              const parts = r.split("-");
-              return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
-            })()}</p>
+            <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
+              {(() => {
+                const r = fighter.record || "0-0";
+                const parts = r.split("-");
+                return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
+              })()}
+              {divisionChip ? (
+                <>
+                  {" · "}
+                  {divisionChip.weightLabel ? (
+                    <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel} </span>
+                  ) : null}
+                  <span
+                    className={
+                      divisionChip.tone === "champion"
+                        ? "text-[var(--bp-accent)]"
+                        : "text-[var(--bp-ink)]"
+                    }
+                  >
+                    {divisionChip.rankLabel}
+                  </span>
+                </>
+              ) : null}
+            </p>
           </div>
 
           {!isPicked && typeof bcPct === "number" ? (
