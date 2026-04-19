@@ -276,7 +276,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       if (fight.status !== "completed" || !fight.winner_id) continue;
       if (!(fight as Record<string, unknown>).is_cup_match) continue;
       const winner = fight.winner_id === fight.fighter_a_id ? fight.fighter_a : fight.fighter_b;
-      const nat = (winner as Record<string, string | null> | null)?.nationality;
+      const nat = (winner as unknown as Record<string, string | null> | null)?.nationality;
       if (nat) countryMap.set(nat, (countryMap.get(nat) ?? 0) + 1);
     }
     const sorted = [...countryMap.entries()].sort((a, b) => b[1] - a[1]);

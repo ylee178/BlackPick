@@ -17,10 +17,6 @@ export default async function FightersPage() {
   const supabase = await createSupabaseServer();
   const { t, locale } = await getTranslations();
 
-  // Wildcard select so new fighter columns (is_champion / rank_position
-  // from migration 202604190001) are picked up without waiting for
-  // Supabase codegen to refresh. Inline type assertion locks the fields
-  // we actually read.
   const { data: fightersRaw } = await supabase
     .from("fighters")
     .select("*")
@@ -57,6 +53,7 @@ export default async function FightersPage() {
     // fighter has no rank/champion signal — grid hides the slot.
     divisionChip: resolveDivisionChip(null, f, locale, championLabel),
   }));
+
 
   // Default order matches FighterGrid's name_asc client sort:
   // pixel-art fighters first, then alphabetical by localized name.

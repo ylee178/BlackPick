@@ -46,15 +46,13 @@
  *   `feature/crawler-automation-cadence`). The `/fighters/{id}` detail
  *   page is the only surface that reads these columns as primary.
  */
-import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import {
   fetchBcFighterProfile,
   fetchBcRankings,
   type BcRankingEntry,
 } from "../lib/bc-rankings";
-
-loadEnv({ path: ".env" });
+import { resolveScriptEnv } from "./_lib/script-env";
 
 type FighterRow = {
   id: string;
@@ -68,17 +66,11 @@ type FighterRow = {
   rank_position: number | null;
 };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error(
-    "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env",
-  );
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// Initialized once in `main()` after `resolveScriptEnv()` asserts the
+// target env matches the operator's --env flag. Module-level `let` so
+// helper functions can read it without threading supabase through
+// every signature.
+let supabase: ReturnType<typeof createClient>;
 
 function normalizeName(value: string | null | undefined): string {
   return (value ?? "")
@@ -208,6 +200,10 @@ function snapshotFighter(fighter: FighterRow): FighterSnapshot {
 }
 
 async function main() {
+  const { supabaseUrl, serviceRoleKey } = await resolveScriptEnv();
+  supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const shouldApply = process.argv.includes("--apply");
 
   console.log("🔍 Fetching BC rankings...");

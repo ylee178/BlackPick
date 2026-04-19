@@ -34,15 +34,13 @@
  * reliably know when a fight has *just* finished. Running this
  * script on demand (or manual cron) is safer than polling blindly.
  */
-import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import {
   fetchBcOfficialEventCard,
   findBcSourceEventId,
   type BcOfficialFight,
 } from "../lib/bc-official";
-
-loadEnv({ path: ".env" });
+import { resolveScriptEnv } from "./_lib/script-env";
 
 type EventRow = {
   id: string;
@@ -71,17 +69,9 @@ type FightRow = {
   fighter_b: FighterNameRow;
 };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error(
-    "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env",
-  );
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// Initialized once in `main()` after `resolveScriptEnv()` asserts the
+// target env matches the operator's --env flag.
+let supabase: ReturnType<typeof createClient>;
 
 function normalizeName(value: string | null | undefined) {
   return (value ?? "")
@@ -297,6 +287,10 @@ async function processEvent(event: EventRow): Promise<Action[]> {
 }
 
 async function main() {
+  const { supabaseUrl, serviceRoleKey } = await resolveScriptEnv();
+  supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const shouldApply = process.argv.includes("--apply");
   const events = await resolveEvents();
 
