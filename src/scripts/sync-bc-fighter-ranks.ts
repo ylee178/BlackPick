@@ -227,13 +227,36 @@ async function main() {
     entry: BcRankingEntry,
   ) => {
     const fighter = match.fighter;
+    // Cross-division dedup: if this fighter already landed a
+    // champion update earlier in the run (e.g. BC lists them as
+    // champion in one weight class and #N in another — 오일학 2026-04-19),
+    // the champion state wins and we ignore the ranked entry. Prevents
+    // the sequential writes from toggling `is_champion` / `rank_position`
+    // and violating the row invariant CHECK.
+    if (matchedIds.has(fighter.id) && fighter.is_champion && entry.kind === "ranked") {
+      actions.push({ kind: "same", fighterId: fighter.id });
+      return;
+    }
     matchedIds.add(fighter.id);
 
     const newIsChampion = entry.kind === "champion";
     const newRankPosition = entry.kind === "ranked" ? entry.position : null;
+    // Always write is_champion + rank_position together when either
+    // needs to change. Partial patches (writing only the differing
+    // field) trip the row-invariant CHECK constraint when the SAME
+    // fighter has been touched earlier in this run — the in-memory
+    // `fighter` snapshot was loaded once at start, so the field the
+    // patch skipped as "already correct" can actually be stale in
+    // memory vs DB. Sending both atomically guarantees the post-write
+    // row satisfies `NOT is_champion OR rank_position IS NULL`.
     const patch: Partial<FighterRow> = {};
-    if (fighter.is_champion !== newIsChampion) patch.is_champion = newIsChampion;
-    if (fighter.rank_position !== newRankPosition) patch.rank_position = newRankPosition;
+    if (
+      fighter.is_champion !== newIsChampion ||
+      fighter.rank_position !== newRankPosition
+    ) {
+      patch.is_champion = newIsChampion;
+      patch.rank_position = newRankPosition;
+    }
     if (
       (match.kind === "by-name" || match.kind === "by-profile") &&
       fighter.source_fighter_id !== match.backfillSourceId
@@ -245,6 +268,11 @@ async function main() {
       actions.push({ kind: "same", fighterId: fighter.id });
     } else {
       actions.push({ kind: "update", fighterId: fighter.id, patch, prev: fighter, entry });
+      // Mutate the in-memory row so any later iteration that touches
+      // this fighter sees the post-write state, not the stale load.
+      if (patch.is_champion !== undefined) fighter.is_champion = patch.is_champion;
+      if (patch.rank_position !== undefined) fighter.rank_position = patch.rank_position ?? null;
+      if (patch.source_fighter_id !== undefined) fighter.source_fighter_id = patch.source_fighter_id ?? null;
     }
   };
 
