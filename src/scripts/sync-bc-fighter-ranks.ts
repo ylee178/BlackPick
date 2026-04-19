@@ -186,12 +186,26 @@ function sleep(ms: number): Promise<void> {
 
 const TIER3_RATE_LIMIT_MS = 1200;
 
+// Snapshot fields that drive the pre/post log labels. Cloning them at
+// action-record time (not holding a live reference) keeps the log
+// honest when later iterations mutate the in-memory fighter row.
+type FighterSnapshot = Pick<FighterRow, "name" | "is_champion" | "rank_position" | "weight_class">;
+
 type ApplyAction =
-  | { kind: "update"; fighterId: string; patch: Partial<FighterRow>; prev: FighterRow; entry: BcRankingEntry }
-  | { kind: "reset"; fighterId: string; prev: FighterRow }
+  | { kind: "update"; fighterId: string; patch: Partial<FighterRow>; prev: FighterSnapshot; entry: BcRankingEntry }
+  | { kind: "reset"; fighterId: string; prev: FighterSnapshot }
   | { kind: "same"; fighterId: string }
   | { kind: "skip-ambiguous"; entry: BcRankingEntry; candidateIds: string[] }
   | { kind: "skip-unmatched"; entry: BcRankingEntry };
+
+function snapshotFighter(fighter: FighterRow): FighterSnapshot {
+  return {
+    name: fighter.name,
+    is_champion: fighter.is_champion,
+    rank_position: fighter.rank_position,
+    weight_class: fighter.weight_class,
+  };
+}
 
 async function main() {
   const shouldApply = process.argv.includes("--apply");
@@ -216,63 +230,72 @@ async function main() {
   const fighters = await loadAllFighters();
   const actions: ApplyAction[] = [];
 
-  // Track fighter IDs we've already handled so stale-reset doesn't
-  // clobber a row we just wrote in this run.
-  const matchedIds = new Set<string>();
+  // Per-fighter chosen-entry map. BC lists some fighters across
+  // multiple divisions (e.g. 오일학 = 웰터급 #2 AND 미들급 CHAMPION).
+  // Collapsing by DB fighter.id with explicit priority rules gives
+  // one authoritative entry per fighter before computing patches,
+  // preventing flip-flop writes + CHECK constraint violations.
+  type ChosenMatch = {
+    fighter: FighterRow;
+    entry: BcRankingEntry;
+    backfillSourceId: string | null;
+  };
+  const chosenByFighter = new Map<string, ChosenMatch>();
+
   // Entries that need the tier-3 BC profile fetch fallback.
   const tier3Queue: BcRankingEntry[] = [];
 
-  const recordMatch = (
+  /**
+   * Decides if `candidate` beats `incumbent` as the representative
+   * ranking entry for a fighter. Deterministic priority:
+   *   1. Champion beats ranked.
+   *   2. When both are the same kind, the entry whose weight_class
+   *      matches the fighter's stored DB weight_class wins.
+   *   3. When both still tied, lower position number wins (#1 beats
+   *      #6 — higher rank = smaller number).
+   */
+  const candidateWins = (
+    candidate: BcRankingEntry,
+    incumbent: BcRankingEntry,
+    fighter: FighterRow,
+  ): boolean => {
+    if (candidate.kind === "champion" && incumbent.kind !== "champion") return true;
+    if (incumbent.kind === "champion" && candidate.kind !== "champion") return false;
+    const candMatchesWeight =
+      !!fighter.weight_class && candidate.weightClass === fighter.weight_class;
+    const incMatchesWeight =
+      !!fighter.weight_class && incumbent.weightClass === fighter.weight_class;
+    if (candMatchesWeight && !incMatchesWeight) return true;
+    if (incMatchesWeight && !candMatchesWeight) return false;
+    if (candidate.kind === "ranked" && incumbent.kind === "ranked") {
+      return (candidate.position ?? 16) < (incumbent.position ?? 16);
+    }
+    return false;
+  };
+
+  const considerMatch = (
     match: Extract<MatchResult, { kind: "by-source-id" | "by-name" | "by-profile" }>,
     entry: BcRankingEntry,
   ) => {
     const fighter = match.fighter;
-    // Cross-division dedup: if this fighter already landed a
-    // champion update earlier in the run (e.g. BC lists them as
-    // champion in one weight class and #N in another — 오일학 2026-04-19),
-    // the champion state wins and we ignore the ranked entry. Prevents
-    // the sequential writes from toggling `is_champion` / `rank_position`
-    // and violating the row invariant CHECK.
-    if (matchedIds.has(fighter.id) && fighter.is_champion && entry.kind === "ranked") {
-      actions.push({ kind: "same", fighterId: fighter.id });
+    const backfillSourceId =
+      match.kind === "by-source-id" ? null : match.backfillSourceId;
+    const existing = chosenByFighter.get(fighter.id);
+    if (!existing) {
+      chosenByFighter.set(fighter.id, { fighter, entry, backfillSourceId });
       return;
     }
-    matchedIds.add(fighter.id);
-
-    const newIsChampion = entry.kind === "champion";
-    const newRankPosition = entry.kind === "ranked" ? entry.position : null;
-    // Always write is_champion + rank_position together when either
-    // needs to change. Partial patches (writing only the differing
-    // field) trip the row-invariant CHECK constraint when the SAME
-    // fighter has been touched earlier in this run — the in-memory
-    // `fighter` snapshot was loaded once at start, so the field the
-    // patch skipped as "already correct" can actually be stale in
-    // memory vs DB. Sending both atomically guarantees the post-write
-    // row satisfies `NOT is_champion OR rank_position IS NULL`.
-    const patch: Partial<FighterRow> = {};
-    if (
-      fighter.is_champion !== newIsChampion ||
-      fighter.rank_position !== newRankPosition
-    ) {
-      patch.is_champion = newIsChampion;
-      patch.rank_position = newRankPosition;
-    }
-    if (
-      (match.kind === "by-name" || match.kind === "by-profile") &&
-      fighter.source_fighter_id !== match.backfillSourceId
-    ) {
-      patch.source_fighter_id = match.backfillSourceId;
-    }
-
-    if (Object.keys(patch).length === 0) {
-      actions.push({ kind: "same", fighterId: fighter.id });
-    } else {
-      actions.push({ kind: "update", fighterId: fighter.id, patch, prev: fighter, entry });
-      // Mutate the in-memory row so any later iteration that touches
-      // this fighter sees the post-write state, not the stale load.
-      if (patch.is_champion !== undefined) fighter.is_champion = patch.is_champion;
-      if (patch.rank_position !== undefined) fighter.rank_position = patch.rank_position ?? null;
-      if (patch.source_fighter_id !== undefined) fighter.source_fighter_id = patch.source_fighter_id ?? null;
+    if (candidateWins(entry, existing.entry, fighter)) {
+      chosenByFighter.set(fighter.id, {
+        fighter,
+        entry,
+        backfillSourceId: backfillSourceId ?? existing.backfillSourceId,
+      });
+    } else if (backfillSourceId && !existing.backfillSourceId) {
+      // Keep the existing entry but remember the backfill source_id
+      // (tier-2/3 fills in the stable BC key even when the entry
+      // itself loses the priority contest).
+      chosenByFighter.set(fighter.id, { ...existing, backfillSourceId });
     }
   };
 
@@ -292,7 +315,7 @@ async function main() {
       tier3Queue.push(entry);
       continue;
     }
-    recordMatch(match, entry);
+    considerMatch(match, entry);
   }
 
   // Pass 2: tier-3. For each queued entry, fetch the BC fighter
@@ -328,7 +351,38 @@ async function main() {
       actions.push({ kind: "skip-unmatched", entry });
       continue;
     }
-    recordMatch(match, entry);
+    considerMatch(match, entry);
+  }
+
+  // Pass 3: compute patches from the collapsed choices — one action
+  // per fighter, no flip-flop.
+  const matchedIds = new Set<string>();
+  for (const { fighter, entry, backfillSourceId } of chosenByFighter.values()) {
+    matchedIds.add(fighter.id);
+    const newIsChampion = entry.kind === "champion";
+    const newRankPosition = entry.kind === "ranked" ? entry.position : null;
+    const patch: Partial<FighterRow> = {};
+    if (
+      fighter.is_champion !== newIsChampion ||
+      fighter.rank_position !== newRankPosition
+    ) {
+      patch.is_champion = newIsChampion;
+      patch.rank_position = newRankPosition;
+    }
+    if (backfillSourceId && fighter.source_fighter_id !== backfillSourceId) {
+      patch.source_fighter_id = backfillSourceId;
+    }
+    if (Object.keys(patch).length === 0) {
+      actions.push({ kind: "same", fighterId: fighter.id });
+    } else {
+      actions.push({
+        kind: "update",
+        fighterId: fighter.id,
+        patch,
+        prev: snapshotFighter(fighter),
+        entry,
+      });
+    }
   }
 
   // Stale-reset: fighters whose weight_class matches one of the divisions
@@ -340,7 +394,7 @@ async function main() {
     if (matchedIds.has(fighter.id)) continue;
     if (!fighter.weight_class || !divisionsSet.has(fighter.weight_class)) continue;
     if (!fighter.is_champion && fighter.rank_position === null) continue;
-    actions.push({ kind: "reset", fighterId: fighter.id, prev: fighter });
+    actions.push({ kind: "reset", fighterId: fighter.id, prev: snapshotFighter(fighter) });
   }
 
   // Print + apply in order. Writes are per-row so a single failure
