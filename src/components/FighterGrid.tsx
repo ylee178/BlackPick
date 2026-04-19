@@ -40,6 +40,14 @@ type FighterItem = {
   avatarUrl: string | null;
   weightClass: string | null;
   hasPixelArt?: boolean;
+  /** Precomputed server-side (see `/fighters/page.tsx`). Drives the
+   *  rank/champion line on the grid card. Weight class stays as
+   *  `weightClass` above for the uppercase caption below the record. */
+  divisionChip?: {
+    weightLabel: string | null;
+    rankLabel: string;
+    tone: "champion" | "ranked";
+  } | null;
 };
 
 const CUSTOM_REGION_LABELS: Record<string, string> = {
@@ -596,13 +604,26 @@ export default function FighterGrid({ items }: { items: FighterItem[] }) {
               <p className="mt-2 truncate text-sm font-semibold text-[var(--bp-ink)]">
                 {f.name} {f.flag}
               </p>
-              <p className="mt-0.5 flex items-center gap-1 text-xs">
+              <p className="mt-0.5 flex items-center justify-center gap-1 text-xs">
                 <WLRecord wins={f.wins} losses={f.losses} size="xs" />
                 {f.draws > 0 && <span className="text-[var(--bp-muted)]">{f.draws}D</span>}
               </p>
-              {f.weightClass && (
-                <p className="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--bp-muted)]">
-                  {f.weightClass}
+              {(f.weightClass || f.divisionChip) && (
+                <p className="mt-0.5 flex items-center justify-center gap-1 text-[11px] font-semibold uppercase tracking-[0.04em]">
+                  <span className="text-[var(--bp-muted)]">
+                    {f.divisionChip?.weightLabel ?? f.weightClass}
+                  </span>
+                  {f.divisionChip && (
+                    <span
+                      className={
+                        f.divisionChip.tone === "champion"
+                          ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text text-transparent"
+                          : "text-[var(--bp-ink)]"
+                      }
+                    >
+                      {f.divisionChip.rankLabel}
+                    </span>
+                  )}
                 </p>
               )}
             </Link>

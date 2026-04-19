@@ -465,5 +465,8 @@
     "fighters": "Peleadores",
     "latestResults": "Últimos resultados",
     "close": "Cerrar"
+  },
+  "division": {
+    "champion": "Campeón"
   }
 }

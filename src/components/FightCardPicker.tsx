@@ -13,9 +13,11 @@ import { getFighterAvatarUrl } from "@/lib/fighter-avatar";
 import FighterAvatar from "@/components/FighterAvatar";
 import { countryCodeToFlag } from "@/lib/flags";
 import { cn } from "@/lib/utils";
-import { translateWeightClass } from "@/lib/weight-class";
+import { resolveDivisionChip } from "@/lib/division-chip";
 import { Check, Pencil } from "lucide-react";
 import { RetroLabel } from "@/components/ui/retro";
+import { WLRecord } from "@/components/ui/ranking";
+import { parseRecord } from "@/lib/parse-record";
 import SignupGateModal from "@/components/SignupGateModal";
 import {
   loadPendingPick,
@@ -33,6 +35,11 @@ type FighterData = {
   record?: string | null;
   nationality?: string | null;
   weight_class?: string | null;
+  /** Persisted by `src/scripts/sync-bc-fighter-ranks.ts`. Used as
+   *  fallback by `resolveDivisionChip` when the live BC division
+   *  has no rank. */
+  is_champion?: boolean | null;
+  rank_position?: number | null;
 };
 
 type Props = {
@@ -50,8 +57,8 @@ type Props = {
     fighterA_pct: number;
     fighterB_pct: number;
   } | null;
-  bcFighterADivision?: { weightClass: string; rank: number | null } | null;
-  bcFighterBDivision?: { weightClass: string; rank: number | null } | null;
+  bcFighterADivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
+  bcFighterBDivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
   initialPrediction: {
     winner_id: string;
     method?: string | null;
@@ -351,10 +358,8 @@ export default function FightCardPicker({
     const bcPct = side === "left" ? bcPrediction?.fighterA_pct : bcPrediction?.fighterB_pct;
     const isPicked = winnerId === fighterId;
     const bcDiv = side === "left" ? bcFighterADivision : bcFighterBDivision;
-    const divRank = bcDiv?.rank ?? null;
-    const divWeight = bcDiv?.weightClass
-      ? translateWeightClass(bcDiv.weightClass, locale)
-      : null;
+    const divisionChip = resolveDivisionChip(bcDiv, fighter, locale, t("division.champion"));
+    const { wins, losses } = parseRecord(fighter.record);
 
     const pickFighter = () =>
       selectWinner(fighterId, side === "left" ? "a" : "b");
@@ -402,7 +407,7 @@ export default function FightCardPicker({
               <RetroLabel
                 size="sm"
                 tone="neutral"
-                icon={<CheckIcon className="h-3.5 w-3.5 text-[#4ade80]" />}
+                icon={<CheckIcon className="h-3.5 w-3.5 text-[var(--bp-accent)]" />}
               >
                 {t("prediction.yourPick")}
               </RetroLabel>
@@ -437,13 +442,10 @@ export default function FightCardPicker({
                 fighter detail page with `stopPropagation` so clicking
                 the name navigates to the profile without firing the
                 parent radio's pick handler. */}
-            <p className={cn("text-sm font-bold break-words", isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]")}>
+            <p className="text-sm font-bold break-words text-[var(--bp-ink)]">
               <Link
                 href={`/fighters/${fighter.id}`}
-                className={cn(
-                  "pointer-events-auto transition-colors hover:text-[var(--bp-accent)]",
-                  isPicked ? "text-[var(--bp-accent)]" : "text-[var(--bp-ink)]",
-                )}
+                className="pointer-events-auto text-[var(--bp-ink)] transition-colors hover:text-[var(--bp-accent)]"
               >
                 {displayName}
               </Link>{" "}
@@ -452,16 +454,26 @@ export default function FightCardPicker({
             {subLabel ? (
               <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
             ) : null}
-            <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{(() => {
-              const r = fighter.record || "0-0";
-              const parts = r.split("-");
-              return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
-            })()}</p>
-            {divRank ? (
-              <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
-                #{divRank} {divWeight}
-              </p>
-            ) : null}
+            <p className="mt-0.5 flex flex-wrap items-center justify-center gap-x-1 text-xs">
+              <WLRecord wins={Number(wins) || 0} losses={Number(losses) || 0} size="xs" />
+              {divisionChip ? (
+                <>
+                  <span className="text-[var(--bp-muted)]">·</span>
+                  {divisionChip.weightLabel ? (
+                    <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+                  ) : null}
+                  <span
+                    className={
+                      divisionChip.tone === "champion"
+                        ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text font-semibold text-transparent"
+                        : "font-semibold text-[var(--bp-ink)]"
+                    }
+                  >
+                    {divisionChip.rankLabel}
+                  </span>
+                </>
+              ) : null}
+            </p>
           </div>
 
           {!isPicked && typeof bcPct === "number" ? (

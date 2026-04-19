@@ -119,6 +119,9 @@ export type Database = {
           weight_class: string | null
           image_url: string | null
           created_at: string
+          source_fighter_id: string | null
+          is_champion: boolean
+          rank_position: number | null
         }
         Insert: {
           id?: string
@@ -131,6 +134,9 @@ export type Database = {
           weight_class?: string | null
           image_url?: string | null
           created_at?: string
+          source_fighter_id?: string | null
+          is_champion?: boolean
+          rank_position?: number | null
         }
         Update: {
           id?: string
@@ -143,6 +149,9 @@ export type Database = {
           weight_class?: string | null
           image_url?: string | null
           created_at?: string
+          source_fighter_id?: string | null
+          is_champion?: boolean
+          rank_position?: number | null
         }
         Relationships: []
       }

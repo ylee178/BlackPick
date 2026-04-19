@@ -465,5 +465,8 @@
     "fighters": "Тулаанчид",
     "latestResults": "Сүүлийн үр дүн",
     "close": "Хаах"
+  },
+  "division": {
+    "champion": "Аварга"
   }
 }

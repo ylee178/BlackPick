@@ -1,8 +1,6 @@
-import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { fetchBcOfficialEventCard, findBcSourceEventId, type BcOfficialFight } from "../lib/bc-official";
-
-loadEnv({ path: ".env" });
+import { resolveScriptEnv } from "./_lib/script-env";
 
 type FighterRow = {
   id: string;
@@ -13,6 +11,7 @@ type FighterRow = {
   record: string | null;
   nationality: string | null;
   weight_class: string | null;
+  source_fighter_id: string | null;
 };
 
 type FightRow = {
@@ -24,16 +23,9 @@ type FightRow = {
   fighter_b: FighterRow;
 };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// Initialized once in `main()` after `resolveScriptEnv()` asserts the
+// target env matches the operator's --env flag.
+let supabase: ReturnType<typeof createClient>;
 
 function normalizeName(value: string | null | undefined) {
   return (value ?? "")
@@ -91,8 +83,8 @@ async function loadEventFights(eventId: string): Promise<FightRow[]> {
     .from("fights")
     .select(`
       id, start_time, fighter_a_id, fighter_b_id,
-      fighter_a:fighters!fighter_a_id(id, name, name_en, name_ko, ring_name, record, nationality, weight_class),
-      fighter_b:fighters!fighter_b_id(id, name, name_en, name_ko, ring_name, record, nationality, weight_class)
+      fighter_a:fighters!fighter_a_id(id, name, name_en, name_ko, ring_name, record, nationality, weight_class, source_fighter_id),
+      fighter_b:fighters!fighter_b_id(id, name, name_en, name_ko, ring_name, record, nationality, weight_class, source_fighter_id)
     `)
     .eq("event_id", eventId)
     .order("start_time", { ascending: true });
@@ -112,7 +104,7 @@ async function loadEventFights(eventId: string): Promise<FightRow[]> {
 async function loadAllFighters(): Promise<FighterRow[]> {
   const { data, error } = await supabase
     .from("fighters")
-    .select("id, name, name_en, name_ko, ring_name, record, nationality, weight_class")
+    .select("id, name, name_en, name_ko, ring_name, record, nationality, weight_class, source_fighter_id")
     .limit(2000);
 
   if (error) throw error;
@@ -187,6 +179,7 @@ async function findOrCreateFighter(
         record: official.record,
         nationality: official.nationality,
         weight_class: weightClass,
+        source_fighter_id: official.sourceId || null,
       } satisfies FighterRow;
     }
 
@@ -198,6 +191,7 @@ async function findOrCreateFighter(
       record: official.record,
       nationality: official.nationality,
       weight_class: weightClass,
+      source_fighter_id: official.sourceId || null,
     };
     const { data, error } = await supabase.from("fighters").insert(insertPayload).select("*").single();
     if (error) throw error;
@@ -213,6 +207,12 @@ async function findOrCreateFighter(
     if (weightClass && weightClass !== existing.weight_class) patch.weight_class = weightClass;
     if (isLatinName(official.name) && official.name && official.name !== existing.name_en) patch.name_en = official.name;
     if (!isLatinName(official.name) && official.name && official.name !== existing.name_ko) patch.name_ko = official.name;
+    // Backfill the BC seq when it's missing on an existing row. Never
+    // overwrite an already-set value — that would mask a real mismatch
+    // that the sync script should log and let a human resolve.
+    if (official.sourceId && !existing.source_fighter_id) {
+      patch.source_fighter_id = official.sourceId;
+    }
 
     if (Object.keys(patch).length > 0) {
       if (!shouldApply) {
@@ -251,6 +251,10 @@ function chooseFightRow(officialFight: BcOfficialFight, availableRows: FightRow[
 }
 
 async function main() {
+  const { supabaseUrl, serviceRoleKey } = await resolveScriptEnv();
+  supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const shouldApply = process.argv.includes("--apply");
   const event = await resolveTargetEvent();
   const sourceEventId = event.source_event_id ?? (await findBcSourceEventId(event.name));

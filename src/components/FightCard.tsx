@@ -7,6 +7,7 @@ import { countryCodeToFlag } from "@/lib/flags";
 import { translateWeightClass } from "@/lib/weight-class";
 import { getTranslations } from "@/lib/i18n-server";
 import { cn } from "@/lib/utils";
+import { resolveDivisionChip } from "@/lib/division-chip";
 import type { BcScoreCard } from "@/lib/bc-official";
 import { Check, Crown, MessageCircle, PartyPopper, Frown } from "lucide-react";
 import {
@@ -20,7 +21,8 @@ import {
   retroChipClassName,
   retroButtonClassName,
 } from "@/components/ui/retro";
-import { PointsBadge } from "@/components/ui/ranking";
+import { PointsBadge, WLRecord } from "@/components/ui/ranking";
+import { parseRecord } from "@/lib/parse-record";
 
 type FighterData = {
   id: string;
@@ -32,6 +34,12 @@ type FighterData = {
   record?: string | null;
   nationality?: string | null;
   weight_class?: string | null;
+  /** Persisted by `src/scripts/sync-bc-fighter-ranks.ts`. Fallback
+   *  source for the static-side portrait chip — live BC data from
+   *  `bcFighterADivision`/`bcFighterBDivision` takes priority on
+   *  event/fight surfaces while rank sync remains manual. */
+  is_champion?: boolean | null;
+  rank_position?: number | null;
 };
 
 type FightCardProps = {
@@ -75,8 +83,8 @@ type FightCardProps = {
     fighterB_pct: number;
   } | null;
   bcWeightClass?: string | null;
-  bcFighterADivision?: { weightClass: string; rank: number | null } | null;
-  bcFighterBDivision?: { weightClass: string; rank: number | null } | null;
+  bcFighterADivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
+  bcFighterBDivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
   hideDiscussion?: boolean;
   /**
    * Forwarded to FightCardPicker. Anonymous viewers hit a signup gate on
@@ -105,6 +113,7 @@ function FighterSideStatic({
   winRound,
   winLabel,
   bcLabel,
+  championLabel,
   isCompleted,
   predictionResult,
   predictionScore,
@@ -116,13 +125,14 @@ function FighterSideStatic({
   fighter: FighterData;
   locale: AppLocale;
   bcPct: number | undefined;
-  bcDivision?: { weightClass: string; rank: number | null } | null;
+  bcDivision?: { weightClass: string; rank: number | null; isChampion?: boolean } | null;
   isWinner: boolean;
   isLoser: boolean;
   winMethod?: string | null;
   winRound?: number | null;
   winLabel: string;
   bcLabel: string;
+  championLabel: string;
   isCompleted: boolean;
   predictionResult?: "correct" | "wrong" | null;
   predictionScore?: number | null;
@@ -141,6 +151,8 @@ function FighterSideStatic({
   const displayName = getLocalizedFighterName(fighter, locale, fighter.name);
   const subLabel = getLocalizedFighterSubLabel(fighter, locale);
   const avatarUrl = getFighterAvatarUrl(fighter);
+  const divisionChip = resolveDivisionChip(bcDivision, fighter, locale, championLabel);
+  const { wins, losses } = parseRecord(fighter.record);
   return (
     <div
       className={cn(
@@ -170,7 +182,7 @@ function FighterSideStatic({
           <RetroLabel
             size="sm"
             tone="neutral"
-            icon={<Check className="h-3.5 w-3.5 text-[#4ade80]" strokeWidth={2} />}
+            icon={<Check className="h-3.5 w-3.5 text-[var(--bp-accent)]" strokeWidth={2} />}
           >
             {myPickLabel}
           </RetroLabel>
@@ -200,18 +212,26 @@ function FighterSideStatic({
         {subLabel ? (
           <p className="mt-0.5 text-xs text-[var(--bp-muted)]">{subLabel}</p>
         ) : null}
-        <p className="mt-0.5 text-xs text-[var(--bp-muted)]">
-          {(() => {
-            const r = fighter.record || "0-0";
-            const parts = r.split("-");
-            return parts.length >= 2 ? `${parts[0]}W ${parts[1]}L` : r;
-          })()}
+        <p className="mt-0.5 flex flex-wrap items-center justify-center gap-x-1 text-xs">
+          <WLRecord wins={Number(wins) || 0} losses={Number(losses) || 0} size="xs" />
+          {divisionChip ? (
+            <>
+              <span className="text-[var(--bp-muted)]">·</span>
+              {divisionChip.weightLabel ? (
+                <span className="text-[var(--bp-muted)]">{divisionChip.weightLabel}</span>
+              ) : null}
+              <span
+                className={
+                  divisionChip.tone === "champion"
+                    ? "bg-gradient-to-r from-[#e5a944] via-[#fde68a] to-[#e5a944] bg-clip-text font-semibold text-transparent"
+                    : "font-semibold text-[var(--bp-ink)]"
+                }
+              >
+                {divisionChip.rankLabel}
+              </span>
+            </>
+          ) : null}
         </p>
-        {bcDivision?.rank ? (
-          <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--bp-accent)]">
-            #{bcDivision.rank} {translateWeightClass(bcDivision.weightClass, locale)}
-          </p>
-        ) : null}
       </div>
       {isWinner && (winMethod || winRound) ? (
         <p className="text-xs font-semibold text-[#4ade80]">
@@ -370,6 +390,7 @@ export default async function FightCard({
               winRound={winnerA ? fight.round : null}
               winLabel={t("event.win")}
               bcLabel={t("event.officialPrediction")}
+              championLabel={t("division.champion")}
               isCompleted={isCompleted}
               predictionResult={prediction && isCompleted && !isVoided && winnerA ? (prediction.is_winner_correct ? "correct" : prediction.is_winner_correct === false ? "wrong" : null) : null}
               predictionScore={prediction?.score}
@@ -392,6 +413,7 @@ export default async function FightCard({
               winRound={winnerB ? fight.round : null}
               winLabel={t("event.win")}
               bcLabel={t("event.officialPrediction")}
+              championLabel={t("division.champion")}
               isCompleted={isCompleted}
               predictionResult={prediction && isCompleted && !isVoided && winnerB ? (prediction.is_winner_correct ? "correct" : prediction.is_winner_correct === false ? "wrong" : null) : null}
               predictionScore={prediction?.score}

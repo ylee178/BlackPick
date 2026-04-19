@@ -8,7 +8,16 @@
 
 export type BcFighterDivision = {
   weightClass: string;
+  /** Numeric rank (1..15) for ranked contenders. `null` for champions
+   *  and unranked fighters — disambiguate via `isChampion`. */
   rank: number | null;
+  /** True when BC marked this fighter as champion at the time this
+   *  event page was rendered. BC signals champion with `#C` (not a
+   *  digit) inside the `.division-info` span — e.g.
+   *  `<span class="division-info">밴텀급 #C</span>`. Captured here so
+   *  completed / live event cards show the champion label even when
+   *  the fighter has since lost the title. */
+  isChampion: boolean;
 };
 
 export type BcFightData = {
@@ -118,6 +127,7 @@ async function fetchFromDetailPage(
   }
 
   // ── 3. Parse per-fighter division: <span class="division-info">웰터급 #10</span>
+  // Champions use `#C` (e.g. "헤비급 #C"); ranked contenders use `#1`..`#15`.
   const KO_WEIGHT_RE =
     /(플라이급|밴텀급|페더급|라이트급|웰터급|미들급|라이트헤비급|헤비급|스트로급|슈퍼라이트급|캐치웨이트|오픈웨이트|슈퍼웰터급|슈퍼밴텀급|슈퍼페더급|슈퍼미들급)/;
   const divRegex = /class="division-info"[^>]*>([^<]+)/g;
@@ -126,10 +136,15 @@ async function fetchFromDetailPage(
   while ((dm = divRegex.exec(html)) !== null) {
     const text = dm[1].trim();
     const wm = text.match(KO_WEIGHT_RE);
+    const isChampion = /#C\b/.test(text);
     const rm = text.match(/#(\d+)/);
     if (wm) {
       divEntries.push({
-        div: { weightClass: wm[1], rank: rm ? Number(rm[1]) : null },
+        div: {
+          weightClass: wm[1],
+          rank: rm ? Number(rm[1]) : null,
+          isChampion,
+        },
         pos: dm.index,
       });
     }

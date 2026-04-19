@@ -465,5 +465,8 @@
     "fighters": "选手",
     "latestResults": "最新结果",
     "close": "关闭"
+  },
+  "division": {
+    "champion": "冠军"
   }
 }
